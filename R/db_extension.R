@@ -30,7 +30,8 @@ ddbs_load <- function(conn) {
     ## 2.1. Check connection
     dbConnCheck(conn)
     ## 2.2. Check if spatial extension is installed
-    if (!ext$installed)
+    spatial_ext <- ext[ext$extension_name == "spatial", ]
+    if (!spatial_ext$installed)
         stop("spatial extension is not installed, please use `ddbs_install()`")
 
     # 3. Load spatial extension
