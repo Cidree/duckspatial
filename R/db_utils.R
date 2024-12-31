@@ -46,4 +46,5 @@ ddbs_create_schema <- function(conn, name) {
         cli::cli_alert_success("Schema {name} created")
     }
     return(invisible(TRUE))
+
 }

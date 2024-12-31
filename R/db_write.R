@@ -1,5 +1,4 @@
 
-
 #' Write an SF Object to a DuckDB Database
 #'
 #' This function writes a Simple Features (SF) object into a DuckDB database as a new table.
@@ -47,6 +46,7 @@
 #' dbDisconnect(conn)
 
 ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
+
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
@@ -97,4 +97,5 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
     cli::cli_alert_success("Table {name} successfully imported")
     cli::cli_alert_info("Note that SRID information is not stored in the database. These features may be added in the future.")
     return(invisible(TRUE))
+
 }
