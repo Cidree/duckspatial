@@ -8,8 +8,8 @@
 ##' @keywords internal
 dbConnCheck <- function(conn) {
     if (inherits(conn, "duckdb_connection")) {
-        return(TRUE)
+        return(invisible(TRUE))
     } else {
-        return(stop("'conn' must be connection object: <duckdb_connection> from `duckdb`"))
+        cli::cli_abort("'conn' must be connection object: <duckdb_connection> from `duckdb`")
     }
 }
