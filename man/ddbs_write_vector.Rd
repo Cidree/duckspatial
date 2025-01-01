@@ -9,7 +9,7 @@ ddbs_write_vector(conn, data, name, overwrite = FALSE)
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
 
-\item{data}{a \code{sf} object to write to the DuckDB database}
+\item{data}{a \code{sf} object to write to the DuckDB database, or a local file}
 
 \item{name}{a character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table names.}
