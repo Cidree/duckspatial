@@ -65,11 +65,11 @@ ddbs_load(conn)
 ```
 
 Now we can get some data to insert into the database. We are creating
-1,000,000 random points.
+10,000,000 random points.
 
 ``` r
 ## create n points
-n <- 1000000
+n <- 10000000
 random_points <- data.frame(
   id = 1:n,
   x = runif(n, min = -180, max = 180),  # Random longitude values
@@ -84,15 +84,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 1 field
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -170.0372 ymin: -77.78096 xmax: 154.213 ymax: 35.45508
+#> Bounding box:  xmin: -146.636 ymin: -85.76622 xmax: 100.7469 ymax: -7.167937
 #> Geodetic CRS:  WGS 84
 #>   id                    geometry
-#> 1  1   POINT (-127.601 35.45508)
-#> 2  2   POINT (154.213 -77.78096)
-#> 3  3 POINT (-76.63392 -40.25935)
-#> 4  4  POINT (-170.0372 22.87667)
-#> 5  5 POINT (-86.79235 -22.43082)
-#> 6  6  POINT (87.95789 -9.292341)
+#> 1  1  POINT (59.99642 -55.53156)
+#> 2  2 POINT (-17.18542 -41.90262)
+#> 3  3 POINT (-76.45784 -7.167937)
+#> 4  4  POINT (-98.77747 -41.0209)
+#> 5  5  POINT (-146.636 -51.90652)
+#> 6  6  POINT (100.7469 -85.76622)
 ```
 
 Now we can insert the data into the database using the
@@ -111,7 +111,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>    3.88
+#>   36.83
 ```
 
 ``` r
@@ -125,10 +125,10 @@ end_time <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>   13.97
+#>  128.61
 ```
 
-In this case, we can see that DuckDB was 3.6 times faster. Now we will
+In this case, we can see that DuckDB was 3.5 times faster. Now we will
 do the same exercise but reading the data back into R:
 
 ``` r
@@ -142,7 +142,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   15.61
+#>   67.56
 ```
 
 ``` r
@@ -155,10 +155,10 @@ end_time       <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>      32
+#>  101.17
 ```
 
-For reading, we get a factor of 2 times faster for DuckDB. Finally,
+For reading, we get a factor of 1.5 times faster for DuckDB. Finally,
 don’t forget to disconnect from the database:
 
 ``` r

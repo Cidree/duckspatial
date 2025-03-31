@@ -56,11 +56,11 @@ ddbs_install(conn)
 ddbs_load(conn)
 ```
 
-Now we can get some data to insert into the database. We are creating 1,000,000 random points.
+Now we can get some data to insert into the database. We are creating 10,000,000 random points.
 
 ```{r}
 ## create n points
-n <- 1000000
+n <- 10000000
 random_points <- data.frame(
   id = 1:n,
   x = runif(n, min = -180, max = 180),  # Random longitude values
