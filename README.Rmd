@@ -99,7 +99,7 @@ elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 ```
 
-In this case, we can see that DuckDB was `r round(elapsed_shp / elapsed_duckdb, 1)` times faster. Now, we will do the same exercise but reading the data back into R:
+In this case, we can see that DuckDB was `r round(elapsed_shp / elapsed_duckdb, 1)` times faster. Now we will do the same exercise but reading the data back into R:
 
 ```{r}
 ## write data monitoring processing time

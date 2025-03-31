@@ -42,6 +42,7 @@ data manipulation, and how to write/read vector data.
 
 ``` r
 library(duckdb)
+#> Warning: package 'duckdb' was built under R version 4.4.3
 #> Cargando paquete requerido: DBI
 library(duckspatial)
 library(sf)
@@ -58,7 +59,7 @@ conn <- dbConnect(duckdb())
 
 ## install and load spatial extension
 ddbs_install(conn)
-#> ℹ spatial extension version <6826755> is already installed in this database
+#> ℹ spatial extension version <76dc6da> is already installed in this database
 ddbs_load(conn)
 #> ✔ Spatial extension loaded
 ```
@@ -83,35 +84,34 @@ head(sf_points)
 #> Simple feature collection with 6 features and 1 field
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -159.589 ymin: -64.34659 xmax: 86.12 ymax: 69.84376
+#> Bounding box:  xmin: -170.0372 ymin: -77.78096 xmax: 154.213 ymax: 35.45508
 #> Geodetic CRS:  WGS 84
-#>   id                   geometry
-#> 1  1 POINT (-99.66919 69.84376)
-#> 2  2  POINT (83.8427 -64.34659)
-#> 3  3  POINT (29.08431 13.34119)
-#> 4  4  POINT (68.48878 25.78263)
-#> 5  5    POINT (86.12 -55.52485)
-#> 6  6 POINT (-159.589 -51.17272)
+#>   id                    geometry
+#> 1  1   POINT (-127.601 35.45508)
+#> 2  2   POINT (154.213 -77.78096)
+#> 3  3 POINT (-76.63392 -40.25935)
+#> 4  4  POINT (-170.0372 22.87667)
+#> 5  5 POINT (-86.79235 -22.43082)
+#> 6  6  POINT (87.95789 -9.292341)
 ```
 
 Now we can insert the data into the database using the
-`ddbs_write_vector()` function. We use the `tictoc` package to see how
-long does it take, and we can compare it with writting a shapefile with
-the `write_sf()` function:
+`ddbs_write_vector()` function. We use the `proc.time()` function to
+calculate how long does it take, and we can compare it with writing a
+shapefile with the `write_sf()` function:
 
 ``` r
 ## write data monitoring processing time
 start_time <- proc.time()
 ddbs_write_vector(conn, sf_points, "test_points")
 #> ✔ Table test_points successfully imported
-#> ℹ Note that SRID information is not stored in the database. These features may be added in the future.
 end_time <- proc.time()
 
 ## print elapsed time
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>    3.39
+#>    3.88
 ```
 
 ``` r
@@ -125,24 +125,24 @@ end_time <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>   17.31
+#>   13.97
 ```
 
-In this case, we can see that DuckDB was 5.1 times faster. Now, we will
+In this case, we can see that DuckDB was 3.6 times faster. Now we will
 do the same exercise but reading the data back into R:
 
 ``` r
 ## write data monitoring processing time
 start_time <- proc.time()
 sf_points_ddbs <- ddbs_read_vector(conn, "test_points", crs = 4326)
-#> ✔ Table test_points successfully imported. Note that SRID is not currently stored in the database.
+#> ✔ Table test_points successfully imported.
 end_time <- proc.time()
 
 ## print elapsed time
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>    7.17
+#>   15.61
 ```
 
 ``` r
@@ -155,10 +155,10 @@ end_time       <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>   20.04
+#>      32
 ```
 
-For reading, we get a factor of 2.8 times faster for DuckDB. Finally,
+For reading, we get a factor of 2 times faster for DuckDB. Finally,
 don’t forget to disconnect from the database:
 
 ``` r

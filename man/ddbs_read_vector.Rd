@@ -4,7 +4,7 @@
 \alias{ddbs_read_vector}
 \title{Load vectorial data from DuckDB into R}
 \usage{
-ddbs_read_vector(conn, name, crs = NULL)
+ddbs_read_vector(conn, name, crs = NULL, crs_column = "crs_duckspatial")
 }
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
@@ -13,6 +13,10 @@ ddbs_read_vector(conn, name, crs = NULL)
 or a character string of length two specifying the schema and table names.}
 
 \item{crs}{the coordinates reference system of the data}
+
+\item{crs_column}{a character string of length one specifying the column
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
+to NULL if absent}
 }
 \value{
 an sf object

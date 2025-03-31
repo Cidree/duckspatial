@@ -8,6 +8,9 @@
 #' @param name a character string of length one specifying the name of the table,
 #' or a character string of length two specifying the schema and table names.
 #' @param crs the coordinates reference system of the data
+#' @param crs_column a character string of length one specifying the column
+#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
+#' to NULL if absent
 #'
 #' @returns an sf object
 #' @export
@@ -44,7 +47,7 @@
 #' ## disconnect from db
 #' dbDisconnect(conn)
 #'
-ddbs_read_vector <- function(conn, name, crs = NULL) {
+ddbs_read_vector <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial") {
 
   # 1. Checks
   ## Check if connection is correct
@@ -84,13 +87,20 @@ ddbs_read_vector <- function(conn, name, crs = NULL) {
   ))
   ## Convert to sf
   if (is.null(crs)) {
+    if (is.null(crs_column)) {
       data_sf <- data_tbl |>
-          sf::st_as_sf(wkt = geom_name)
+        sf::st_as_sf(wkt = geom_name)
+    } else {
+      data_sf <- data_tbl |>
+        sf::st_as_sf(wkt = geom_name, crs = data_tbl[1, crs_column])
+      data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
+    }
+
   } else {
       data_sf <- data_tbl |>
           sf::st_as_sf(wkt = geom_name, crs = crs)
   }
-  cli::cli_alert_success("Table {name} successfully imported. Note that SRID is not currently stored in the database.")
+  cli::cli_alert_success("Table {name} successfully imported.")
   return(data_sf)
 
 }

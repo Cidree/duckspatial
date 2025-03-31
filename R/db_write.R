@@ -100,10 +100,17 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
         )
     }
 
+    # 5. CRS
+    ## 5.1. get data CRS
+    data_crs <- sf::st_crs(data, parameters = TRUE)
+    ## 5.2. create new column with CRS as default value
+    DBI::dbExecute(conn, glue::glue("
+        ALTER TABLE {query_name}
+        ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{data_crs$srid}';
+    "))
 
-    # 5. User feedback
+    # 6. User feedback
     cli::cli_alert_success("Table {name} successfully imported")
-    cli::cli_alert_info("Note that SRID information is not stored in the database. These features may be added in the future.")
     return(invisible(TRUE))
 
 }
