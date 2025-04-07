@@ -7,7 +7,8 @@
 #' @param conn a connection object to a DuckDB database
 #' @param name a character string of length one specifying the name of the table,
 #' or a character string of length two specifying the schema and table names.
-#' @param crs the coordinates reference system of the data
+#' @param crs the coordinates reference system of the data. Specify if the data
+#' doesn't have crs_column, and you know the crs
 #' @param crs_column a character string of length one specifying the column
 #' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
 #' to NULL if absent

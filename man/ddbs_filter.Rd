@@ -4,7 +4,16 @@
 \alias{ddbs_filter}
 \title{Spatial Filter}
 \usage{
-ddbs_filter(conn, x, y, predicate = "intersection", crs = NULL)
+ddbs_filter(
+  conn,
+  x,
+  y,
+  name = NULL,
+  predicate = "intersection",
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
@@ -14,9 +23,21 @@ from this object}
 
 \item{y}{a table with geometry column within the DuckDB database}
 
+\item{name}{a character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table names. If it's
+NULL (the default), it will return the result as an \code{sf} object}
+
 \item{predicate}{geometry predicate to use for filtering the data}
 
-\item{crs}{the coordinates reference system of the data}
+\item{crs}{the coordinates reference system of the data. Specify if the data
+doesn't have crs_column, and you know the crs}
+
+\item{crs_column}{a character string of length one specifying the column
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
+to NULL if absent}
+
+\item{overwrite}{whether to overwrite the existing table if it exists. Ignored
+when name is NULL}
 }
 \value{
 an sf object

@@ -50,3 +50,46 @@ ddbs_create_schema <- function(conn, name) {
 }
 
 
+
+
+#' Check CRS of a table
+#'
+#' @param conn a connection object to a DuckDB database
+#' @param name a character string of length one specifying the name of the table,
+#' or a character string of length two specifying the schema and table names.
+#' @param crs_column a character string of length one specifying the column
+#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}})
+#'
+#' @returns CRS object
+#' @export
+#'
+#' @examples
+#' 1 + 1 # TODO
+#'
+ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
+
+    # 1. Checks
+    ## Check if connection is correct
+    dbConnCheck(conn)
+    ## convenient names of table and/or schema.table
+    if (length(name) == 2) {
+        table_name <- name[2]
+        schema_name <- name[1]
+        query_name <- paste0(name, collapse = ".")
+    } else {
+        table_name   <- name
+        schema_name <- "main"
+        query_name <- name
+    }
+    ## Check if table name exists
+    if (!table_name %in% DBI::dbListTables(conn))
+        cli::cli_abort("The provided name is not present in the database.")
+    ## check if geometry column is present
+    info_tbl  <- DBI::dbGetQuery(conn, glue::glue("PRAGMA table_info('{query_name}');"))
+
+    # 2. Return CRS
+    ## extract CRS
+    crs_vec <- gsub("'", "", info_tbl[which(info_tbl$name == crs_column), "dflt_value"])
+    ## return CRS
+    return(sf::st_crs(crs_vec))
+}

@@ -4,7 +4,15 @@
 \alias{ddbs_intersection}
 \title{Calculates the intersection of two geometries}
 \usage{
-ddbs_intersection(conn, x, y, crs = NULL)
+ddbs_intersection(
+  conn,
+  x,
+  y,
+  name = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  overwrite = NULL
+)
 }
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
@@ -14,7 +22,19 @@ from this object}
 
 \item{y}{a table with geometry column within the DuckDB database}
 
-\item{crs}{the coordinates reference system of the data}
+\item{name}{a character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table names. If it's
+NULL (the default), it will return the result as an \code{sf} object}
+
+\item{crs}{the coordinates reference system of the data. Specify if the data
+doesn't have crs_column, and you know the crs}
+
+\item{crs_column}{a character string of length one specifying the column
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
+to NULL if absent}
+
+\item{overwrite}{whether to overwrite the existing table if it exists. Ignored
+when name is NULL}
 }
 \value{
 an sf object

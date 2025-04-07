@@ -90,24 +90,59 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
         DBI::dbWriteTable(conn, DBI::Id(schema = schema_name, table = table_name), data_df, overwrite = overwrite, field.types = c(geom_name = "BLOB"))
         ## Convert to spatial
         DBI::dbExecute(conn, glue::glue("
-        ALTER TABLE {query_name}
-        ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
-    "))
+            ALTER TABLE {query_name}
+            ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
+        "))
+
+        ## CRS
+        ## get data CRS
+        data_crs <- sf::st_crs(data, parameters = TRUE)
+        ## create new column with CRS as default value
+        DBI::dbExecute(conn, glue::glue("
+            ALTER TABLE {query_name}
+            ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{data_crs$srid}';
+        "))
+
     } else {
-        DBI::dbExecute(
-            conn,
-            glue::glue("CREATE TABLE {query_name} AS SELECT * FROM ST_Read('{data}')")
-        )
+        ## check file extension
+        # file_ext <- sub(".*\\.", "", data)
+        # if (file_ext == "parquet") {
+        #     ## insert data
+        #     DBI::dbExecute(
+        #         conn,
+        #         glue::glue("CREATE TABLE {query_name} AS SELECT * FROM read_parquet('{data}')")
+        #     )
+        #     ## specify geometry column
+        #     ## - try to get geom column name
+        #     metadata_df <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_name}"))
+        #     geom_name <- metadata_df$column_name[grepl("STRUCT", metadata_df$column_type)]
+        #     DBI::dbExecute(conn, glue::glue("
+        #         ALTER TABLE {query_name}
+        #         ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
+        #     "))
+        #     ## manage CRS
+        #
+        # } else {
+            ## insert data
+            DBI::dbExecute(
+                conn,
+                glue::glue("CREATE TABLE {query_name} AS SELECT * FROM ST_Read('{data}')")
+            )
+            ## get CRS
+            meta_list <- DBI::dbGetQuery(conn, glue::glue("SELECT * FROM ST_READ_META('{data}')"))
+            auth_name <- meta_list$layers[[1]]$geometry_fields[[1]]$crs$auth_name
+            auth_code <- meta_list$layers[[1]]$geometry_fields[[1]]$crs$auth_code
+            srid <- paste0(auth_name, ":", auth_code)
+            ## create new column with CRS as default value
+            DBI::dbExecute(conn, glue::glue("
+            ALTER TABLE {query_name}
+            ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{srid}';
+        "))
+        # }
+
+
     }
 
-    # 5. CRS
-    ## 5.1. get data CRS
-    data_crs <- sf::st_crs(data, parameters = TRUE)
-    ## 5.2. create new column with CRS as default value
-    DBI::dbExecute(conn, glue::glue("
-        ALTER TABLE {query_name}
-        ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{data_crs$srid}';
-    "))
 
     # 6. User feedback
     cli::cli_alert_success("Table {name} successfully imported")

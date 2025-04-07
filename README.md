@@ -84,15 +84,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 1 field
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -146.636 ymin: -85.76622 xmax: 100.7469 ymax: -7.167937
+#> Bounding box:  xmin: -169.0093 ymin: -77.41504 xmax: 168.9551 ymax: 5.223504
 #> Geodetic CRS:  WGS 84
 #>   id                    geometry
-#> 1  1  POINT (59.99642 -55.53156)
-#> 2  2 POINT (-17.18542 -41.90262)
-#> 3  3 POINT (-76.45784 -7.167937)
-#> 4  4  POINT (-98.77747 -41.0209)
-#> 5  5  POINT (-146.636 -51.90652)
-#> 6  6  POINT (100.7469 -85.76622)
+#> 1  1  POINT (168.9551 -77.41504)
+#> 2  2  POINT (-8.525403 5.223504)
+#> 3  3 POINT (-169.0093 -51.50397)
+#> 4  4 POINT (-22.60164 -12.09905)
+#> 5  5  POINT (154.9026 -49.85308)
+#> 6  6   POINT (118.5784 2.621623)
 ```
 
 Now we can insert the data into the database using the
@@ -111,7 +111,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   36.83
+#>   20.04
 ```
 
 ``` r
@@ -125,16 +125,16 @@ end_time <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>  128.61
+#>   67.26
 ```
 
-In this case, we can see that DuckDB was 3.5 times faster. Now we will
+In this case, we can see that DuckDB was 3.4 times faster. Now we will
 do the same exercise but reading the data back into R:
 
 ``` r
 ## write data monitoring processing time
 start_time <- proc.time()
-sf_points_ddbs <- ddbs_read_vector(conn, "test_points", crs = 4326)
+sf_points_ddbs <- ddbs_read_vector(conn, "test_points")
 #> ✔ Table test_points successfully imported.
 end_time <- proc.time()
 
@@ -142,7 +142,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   67.56
+#>   43.53
 ```
 
 ``` r
@@ -155,10 +155,10 @@ end_time       <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>  101.17
+#>   61.64
 ```
 
-For reading, we get a factor of 1.5 times faster for DuckDB. Finally,
+For reading, we get a factor of 1.4 times faster for DuckDB. Finally,
 don’t forget to disconnect from the database:
 
 ``` r

@@ -4,6 +4,7 @@
 #' Checks if a spatial extension is available, and installs it in a DuckDB database
 #'
 #' @param conn a connection object to a DuckDB database
+#' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #'
 #' @returns TRUE (invisibly) for successful installation
 #' @export
@@ -21,7 +22,7 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-ddbs_install <- function(conn) {
+ddbs_install <- function(conn, upgrade = FALSE) {
 
     # 1. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
@@ -34,7 +35,7 @@ ddbs_install <- function(conn) {
         cli::cli_abort("spatial extension is not available")
     ## 2.3. Check if it's installed
     spatial_ext <- ext[ext$extension_name == "spatial", ]
-    if (spatial_ext$installed) {
+    if (spatial_ext$installed & !upgrade) {
         cli::cli_alert_info("spatial extension version <{spatial_ext$extension_version}> is already installed in this database")
         return(invisible(TRUE))
     }

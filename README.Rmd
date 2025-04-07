@@ -104,7 +104,7 @@ In this case, we can see that DuckDB was `r round(elapsed_shp / elapsed_duckdb, 
 ```{r}
 ## write data monitoring processing time
 start_time <- proc.time()
-sf_points_ddbs <- ddbs_read_vector(conn, "test_points", crs = 4326)
+sf_points_ddbs <- ddbs_read_vector(conn, "test_points")
 end_time <- proc.time()
 
 ## print elapsed time

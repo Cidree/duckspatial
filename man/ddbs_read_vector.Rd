@@ -12,7 +12,8 @@ ddbs_read_vector(conn, name, crs = NULL, crs_column = "crs_duckspatial")
 \item{name}{a character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table names.}
 
-\item{crs}{the coordinates reference system of the data}
+\item{crs}{the coordinates reference system of the data. Specify if the data
+doesn't have crs_column, and you know the crs}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
