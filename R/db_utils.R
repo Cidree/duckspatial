@@ -85,11 +85,10 @@ ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
     if (!table_name %in% DBI::dbListTables(conn))
         cli::cli_abort("The provided name is not present in the database.")
     ## check if geometry column is present
-    info_tbl  <- DBI::dbGetQuery(conn, glue::glue("PRAGMA table_info('{query_name}');"))
+    crs_data  <- DBI::dbGetQuery(
+        conn, glue::glue("SELECT {crs_column} FROM {query_name} LIMIT 1;")
+    ) |> as.character()
 
     # 2. Return CRS
-    ## extract CRS
-    crs_vec <- gsub("'", "", info_tbl[which(info_tbl$name == crs_column), "dflt_value"])
-    ## return CRS
-    return(sf::st_crs(crs_vec))
+    return(sf::st_crs(crs_data))
 }

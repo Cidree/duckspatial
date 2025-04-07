@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# duckspatial
+# duckspatial <a href="https://cidree.github.io/duckspatial/"><img src="man/figures/logo.png" align="right" height="138" alt="duckspatial website" /></a>
 
 <!-- badges: start -->
 
@@ -84,15 +84,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 1 field
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -169.0093 ymin: -77.41504 xmax: 168.9551 ymax: 5.223504
+#> Bounding box:  xmin: -152.053 ymin: -71.76679 xmax: 104.184 ymax: 85.14008
 #> Geodetic CRS:  WGS 84
 #>   id                    geometry
-#> 1  1  POINT (168.9551 -77.41504)
-#> 2  2  POINT (-8.525403 5.223504)
-#> 3  3 POINT (-169.0093 -51.50397)
-#> 4  4 POINT (-22.60164 -12.09905)
-#> 5  5  POINT (154.9026 -49.85308)
-#> 6  6   POINT (118.5784 2.621623)
+#> 1  1 POINT (-144.0695 -47.04639)
+#> 2  2  POINT (-50.17469 85.14008)
+#> 3  3   POINT (-152.053 76.27262)
+#> 4  4   POINT (6.616617 28.45241)
+#> 5  5   POINT (104.184 -71.76679)
+#> 6  6 POINT (-123.7325 -44.90248)
 ```
 
 Now we can insert the data into the database using the
@@ -111,7 +111,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   20.04
+#>   19.96
 ```
 
 ``` r
@@ -125,7 +125,7 @@ end_time <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>   67.26
+#>   68.37
 ```
 
 In this case, we can see that DuckDB was 3.4 times faster. Now we will
@@ -142,7 +142,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   43.53
+#>   41.56
 ```
 
 ``` r
@@ -155,10 +155,10 @@ end_time       <- proc.time()
 elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_shp)
 #> elapsed 
-#>   61.64
+#>   52.61
 ```
 
-For reading, we get a factor of 1.4 times faster for DuckDB. Finally,
+For reading, we get a factor of 1.3 times faster for DuckDB. Finally,
 don’t forget to disconnect from the database:
 
 ``` r

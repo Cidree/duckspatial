@@ -4,3 +4,6 @@
 ^LICENSE\.md$
 ^internal_build\.R$
 ^tests_informal/
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

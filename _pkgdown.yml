@@ -1,0 +1,55 @@
+url: https://cidree.github.io/duckspatial/
+template:
+  bootstrap: 5
+  bslib:
+    bg: "#F5F7FA"       # page background
+    fg: "#202123"       # foreground (text colour)
+    primary: "#333C4A"  # link colour, translucent color
+    secondary: "#ff5733"
+    pkgdown-nav-height: 75px
+    base_font: {google: "Roboto"}
+    heading_font: {google: "Merriweather"}
+    code_font: {google: "Source Code Pro"}
+  theme: pygments
+
+authors:
+  Adrián Cidre González:
+    href: https://adrian-cidre.com/
+
+reference:
+
+  - title: "Spatial extension"
+    contents:
+    - ddbs_install
+    - ddbs_load
+  - title: "Read/Write"
+    contents:
+    - ddbs_read_vector
+    - ddbs_write_vector
+  - title: "Vector operations"
+    contents:
+    - ddbs_filter
+    - ddbs_intersection
+  - title: "SQL wrappers"
+    contents:
+    - ddbs_create_schema
+    - ddbs_crs
+
+navbar:
+  title: "duckspatial"
+  bg: dark
+  left:
+    - icon: fa-home
+      href: index.html
+    - text: "Reference"
+      href: reference/index.html
+    - text: "News"
+      href: news/index.html
+  structure:
+    right: [search, github]
+  components:
+    github:
+      icon: fa-github
+      href: https://github.com/Cidree/duckspatial
+      aria-label: GitHub
+
