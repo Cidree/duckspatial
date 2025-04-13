@@ -1,12 +1,14 @@
 Package: duckspatial
 Type: Package
-Title: R interface to DuckDB database with spatial extension
+Title: R Interface to DuckDB Database with Spatial Extension
 Version: 0.1.0
 Authors@R: person("Adrián", "Cidre González", email = "adrian.cidre@gmail.com", role = c("aut", "cre"))
 Description: Provides an interface between R and the DuckDB database with spatial extensions. It supports reading, writing, and performing some geometric operations.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
+Depends:
+    R (>= 4.1.0)
 Imports: 
     cli,
     DBI,
