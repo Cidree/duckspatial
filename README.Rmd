@@ -90,16 +90,16 @@ print(elapsed_duckdb)
 ```{r}
 ## write data monitoring processing time
 start_time <- proc.time()
-shpfile <- tempfile(fileext = ".shp")
-write_sf(sf_points, shpfile)
+gpkg_file <- tempfile(fileext = ".gpkg")
+write_sf(sf_points, gpkg_file)
 end_time <- proc.time()
 
 ## print elapsed time
-elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_shp)
+elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
+print(elapsed_gpkg)
 ```
 
-In this case, we can see that DuckDB was `r round(elapsed_shp / elapsed_duckdb, 1)` times faster. Now we will do the same exercise but reading the data back into R:
+In this case, we can see that DuckDB was `r round(elapsed_gpkg / elapsed_duckdb, 1)` times faster. Now we will do the same exercise but reading the data back into R:
 
 ```{r}
 ## write data monitoring processing time
@@ -115,16 +115,16 @@ print(elapsed_duckdb)
 ```{r}
 ## write data monitoring processing time
 start_time     <- proc.time()
-sf_points_ddbs <- read_sf(shpfile)
+sf_points_ddbs <- read_sf(gpkg_file)
 end_time       <- proc.time()
 
 ## print elapsed time
-elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_shp)
+elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
+print(elapsed_gpkg)
 ```
 
 
-For reading, we get a factor of `r round(elapsed_shp / elapsed_duckdb, 1)` times faster for DuckDB. Finally, don't forget to disconnect from the database:
+For reading, we get a factor of `r round(elapsed_gpkg / elapsed_duckdb, 1)` times faster for DuckDB. Finally, don't forget to disconnect from the database:
 
 ```{r}
 dbDisconnect(conn)

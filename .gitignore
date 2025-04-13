@@ -3,6 +3,5 @@
 .RData
 .Ruserdata
 
-tests_informal/
-internal_build.R
+internal/*
 docs

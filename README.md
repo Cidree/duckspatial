@@ -84,15 +84,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 1 field
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -152.053 ymin: -71.76679 xmax: 104.184 ymax: 85.14008
+#> Bounding box:  xmin: -138.0885 ymin: -83.68937 xmax: 127.3058 ymax: 65.52595
 #> Geodetic CRS:  WGS 84
 #>   id                    geometry
-#> 1  1 POINT (-144.0695 -47.04639)
-#> 2  2  POINT (-50.17469 85.14008)
-#> 3  3   POINT (-152.053 76.27262)
-#> 4  4   POINT (6.616617 28.45241)
-#> 5  5   POINT (104.184 -71.76679)
-#> 6  6 POINT (-123.7325 -44.90248)
+#> 1  1 POINT (-84.05372 -2.313132)
+#> 2  2  POINT (19.89173 -83.68937)
+#> 3  3  POINT (13.76448 -63.57522)
+#> 4  4   POINT (127.3058 65.52595)
+#> 5  5  POINT (-110.9474 40.40336)
+#> 6  6 POINT (-138.0885 -71.29385)
 ```
 
 Now we can insert the data into the database using the
@@ -111,25 +111,25 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   19.96
+#>    9.64
 ```
 
 ``` r
 ## write data monitoring processing time
 start_time <- proc.time()
-shpfile <- tempfile(fileext = ".shp")
-write_sf(sf_points, shpfile)
+gpkg_file <- tempfile(fileext = ".gpkg")
+write_sf(sf_points, gpkg_file)
 end_time <- proc.time()
 
 ## print elapsed time
-elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_shp)
+elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
+print(elapsed_gpkg)
 #> elapsed 
-#>   68.37
+#>  115.25
 ```
 
-In this case, we can see that DuckDB was 3.4 times faster. Now we will
-do the same exercise but reading the data back into R:
+In this case, we can see that DuckDB was 12 times faster. Now we will do
+the same exercise but reading the data back into R:
 
 ``` r
 ## write data monitoring processing time
@@ -142,23 +142,23 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   41.56
+#>   50.34
 ```
 
 ``` r
 ## write data monitoring processing time
 start_time     <- proc.time()
-sf_points_ddbs <- read_sf(shpfile)
+sf_points_ddbs <- read_sf(gpkg_file)
 end_time       <- proc.time()
 
 ## print elapsed time
-elapsed_shp <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_shp)
+elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
+print(elapsed_gpkg)
 #> elapsed 
-#>   52.61
+#>   32.38
 ```
 
-For reading, we get a factor of 1.3 times faster for DuckDB. Finally,
+For reading, we get a factor of 0.6 times faster for DuckDB. Finally,
 don’t forget to disconnect from the database:
 
 ``` r

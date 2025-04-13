@@ -2,8 +2,8 @@
 ^\.Rproj\.user$
 ^README\.Rmd$
 ^LICENSE\.md$
-^internal_build\.R$
-^tests_informal/
+internal/*
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^cran-comments\.md$

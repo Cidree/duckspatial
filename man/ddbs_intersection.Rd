@@ -37,12 +37,31 @@ to NULL if absent}
 when name is NULL}
 }
 \value{
-an sf object
+an sf object or TRUE (invisibly) for table creation
 }
 \description{
 Calculates the intersection of two geometries, and return a \code{sf} object
 }
 \examples{
-1 + 1 ## TODO
+## load packages
+library(duckdb)
+library(duckspatial)
+library(sf)
+
+## database setup
+conn <- dbConnect(duckdb())
+ddbs_install(conn)
+ddbs_load(conn)
+
+## read data
+countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+
+## store in duckdb
+ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, argentina_sf, "argentina")
+
+## intersection
+ddbs_intersection(conn, "countries", "argentina")
 
 }

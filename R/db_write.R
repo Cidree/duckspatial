@@ -44,7 +44,6 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-
 ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
 
     # 1. Checks
@@ -71,12 +70,12 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
 
     ## 3. insert data
     if (inherits(data, "sf")) {
-        # 3. Handle unsupported geometries
-        unsupported_types <- c("GEOMETRYCOLLECTION")
-        geom_types <- unique(sf::st_geometry_type(data))
-        if (any(geom_types %in% unsupported_types)) {
-            cli::cli_abort("Unsupported geometry types found: {paste(geom_types[geom_types %in% unsupported_types], collapse = ', ')}")
-        }
+        # 3. Handle unsupported geometries (TOO SLOW)
+        # unsupported_types <- c("GEOMETRYCOLLECTION")
+        # geom_types <- unique(sf::st_geometry_type(data))
+        # if (any(geom_types %in% unsupported_types)) {
+        #     cli::cli_abort("Unsupported geometry types found: {paste(geom_types[geom_types %in% unsupported_types], collapse = ', ')}")
+        # }
 
         # 4. Prepare data for writing - import as data frame with geom as binary
         ## Get geometry column name
@@ -87,13 +86,19 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
         data_df[[geom_name]] <- wkb_data  # Ensure raw data is preserved
 
         ## Write data into DuckDB
-        DBI::dbWriteTable(conn, DBI::Id(schema = schema_name, table = table_name), data_df, overwrite = overwrite, field.types = c(geom_name = "BLOB"))
+        # duckdb::duckdb_register(conn, "temp_view", data_df, experimental = TRUE) # check later
+        DBI::dbWriteTable(conn, DBI::Id(schema = schema_name, table = table_name), data_df, field.types = c(geom_name = "BLOB"))
+        # DBI::dbExecute(conn, glue::glue("
+        #     CREATE TABLE {query_name} AS
+        #     SELECT {paste0(names(data_df), collapse = ', ')}
+        #     FROM temp_view
+        # "))
         ## Convert to spatial
         DBI::dbExecute(conn, glue::glue("
             ALTER TABLE {query_name}
             ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
         "))
-
+        # duckdb::duckdb_unregister(conn, "temp_view") |> on.exit()
         ## CRS
         ## get data CRS
         data_crs <- sf::st_crs(data, parameters = TRUE)
