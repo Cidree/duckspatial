@@ -27,13 +27,13 @@
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## ensure one thread is used for examples
-#' DBI::dbExecute(conn, "PRAGMA threads=1;")
-#'
 #' ## database setup
 #' conn <- dbConnect(duckdb())
 #' ddbs_install(conn)
 #' ddbs_load(conn)
+#'
+#' ## ensure one thread is used for examples
+#' DBI::dbExecute(conn, "PRAGMA threads=1;")
 #'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -167,13 +167,13 @@ ddbs_intersection <- function(conn,
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## ensure one thread is used for examples
-#' DBI::dbExecute(conn, "PRAGMA threads=1;")
-#'
 #' ## database setup
 #' conn <- dbConnect(duckdb())
 #' ddbs_install(conn)
 #' ddbs_load(conn)
+#'
+#' ## ensure one thread is used for examples
+#' DBI::dbExecute(conn, "PRAGMA threads=1;")
 #'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
