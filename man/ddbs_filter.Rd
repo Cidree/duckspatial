@@ -51,8 +51,11 @@ library(duckdb)
 library(duckspatial)
 library(sf)
 
+## ensure one thread is used for examples
+DBI::dbExecute(conn, "PRAGMA threads=1;")
+
 ## database setup
-conn <- dbConnect(duckdb(), config = list("threads" = 1))
+conn <- dbConnect(duckdb())
 ddbs_install(conn)
 ddbs_load(conn)
 
