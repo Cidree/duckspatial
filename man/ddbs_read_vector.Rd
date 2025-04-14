@@ -27,6 +27,7 @@ Retrieves the data from a DuckDB table with a geometry column, and convert
 it to an R \code{sf} object.
 }
 \examples{
+\donttest{
 ## load packages
 library(duckdb)
 library(duckspatial)
@@ -57,5 +58,5 @@ ddbs_read_vector(conn, "points", crs = 4326)
 
 ## disconnect from db
 dbDisconnect(conn)
-
+}
 }
