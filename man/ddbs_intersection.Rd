@@ -49,12 +49,9 @@ library(duckspatial)
 library(sf)
 
 ## database setup
-conn <- dbConnect(duckdb())
+conn <- dbConnect(duckdb(), config = list("threads" = 1))
 ddbs_install(conn)
 ddbs_load(conn)
-
-## limit CPU to 1 core
-Sys.setenv("OMP_THREAD_LIMIT" = 1)
 
 ## read data
 countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
