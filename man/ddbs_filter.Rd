@@ -46,6 +46,7 @@ an sf object or TRUE (invisibly) for table creation
 Filters data spatially based on a spatial predicate
 }
 \examples{
+\donttest{
 ## load packages
 library(duckdb)
 library(duckspatial)
@@ -55,9 +56,6 @@ library(sf)
 conn <- dbConnect(duckdb())
 ddbs_install(conn)
 ddbs_load(conn)
-
-## ensure one thread is used for examples
-DBI::dbExecute(conn, "PRAGMA threads=1;")
 
 ## read data
 countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -69,5 +67,5 @@ ddbs_write_vector(conn, argentina_sf, "argentina")
 
 ## filter countries touching argentina
 ddbs_filter(conn, "countries", "argentina", predicate = "touches")
-
+}
 }

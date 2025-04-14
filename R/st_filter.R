@@ -22,6 +22,7 @@
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -31,9 +32,6 @@
 #' conn <- dbConnect(duckdb())
 #' ddbs_install(conn)
 #' ddbs_load(conn)
-#'
-#' ## ensure one thread is used for examples
-#' DBI::dbExecute(conn, "PRAGMA threads=1;")
 #'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -45,7 +43,7 @@
 #'
 #' ## intersection
 #' ddbs_intersection(conn, "countries", "argentina")
-#'
+#' }
 ddbs_intersection <- function(conn,
                               x,
                               y,
@@ -162,6 +160,7 @@ ddbs_intersection <- function(conn,
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -171,9 +170,6 @@ ddbs_intersection <- function(conn,
 #' conn <- dbConnect(duckdb())
 #' ddbs_install(conn)
 #' ddbs_load(conn)
-#'
-#' ## ensure one thread is used for examples
-#' DBI::dbExecute(conn, "PRAGMA threads=1;")
 #'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -185,7 +181,7 @@ ddbs_intersection <- function(conn,
 #'
 #' ## filter countries touching argentina
 #' ddbs_filter(conn, "countries", "argentina", predicate = "touches")
-#'
+#' }
 ddbs_filter <- function(conn,
                         x,
                         y,
