@@ -32,6 +32,9 @@
 #' ddbs_install(conn)
 #' ddbs_load(conn)
 #'
+#' ## limit CPU to 1 core
+#' Sys.setenv("OMP_THREAD_LIMIT" = 1)
+#'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 #' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
@@ -168,6 +171,9 @@ ddbs_intersection <- function(conn,
 #' conn <- dbConnect(duckdb())
 #' ddbs_install(conn)
 #' ddbs_load(conn)
+#'
+#' ## limit CPU to 1 core
+#' Sys.setenv("OMP_THREAD_LIMIT" = 1)
 #'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))

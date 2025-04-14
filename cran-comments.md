@@ -15,10 +15,9 @@
 * local Windows 11 Pro 22H2: 
 
 ```
-checking for future file timestamps ... NOTE
-  unable to verify current time
+Duration: 27.5s
 
-0 errors ✔ | 0 warnings ✔ | 1 note ✖
+0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 ```
 
 * R Under development (unstable) x86_64-w64-mingw32:
