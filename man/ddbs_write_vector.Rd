@@ -24,6 +24,7 @@ This function writes a Simple Features (SF) object into a DuckDB database as a n
 The table is created in the specified schema of the DuckDB database.
 }
 \examples{
+\donttest{
 ## load packages
 library(duckdb)
 library(duckspatial)
@@ -54,4 +55,5 @@ ddbs_read_vector(conn, "points", crs = 4326)
 
 ## disconnect from db
 dbDisconnect(conn)
+}
 }

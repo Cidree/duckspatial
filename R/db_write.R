@@ -14,6 +14,7 @@
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -44,6 +45,7 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
+#' }
 ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
 
     # 1. Checks
