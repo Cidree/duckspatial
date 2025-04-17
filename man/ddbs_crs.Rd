@@ -22,6 +22,24 @@ CRS object
 Check CRS of a table
 }
 \examples{
-1 + 1 # TODO
+\donttest{
+## load packages
+library(duckdb)
+library(duckspatial)
+library(sf)
 
+## database setup
+conn <- dbConnect(duckdb())
+ddbs_install(conn)
+ddbs_load(conn)
+
+## read data
+countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+
+## store in duckdb
+ddbs_write_vector(conn, countries_sf, "countries")
+
+## check CRS
+ddbs_crs(conn, "countries")
+}
 }
