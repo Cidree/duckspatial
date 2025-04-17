@@ -9,6 +9,9 @@ dbConnCheck(conn)
 \arguments{
 \item{conn}{A DuckDB connection}
 }
+\value{
+TRUE (invisibly) for successful import
+}
 \description{
 Check if a supported DuckDB connection
 }

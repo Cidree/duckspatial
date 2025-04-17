@@ -13,7 +13,10 @@ get_geom_name(conn, x, rest = FALSE)
 
 \item{rest}{whether to return geometry column name, of the rest of the columns}
 }
+\value{
+name of the geometry column of a table
+}
 \description{
 Get column names in a DuckDB database
 }
-\keyword{internal}
+\keyword{internal#'}
