@@ -21,7 +21,7 @@ dbConnCheck <- function(conn) {
 #' @param x name of the table
 #' @param rest whether to return geometry column name, of the rest of the columns
 #'
-#' @keywords internal#'
+#' @keywords internal
 #' @returns name of the geometry column of a table
 get_geom_name <- function(conn, x, rest = FALSE) {
     info_tbl <- DBI::dbGetQuery(conn, glue::glue("PRAGMA table_info('{x}');"))

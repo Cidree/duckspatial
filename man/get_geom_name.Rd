@@ -19,4 +19,4 @@ name of the geometry column of a table
 \description{
 Get column names in a DuckDB database
 }
-\keyword{internal#'}
+\keyword{internal}
