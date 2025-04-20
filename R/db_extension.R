@@ -58,7 +58,7 @@ ddbs_install <- function(conn, upgrade = FALSE) {
 #' @returns TRUE (invisibly) for successful installation
 #' @export
 #'
-#' @examples
+#' @examplesIf interactive()
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -72,7 +72,6 @@ ddbs_install <- function(conn, upgrade = FALSE) {
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-#'
 ddbs_load <- function(conn) {
 
     # 1. Get extensions list

@@ -22,7 +22,7 @@ CRS object
 Check CRS of a table
 }
 \examples{
-\donttest{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 ## load packages
 library(duckdb)
 library(duckspatial)
@@ -41,5 +41,5 @@ ddbs_write_vector(conn, countries_sf, "countries")
 
 ## check CRS
 ddbs_crs(conn, "countries")
-}
+\dontshow{\}) # examplesIf}
 }

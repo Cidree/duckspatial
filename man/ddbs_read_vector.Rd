@@ -43,8 +43,8 @@ ddbs_load(conn)
 ## create random points
 random_points <- data.frame(
   id = 1:5,
-  x = runif(5, min = -180, max = 180),  # Random longitude values
-  y = runif(5, min = -90, max = 90)     # Random latitude values
+  x = runif(5, min = -180, max = 180),
+  y = runif(5, min = -90, max = 90)
 )
 
 ## convert to sf

@@ -63,8 +63,7 @@ ddbs_create_schema <- function(conn, name) {
 #' @returns CRS object
 #' @export
 #'
-#' @examples
-#' \donttest{
+#' @examplesIf interactive()
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -83,7 +82,6 @@ ddbs_create_schema <- function(conn, name) {
 #'
 #' ## check CRS
 #' ddbs_crs(conn, "countries")
-#' }
 ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
 
     # 1. Checks
