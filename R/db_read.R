@@ -12,6 +12,8 @@
 #' @param crs_column a character string of length one specifying the column
 #' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
 #' to NULL if absent
+#' @param clauses character, additional SQL code to modify the query from the
+#' table (e.g. "WHERE ...", "ORDER BY...")
 #'
 #' @returns an sf object
 #' @export
@@ -49,44 +51,31 @@
 #' ## disconnect from db
 #' dbDisconnect(conn)
 #' }
-ddbs_read_vector <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial") {
+ddbs_read_vector <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial", clauses = NULL) {
 
   # 1. Checks
   ## Check if connection is correct
   dbConnCheck(conn)
   ## convenient names of table and/or schema.table
-  if (length(name) == 2) {
-    table_name <- name[2]
-    schema_name <- name[1]
-    query_name <- paste0(name, collapse = ".")
-  } else {
-    table_name   <- name
-    schema_name <- "main"
-    query_name <- name
-  }
+  name_list <- get_query_name(name)
   ## Check if table name exists
-  if (!table_name %in% DBI::dbListTables(conn))
+  if (!name_list$table_name %in% DBI::dbListTables(conn))
       cli::cli_abort("The provided name is not present in the database.")
-  ## check if geometry column is present
-  info_tbl  <- DBI::dbGetQuery(conn, glue::glue("PRAGMA table_info('{query_name}');"))
-  geom_name <- info_tbl[info_tbl$type == "GEOMETRY", "name"]
-  if (length(geom_name) == 0) {
-      cli::cli_abort("Geometry column wasn't found in table <{name}>.")
-  }
+  ## get column names
+  geom_name    <- get_geom_name(conn, name_list$query_name)
+  no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE) |> paste(collapse = ", ")
+  if (length(geom_name) == 0) cli::cli_abort("Geometry column wasn't found in table <{name_list$query_name}>.")
 
   # 2. Retrieve data
-  ## Get column names except geometry col
-  no_geom_cols <- setdiff(
-      DBI::dbListFields(conn,  DBI::Id(schema = schema_name, table = table_name)),
-      geom_name
-  ) |> paste(collapse = ", ")
   ## Retrieve data as data frame
-  data_tbl <- DBI::dbGetQuery(conn, glue::glue(
+  tmp.query <- glue::glue(
           "SELECT
           {no_geom_cols},
           ST_AsText({geom_name}) AS {geom_name}
-          FROM {query_name}"
-  ))
+          FROM {name_list$query_name}"
+  )
+  tmp.query <- paste(tmp.query, clauses)
+  data_tbl <- DBI::dbGetQuery(conn, tmp.query)
   ## Convert to sf
   if (is.null(crs)) {
     if (is.null(crs_column)) {
