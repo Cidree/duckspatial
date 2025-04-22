@@ -11,7 +11,7 @@ ddbs_intersection(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  overwrite = NULL
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -41,9 +41,10 @@ an sf object or TRUE (invisibly) for table creation
 }
 \description{
 Calculates the intersection of two geometries, and return a \code{sf} object
+or creates a new table
 }
 \examples{
-\donttest{
+\dontrun{
 ## load packages
 library(duckdb)
 library(duckspatial)

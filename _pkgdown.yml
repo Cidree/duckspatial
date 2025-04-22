@@ -17,6 +17,7 @@ template:
 authors:
   Adrián Cidre González:
     href: https://adrian-cidre.com/
+
 reference:
 - title: Spatial extension
   contents:
@@ -34,6 +35,9 @@ reference:
   contents:
   - ddbs_create_schema
   - ddbs_crs
+  - ddbs_glimpse
+  - ddbs_list_tables
+
 navbar:
   title: duckspatial
   bg: dark
