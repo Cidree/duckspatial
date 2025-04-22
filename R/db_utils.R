@@ -108,3 +108,83 @@ ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
     # 2. Return CRS
     return(sf::st_crs(crs_data))
 }
+
+
+
+
+
+#' Check tables and schemas inside a database
+#'
+#' @param conn a connection object to a DuckDB database
+#'
+#' @returns `data.frame`
+#' @export
+#'
+#' @examplesIf interactive()
+#' ## TODO
+ddbs_list_tables <- function(conn) {
+  DBI::dbGetQuery(conn, "
+      SELECT table_schema, table_name, table_type
+      FROM information_schema.tables
+    ")
+}
+
+
+
+
+
+#' Check first rows of the data
+#'
+#' @param conn a connection object to a DuckDB database
+#' @param name a character string of length one specifying the name of the table,
+#' or a character string of length two specifying the schema and table names.
+#' @param crs the coordinates reference system of the data. Specify if the data
+#' doesn't have crs_column, and you know the crs
+#' @param crs_column a character string of length one specifying the column
+#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}})
+#'
+#' @returns `sf` object
+#' @export
+#'
+#' @examplesIf interactive()
+#' ## TODO
+ddbs_glimpse <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial") {
+
+    ## 1. check conn
+    dbConnCheck(conn)
+
+    ## 2. get column names
+    ## convenient names of table and/or schema.table
+    name_list <- get_query_name(name)
+    ## get column names
+    geom_name    <- get_geom_name(conn, name_list$query_name)
+    no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE) |> paste(collapse = ", ")
+
+    # 3. Get data
+    ## get data as table
+    data_tbl <- DBI::dbGetQuery(conn, glue::glue("
+      SELECT
+      {no_geom_cols},
+      ST_AsText({geom_name}) AS {geom_name}
+      FROM {name}
+      LIMIT 10;
+  "))
+    ## Convert to sf
+    if (is.null(crs)) {
+        if (is.null(crs_column)) {
+            data_sf <- data_tbl |>
+                sf::st_as_sf(wkt = geom_name)
+        } else {
+            data_sf <- data_tbl |>
+                sf::st_as_sf(wkt = geom_name, crs = data_tbl[1, crs_column])
+            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
+        }
+
+    } else {
+        data_sf <- data_tbl |>
+            sf::st_as_sf(wkt = geom_name, crs = crs)
+    }
+    cli::cli_alert_success("Showing first 10 rows of the data")
+    return(data_sf)
+
+}
