@@ -46,7 +46,7 @@ an sf object or TRUE (invisibly) for table creation
 Filters data spatially based on a spatial predicate
 }
 \examples{
-\donttest{
+\dontrun{
 ## load packages
 library(duckdb)
 library(duckspatial)

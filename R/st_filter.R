@@ -161,7 +161,7 @@ ddbs_intersection <- function(conn,
 #' @export
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
