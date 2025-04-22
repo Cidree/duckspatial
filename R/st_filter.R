@@ -2,6 +2,7 @@
 #' Calculates the intersection of two geometries
 #'
 #' Calculates the intersection of two geometries, and return a \code{sf} object
+#' or creates a new table
 #'
 #' @param conn a connection object to a DuckDB database
 #' @param x a table with geometry column within the DuckDB database. Data is returned
@@ -22,7 +23,7 @@
 #' @export
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -50,50 +51,50 @@ ddbs_intersection <- function(conn,
                               name = NULL,
                               crs = NULL,
                               crs_column = "crs_duckspatial",
-                              overwrite = NULL) {
+                              overwrite = FALSE) {
 
     ## 1. check conn
     dbConnCheck(conn)
 
     ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x)
-    x_rest <- get_geom_name(conn, x, rest = TRUE)
-    y_geom <- get_geom_name(conn, y)
-
+    ## get convient names for x and y
+    x_list <- get_query_name(x)
+    y_list <- get_query_name(y)
+    ## get name
+    x_geom <- get_geom_name(conn, x_list$query_name)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    y_geom <- get_geom_name(conn, y_list$query_name)
+    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
+    if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
         ## handle overwrite
         if (overwrite) {
-            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name};"))
-            cli::cli_alert_info("Table <{name}> dropped")
+            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
+            cli::cli_alert_info("Table <{name_list$query_name}> dropped")
         }
-        ## convenient names of table and/or schema.table
-        if (length(name) == 2) {
-            table_name <- name[2]
-            schema_name <- name[1]
-            query_name <- paste0(name, collapse = ".")
-        } else {
-            table_name   <- name
-            schema_name <- "main"
-            query_name <- name
-        }
+
         ## create query (no st_as_text)
         if (length(x_rest) == 0) {
             tmp.query <- glue::glue("
             SELECT ST_Intersection(v1.{x_geom}, v2.{y_geom}) AS {x_geom}
-            FROM {x} v1, {y} v2
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
         } else {
             tmp.query <- glue::glue("
             SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_Intersection(v1.{x_geom}, v2.{y_geom}) AS {x_geom}
-            FROM {x} v1, {y} v2
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
         }
         ## execute intersection query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {table_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
         cli::cli_alert_success("Query successful")
         return(invisible(TRUE))
     }
@@ -102,13 +103,13 @@ ddbs_intersection <- function(conn,
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT ST_AsText(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
-            FROM {x} v1, {y} v2
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
     } else {
         tmp.query <- glue::glue("
             SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsText(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
-            FROM {x} v1, {y} v2
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
     }
@@ -203,10 +204,18 @@ ddbs_filter <- function(conn,
            "crosses"      = "ST_Crosses",
            cli::cli_abort("Predicate should be one of <intersection>, <touches>, <contains>, <within>, <disjoin>, <equals>, <overlaps>, or <crosses>")
     )
+
     ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x)
-    x_rest <- get_geom_name(conn, x, rest = TRUE)
-    y_geom <- get_geom_name(conn, y)
+    ## get convient names for x and y
+    x_list <- get_query_name(x)
+    y_list <- get_query_name(y)
+    ## get name
+    x_geom <- get_geom_name(conn, x_list$query_name)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    y_geom <- get_geom_name(conn, y_list$query_name)
+    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
+    if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
+
     ## error if crs_column not found
     if (!is.null(crs_column))
         if (!crs_column %in% x_rest)
@@ -214,25 +223,20 @@ ddbs_filter <- function(conn,
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
         ## handle overwrite
         if (overwrite) {
-            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name};"))
-            cli::cli_alert_info("Table <{name}> dropped")
+            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
+            cli::cli_alert_info("Table <{name_list$query_name}> dropped")
         }
-        ## convenient names of table and/or schema.table
-        if (length(name) == 2) {
-            table_name  <- name[2]
-            schema_name <- name[1]
-            query_name  <- paste0(name, collapse = ".")
-        } else {
-            table_name  <- name
-            schema_name <- "main"
-            query_name  <- name
-        }
+
         tmp.query <- glue::glue("
-            CREATE TABLE {table_name} AS
+            CREATE TABLE {name_list$query_name} AS
             SELECT {paste0('v1.', x_rest, collapse = ', ')}, v1.{x_geom} AS {x_geom}
-            FROM {x} v1, {y} v2
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
         ")
         ## execute filter query
@@ -246,7 +250,7 @@ ddbs_filter <- function(conn,
     data_tbl <- DBI::dbGetQuery(
         conn, glue::glue("
             SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsText(v1.{x_geom}) AS {x_geom}
-            FROM {x} v1, {y} v2
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
         ")
     )
