@@ -51,23 +51,16 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
+    ## convenient names of table and/or schema.table
+    name_list <- get_query_name(name)
     ## Check if table name already exists
-    if (length(name) == 2) {
-        table_name <- name[2]
-        schema_name <- name[1]
-        query_name <- paste0(name, collapse = ".")
-    } else {
-        table_name  <- name
-        schema_name <- "main"
-        query_name  <- name
-    }
-    if (table_name %in% DBI::dbListTables(conn) & !overwrite)
+    if (name_list$query_name %in% DBI::dbListTables(conn) & !overwrite)
         cli::cli_abort("The provided name is already present in the database. Please, use `overwrite = TRUE` or choose a different name.")
 
     # 2. Handle overwrite
     if (overwrite) {
-        DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {query_name};"))
-        cli::cli_alert_info("Table <{query_name}> dropped")
+        DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
+        cli::cli_alert_info("Table <{name_list$query_name}> dropped")
     }
 
     ## 3. insert data
@@ -89,15 +82,15 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
 
         ## Write data into DuckDB
         # duckdb::duckdb_register(conn, "temp_view", data_df, experimental = TRUE) # check later
-        DBI::dbWriteTable(conn, DBI::Id(schema = schema_name, table = table_name), data_df, field.types = c(geom_name = "BLOB"))
+        DBI::dbWriteTable(conn, DBI::Id(schema = name_list$schema_name, table = name_list$table_name), data_df, field.types = c(geom_name = "BLOB"))
         # DBI::dbExecute(conn, glue::glue("
-        #     CREATE TABLE {query_name} AS
+        #     CREATE TABLE {name_list$query_name} AS
         #     SELECT {paste0(names(data_df), collapse = ', ')}
         #     FROM temp_view
         # "))
         ## Convert to spatial
         DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {query_name}
+            ALTER TABLE {name_list$query_name}
             ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
         "))
         # duckdb::duckdb_unregister(conn, "temp_view") |> on.exit()
@@ -106,7 +99,7 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
         data_crs <- sf::st_crs(data, parameters = TRUE)
         ## create new column with CRS as default value
         DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {query_name}
+            ALTER TABLE {name_list$query_name}
             ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{data_crs$srid}';
         "))
 
@@ -117,14 +110,14 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
         #     ## insert data
         #     DBI::dbExecute(
         #         conn,
-        #         glue::glue("CREATE TABLE {query_name} AS SELECT * FROM read_parquet('{data}')")
+        #         glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM read_parquet('{data}')")
         #     )
         #     ## specify geometry column
         #     ## - try to get geom column name
-        #     metadata_df <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_name}"))
+        #     metadata_df <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {name_list$query_name}"))
         #     geom_name <- metadata_df$column_name[grepl("STRUCT", metadata_df$column_type)]
         #     DBI::dbExecute(conn, glue::glue("
-        #         ALTER TABLE {query_name}
+        #         ALTER TABLE {name_list$query_name}
         #         ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
         #     "))
         #     ## manage CRS
@@ -133,7 +126,7 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
             ## insert data
             DBI::dbExecute(
                 conn,
-                glue::glue("CREATE TABLE {query_name} AS SELECT * FROM ST_Read('{data}')")
+                glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM ST_Read('{data}')")
             )
             ## get CRS
             meta_list <- DBI::dbGetQuery(conn, glue::glue("SELECT * FROM ST_READ_META('{data}')"))
@@ -142,7 +135,7 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
             srid <- paste0(auth_name, ":", auth_code)
             ## create new column with CRS as default value
             DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {query_name}
+            ALTER TABLE {name_list$query_name}
             ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{srid}';
         "))
         # }
