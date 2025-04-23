@@ -18,8 +18,7 @@
 #' @returns an sf object
 #' @export
 #'
-#' @examples
-#' \donttest{
+#' @examplesIf interactive()
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -50,7 +49,6 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-#' }
 ddbs_read_vector <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial", clauses = NULL) {
 
   # 1. Checks
