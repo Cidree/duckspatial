@@ -11,6 +11,10 @@
 
 * `ddbs_glimpse()`: check first rows of a table
 
+* `ddbs_buffer()`: calculates the buffer around the input geometry
+
+* `ddbs_centroid()`: calculates the centroid of the input geometry
+
 
 ## IMPROVEMENTS
 

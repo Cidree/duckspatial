@@ -27,10 +27,15 @@ reference:
   contents:
   - ddbs_read_vector
   - ddbs_write_vector
-- title: Vector operations
+- title: Binary operations
   contents:
+  - ddbs_difference
   - ddbs_filter
   - ddbs_intersection
+- title: Unary Operations
+  contents:
+  - ddbs_buffer
+  - ddbs_centroid
 - title: SQL wrappers
   contents:
   - ddbs_create_schema

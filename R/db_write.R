@@ -58,7 +58,7 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
     # 2. Handle overwrite
     if (overwrite) {
         DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-        cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+        cli::cli_alert_info("Table {name_list$query_name} dropped")
     }
 
     ## 3. insert data
@@ -143,7 +143,7 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
 
 
     # 6. User feedback
-    cli::cli_alert_success("Table {name} successfully imported")
+    cli::cli_alert_success("Table {name_list$query_name} successfully imported")
     return(invisible(TRUE))
 
 }
