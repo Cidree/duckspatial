@@ -1,8 +1,5 @@
 
 
-* This is a new release.
-
-
 ## Test environments
 
 * local Windows 11 Pro 22H2, 64 bit, R 4.4.2

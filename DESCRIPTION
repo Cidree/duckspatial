@@ -18,4 +18,5 @@ RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Suggests: 
     duckdb
-URL: https://cidree.github.io/duckspatial/
+URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
+BugReports: https://github.com/Cidree/duckspatial/issues

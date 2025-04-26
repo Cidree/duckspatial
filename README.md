@@ -42,11 +42,10 @@ data manipulation, and how to write/read vector data.
 
 ``` r
 library(duckdb)
-#> Warning: package 'duckdb' was built under R version 4.4.3
 #> Cargando paquete requerido: DBI
 library(duckspatial)
 library(sf)
-#> Linking to GEOS 3.12.2, GDAL 3.9.3, PROJ 9.4.1; sf_use_s2() is TRUE
+#> Linking to GEOS 3.13.1, GDAL 3.10.2, PROJ 9.5.1; sf_use_s2() is TRUE
 ```
 
 First, we create a connection with a DuckDB database (in this case in
@@ -59,7 +58,7 @@ conn <- dbConnect(duckdb())
 
 ## install and load spatial extension
 ddbs_install(conn)
-#> ℹ spatial extension version <76dc6da> is already installed in this database
+#> ℹ spatial extension version <2905968> is already installed in this database
 ddbs_load(conn)
 #> ✔ Spatial extension loaded
 ```
@@ -68,12 +67,20 @@ Now we can get some data to insert into the database. We are creating
 10,000,000 random points.
 
 ``` r
+## random word generator
+random_word <- function(length = 5) {
+    paste0(sample(letters, length, replace = TRUE), collapse = "")
+}
+
 ## create n points
 n <- 10000000
 random_points <- data.frame(
   id = 1:n,
-  x = runif(n, min = -180, max = 180),  # Random longitude values
-  y = runif(n, min = -90, max = 90)     # Random latitude values
+  x = runif(n, min = -180, max = 180),  
+  y = runif(n, min = -90, max = 90),
+  a = sample(1:1000000, size = n, replace = TRUE),
+  b = sample(replicate(10, random_word(7)), size = n, replace = TRUE),
+  c = sample(replicate(10, random_word(9)), size = n, replace = TRUE)
 )
 
 ## convert to sf
@@ -81,18 +88,18 @@ sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
 
 ## view first rows
 head(sf_points)
-#> Simple feature collection with 6 features and 1 field
+#> Simple feature collection with 6 features and 4 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -138.0885 ymin: -83.68937 xmax: 127.3058 ymax: 65.52595
+#> Bounding box:  xmin: -117.7598 ymin: -34.15453 xmax: 113.8518 ymax: 89.68161
 #> Geodetic CRS:  WGS 84
-#>   id                    geometry
-#> 1  1 POINT (-84.05372 -2.313132)
-#> 2  2  POINT (19.89173 -83.68937)
-#> 3  3  POINT (13.76448 -63.57522)
-#> 4  4   POINT (127.3058 65.52595)
-#> 5  5  POINT (-110.9474 40.40336)
-#> 6  6 POINT (-138.0885 -71.29385)
+#>   id      a       b         c                    geometry
+#> 1  1 709998 bvwprwa izlhlvspq POINT (-100.8183 -34.15453)
+#> 2  2 650017 jfgrvgp ikchdbklp   POINT (68.39046 25.59802)
+#> 3  3 957513 vwmhulb tjevpihjs  POINT (-64.22538 42.72978)
+#> 4  4 593853 elthvjo tqucqfpuu  POINT (-117.7598 16.73306)
+#> 5  5 188177 elthvjo ddzbekmdx   POINT (113.8518 89.68161)
+#> 6  6 245843 yksarig sjksxdtdg  POINT (28.08287 -19.54068)
 ```
 
 Now we can insert the data into the database using the
@@ -111,7 +118,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>    9.64
+#>   18.64
 ```
 
 ``` r
@@ -125,11 +132,11 @@ end_time <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>  115.25
+#>  244.23
 ```
 
-In this case, we can see that DuckDB was 12 times faster. Now we will do
-the same exercise but reading the data back into R:
+In this case, we can see that DuckDB was 13.1 times faster. Now we will
+do the same exercise but reading the data back into R:
 
 ``` r
 ## write data monitoring processing time
@@ -142,7 +149,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   50.34
+#>   61.91
 ```
 
 ``` r
@@ -155,11 +162,11 @@ end_time       <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>   32.38
+#>   58.58
 ```
 
-For reading, we get a factor of 0.6 times faster for DuckDB. Finally,
-don’t forget to disconnect from the database:
+For reading, we got similar results. Finally, don’t forget to disconnect
+from the database:
 
 ``` r
 dbDisconnect(conn)

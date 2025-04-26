@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,7 +29,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Check CRS of a table</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/HEAD/R/db_utils.R" class="external-link"><code>R/db_utils.R</code></a></small>
       <div class="d-none name"><code>ddbs_crs.Rd</code></div>
     </div>
 
@@ -67,68 +67,26 @@ storing the CRS (created automatically by <code><a href="ddbs_write_vector.html"
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="co">## load packages</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">duckspatial</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Linking to GEOS 3.13.1, GDAL 3.10.2, PROJ 9.5.1; sf_use_s2() is TRUE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## database setup</span></span></span>
 <span class="r-in"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_install.html">ddbs_install</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> spatial extension version &lt;2905968&gt; is already installed in this database</span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_load.html">ddbs_load</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Spatial extension loaded</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## read data</span></span></span>
 <span class="r-in"><span><span class="va">countries_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Reading layer `countries' from data source </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   `C:\Users\User\AppData\Local\R\win-library\4.5\duckspatial\spatial\countries.geojson' </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   using driver `GeoJSON'</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 257 features and 6 fields</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POLYGON</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## store in duckdb</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, <span class="st">"countries"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table countries successfully imported</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## check CRS</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_crs</span><span class="op">(</span><span class="va">conn</span>, <span class="st">"countries"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Coordinate Reference System:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   User input: EPSG:4326 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   wkt:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> GEOGCRS["WGS 84",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ENSEMBLE["World Geodetic System 1984 ensemble",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (Transit)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (G730)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (G873)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (G1150)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (G1674)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (G1762)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (G2139)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         MEMBER["World Geodetic System 1984 (G2296)"],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         ELLIPSOID["WGS 84",6378137,298.257223563,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             LENGTHUNIT["metre",1]],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         ENSEMBLEACCURACY[2.0]],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     PRIMEM["Greenwich",0,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         ANGLEUNIT["degree",0.0174532925199433]],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     CS[ellipsoidal,2],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         AXIS["geodetic latitude (Lat)",north,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             ORDER[1],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             ANGLEUNIT["degree",0.0174532925199433]],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         AXIS["geodetic longitude (Lon)",east,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             ORDER[2],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             ANGLEUNIT["degree",0.0174532925199433]],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     USAGE[</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         SCOPE["Horizontal component of 3D system."],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         AREA["World."],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         BBOX[-90,-180,90,180]],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ID["EPSG",4326]]</span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -5,15 +5,21 @@
 <url><loc>https://cidree.github.io/duckspatial/LICENSE.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/news/index.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_buffer.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_centroid.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_create_schema.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_crs.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_difference.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_filter.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_glimpse.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_install.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_intersection.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_list_tables.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_load.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_read_vector.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_vector.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_geom_name.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/get_query_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/index.html</loc></url>
 </urlset>
 

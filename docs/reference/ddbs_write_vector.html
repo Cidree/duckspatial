@@ -9,7 +9,7 @@ The table is created in the specified schema of the DuckDB database."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@ The table is created in the specified schema of the DuckDB database."><meta prop
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Write an SF Object to a DuckDB Database</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/HEAD/R/db_write.R" class="external-link"><code>R/db_write.R</code></a></small>
       <div class="d-none name"><code>ddbs_write_vector.Rd</code></div>
     </div>
 
@@ -73,7 +73,7 @@ or a character string of length two specifying the schema and table names.</p></
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="co">## load packages</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">duckspatial</span><span class="op">)</span></span></span>
@@ -84,9 +84,7 @@ or a character string of length two specifying the schema and table names.</p></
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## install the spatial exntesion</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_install.html">ddbs_install</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> spatial extension version &lt;2905968&gt; is already installed in this database</span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_load.html">ddbs_load</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Spatial extension loaded</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## create random points</span></span></span>
 <span class="r-in"><span><span class="va">random_points</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
@@ -100,26 +98,13 @@ or a character string of length two specifying the schema and table names.</p></
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## insert data into the database</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_write_vector</span><span class="op">(</span><span class="va">conn</span>, <span class="va">sf_points</span>, <span class="st">"points"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table points successfully imported</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## read data back into R</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_read_vector.html">ddbs_read_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="st">"points"</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table points successfully imported.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 5 features and 2 fields</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -85.90631 ymin: -79.44946 xmax: 151.202 ymax: 89.47244</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id crs_duckspatial                    geometry</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1       EPSG:4326 POINT (-85.90631 -51.62891)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2       EPSG:4326  POINT (-75.58194 30.91803)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3       EPSG:4326 POINT (-7.172937 -79.44946)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4       EPSG:4326    POINT (151.202 89.47244)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5       EPSG:4326 POINT (-35.74073 -63.17362)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## disconnect from db</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

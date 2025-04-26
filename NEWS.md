@@ -15,6 +15,8 @@
 
 * `ddbs_centroid()`: calculates the centroid of the input geometry
 
+* `ddbs_difference()`: calculates the geometric difference between two objects
+
 
 ## IMPROVEMENTS
 
