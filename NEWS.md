@@ -7,7 +7,7 @@
 
 ## NEW FUNCTIONS
 
-* `ddbs_list_tables()`: lists table schemas and tables insdie the database
+* `ddbs_list_tables()`: lists table schemas and tables inside the database
 
 * `ddbs_glimpse()`: check first rows of a table
 
