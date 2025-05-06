@@ -51,8 +51,12 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
     dbConnCheck(conn)
     ## convenient names of table and/or schema.table
     name_list <- get_query_name(name)
+    ## get schema.table available in the database
+    tables_df <- ddbs_list_tables(conn)
+    db_tables <- paste0(tables_df$table_schema, ".", tables_df$table_name) |>
+        sub(pattern = "^main\\.", replacement = "")
     ## Check if table name already exists
-    if (name_list$query_name %in% DBI::dbListTables(conn) & !overwrite)
+    if (name_list$query_name %in% db_tables & !overwrite)
         cli::cli_abort("The provided name is already present in the database. Please, use `overwrite = TRUE` or choose a different name.")
 
     # 2. Handle overwrite
