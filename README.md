@@ -16,6 +16,8 @@ v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/li
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Last Month
+Downloads](https://cranlogs.r-pkg.org/badges/last-month/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial)
 <!-- badges: end -->
 
 **duckspatial** is an R package that simplifies the process of reading
@@ -91,15 +93,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 4 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -117.7598 ymin: -34.15453 xmax: 113.8518 ymax: 89.68161
+#> Bounding box:  xmin: -123.6892 ymin: -81.28037 xmax: 161.5825 ymax: 42.83173
 #> Geodetic CRS:  WGS 84
 #>   id      a       b         c                    geometry
-#> 1  1 709998 bvwprwa izlhlvspq POINT (-100.8183 -34.15453)
-#> 2  2 650017 jfgrvgp ikchdbklp   POINT (68.39046 25.59802)
-#> 3  3 957513 vwmhulb tjevpihjs  POINT (-64.22538 42.72978)
-#> 4  4 593853 elthvjo tqucqfpuu  POINT (-117.7598 16.73306)
-#> 5  5 188177 elthvjo ddzbekmdx   POINT (113.8518 89.68161)
-#> 6  6 245843 yksarig sjksxdtdg  POINT (28.08287 -19.54068)
+#> 1  1 458064 svdtjpt fmuwkbvzb   POINT (96.27221 42.83173)
+#> 2  2 183934 kugswkz fmuwkbvzb POINT (-98.39448 -52.03544)
+#> 3  3 101830 ewtbqed whwecpqsj POINT (-108.6723 -21.72314)
+#> 4  4 471166 kugswkz myfcqkndt  POINT (-123.6892 20.54316)
+#> 5  5 672502 jxkzoyf xnrnbcigo POINT (-91.60747 -56.17601)
+#> 6  6 108727 aupymig xamjuqius  POINT (161.5825 -81.28037)
 ```
 
 Now we can insert the data into the database using the
@@ -118,7 +120,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   18.64
+#>   15.73
 ```
 
 ``` r
@@ -132,10 +134,10 @@ end_time <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>  244.23
+#>  180.51
 ```
 
-In this case, we can see that DuckDB was 13.1 times faster. Now we will
+In this case, we can see that DuckDB was 11.5 times faster. Now we will
 do the same exercise but reading the data back into R:
 
 ``` r
@@ -149,7 +151,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   61.91
+#>   56.29
 ```
 
 ``` r
@@ -162,7 +164,7 @@ end_time       <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>   58.58
+#>    50.7
 ```
 
 For reading, we got similar results. Finally, don’t forget to disconnect

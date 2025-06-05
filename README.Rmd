@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/Cidree/duckspatial/graph/badge.svg)](https://app.codecov.io/gh/Cidree/duckspatial)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Last Month Downloads](https://cranlogs.r-pkg.org/badges/last-month/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial)
 <!-- badges: end -->
 
 **duckspatial** is an R package that simplifies the process of reading and writing vector spatial data (e.g., `sf` objects) in a [DuckDB](https://duckdb.org/) database. This package is designed for users working with geospatial data who want to leverage DuckDB’s fast analytical capabilities while maintaining compatibility with R’s spatial data ecosystem.
