@@ -18,6 +18,7 @@
 #' to NULL if absent
 #' @param overwrite whether to overwrite the existing table if it exists. Ignored
 #' when name is NULL
+#' @template quiet
 #'
 #' @returns an sf object or TRUE (invisibly) for table creation
 #' @export
@@ -51,7 +52,8 @@ ddbs_intersection <- function(conn,
                               name = NULL,
                               crs = NULL,
                               crs_column = "crs_duckspatial",
-                              overwrite = FALSE) {
+                              overwrite = FALSE,
+                              quiet = FALSE) {
 
     ## 1. check conn
     dbConnCheck(conn)
@@ -76,7 +78,10 @@ ddbs_intersection <- function(conn,
         ## handle overwrite
         if (overwrite) {
             DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-            cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+
+            if (isFALSE(quiet)) {
+                cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+            }
         }
 
         ## create query (no st_as_text)
@@ -95,7 +100,11 @@ ddbs_intersection <- function(conn,
         }
         ## execute intersection query
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
-        cli::cli_alert_success("Query successful")
+
+        if (isFALSE(quiet)) {
+            cli::cli_alert_success("Query successful")
+        }
+
         return(invisible(TRUE))
     }
 
@@ -132,7 +141,10 @@ ddbs_intersection <- function(conn,
             sf::st_as_sf(wkt = x_geom, crs = crs)
     }
 
-    cli::cli_alert_success("Query successful")
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Query successful")
+    }
+
     return(data_sf)
 }
 
@@ -160,6 +172,7 @@ ddbs_intersection <- function(conn,
 #' to NULL if absent
 #' @param overwrite whether to overwrite the existing table if it exists. Ignored
 #' when name is NULL
+#' @template quiet
 #'
 #' @returns an sf object or TRUE (invisibly) for table creation
 #' @export
@@ -193,7 +206,8 @@ ddbs_difference <- function(conn,
                             name = NULL,
                             crs = NULL,
                             crs_column = "crs_duckspatial",
-                            overwrite = FALSE) {
+                            overwrite = FALSE,
+                            quiet = FALSE) {
 
     ## 1. check conn
     dbConnCheck(conn)
@@ -218,7 +232,10 @@ ddbs_difference <- function(conn,
         ## handle overwrite
         if (overwrite) {
             DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-            cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+
+            if (isFALSE(quiet)) {
+                cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+            }
         }
 
         ## create query (no st_as_text)
@@ -249,7 +266,10 @@ ddbs_difference <- function(conn,
           WHERE ST_IsEmpty({x_geom})
         "))
 
-        cli::cli_alert_success("Query successful")
+        if (isFALSE(quiet)) {
+            cli::cli_alert_success("Query successful")
+        }
+
         return(invisible(TRUE))
     }
 
@@ -293,6 +313,9 @@ ddbs_difference <- function(conn,
     ## remove empty features
     data_sf <- data_sf[!sf::st_is_empty(data_sf), ]
 
-    cli::cli_alert_success("Query successful")
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Query successful")
+    }
+
     return(data_sf)
 }

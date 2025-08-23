@@ -1,9 +1,8 @@
-
-
 #' Check and create schema
 #'
 #' @param conn a connection object to a DuckDB database
 #' @param name a character string with the name of the schema to be created
+#' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful schema creation
 #' @export
@@ -25,7 +24,7 @@
 #' ## disconnect from db
 #' dbDisconnect(conn)
 #'
-ddbs_create_schema <- function(conn, name) {
+ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 
     # 1. Checks
     ## Check if connection is correct
@@ -43,7 +42,10 @@ ddbs_create_schema <- function(conn, name) {
             conn,
             glue::glue("CREATE SCHEMA {name};")
         )
-        cli::cli_alert_success("Schema {name} created")
+
+        if (isFALSE(quiet)) {
+            cli::cli_alert_success("Schema {name} created")
+        }
     }
     return(invisible(TRUE))
 
@@ -142,13 +144,18 @@ ddbs_list_tables <- function(conn) {
 #' doesn't have crs_column, and you know the crs
 #' @param crs_column a character string of length one specifying the column
 #' storing the CRS (created automatically by \code{\link{ddbs_write_vector}})
+#' @template quiet
 #'
 #' @returns `sf` object
 #' @export
 #'
 #' @examplesIf interactive()
 #' ## TODO
-ddbs_glimpse <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial") {
+ddbs_glimpse <- function(conn,
+                         name,
+                         crs = NULL,
+                         crs_column = "crs_duckspatial",
+                         quiet = FALSE) {
 
     ## 1. check conn
     dbConnCheck(conn)
@@ -184,7 +191,11 @@ ddbs_glimpse <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial")
         data_sf <- data_tbl |>
             sf::st_as_sf(wkt = geom_name, crs = crs)
     }
-    cli::cli_alert_success("Showing first 10 rows of the data")
+
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Showing first 10 rows of the data")
+    }
+
     return(data_sf)
 
 }

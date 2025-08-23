@@ -4,12 +4,15 @@
 \alias{ddbs_create_schema}
 \title{Check and create schema}
 \usage{
-ddbs_create_schema(conn, name)
+ddbs_create_schema(conn, name, quiet = FALSE)
 }
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
 
 \item{name}{a character string with the name of the schema to be created}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 TRUE (invisibly) for successful schema creation

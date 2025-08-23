@@ -9,7 +9,8 @@ ddbs_read_vector(
   name,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  clauses = NULL
+  clauses = NULL,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ to NULL if absent}
 
 \item{clauses}{character, additional SQL code to modify the query from the
 table (e.g. "WHERE ...", "ORDER BY...")}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 an sf object

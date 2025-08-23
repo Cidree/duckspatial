@@ -4,7 +4,13 @@
 \alias{ddbs_glimpse}
 \title{Check first rows of the data}
 \usage{
-ddbs_glimpse(conn, name, crs = NULL, crs_column = "crs_duckspatial")
+ddbs_glimpse(
+  conn,
+  name,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  quiet = FALSE
+)
 }
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
@@ -17,6 +23,9 @@ doesn't have crs_column, and you know the crs}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}})}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 \code{sf} object

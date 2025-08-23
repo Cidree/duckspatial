@@ -4,10 +4,13 @@
 \alias{ddbs_load}
 \title{Loads the Spatial extension}
 \usage{
-ddbs_load(conn)
+ddbs_load(conn, quiet = FALSE)
 }
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 TRUE (invisibly) for successful installation

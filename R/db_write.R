@@ -1,4 +1,3 @@
-
 #' Write an SF Object to a DuckDB Database
 #'
 #' This function writes a Simple Features (SF) object into a DuckDB database as a new table.
@@ -9,6 +8,7 @@
 #' @param name a character string of length one specifying the name of the table,
 #' or a character string of length two specifying the schema and table names.
 #' @param overwrite whether to overwrite the existing table if it exists
+#' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful import
 #' @export
@@ -44,7 +44,7 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
+ddbs_write_vector <- function(conn, data, name, overwrite = FALSE, quiet = FALSE) {
 
     # 1. Checks
     ## Check if connection is correct
@@ -147,7 +147,10 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE) {
 
 
     # 6. User feedback
-    cli::cli_alert_success("Table {name_list$query_name} successfully imported")
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Table {name_list$query_name} successfully imported")
+        }
+
     return(invisible(TRUE))
 
 }
