@@ -47,7 +47,8 @@ it to an R <code>sf</code> object.</p>
 <span>  <span class="va">name</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
-<span>  clauses <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  clauses <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -78,6 +79,11 @@ to NULL if absent</p></dd>
 <dt id="arg-clauses">clauses<a class="anchor" aria-label="anchor" href="#arg-clauses"></a></dt>
 <dd><p>character, additional SQL code to modify the query from the
 table (e.g. "WHERE ...", "ORDER BY...")</p></dd>
+
+
+<dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
+<dd><p>A logical value. If <code>TRUE</code>, suppresses any informational messages.
+Defaults to <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
