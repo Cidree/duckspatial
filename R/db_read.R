@@ -14,6 +14,7 @@
 #' to NULL if absent
 #' @param clauses character, additional SQL code to modify the query from the
 #' table (e.g. "WHERE ...", "ORDER BY...")
+#' @template quiet
 #'
 #' @returns an sf object
 #' @export
@@ -49,7 +50,12 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-ddbs_read_vector <- function(conn, name, crs = NULL, crs_column = "crs_duckspatial", clauses = NULL) {
+ddbs_read_vector <- function(conn,
+                             name,
+                             crs = NULL,
+                             crs_column = "crs_duckspatial",
+                             clauses = NULL,
+                             quiet = FALSE) {
 
   # 1. Checks
   ## Check if connection is correct
@@ -89,7 +95,12 @@ ddbs_read_vector <- function(conn, name, crs = NULL, crs_column = "crs_duckspati
       data_sf <- data_tbl |>
           sf::st_as_sf(wkt = geom_name, crs = crs)
   }
-  cli::cli_alert_success("Table {name} successfully imported.")
+
+
+  if (isFALSE(quiet)) {
+      cli::cli_alert_success("Table {name} successfully imported.")
+  }
+
   return(data_sf)
 
 }

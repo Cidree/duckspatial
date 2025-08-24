@@ -20,6 +20,7 @@
 #' to NULL if absent
 #' @param overwrite whether to overwrite the existing table if it exists. Ignored
 #' when name is NULL
+#' @template quiet
 #'
 #' @returns an sf object or TRUE (invisibly) for table creation
 #' @export
@@ -54,7 +55,8 @@ ddbs_filter <- function(conn,
                         predicate = "intersection",
                         crs = NULL,
                         crs_column = "crs_duckspatial",
-                        overwrite = FALSE) {
+                        overwrite = FALSE,
+                        quiet = FALSE) {
 
     ## 1. select predicate
     sel_pred <- switch(predicate,
@@ -97,7 +99,10 @@ ddbs_filter <- function(conn,
         ## handle overwrite
         if (overwrite) {
             DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-            cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+
+            if (isFALSE(quiet)) {
+                cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+            }
         }
 
         tmp.query <- glue::glue("
@@ -108,7 +113,11 @@ ddbs_filter <- function(conn,
         ")
         ## execute filter query
         DBI::dbExecute(conn, tmp.query)
-        cli::cli_alert_success("Query successful")
+
+        if (isFALSE(quiet)) {
+            cli::cli_alert_success("Query successful")
+        }
+
         return(invisible(TRUE))
     }
 
@@ -136,7 +145,11 @@ ddbs_filter <- function(conn,
         data_sf <- data_tbl |>
             sf::st_as_sf(wkt = x_geom, crs = crs)
     }
-    cli::cli_alert_success("Query successful")
+
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Query successful")
+    }
+
     return(data_sf)
 }
 

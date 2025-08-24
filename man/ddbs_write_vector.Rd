@@ -4,7 +4,7 @@
 \alias{ddbs_write_vector}
 \title{Write an SF Object to a DuckDB Database}
 \usage{
-ddbs_write_vector(conn, data, name, overwrite = FALSE)
+ddbs_write_vector(conn, data, name, overwrite = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{conn}{a connection object to a DuckDB database}
@@ -15,6 +15,9 @@ ddbs_write_vector(conn, data, name, overwrite = FALSE)
 or a character string of length two specifying the schema and table names.}
 
 \item{overwrite}{whether to overwrite the existing table if it exists}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 TRUE (invisibly) for successful import

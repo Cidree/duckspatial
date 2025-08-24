@@ -11,7 +11,8 @@ ddbs_intersection(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  overwrite = FALSE
+  overwrite = FALSE,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ to NULL if absent}
 
 \item{overwrite}{whether to overwrite the existing table if it exists. Ignored
 when name is NULL}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 an sf object or TRUE (invisibly) for table creation

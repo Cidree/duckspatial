@@ -5,6 +5,7 @@
 #'
 #' @param conn a connection object to a DuckDB database
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
+#' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful installation
 #' @export
@@ -22,7 +23,7 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-ddbs_install <- function(conn, upgrade = FALSE) {
+ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 
     # 1. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
@@ -36,13 +37,21 @@ ddbs_install <- function(conn, upgrade = FALSE) {
     ## 2.3. Check if it's installed
     spatial_ext <- ext[ext$extension_name == "spatial", ]
     if (spatial_ext$installed & !upgrade) {
-        cli::cli_alert_info("spatial extension version <{spatial_ext$extension_version}> is already installed in this database")
+
+        if (isFALSE(quiet)) {
+            cli::cli_alert_info("spatial extension version <{spatial_ext$extension_version}> is already installed in this database")
+        }
+
         return(invisible(TRUE))
     }
 
     # 3. Install extension
     suppressMessages(DBI::dbExecute(conn, "INSTALL spatial;"))
-    cli::cli_alert_success("Spatial extension installed")
+
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Spatial extension installed")
+    }
+
     return(invisible(TRUE))
 
 
@@ -54,6 +63,7 @@ ddbs_install <- function(conn, upgrade = FALSE) {
 #' Checks if a spatial extension is installed, and loads it in a DuckDB database
 #'
 #' @param conn a connection object to a DuckDB database
+#' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful installation
 #' @export
@@ -72,7 +82,7 @@ ddbs_install <- function(conn, upgrade = FALSE) {
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-ddbs_load <- function(conn) {
+ddbs_load <- function(conn, quiet = FALSE) {
 
     # 1. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
@@ -87,6 +97,9 @@ ddbs_load <- function(conn) {
 
     # 3. Load spatial extension
     suppressMessages(DBI::dbExecute(conn, "LOAD spatial;"))
-    cli::cli_alert_success("Spatial extension loaded")
+
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Spatial extension loaded")
+    }
 
 }

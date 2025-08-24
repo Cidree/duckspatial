@@ -1,3 +1,9 @@
+# duckspatial 0.2.0999 dev
+
+## MINOR CHANGES
+
+* All functions now have a parameter `quiet` that allows users to supress informational messages. Closed [#3](https://github.com/Cidree/duckspatial/issues/3)
+
 
 # duckspatial 0.2.0
 
