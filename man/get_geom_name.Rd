@@ -7,7 +7,7 @@
 get_geom_name(conn, x, rest = FALSE)
 }
 \arguments{
-\item{conn}{A DuckDB connection}
+\item{conn}{A connection object to a DuckDB database}
 
 \item{x}{name of the table}
 

@@ -3,7 +3,7 @@
 #'
 #' Checks if a spatial extension is available, and installs it in a DuckDB database
 #'
-#' @param conn a connection object to a DuckDB database
+#' @template conn
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #' @template quiet
 #'
@@ -62,7 +62,7 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 #'
 #' Checks if a spatial extension is installed, and loads it in a DuckDB database
 #'
-#' @param conn a connection object to a DuckDB database
+#' @template conn
 #' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful installation

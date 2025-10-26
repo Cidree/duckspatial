@@ -7,10 +7,11 @@
 ddbs_crs(conn, name, crs_column = "crs_duckspatial")
 }
 \arguments{
-\item{conn}{a connection object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 
-\item{name}{a character string of length one specifying the name of the table,
-or a character string of length two specifying the schema and table names.}
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names.}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}})}

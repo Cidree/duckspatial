@@ -7,9 +7,9 @@
 ddbs_create_schema(conn, name, quiet = FALSE)
 }
 \arguments{
-\item{conn}{a connection object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 
-\item{name}{a character string with the name of the schema to be created}
+\item{name}{A character string with the name of the schema to be created}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}

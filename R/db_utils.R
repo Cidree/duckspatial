@@ -1,7 +1,7 @@
 #' Check and create schema
 #'
-#' @param conn a connection object to a DuckDB database
-#' @param name a character string with the name of the schema to be created
+#' @template conn
+#' @param name A character string with the name of the schema to be created
 #' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful schema creation
@@ -56,9 +56,10 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 
 #' Check CRS of a table
 #'
-#' @param conn a connection object to a DuckDB database
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names.
+#' @template conn
+#' @param name A character string of length one specifying the name of the table,
+#'        or a character string of length two specifying the schema and table
+#'        names.
 #' @param crs_column a character string of length one specifying the column
 #' storing the CRS (created automatically by \code{\link{ddbs_write_vector}})
 #'
@@ -117,7 +118,7 @@ ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
 
 #' Check tables and schemas inside a database
 #'
-#' @param conn a connection object to a DuckDB database
+#' @template conn
 #'
 #' @returns `data.frame`
 #' @export
@@ -137,13 +138,11 @@ ddbs_list_tables <- function(conn) {
 
 #' Check first rows of the data
 #'
-#' @param conn a connection object to a DuckDB database
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names.
-#' @param crs the coordinates reference system of the data. Specify if the data
-#' doesn't have crs_column, and you know the crs
-#' @param crs_column a character string of length one specifying the column
-#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}})
+#' @template conn
+#' @param name A character string of length one specifying the name of the table,
+#'        or a character string of length two specifying the schema and table
+#'        names.
+#' @template crs
 #' @template quiet
 #'
 #' @returns `sf` object
