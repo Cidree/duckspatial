@@ -19,7 +19,7 @@ TRUE (invisibly) for successful installation
 Checks if a spatial extension is installed, and loads it in a DuckDB database
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
 library(duckdb)
 library(duckspatial)

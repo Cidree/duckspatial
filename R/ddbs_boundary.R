@@ -3,18 +3,12 @@
 #' Returns the boundary of geometries from a DuckDB table using the spatial extension.
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
-#' @param conn a connection object to a DuckDB database
+#' @template conn
 #' @param x a table with a geometry column within the DuckDB database
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names. If it's
-#' NULL (the default), it will return the result as an \code{sf} object
-#' @param crs the coordinates reference system of the data. Specify if the data
-#' doesn't have a \code{crs_column}, and you know the CRS
-#' @param crs_column a character string of length one specifying the column
-#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
-#' to NULL if absent
-#' @param overwrite whether to overwrite the existing table if it exists. Ignored
-#' when \code{name} is NULL
+#' @template name
+#' @template crs
+#' @template overwrite
+#' @template quiet
 #'
 #' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
 #' @export
@@ -45,7 +39,8 @@ ddbs_boundary <- function(conn,
                           name = NULL,
                           crs = NULL,
                           crs_column = "crs_duckspatial",
-                          overwrite = FALSE) {
+                          overwrite = FALSE,
+                          quiet = FALSE) {
 
     ## 1. check conn
     dbConnCheck(conn)
@@ -99,22 +94,14 @@ ddbs_boundary <- function(conn,
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF
-    if (is.null(crs)) {
-        if (is.null(crs_column)) {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom)
-        } else {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom, crs = data_tbl[1, crs_column])
-            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-        }
+    ## 5. convert to SF and return result
+    data_sf <- convert_to_sf(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
 
-    } else {
-        data_sf <- data_tbl |>
-            sf::st_as_sf(wkt = x_geom, crs = crs)
-    }
-
-    cli::cli_alert_success("Query successful")
+    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
     return(data_sf)
 }

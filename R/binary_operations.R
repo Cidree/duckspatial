@@ -118,26 +118,15 @@ ddbs_intersection <- function(conn,
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF
-    if (is.null(crs)) {
-        if (is.null(crs_column)) {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom)
-        } else {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom, crs = data_tbl[1, crs_column])
-            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-        }
+    ## 5. convert to SF and return result
+    data_sf <- convert_to_sf(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
 
-    } else {
-        data_sf <- data_tbl |>
-            sf::st_as_sf(wkt = x_geom, crs = crs)
-    }
-
-    if (isFALSE(quiet)) {
-        cli::cli_alert_success("Query successful")
-    }
-
+    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
     return(data_sf)
 }
 
@@ -280,28 +269,20 @@ ddbs_difference <- function(conn,
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF
-    if (is.null(crs)) {
-        if (is.null(crs_column)) {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom)
-        } else {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom, crs = data_tbl[1, crs_column])
-            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-        }
-
-    } else {
-        data_sf <- data_tbl |>
-            sf::st_as_sf(wkt = x_geom, crs = crs)
-    }
+    ## 5. convert to SF  
+    data_sf <- convert_to_sf(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
 
     ## remove empty features
     data_sf <- data_sf[!sf::st_is_empty(data_sf), ]
 
-    if (isFALSE(quiet)) {
-        cli::cli_alert_success("Query successful")
-    }
-
+    ## return result
+    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
     return(data_sf)
+
+    
 }

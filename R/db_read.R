@@ -5,9 +5,7 @@
 #' it to an R \code{sf} object.
 #'
 #' @template conn
-#' @param name A character string of length one specifying the name of the table,
-#'        or a character string of length two specifying the schema and table
-#'        names.
+#' @template name
 #' @template crs
 #' @param clauses character, additional SQL code to modify the query from the
 #' table (e.g. "WHERE ...", "ORDER BY...")
@@ -77,27 +75,17 @@ ddbs_read_vector <- function(conn,
   )
   tmp.query <- paste(tmp.query, clauses)
   data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-  ## Convert to sf
-  if (is.null(crs)) {
-    if (is.null(crs_column)) {
-      data_sf <- data_tbl |>
-        sf::st_as_sf(wkt = geom_name)
-    } else {
-      data_sf <- data_tbl |>
-        sf::st_as_sf(wkt = geom_name, crs = data_tbl[1, crs_column])
-      data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-    }
 
-  } else {
-      data_sf <- data_tbl |>
-          sf::st_as_sf(wkt = geom_name, crs = crs)
-  }
+  ## 5. convert to SF
+    data_sf <- convert_to_sf(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = geom_name
+    )
 
-
-  if (isFALSE(quiet)) {
-      cli::cli_alert_success("Table {name} successfully imported.")
-  }
-
-  return(data_sf)
+    ## return result
+    if (isFALSE(quiet)) cli::cli_alert_success("Table {name} successfully imported.")
+    return(data_sf)
 
 }

@@ -31,7 +31,7 @@ This function writes a Simple Features (SF) object into a DuckDB database as a n
 The table is created in the specified schema of the DuckDB database.
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
 library(duckdb)
 library(duckspatial)

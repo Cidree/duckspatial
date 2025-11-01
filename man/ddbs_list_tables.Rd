@@ -16,7 +16,7 @@ ddbs_list_tables(conn)
 Check tables and schemas inside a database
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## TODO
 \dontshow{\}) # examplesIf}
 }

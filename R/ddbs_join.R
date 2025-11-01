@@ -3,7 +3,7 @@
 #' Performs spatial joins of two geometries, and returns a \code{sf} object
 #' or creates a new table
 #'
-#' @param conn a connection object to a DuckDB database
+#' @template conn
 #' @param x a table with geometry column within the DuckDB database. Data is returned
 #' from this object
 #' @param y a table with geometry column within the DuckDB database
@@ -12,13 +12,8 @@
 #' @param name a character string of length one specifying the name of the table,
 #' or a character string of length two specifying the schema and table names. If it's
 #' NULL (the default), it will return the result as an \code{sf} object
-#' @param crs the coordinates reference system of the data. Specify if the data
-#' doesn't have crs_column, and you know the crs
-#' @param crs_column a character string of length one specifying the column
-#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
-#' to NULL if absent
-#' @param overwrite whether to overwrite the existing table if it exists. Ignored
-#' when name is NULL
+#' @template crs
+#' @template overwrite
 #' @template quiet
 #'
 #' @returns an sf object or TRUE (invisibly) for table creation
@@ -186,26 +181,15 @@ ddbs_join <- function(conn,
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF
-    if (is.null(crs)) {
-        if (is.null(crs_column)) {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom)
-        } else {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = x_geom, crs = data_tbl[1, crs_column])
-            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-        }
+    ## 5. convert to SF and return result
+    data_sf <- convert_to_sf(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
 
-    } else {
-        data_sf <- data_tbl |>
-            sf::st_as_sf(wkt = x_geom, crs = crs)
-    }
-
-    if (isFALSE(quiet)) {
-        cli::cli_alert_success("Query successful")
-    }
-
+    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
     return(data_sf)
 }
 

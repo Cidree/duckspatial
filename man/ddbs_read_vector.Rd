@@ -18,7 +18,8 @@ ddbs_read_vector(
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names.}
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS}
@@ -41,7 +42,7 @@ Retrieves the data from a DuckDB table with a geometry column, and convert
 it to an R \code{sf} object.
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
 library(duckdb)
 library(duckspatial)

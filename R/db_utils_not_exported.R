@@ -51,3 +51,34 @@ get_query_name <- function(name) {
         query_name = query_name
     )
 }
+
+
+
+
+#' Converts from data frame to sf
+#' 
+#' Converts a table that has been read from DuckDB into an sf object
+#'
+#' @param data a tibble or data frame
+#' @template crs
+#' @param x_geom name of geometry
+#'
+#' @keywords internal
+#' @returns sf
+convert_to_sf <- function(data, crs, crs_column, x_geom) {
+    if (is.null(crs)) {
+        if (is.null(crs_column)) {
+            data_sf <- data |>
+                sf::st_as_sf(wkt = x_geom)
+        } else {
+            data_sf <- data |>
+                sf::st_as_sf(wkt = x_geom, crs = data[1, crs_column])
+            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
+        }
+
+    } else {
+        data_sf <- data |>
+            sf::st_as_sf(wkt = x_geom, crs = crs)
+    }
+
+}

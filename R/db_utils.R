@@ -198,3 +198,35 @@ ddbs_glimpse <- function(conn,
     return(data_sf)
 
 }
+
+
+
+
+
+
+
+
+#' Get list of GDAL drivers and file formats
+#'
+#' @template conn
+#'
+#' @returns `data.frame`
+#' @export
+#'
+#' @examplesIf interactive()
+#' ## load packages
+#' library(duckdb)
+#' library(duckspatial)
+#'
+#' ## database setup
+#' conn <- dbConnect(duckdb())
+#' ddbs_install(conn)
+#' ddbs_load(conn)
+#' 
+#' ## check drivers
+#' ddbs_drivers(conn)
+ddbs_drivers <- function(conn) {
+  DBI::dbGetQuery(conn, "
+      SELECT * FROM ST_Drivers()
+    ")
+}

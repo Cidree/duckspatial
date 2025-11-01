@@ -10,7 +10,8 @@ ddbs_centroid(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  overwrite = FALSE
+  overwrite = FALSE,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,9 @@ Set to \code{NULL} if absent}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 an \code{sf} object or \code{TRUE} (invisibly) for table creation

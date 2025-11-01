@@ -36,7 +36,7 @@ Defaults to \code{FALSE}.}
 Check first rows of the data
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## TODO
 \dontshow{\}) # examplesIf}
 }

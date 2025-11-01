@@ -16,7 +16,7 @@ ddbs_buffer(
 )
 }
 \arguments{
-\item{conn}{a connection object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 
 \item{x}{a table with a geometry column within the DuckDB database}
 
