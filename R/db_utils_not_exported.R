@@ -3,7 +3,7 @@
 
 #' Check if a supported DuckDB connection
 #'
-#' @param conn A DuckDB connection
+#' @template conn
 #'
 #' @keywords internal
 #' @returns TRUE (invisibly) for successful import
@@ -17,7 +17,7 @@ dbConnCheck <- function(conn) {
 
 #' Get column names in a DuckDB database
 #'
-#' @param conn A DuckDB connection
+#' @template conn
 #' @param x name of the table
 #' @param rest whether to return geometry column name, of the rest of the columns
 #'

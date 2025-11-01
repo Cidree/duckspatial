@@ -7,7 +7,7 @@
 ddbs_install(conn, upgrade = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{conn}{a connection object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 
 \item{upgrade}{if TRUE, it upgrades the DuckDB extension to the latest version}
 

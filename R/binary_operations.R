@@ -4,20 +4,13 @@
 #' Calculates the intersection of two geometries, and return a \code{sf} object
 #' or creates a new table
 #'
-#' @param conn a connection object to a DuckDB database
-#' @param x a table with geometry column within the DuckDB database. Data is returned
+#' @template conn
+#' @param x A table with geometry column within the DuckDB database. Data is returned
 #' from this object
-#' @param y a table with geometry column within the DuckDB database
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names. If it's
-#' NULL (the default), it will return the result as an \code{sf} object
-#' @param crs the coordinates reference system of the data. Specify if the data
-#' doesn't have crs_column, and you know the crs
-#' @param crs_column a character string of length one specifying the column
-#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
-#' to NULL if absent
-#' @param overwrite whether to overwrite the existing table if it exists. Ignored
-#' when name is NULL
+#' @param y A table with geometry column within the DuckDB database
+#' @template name
+#' @template crs
+#' @template overwrite
 #' @template quiet
 #'
 #' @returns an sf object or TRUE (invisibly) for table creation
@@ -158,23 +151,16 @@ ddbs_intersection <- function(conn,
 #' Calculates the geometric difference of two geometries, and returns a \code{sf}
 #' object or creates a new table
 #'
-#' @param conn a connection object to a DuckDB database
-#' @param x a table with geometry column within the DuckDB database. Data is returned
+#' @template conn
+#' @param x A table with geometry column within the DuckDB database. Data is returned
 #' from this object
-#' @param y a table with geometry column within the DuckDB database
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names. If it's
-#' NULL (the default), it will return the result as an \code{sf} object
-#' @param crs the coordinates reference system of the data. Specify if the data
-#' doesn't have crs_column, and you know the crs
-#' @param crs_column a character string of length one specifying the column
-#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
-#' to NULL if absent
-#' @param overwrite whether to overwrite the existing table if it exists. Ignored
-#' when name is NULL
+#' @param y A table with geometry column within the DuckDB database
+#' @template name
+#' @template crs
+#' @template overwrite
 #' @template quiet
 #'
-#' @returns an sf object or TRUE (invisibly) for table creation
+#' @returns An sf object or TRUE (invisibly) for table creation
 #' @export
 #'
 #' @examples

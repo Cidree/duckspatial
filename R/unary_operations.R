@@ -10,16 +10,9 @@
 #' @param x a table with a geometry column within the DuckDB database
 #' @param distance a numeric value specifying the buffer distance. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names. If it's
-#' NULL (the default), it will return the result as an \code{sf} object
-#' @param crs the coordinates reference system of the data. Specify if the data
-#' doesn't have a \code{crs_column}, and you know the CRS
-#' @param crs_column a character string of length one specifying the column
-#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
-#' to NULL if absent
-#' @param overwrite whether to overwrite the existing table if it exists. Ignored
-#' when \code{name} is NULL
+#' @template name
+#' @template crs
+#' @template overwrite
 #' @template quiet
 #'
 #' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
@@ -147,17 +140,10 @@ ddbs_buffer <- function(conn,
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
 #' @param conn a connection object to a DuckDB database
-#' @param x a table with a geometry column within the DuckDB database
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names. If it's
-#' NULL (the default), it will return the result as an \code{sf} object
-#' @param crs the coordinates reference system of the data. Specify if the data
-#' doesn't have a \code{crs_column}, and you know the CRS
-#' @param crs_column a character string of length one specifying the column
-#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
-#' to NULL if absent
-#' @param overwrite whether to overwrite the existing table if it exists. Ignored
-#' when \code{name} is NULL
+#' @param x A table with a geometry column within the DuckDB database
+#' @template name
+#' @template crs
+#' @template overwrite
 #'
 #' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
 #' @export

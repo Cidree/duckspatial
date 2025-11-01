@@ -23,19 +23,20 @@ ddbs_buffer(
 \item{distance}{a numeric value specifying the buffer distance. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)}
 
-\item{name}{a character string of length one specifying the name of the table,
-or a character string of length two specifying the schema and table names. If it's
-NULL (the default), it will return the result as an \code{sf} object}
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
 
-\item{crs}{the coordinates reference system of the data. Specify if the data
+\item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS}
 
 \item{crs_column}{a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
-to NULL if absent}
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
+Set to \code{NULL} if absent}
 
-\item{overwrite}{whether to overwrite the existing table if it exists. Ignored
-when \code{name} is NULL}
+\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
+to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}

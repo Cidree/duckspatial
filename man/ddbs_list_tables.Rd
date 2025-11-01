@@ -7,7 +7,7 @@
 ddbs_list_tables(conn)
 }
 \arguments{
-\item{conn}{a connection object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 }
 \value{
 \code{data.frame}

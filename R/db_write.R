@@ -3,11 +3,11 @@
 #' This function writes a Simple Features (SF) object into a DuckDB database as a new table.
 #' The table is created in the specified schema of the DuckDB database.
 #'
-#' @param conn a connection object to a DuckDB database
-#' @param data a \code{sf} object to write to the DuckDB database, or a local file
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names.
-#' @param overwrite whether to overwrite the existing table if it exists
+#' @template conn
+#' @param data A \code{sf} object to write to the DuckDB database, or the path to
+#'        a local file that can be read with `ST_READ`
+#' @template name
+#' @template overwrite
 #' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful import
