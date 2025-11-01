@@ -1,0 +1,229 @@
+#' Performs spatial joins of two geometries
+#'
+#' Performs spatial joins of two geometries, and returns a \code{sf} object
+#' or creates a new table
+#'
+#' @param conn a connection object to a DuckDB database
+#' @param x a table with geometry column within the DuckDB database. Data is returned
+#' from this object
+#' @param y a table with geometry column within the DuckDB database
+#' @param join A geometry predicate function. Defaults to `"ST_Intersects"`. See
+#'        the details for other options.
+#' @param name a character string of length one specifying the name of the table,
+#' or a character string of length two specifying the schema and table names. If it's
+#' NULL (the default), it will return the result as an \code{sf} object
+#' @param crs the coordinates reference system of the data. Specify if the data
+#' doesn't have crs_column, and you know the crs
+#' @param crs_column a character string of length one specifying the column
+#' storing the CRS (created automatically by \code{\link{ddbs_write_vector}}). Set
+#' to NULL if absent
+#' @param overwrite whether to overwrite the existing table if it exists. Ignored
+#' when name is NULL
+#' @template quiet
+#'
+#' @returns an sf object or TRUE (invisibly) for table creation
+#'
+#' @template spatial_join_predicates
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load packages
+#' library(duckdb)
+#' library(duckspatial)
+#' library(sf)
+#'
+#' ## database setup
+#' conn <- duckdb::dbConnect(duckdb::duckdb())
+#' ddbs_install(conn)
+#' ddbs_load(conn)
+#'
+#' ## read data
+#' countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+#' argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+#' brazil_sf <- subset(countries_sf, NAME_ENGL == "Brazil")
+#'
+#' ## store in duckdb
+#' ddbs_write_vector(conn, countries_sf, "countries", overwrite = TRUE)
+#' ddbs_write_vector(conn, argentina_sf, "argentina", overwrite = TRUE)
+#'
+#' ## spatial join: intersects
+#' temp_1 <- ddbs_join(
+#'     conn, x = "countries",
+#'     y = "argentina",
+#'     join = "ST_Intersects"
+#'     )
+#'
+#' head(temp_1)
+#'
+#' }
+ddbs_join <- function(conn,
+                      x,
+                      y,
+                      join = "ST_Intersects",
+                      name = NULL,
+                      crs = NULL,
+                      crs_column = "crs_duckspatial",
+                      overwrite = FALSE,
+                      quiet = FALSE) {
+
+    ## 1. check conn
+    dbConnCheck(conn)
+
+    ## 2. get name of geometry column
+    ## get convient names for x and y
+    x_list <- get_query_name(x)
+    y_list <- get_query_name(y)
+
+    ## get name
+    x_geom <- get_geom_name(conn, x_list$query_name)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    y_geom <- get_geom_name(conn, y_list$query_name)
+    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
+    if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
+
+
+    ## Create an index on the x and y tables
+    # https://duckdb.org/docs/stable/core_extensions/spatial/r-tree_indexes
+    x_has_rtree <- has_rtree_index(conn, tbl_name = x_list$query_name)
+    index_name <- paste0("idx_", x_list$query_name)
+
+    if (isFALSE(x_has_rtree)) {
+        DBI::dbExecute(
+            conn,
+            glue::glue(
+                "CREATE INDEX {index_name} ON {x_list$query_name} USING RTREE ({x_geom});"
+                )
+            )
+        }
+
+    # y_has_rtree <- has_rtree_index(conn, y_list$query_name)
+    #
+    # if(isFALSE(y_has_rtree)){
+    #     DBI::dbExecute(
+    #         conn,
+    #         glue::glue(
+    #             "CREATE INDEX my_idy ON {y_list$query_name} USING RTREE ({y_geom});"
+    #         )
+    #     )
+    # }
+
+
+    ## 3. if name is not NULL (i.e. no SF returned)
+    if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
+        ## handle overwrite
+        if (overwrite) {
+            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
+
+            if (isFALSE(quiet)) {
+                cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+            }
+        }
+
+
+        ## create query (no st_as_text)
+        if (length(x_rest) == 0) {
+            tmp.query <- glue::glue("
+            SELECT {paste0('v2.', x_rest, collapse = ', ')},
+                   ST_AsText(v1.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
+            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+            ")
+        } else {
+            tmp.query <- glue::glue("
+            SELECT {paste0('v1.', x_rest, collapse = ', ')},
+                   {paste0('v2.', x_rest, collapse = ', ')},
+                   ST_AsText(v1.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
+            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+
+        ")
+        }
+        ## execute intersection query
+        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+
+
+        if (isFALSE(quiet)) {
+            cli::cli_alert_success("Query successful")
+        }
+
+        return(invisible(TRUE))
+    }
+
+    ## 4. create the base query
+    if (length(x_rest) == 0) {
+        tmp.query <- glue::glue("
+            SELECT {paste0('v2.', x_rest, collapse = ', ')},
+                   ST_AsText(v1.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
+            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+        ")
+
+    } else {
+        tmp.query <- glue::glue("
+            SELECT {paste0('v1.', x_rest, collapse = ', ')},
+                   {paste0('v2.', x_rest, collapse = ', ')},
+                   ST_AsText(v1.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} v1, {y_list$query_name} v2
+            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+        ")
+
+        # tmp.query <- glue::glue("
+        #     SELECT {paste0('v1.', x_rest, collapse = ', ')},
+        #            {paste0('v2.', x_rest, collapse = ', ')},
+        #            ST_AsText(v1.{x_geom}) AS {x_geom}
+        #     FROM {x_list$query_name} v1
+        #     LEFT JOIN {y_list$query_name} v2
+        #         ON {join}(v1.{x_geom}, v2.{y_geom})
+        # ")
+    }
+
+    ## send the query
+    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+
+    ## 5. convert to SF
+    if (is.null(crs)) {
+        if (is.null(crs_column)) {
+            data_sf <- data_tbl |>
+                sf::st_as_sf(wkt = x_geom)
+        } else {
+            data_sf <- data_tbl |>
+                sf::st_as_sf(wkt = x_geom, crs = data_tbl[1, crs_column])
+            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
+        }
+
+    } else {
+        data_sf <- data_tbl |>
+            sf::st_as_sf(wkt = x_geom, crs = crs)
+    }
+
+    if (isFALSE(quiet)) {
+        cli::cli_alert_success("Query successful")
+    }
+
+    return(data_sf)
+}
+
+
+
+has_rtree_index <- function(conn,  tbl_name){
+
+    temp_df <- DBI::dbGetQuery(
+        conn,
+        glue::glue("
+            SELECT *
+            FROM duckdb_indexes()
+            WHERE table_name = '{tbl_name}';
+          ")
+    )
+
+    check <- grepl(" RTREE ", temp_df$sql)
+    check <- ifelse(isTRUE(check), TRUE, FALSE)
+    return(check)
+}
+
