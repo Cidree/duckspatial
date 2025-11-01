@@ -44,10 +44,10 @@ data manipulation, and how to write/read vector data.
 
 ``` r
 library(duckdb)
-#> Cargando paquete requerido: DBI
+#> Loading required package: DBI
 library(duckspatial)
 library(sf)
-#> Linking to GEOS 3.13.1, GDAL 3.10.2, PROJ 9.5.1; sf_use_s2() is TRUE
+#> Linking to GEOS 3.13.1, GDAL 3.11.0, PROJ 9.6.0; sf_use_s2() is TRUE
 ```
 
 First, we create a connection with a DuckDB database (in this case in
@@ -60,7 +60,7 @@ conn <- dbConnect(duckdb())
 
 ## install and load spatial extension
 ddbs_install(conn)
-#> ℹ spatial extension version <2905968> is already installed in this database
+#> ℹ spatial extension version <a6a607f> is already installed in this database
 ddbs_load(conn)
 #> ✔ Spatial extension loaded
 ```
@@ -93,15 +93,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 4 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -123.6892 ymin: -81.28037 xmax: 161.5825 ymax: 42.83173
+#> Bounding box:  xmin: -115.4635 ymin: -71.18817 xmax: 111.539 ymax: 85.84148
 #> Geodetic CRS:  WGS 84
 #>   id      a       b         c                    geometry
-#> 1  1 458064 svdtjpt fmuwkbvzb   POINT (96.27221 42.83173)
-#> 2  2 183934 kugswkz fmuwkbvzb POINT (-98.39448 -52.03544)
-#> 3  3 101830 ewtbqed whwecpqsj POINT (-108.6723 -21.72314)
-#> 4  4 471166 kugswkz myfcqkndt  POINT (-123.6892 20.54316)
-#> 5  5 672502 jxkzoyf xnrnbcigo POINT (-91.60747 -56.17601)
-#> 6  6 108727 aupymig xamjuqius  POINT (161.5825 -81.28037)
+#> 1  1 885810 tohjzsg eqatwiicz  POINT (47.98161 -71.18817)
+#> 2  2 226987 fadqruo xuxlgpjsu POINT (-115.4635 -51.29217)
+#> 3  3 651225 zsegfdh cplfshwwa  POINT (-36.80553 85.84148)
+#> 4  4 124181 fadqruo yfcockqvq POINT (-5.879732 -35.01169)
+#> 5  5 425637 oxmxllm cplfshwwa     POINT (111.539 56.5298)
+#> 6  6 373048 oxmxllm dqawapryg    POINT (37.39019 76.1379)
 ```
 
 Now we can insert the data into the database using the
@@ -120,7 +120,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   15.73
+#>   11.19
 ```
 
 ``` r
@@ -134,10 +134,10 @@ end_time <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>  180.51
+#>  119.15
 ```
 
-In this case, we can see that DuckDB was 11.5 times faster. Now we will
+In this case, we can see that DuckDB was 10.6 times faster. Now we will
 do the same exercise but reading the data back into R:
 
 ``` r
@@ -151,7 +151,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   56.29
+#>   74.36
 ```
 
 ``` r
@@ -164,7 +164,7 @@ end_time       <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>    50.7
+#>   81.45
 ```
 
 For reading, we got similar results. Finally, don’t forget to disconnect

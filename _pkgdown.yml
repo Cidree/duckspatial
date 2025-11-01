@@ -23,23 +23,33 @@ reference:
   contents:
   - ddbs_install
   - ddbs_load
+
 - title: Read/Write
   contents:
   - ddbs_read_vector
   - ddbs_write_vector
-- title: Binary operations
+
+- title: Spatial operations (binary)
   contents:
   - ddbs_difference
-  - ddbs_filter
   - ddbs_intersection
-- title: Unary Operations
+
+- title: Spatial operations (unary)
   contents:
+  - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid
+
+- title: Data manipulation
+  contents:
+  - ddbs_filter
+  - ddbs_join
+
 - title: SQL wrappers
   contents:
   - ddbs_create_schema
   - ddbs_crs
+  - ddbs_drivers
   - ddbs_glimpse
   - ddbs_list_tables
 
