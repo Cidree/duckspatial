@@ -50,20 +50,24 @@ The table is created in the specified schema of the DuckDB database.</p>
 
 
 <dl><dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>a connection object to a DuckDB database</p></dd>
+<dd><p>A connection object to a DuckDB database</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>a <code>sf</code> object to write to the DuckDB database, or a local file</p></dd>
+<dd><p>A <code>sf</code> object to write to the DuckDB database, or the path to
+a local file that can be read with <code>ST_READ</code></p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>a character string of length one specifying the name of the table,
-or a character string of length two specifying the schema and table names.</p></dd>
+<dd><p>A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If <code>NULL</code> (the default), the function returns the result as an
+<code>sf</code> object</p></dd>
 
 
 <dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
-<dd><p>whether to overwrite the existing table if it exists</p></dd>
+<dd><p>Boolean. whether to overwrite the existing table if it exists. Defaults
+to <code>FALSE</code>. This argument is ignore when <code>name</code> is <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>

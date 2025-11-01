@@ -57,22 +57,23 @@
 
 
 <dl><dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>a connection object to a DuckDB database</p></dd>
+<dd><p>A connection object to a DuckDB database</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>a table with geometry column within the DuckDB database. Data is returned
+<dd><p>A table with geometry column within the DuckDB database. Data is returned
 from this object</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>a table with geometry column within the DuckDB database</p></dd>
+<dd><p>Y table with geometry column within the DuckDB database</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>a character string of length one specifying the name of the table,
-or a character string of length two specifying the schema and table names. If it's
-NULL (the default), it will return the result as an <code>sf</code> object</p></dd>
+<dd><p>A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If <code>NULL</code> (the default), the function returns the result as an
+<code>sf</code> object</p></dd>
 
 
 <dt id="arg-predicate">predicate<a class="anchor" aria-label="anchor" href="#arg-predicate"></a></dt>
@@ -80,19 +81,19 @@ NULL (the default), it will return the result as an <code>sf</code> object</p></
 
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
-<dd><p>the coordinates reference system of the data. Specify if the data
-doesn't have crs_column, and you know the crs</p></dd>
+<dd><p>The coordinates reference system of the data. Specify if the data
+doesn't have a <code>crs_column</code>, and you know the CRS</p></dd>
 
 
 <dt id="arg-crs-column">crs_column<a class="anchor" aria-label="anchor" href="#arg-crs-column"></a></dt>
 <dd><p>a character string of length one specifying the column
-storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>). Set
-to NULL if absent</p></dd>
+storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>).
+Set to <code>NULL</code> if absent</p></dd>
 
 
 <dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
-<dd><p>whether to overwrite the existing table if it exists. Ignored
-when name is NULL</p></dd>
+<dd><p>Boolean. whether to overwrite the existing table if it exists. Defaults
+to <code>FALSE</code>. This argument is ignore when <code>name</code> is <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -102,7 +103,7 @@ Defaults to <code>FALSE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>an sf object or TRUE (invisibly) for table creation</p>
+    <p>An sf object or TRUE (invisibly) for table creation</p>
     </div>
 
     <div class="section level2">

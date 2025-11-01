@@ -79,10 +79,10 @@
 <p>This is a basic example which shows how to set up DuckDB for spatial data manipulation, and how to write/read vector data.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Cargando paquete requerido: DBI</span></span>
+<span><span class="co">#&gt; Loading required package: DBI</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Linking to GEOS 3.13.1, GDAL 3.10.2, PROJ 9.5.1; sf_use_s2() is TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; Linking to GEOS 3.13.1, GDAL 3.11.0, PROJ 9.6.0; sf_use_s2() is TRUE</span></span></code></pre></div>
 <p>First, we create a connection with a DuckDB database (in this case in memory database), and we make sure that the spatial extension is installed, and we load it:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## create connection</span></span>
@@ -90,7 +90,7 @@
 <span></span>
 <span><span class="co">## install and load spatial extension</span></span>
 <span><span class="fu"><a href="reference/ddbs_install.html">ddbs_install</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ℹ spatial extension version &lt;2905968&gt; is already installed in this database</span></span>
+<span><span class="co">#&gt; ℹ spatial extension version &lt;a6a607f&gt; is already installed in this database</span></span>
 <span><span class="fu"><a href="reference/ddbs_load.html">ddbs_load</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ✔ Spatial extension loaded</span></span></code></pre></div>
 <p>Now we can get some data to insert into the database. We are creating 10,000,000 random points.</p>
@@ -119,15 +119,15 @@
 <span><span class="co">#&gt; Simple feature collection with 6 features and 4 fields</span></span>
 <span><span class="co">#&gt; Geometry type: POINT</span></span>
 <span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: -123.6892 ymin: -81.28037 xmax: 161.5825 ymax: 42.83173</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -115.4635 ymin: -71.18817 xmax: 111.539 ymax: 85.84148</span></span>
 <span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
 <span><span class="co">#&gt;   id      a       b         c                    geometry</span></span>
-<span><span class="co">#&gt; 1  1 458064 svdtjpt fmuwkbvzb   POINT (96.27221 42.83173)</span></span>
-<span><span class="co">#&gt; 2  2 183934 kugswkz fmuwkbvzb POINT (-98.39448 -52.03544)</span></span>
-<span><span class="co">#&gt; 3  3 101830 ewtbqed whwecpqsj POINT (-108.6723 -21.72314)</span></span>
-<span><span class="co">#&gt; 4  4 471166 kugswkz myfcqkndt  POINT (-123.6892 20.54316)</span></span>
-<span><span class="co">#&gt; 5  5 672502 jxkzoyf xnrnbcigo POINT (-91.60747 -56.17601)</span></span>
-<span><span class="co">#&gt; 6  6 108727 aupymig xamjuqius  POINT (161.5825 -81.28037)</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  1 885810 tohjzsg eqatwiicz  POINT (47.98161 -71.18817)</span></span>
+<span><span class="co">#&gt; 2  2 226987 fadqruo xuxlgpjsu POINT (-115.4635 -51.29217)</span></span>
+<span><span class="co">#&gt; 3  3 651225 zsegfdh cplfshwwa  POINT (-36.80553 85.84148)</span></span>
+<span><span class="co">#&gt; 4  4 124181 fadqruo yfcockqvq POINT (-5.879732 -35.01169)</span></span>
+<span><span class="co">#&gt; 5  5 425637 oxmxllm cplfshwwa     POINT (111.539 56.5298)</span></span>
+<span><span class="co">#&gt; 6  6 373048 oxmxllm dqawapryg    POINT (37.39019 76.1379)</span></span></code></pre></div>
 <p>Now we can insert the data into the database using the <code><a href="reference/ddbs_write_vector.html">ddbs_write_vector()</a></code> function. We use the <code><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time()</a></code> function to calculate how long does it take, and we can compare it with writing a shapefile with the <code><a href="https://r-spatial.github.io/sf/reference/st_write.html" class="external-link">write_sf()</a></code> function:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## write data monitoring processing time</span></span>
@@ -140,7 +140,7 @@
 <span><span class="va">elapsed_duckdb</span> <span class="op">&lt;-</span> <span class="va">end_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">-</span> <span class="va">start_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">elapsed_duckdb</span><span class="op">)</span></span>
 <span><span class="co">#&gt; elapsed </span></span>
-<span><span class="co">#&gt;   15.73</span></span></code></pre></div>
+<span><span class="co">#&gt;   11.19</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## write data monitoring processing time</span></span>
 <span><span class="va">start_time</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -152,8 +152,8 @@
 <span><span class="va">elapsed_gpkg</span> <span class="op">&lt;-</span> <span class="va">end_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">-</span> <span class="va">start_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">elapsed_gpkg</span><span class="op">)</span></span>
 <span><span class="co">#&gt; elapsed </span></span>
-<span><span class="co">#&gt;  180.51</span></span></code></pre></div>
-<p>In this case, we can see that DuckDB was 11.5 times faster. Now we will do the same exercise but reading the data back into R:</p>
+<span><span class="co">#&gt;  119.15</span></span></code></pre></div>
+<p>In this case, we can see that DuckDB was 10.6 times faster. Now we will do the same exercise but reading the data back into R:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## write data monitoring processing time</span></span>
 <span><span class="va">start_time</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -165,7 +165,7 @@
 <span><span class="va">elapsed_duckdb</span> <span class="op">&lt;-</span> <span class="va">end_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">-</span> <span class="va">start_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">elapsed_duckdb</span><span class="op">)</span></span>
 <span><span class="co">#&gt; elapsed </span></span>
-<span><span class="co">#&gt;   56.29</span></span></code></pre></div>
+<span><span class="co">#&gt;   74.36</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## write data monitoring processing time</span></span>
 <span><span class="va">start_time</span>     <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -176,7 +176,7 @@
 <span><span class="va">elapsed_gpkg</span> <span class="op">&lt;-</span> <span class="va">end_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span> <span class="op">-</span> <span class="va">start_time</span><span class="op">[</span><span class="st">"elapsed"</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">elapsed_gpkg</span><span class="op">)</span></span>
 <span><span class="co">#&gt; elapsed </span></span>
-<span><span class="co">#&gt;    50.7</span></span></code></pre></div>
+<span><span class="co">#&gt;   81.45</span></span></code></pre></div>
 <p>For reading, we got similar results. Finally, don’t forget to disconnect from the database:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></code></pre></div>
