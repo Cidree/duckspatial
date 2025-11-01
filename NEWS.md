@@ -1,5 +1,10 @@
 # duckspatial 0.2.0999 dev
 
+## NEW FEATURES
+
+*`ddbs_join()`: new function to perform spatial join operations.
+*`ddbs_create_conn()`: new convinient function to create a duckdb connection.
+
 ## MINOR CHANGES
 
 * All functions now have a parameter `quiet` that allows users to supress informational messages. Closed [#3](https://github.com/Cidree/duckspatial/issues/3)

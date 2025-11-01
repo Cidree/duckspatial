@@ -33,6 +33,8 @@ reference:
   contents:
   - ddbs_difference
   - ddbs_intersection
+  - ddbs_join
+- title: Unary Operations
 
 - title: Spatial operations (unary)
   contents:
@@ -47,6 +49,7 @@ reference:
 
 - title: SQL wrappers
   contents:
+  - ddbs_create_conn
   - ddbs_create_schema
   - ddbs_crs
   - ddbs_drivers
