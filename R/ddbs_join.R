@@ -137,23 +137,20 @@ ddbs_join <- function(x,
     if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
 
 
-    ## Create an index on the x and y tables
-    # https://duckdb.org/docs/stable/core_extensions/spatial/r-tree_indexes
-    x_has_rtree <- has_rtree_index(conn, tbl_name = x_list$query_name)
-    index_name <- paste0("idx_", x_list$query_name)
-
-    if (isFALSE(x_has_rtree)) {
-        DBI::dbExecute(
-            conn,
-            glue::glue(
-                "CREATE INDEX {index_name} ON {x_list$query_name} USING RTREE ({x_geom});"
-                )
-            )
-        }
-
-
-
-
+    # ## Create an rtree index on the x and y tables
+    # # https://duckdb.org/docs/stable/core_extensions/spatial/r-tree_indexes
+    # x_has_rtree <- has_rtree_index(conn, tbl_name = x_list$query_name)
+    # index_name <- paste0("idx_", x_list$query_name)
+    #
+    # if (isFALSE(x_has_rtree)) {
+    #     DBI::dbExecute(
+    #         conn,
+    #         glue::glue(
+    #             "CREATE INDEX {index_name} ON {x_list$query_name} USING RTREE ({x_geom});"
+    #             )
+    #         )
+    #     }
+    #
     # y_has_rtree <- has_rtree_index(conn, y_list$query_name)
     #
     # if(isFALSE(y_has_rtree)){
@@ -251,19 +248,19 @@ ddbs_join <- function(x,
 
 
 
-has_rtree_index <- function(conn,  tbl_name){
-
-    temp_df <- DBI::dbGetQuery(
-        conn,
-        glue::glue("
-            SELECT *
-            FROM duckdb_indexes()
-            WHERE table_name = '{tbl_name}';
-          ")
-    )
-
-    check <- grepl(" RTREE ", temp_df$sql)
-    check <- ifelse(isTRUE(check), TRUE, FALSE)
-    return(check)
-}
+# has_rtree_index <- function(conn,  tbl_name){
+#
+#     temp_df <- DBI::dbGetQuery(
+#         conn,
+#         glue::glue("
+#             SELECT *
+#             FROM duckdb_indexes()
+#             WHERE table_name = '{tbl_name}';
+#           ")
+#     )
+#
+#     check <- grepl(" RTREE ", temp_df$sql)
+#     check <- ifelse(isTRUE(check), TRUE, FALSE)
+#     return(check)
+# }
 
