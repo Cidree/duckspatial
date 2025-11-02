@@ -9,7 +9,7 @@ or creates a new table"><meta property="og:image" content="https://cidree.github
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0999</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,10 +43,10 @@ or creates a new table</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_join</span><span class="op">(</span></span>
-<span>  <span class="va">conn</span>,</span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">y</span>,</span>
 <span>  join <span class="op">=</span> <span class="st">"ST_Intersects"</span>,</span>
+<span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
@@ -59,17 +59,15 @@ or creates a new table</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>A connection object to a DuckDB database</p></dd>
-
-
-<dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>a table with geometry column within the DuckDB database. Data is returned
-from this object</p></dd>
+<dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
+<dd><p>An <code>sf</code> spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database <code>conn</code>.
+Data is returned from this object.</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>a table with geometry column within the DuckDB database</p></dd>
+<dd><p>An <code>sf</code> spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database <code>conn</code>.</p></dd>
 
 
 <dt id="arg-join">join<a class="anchor" aria-label="anchor" href="#arg-join"></a></dt>
@@ -77,21 +75,27 @@ from this object</p></dd>
 the details for other options.</p></dd>
 
 
+<dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
+<dd><p>A connection object to a DuckDB database. If <code>NULL</code>, the function
+runs on a temporary DuckDB database.</p></dd>
+
+
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>a character string of length one specifying the name of the table,
-or a character string of length two specifying the schema and table names. If it's
-NULL (the default), it will return the result as an <code>sf</code> object</p></dd>
+<dd><p>A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If it's <code>NULL</code> (the default), it will return the result as an
+<code>sf</code> object.</p></dd>
 
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
 <dd><p>The coordinates reference system of the data. Specify if the data
-doesn't have a <code>crs_column</code>, and you know the CRS</p></dd>
+doesn't have a <code>crs_column</code>, and you know the CRS.</p></dd>
 
 
 <dt id="arg-crs-column">crs_column<a class="anchor" aria-label="anchor" href="#arg-crs-column"></a></dt>
 <dd><p>a character string of length one specifying the column
 storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>).
-Set to <code>NULL</code> if absent</p></dd>
+Set to <code>NULL</code> if absent.</p></dd>
 
 
 <dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
@@ -130,33 +134,53 @@ most commonly used ones, taking two geometries a and b:</p><ul><li><p><code>"ST_
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co">## load packages</span></span></span>
+<span class="r-in"><span><span class="co"># load packages</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## database setup</span></span></span>
-<span class="r-in"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu">duckdb</span><span class="fu">::</span><span class="fu">dbConnect</span><span class="op">(</span><span class="fu">duckdb</span><span class="fu">::</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="ddbs_install.html">ddbs_install</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="ddbs_load.html">ddbs_load</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## read data</span></span></span>
+<span class="r-in"><span><span class="co"># read polygons data</span></span></span>
 <span class="r-in"><span><span class="va">countries_sf</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">argentina_sf</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/argentina.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">brazil_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">NAME_ENGL</span> <span class="op">==</span> <span class="st">"Brazil"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## store in duckdb</span></span></span>
+<span class="r-in"><span><span class="co"># create points data</span></span></span>
+<span class="r-in"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span></span></span>
+<span class="r-in"><span><span class="va">points_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n</span>,</span></span>
+<span class="r-in"><span>    x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">180</span>, max <span class="op">=</span> <span class="fl">180</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">90</span>, max <span class="op">=</span> <span class="fl">90</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># option 1: passing sf objects</span></span></span>
+<span class="r-in"><span><span class="va">output1</span> <span class="op">&lt;-</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu">ddbs_join</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    x <span class="op">=</span> <span class="va">points_sf</span>,</span></span>
+<span class="r-in"><span>    y <span class="op">=</span> <span class="va">countries_sf</span>,</span></span>
+<span class="r-in"><span>    join <span class="op">=</span> <span class="st">"ST_Within"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">output1</span><span class="op">[</span><span class="st">"CNTR_NAME"</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## option 2: passing the names of tables in a duckdb db</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># creates a duckdb</span></span></span>
+<span class="r-in"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># write sf to duckdb</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">points_sf</span>, <span class="st">"points"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, <span class="st">"countries"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">argentina_sf</span>, <span class="st">"argentina"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## spatial join: intersects</span></span></span>
-<span class="r-in"><span><span class="va">temp_1</span> <span class="op">&lt;-</span> <span class="fu">ddbs_join</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="va">conn</span>, x <span class="op">=</span> <span class="st">"countries"</span>,</span></span>
-<span class="r-in"><span>    y <span class="op">=</span> <span class="st">"argentina"</span>,</span></span>
-<span class="r-in"><span>    join <span class="op">=</span> <span class="st">"ST_Intersects"</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># spatial join</span></span></span>
+<span class="r-in"><span><span class="va">output2</span> <span class="op">&lt;-</span> <span class="fu">ddbs_join</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">conn</span>,</span></span>
+<span class="r-in"><span>    x <span class="op">=</span> <span class="st">"points"</span>,</span></span>
+<span class="r-in"><span>    y <span class="op">=</span> <span class="st">"countries"</span>,</span></span>
+<span class="r-in"><span>    join <span class="op">=</span> <span class="st">"ST_Within"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">temp_1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">output2</span><span class="op">[</span><span class="st">"CNTR_NAME"</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
@@ -166,7 +190,7 @@ most commonly used ones, taking two geometries a and b:</p><ul><li><p><code>"ST_
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>.</p>
+  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira.</p>
 </div>
 
 <div class="pkgdown-footer-right">
