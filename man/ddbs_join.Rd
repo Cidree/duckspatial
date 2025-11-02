@@ -5,10 +5,10 @@
 \title{Performs spatial joins of two geometries}
 \usage{
 ddbs_join(
-  conn,
   x,
   y,
   join = "ST_Intersects",
+  conn = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
@@ -17,26 +17,30 @@ ddbs_join(
 )
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database \code{conn}.
+Data is returned from this object.}
 
-\item{x}{a table with geometry column within the DuckDB database. Data is returned
-from this object}
-
-\item{y}{a table with geometry column within the DuckDB database}
+\item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database \code{conn}.}
 
 \item{join}{A geometry predicate function. Defaults to \code{"ST_Intersects"}. See
 the details for other options.}
 
-\item{name}{a character string of length one specifying the name of the table,
-or a character string of length two specifying the schema and table names. If it's
-NULL (the default), it will return the result as an \code{sf} object}
+\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
+runs on a temporary DuckDB database.}
+
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If it's \code{NULL} (the default), it will return the result as an
+\code{sf} object.}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS}
+doesn't have a \code{crs_column}, and you know the CRS.}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent}
+Set to \code{NULL} if absent.}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}

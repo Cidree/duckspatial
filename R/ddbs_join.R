@@ -3,15 +3,19 @@
 #' Performs spatial joins of two geometries, and returns a \code{sf} object
 #' or creates a new table
 #'
-#' @template conn
-#' @param x a table with geometry column within the DuckDB database. Data is returned
-#' from this object
-#' @param y a table with geometry column within the DuckDB database
+#' @param x An `sf` spatial object. Alternatively, it can be a string with the
+#'        name of a table with geometry column within the DuckDB database `conn`.
+#'        Data is returned from this object.
+#' @param y An `sf` spatial object. Alternatively, it can be a string with the
+#'        name of a table with geometry column within the DuckDB database `conn`.
 #' @param join A geometry predicate function. Defaults to `"ST_Intersects"`. See
 #'        the details for other options.
-#' @param name a character string of length one specifying the name of the table,
-#' or a character string of length two specifying the schema and table names. If it's
-#' NULL (the default), it will return the result as an \code{sf} object
+#' @param conn A connection object to a DuckDB database. If `NULL`, the function
+#'        runs on a temporary DuckDB database.
+#' @param name A character string of length one specifying the name of the table,
+#'        or a character string of length two specifying the schema and table
+#'        names. If it's `NULL` (the default), it will return the result as an
+#'        \code{sf} object.
 #' @template crs
 #' @template overwrite
 #' @template quiet
@@ -53,10 +57,10 @@
 #' head(temp_1)
 #'
 #' }
-ddbs_join <- function(conn,
-                      x,
+ddbs_join <- function(x,
                       y,
                       join = "ST_Intersects",
+                      conn = NULL,
                       name = NULL,
                       crs = NULL,
                       crs_column = "crs_duckspatial",
@@ -64,17 +68,42 @@ ddbs_join <- function(conn,
                       quiet = FALSE) {
 
     ## 1. check conn
-    dbConnCheck(conn)
+   is_duckdn_conn <- dbConnCheck(conn)
 
-    ## 2. get name of geometry column
-    ## get convient names for x and y
-    x_list <- get_query_name(x)
-    y_list <- get_query_name(y)
+   ## 2. prepares info for running the function on a temporary db
+   if (isFALSE(is_duckdn_conn)) {
+
+       # create conn
+       conn <- duckspatial::ddbs_create_conn()
+
+       # write tables
+       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+       duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE)
+
+       ## 2.1 get name of geometry column
+       ## get convenient names for x and y
+       x_list <- get_query_name("tbl_x")
+       y_list <- get_query_name("tbl_y")
+
+   }
+
+
+   # prepares info for running the function in an existing db
+   if (isTRUE(is_duckdn_conn)) {
+
+       ## 2. get name of geometry column
+        ## get convenient names for x and y
+        x_list <- get_query_name(x)
+        y_list <- get_query_name(y)
+
+        }
 
     ## get name
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+
     y_geom <- get_geom_name(conn, y_list$query_name)
+    y_rest <- get_geom_name(conn, y_list$query_name, rest = TRUE)
     if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
     if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
 
@@ -92,6 +121,9 @@ ddbs_join <- function(conn,
                 )
             )
         }
+
+
+
 
     # y_has_rtree <- has_rtree_index(conn, y_list$query_name)
     #
@@ -121,24 +153,27 @@ ddbs_join <- function(conn,
         }
 
 
+
+
         ## create query (no st_as_text)
         if (length(x_rest) == 0) {
             tmp.query <- glue::glue("
-            SELECT {paste0('v2.', x_rest, collapse = ', ')},
-                   ST_AsText(v1.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+            SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
+                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
+            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
             ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0('v1.', x_rest, collapse = ', ')},
-                   {paste0('v2.', x_rest, collapse = ', ')},
-                   ST_AsText(v1.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+            SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
+                   {paste0('tbl_y.', y_rest, collapse = ', ')},
+                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
+            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
 
         ")
         }
+
         ## execute intersection query
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
 
@@ -153,29 +188,21 @@ ddbs_join <- function(conn,
     ## 4. create the base query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT {paste0('v2.', x_rest, collapse = ', ')},
-                   ST_AsText(v1.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+            SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
+                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
+            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
         ")
 
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0('v1.', x_rest, collapse = ', ')},
-                   {paste0('v2.', x_rest, collapse = ', ')},
-                   ST_AsText(v1.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE {join}(v1.{x_geom}, v2.{y_geom})
+            SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
+                   {paste0('tbl_y.', y_rest, collapse = ', ')},
+                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
+            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
         ")
 
-        # tmp.query <- glue::glue("
-        #     SELECT {paste0('v1.', x_rest, collapse = ', ')},
-        #            {paste0('v2.', x_rest, collapse = ', ')},
-        #            ST_AsText(v1.{x_geom}) AS {x_geom}
-        #     FROM {x_list$query_name} v1
-        #     LEFT JOIN {y_list$query_name} v2
-        #         ON {join}(v1.{x_geom}, v2.{y_geom})
-        # ")
     }
 
     ## send the query
