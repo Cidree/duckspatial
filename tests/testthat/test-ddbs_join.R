@@ -47,7 +47,7 @@ testthat::test_that("expected behavior", {
 
     testthat::expect_true(is(output1 , 'sf'))
 
-    # option 2: passing the names of tables in a duckdb db
+    # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
     ddbs_write_vector(conn_test, points_sf, "points", overwrite = TRUE)
     ddbs_write_vector(conn_test, countries_sf, "countries", overwrite = TRUE)
@@ -61,6 +61,27 @@ testthat::test_that("expected behavior", {
     )
 
     testthat::expect_true(is(output2 , 'sf'))
+
+    # option 3: passing the names of tables in a duckdb db, creating new table in db
+    output3 <- ddbs_join(
+        conn_test,
+        x = "points",
+        y = "countries",
+        join = "ST_Within",
+        name = "test_result",
+        overwrite = TRUE
+    )
+
+    testthat::expect_true(output3)
+
+    output3 <- DBI::dbReadTable(conn_test, "test_result") |>
+        sf::st_as_sf(wkt = 'geometry')
+
+    testthat::expect_true(is(output3 , 'sf'))
+
+
+    ddbs_read_vector(conn_test, name = "test_result", crs = 4326)
+
 
 })
 
