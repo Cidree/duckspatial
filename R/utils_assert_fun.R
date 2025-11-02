@@ -29,7 +29,7 @@ assert_name <- function(name = parent.frame()$name) {
  }
 
 
-# whether the function takes sf of string
+# whether the function takes sf of string as xy input
 assert_connflict <- function(conn, xy, ref = "x") {
 
     is_duckdn_conn <- dbConnCheck(conn)
