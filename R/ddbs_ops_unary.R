@@ -6,10 +6,10 @@
 #' Calculates the buffer of geometries from a DuckDB table using the spatial extension.
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
-#' @template conn
 #' @param x a table with a geometry column within the DuckDB database
 #' @param distance a numeric value specifying the buffer distance. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
+#' @template conn_null
 #' @template name
 #' @template crs
 #' @template overwrite
@@ -39,25 +39,43 @@
 #' ## buffer
 #' ddbs_buffer(conn, "argentina", distance = 1)
 #' }
-ddbs_buffer <- function(conn,
-                        x,
+ddbs_buffer <- function(x,
                         distance,
+                        conn = NULL,
                         name = NULL,
                         crs = NULL,
                         crs_column = "crs_duckspatial",
                         overwrite = FALSE,
                         quiet = FALSE) {
+    
+    ## 0. Handle errors
+    assert_xy(x, "x")
+    assert_name(name)
+    assert_numeric(distance, "distance")
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
 
-    ## 1. check conn
-    dbConnCheck(conn)
+    # 1. manage connection to DB
+    ## 1.1. check if connection is provided
+    is_duckdb_conn <- dbConnCheck(conn)
+    ## 1.2. prepares info for running the function on a temporary db
+    if (isFALSE(is_duckdb_conn)) {
+
+       # create conn
+       conn <- duckspatial::ddbs_create_conn()
+
+       # write tables, and get convenient names for x
+       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+       x_list <- get_query_name("tbl_x")
+
+   } else {
+        x_list <- get_query_name(x)
+    }
 
     ## 2. get name of geometry column
-    ## get convient names
-    x_list <- get_query_name(x)
-    ## get name
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
-    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
+    assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -94,7 +112,8 @@ ddbs_buffer <- function(conn,
         return(invisible(TRUE))
     }
 
-    ## 4. create the base query
+    # 4. Get data frame
+    ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT ST_AsText(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
@@ -104,7 +123,7 @@ ddbs_buffer <- function(conn,
             SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
         ")
     }
-    ## send the query
+    ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
@@ -128,8 +147,8 @@ ddbs_buffer <- function(conn,
 #' Calculates the centroids of geometries from a DuckDB table using the spatial extension.
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
-#' @param conn a connection object to a DuckDB database
 #' @param x A table with a geometry column within the DuckDB database
+#' @template conn_null
 #' @template name
 #' @template crs
 #' @template overwrite
@@ -159,24 +178,42 @@ ddbs_buffer <- function(conn,
 #' ## centroid
 #' ddbs_centroid(conn, "argentina")
 #' }
-ddbs_centroid <- function(conn,
-                            x,
-                            name = NULL,
-                            crs = NULL,
-                            crs_column = "crs_duckspatial",
-                            overwrite = FALSE,
-                            quiet     = FALSE) {
+ddbs_centroid <- function(x,
+                        conn = NULL,
+                        name = NULL,
+                        crs = NULL,
+                        crs_column = "crs_duckspatial",
+                        overwrite = FALSE,
+                        quiet     = FALSE) {
 
-    ## 1. check conn
-    dbConnCheck(conn)
+    ## 0. Handle errors
+    assert_xy(x, "x")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+
+    # 1. manage connection to DB
+    ## 1.1. check if connection is provided
+    is_duckdb_conn <- dbConnCheck(conn)
+    ## 1.2. prepares info for running the function on a temporary db
+    if (isFALSE(is_duckdb_conn)) {
+
+       # create conn
+       conn <- duckspatial::ddbs_create_conn()
+
+       # write tables, and get convenient names for x
+       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+       x_list <- get_query_name("tbl_x")
+
+   } else {
+        x_list <- get_query_name(x)
+    }
+
 
     ## 2. get name of geometry column
-    ## get convient names
-    x_list <- get_query_name(x)
-    ## get name
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
-    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
+    assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -206,7 +243,8 @@ ddbs_centroid <- function(conn,
         return(invisible(TRUE))
     }
 
-    ## 4. create the base query
+    # 4. Get data frame
+    ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT ST_AsText(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
@@ -216,10 +254,9 @@ ddbs_centroid <- function(conn,
             SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
         ")
     }
-    ## send the query
+    ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF
     ## 5. convert to SF and return result
     data_sf <- convert_to_sf(
         data       = data_tbl,

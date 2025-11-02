@@ -5,17 +5,20 @@
 #'
 #' Filters data spatially based on a spatial predicate
 #'
-#' @template conn
 #' @param x A table with geometry column within the DuckDB database. Data is returned
 #' from this object
 #' @param y Y table with geometry column within the DuckDB database
 #' @template name
-#' @param predicate geometry predicate to use for filtering the data
+#' @template predicate
+#' @template conn_null
 #' @template crs
 #' @template overwrite
 #' @template quiet
 #'
 #' @returns An sf object or TRUE (invisibly) for table creation
+#' 
+#' @template spatial_join_predicates
+#' 
 #' @export
 #'
 #' @examples
@@ -41,47 +44,56 @@
 #' ## filter countries touching argentina
 #' ddbs_filter(conn, "countries", "argentina", predicate = "touches")
 #' }
-ddbs_filter <- function(conn,
-                        x,
+ddbs_filter <- function(x,
                         y,
+                        conn = NULL,
+                        predicate = "intersects",
                         name = NULL,
-                        predicate = "intersection",
                         crs = NULL,
                         crs_column = "crs_duckspatial",
                         overwrite = FALSE,
                         quiet = FALSE) {
+    
+    # 0. Handle errors
+    assert_xy(x, "x")
+    assert_xy(y, "y")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    assert_connflict(conn, xy = x, ref = "x")
+    assert_connflict(conn, xy = y, ref = "y")
 
-    ## 1. select predicate
-    sel_pred <- switch(predicate,
-           "intersection" = "ST_Intersects",
-           "touches"      = "ST_Touches",
-           "contains"     = "ST_Contains",
-           "within"       = "ST_Within",  ## TODO -> add distance argument
-           "disjoint"     = "ST_Disjoint",
-           "equals"       = "ST_Equals",
-           "overlaps"     = "ST_Overlaps",
-           "crosses"      = "ST_Crosses",
-           "intersects_extent" = "ST_Intersects_Extent",
-           cli::cli_abort(
-               "Predicate should be one of <intersection>, <touches>, <contains>,
-               <within>, <disjoin>, <equals>, <overlaps>, <crosses>, or <intersects_extent>")
-    )
+    # 1. Manage connection to DB
+    ## 1.1. check if connection is provided
+    is_duckdb_conn <- dbConnCheck(conn)
+    ## 1.2. prepares info for running the function on a temporary db
+    if (isFALSE(is_duckdb_conn)) {
+        
+        # create conn
+        conn <- duckspatial::ddbs_create_conn()
+        
+        # write tables, and get convenient names for x
+        duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+        duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE)
+        x_list <- get_query_name("tbl_x")
+        y_list <- get_query_name("tbl_y")
 
-    ## 2. get name of geometry column
-    ## get convient names for x and y
-    x_list <- get_query_name(x)
-    y_list <- get_query_name(y)
-    ## get name
+    } else {
+        x_list <- get_query_name(x)
+        y_list <- get_query_name(y)
+    }
+
+    # 2. Prepare params for query
+    ## 2.1. select predicate
+    sel_pred <- get_st_predicate(predicate)
+    ## 2.2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
     y_geom <- get_geom_name(conn, y_list$query_name)
-    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
-    if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
-
+    assert_geometry_column(x_geom, x_list)
+    assert_geometry_column(y_geom, y_list)
     ## error if crs_column not found
-    if (!is.null(crs_column))
-        if (!crs_column %in% x_rest)
-            cli::cli_abort("CRS column <{crs_column}> do not found in the table. If the data do not have CRS column, set the argument `crs_column = NULL`")
+    assert_crs_column(crs_column, x_rest)
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -114,8 +126,7 @@ ddbs_filter <- function(conn,
         return(invisible(TRUE))
     }
 
-    ## 4. get data frame
-    ## send the query
+    ## 4. Get data frame
     data_tbl <- DBI::dbGetQuery(
         conn, glue::glue("
             SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsText(v1.{x_geom}) AS {x_geom}

@@ -4,10 +4,10 @@
 #' Calculates the intersection of two geometries, and return a \code{sf} object
 #' or creates a new table
 #'
-#' @template conn
 #' @param x A table with geometry column within the DuckDB database. Data is returned
 #' from this object
 #' @param y A table with geometry column within the DuckDB database
+#' @template conn_null
 #' @template name
 #' @template crs
 #' @template overwrite
@@ -39,28 +39,50 @@
 #' ## intersection
 #' ddbs_intersection(conn, "countries", "argentina")
 #' }
-ddbs_intersection <- function(conn,
-                              x,
+ddbs_intersection <- function(x,
                               y,
+                              conn = NULL,
                               name = NULL,
                               crs = NULL,
                               crs_column = "crs_duckspatial",
                               overwrite = FALSE,
                               quiet = FALSE) {
+    
+    # 0. Handle errors
+    assert_xy(x, "x")
+    assert_xy(y, "y")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    assert_connflict(conn, xy = x, ref = "x")
+    assert_connflict(conn, xy = y, ref = "y")
 
-    ## 1. check conn
-    dbConnCheck(conn)
+    # 1. Manage connection to DB
+    ## 1.1. check if connection is provided
+    is_duckdb_conn <- dbConnCheck(conn)
+    ## 1.2. prepares info for running the function on a temporary db
+    if (isFALSE(is_duckdb_conn)) {
+        
+        # create conn
+        conn <- duckspatial::ddbs_create_conn()
+        
+        # write tables, and get convenient names for x
+        duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+        duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE)
+        x_list <- get_query_name("tbl_x")
+        y_list <- get_query_name("tbl_y")
+
+    } else {
+        x_list <- get_query_name(x)
+        y_list <- get_query_name(y)
+    }
 
     ## 2. get name of geometry column
-    ## get convient names for x and y
-    x_list <- get_query_name(x)
-    y_list <- get_query_name(y)
-    ## get name
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
     y_geom <- get_geom_name(conn, y_list$query_name)
-    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
-    if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
+    assert_geometry_column(x_geom, x_list)
+    assert_geometry_column(y_geom, y_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -101,7 +123,8 @@ ddbs_intersection <- function(conn,
         return(invisible(TRUE))
     }
 
-    ## 4. create the base query
+    # 4. Get data fram
+    ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT ST_AsText(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
@@ -115,7 +138,7 @@ ddbs_intersection <- function(conn,
             WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
     }
-    ## send the query
+    ## 4.2. retrieve results of the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
@@ -140,10 +163,10 @@ ddbs_intersection <- function(conn,
 #' Calculates the geometric difference of two geometries, and returns a \code{sf}
 #' object or creates a new table
 #'
-#' @template conn
 #' @param x A table with geometry column within the DuckDB database. Data is returned
 #' from this object
 #' @param y A table with geometry column within the DuckDB database
+#' @template conn_null
 #' @template name
 #' @template crs
 #' @template overwrite
@@ -175,28 +198,50 @@ ddbs_intersection <- function(conn,
 #' ## diffrence
 #' ddbs_difference(conn, "countries", "argentina")
 #' }
-ddbs_difference <- function(conn,
-                            x,
+ddbs_difference <- function(x,
                             y,
+                            conn = NULL,
                             name = NULL,
                             crs = NULL,
                             crs_column = "crs_duckspatial",
                             overwrite = FALSE,
                             quiet = FALSE) {
 
-    ## 1. check conn
-    dbConnCheck(conn)
+    # 0. Handle errors
+    assert_xy(x, "x")
+    assert_xy(y, "y")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    assert_connflict(conn, xy = x, ref = "x")
+    assert_connflict(conn, xy = y, ref = "y")
 
-    ## 2. get name of geometry column
-    ## get convient names for x and y
-    x_list <- get_query_name(x)
-    y_list <- get_query_name(y)
-    ## get name
+    # 1. Manage connection to DB
+    ## 1.1. check if connection is provided
+    is_duckdb_conn <- dbConnCheck(conn)
+    ## 1.2. prepares info for running the function on a temporary db
+    if (isFALSE(is_duckdb_conn)) {
+        
+        # create conn
+        conn <- duckspatial::ddbs_create_conn()
+        
+        # write tables, and get convenient names for x
+        duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+        duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE)
+        x_list <- get_query_name("tbl_x")
+        y_list <- get_query_name("tbl_y")
+
+    } else {
+        x_list <- get_query_name(x)
+        y_list <- get_query_name(y)
+    }
+
+    # 2. Prepare params for query
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
     y_geom <- get_geom_name(conn, y_list$query_name)
-    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
-    if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
+    assert_geometry_column(x_geom, x_list)
+    assert_geometry_column(y_geom, y_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -248,7 +293,8 @@ ddbs_difference <- function(conn,
         return(invisible(TRUE))
     }
 
-    ## 4. create the base query
+    # 4. Get data frame
+    ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT ST_AsText(ST_Difference(
@@ -266,10 +312,10 @@ ddbs_difference <- function(conn,
             FROM {x_list$query_name} v1, {y_list$query_name} v2
         ")
     }
-    ## send the query
+    ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF  
+    ## 5. convert to SF
     data_sf <- convert_to_sf(
         data       = data_tbl,
         crs        = crs,

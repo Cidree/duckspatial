@@ -7,7 +7,7 @@ assert_logic <- function(arg, ref = "quiet") {
             .frame = parent.frame()
             )
         }
-    }
+}
 
 
 assert_xy <- function(xy, ref = "x") {
@@ -28,6 +28,16 @@ assert_name <- function(name = parent.frame()$name) {
                        )
  }
 
+assert_numeric <- function(arg, ref) {
+    
+    if (!is.numeric(arg) || length(arg) != 1) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single numeric value.",
+            .frame = parent.frame()
+        )
+    }
+}
+
 
 # whether the function takes sf of string as xy input
 assert_connflict <- function(conn, xy, ref = "x") {
@@ -43,3 +53,17 @@ assert_connflict <- function(conn, xy, ref = "x") {
     }
 }
 
+
+assert_geometry_column <- function(geom, name_list) {
+    if (length(geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{name_list$query_name}>.")
+}
+
+
+
+## assert crs_column (needed for ddbs_filter)
+assert_crs_column <- function(crs_column, cols) {
+    if (!is.null(crs_column))
+        if (!crs_column %in% cols)
+            cli::cli_abort("CRS column <{crs_column}> do not found in the table. If the data do not have CRS column, set the argument `crs_column = NULL`")
+
+}

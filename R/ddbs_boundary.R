@@ -3,8 +3,8 @@
 #' Returns the boundary of geometries from a DuckDB table using the spatial extension.
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
-#' @template conn
 #' @param x a table with a geometry column within the DuckDB database
+#' @template conn_null
 #' @template name
 #' @template crs
 #' @template overwrite
@@ -34,24 +34,42 @@
 #' ## boundary
 #' b <- ddbs_boundary(conn, "argentina")
 #' }
-ddbs_boundary <- function(conn,
-                          x,
-                          name = NULL,
-                          crs = NULL,
-                          crs_column = "crs_duckspatial",
-                          overwrite = FALSE,
-                          quiet = FALSE) {
+ddbs_boundary <- function(x,
+                        conn = NULL,
+                        name = NULL,
+                        crs = NULL,
+                        crs_column = "crs_duckspatial",
+                        overwrite = FALSE,
+                        quiet = FALSE) {
 
-    ## 1. check conn
-    dbConnCheck(conn)
+    ## 0. Handle errors
+    assert_xy(x, "x")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+
+    # 1. manage connection to DB
+    ## 1.1. check if connection is provided
+    is_duckdb_conn <- dbConnCheck(conn)
+    ## 1.2. prepares info for running the function on a temporary db
+    if (isFALSE(is_duckdb_conn)) {
+
+       # create conn
+       conn <- duckspatial::ddbs_create_conn()
+
+       # write tables, and get convenient names for x
+       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+       x_list <- get_query_name("tbl_x")
+
+   } else {
+        x_list <- get_query_name(x)
+    }
+
 
     ## 2. get name of geometry column
-    ## get convient names
-    x_list <- get_query_name(x)
-    ## get name
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
-    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
+    assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {

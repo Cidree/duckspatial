@@ -85,3 +85,32 @@ convert_to_sf <- function(data, crs, crs_column, x_geom) {
     }
 
 }
+
+
+
+
+
+#' Gets predicate name
+#'
+#' Gets a full predicate name from the shorter version
+#'
+#' @template predicate
+#'
+#' @keywords internal
+#' @returns character
+get_st_predicate <- function(predicate) {
+    switch(predicate,
+           "intersects"   = "ST_Intersects",
+           "touches"      = "ST_Touches",
+           "contains"     = "ST_Contains",
+           "within"       = "ST_Within",  ## TODO -> add distance argument
+           "disjoint"     = "ST_Disjoint",
+           "equals"       = "ST_Equals",
+           "overlaps"     = "ST_Overlaps",
+           "crosses"      = "ST_Crosses",
+           "intersects_extent" = "ST_Intersects_Extent",
+           cli::cli_abort(
+               "Predicate should be one of <intersects>, <touches>, <contains>,
+               <within>, <disjoin>, <equals>, <overlaps>, <crosses>, or <intersects_extent>")
+    )
+}

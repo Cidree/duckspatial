@@ -5,8 +5,8 @@
 \title{Returns the boundary of geometries}
 \usage{
 ddbs_boundary(
-  conn,
   x,
+  conn = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
@@ -15,9 +15,10 @@ ddbs_boundary(
 )
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
-
 \item{x}{a table with a geometry column within the DuckDB database}
+
+\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
+runs on a temporary DuckDB database.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table

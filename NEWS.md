@@ -1,5 +1,11 @@
 # duckspatial 0.2.0999 dev
 
+## MAJOR CHANGES
+
+* `conn` argument defaults now to NULL. This parameter is not mandatory anymore in spatial operations, and it will be handled internally. The argument has been moved after `x` and `y` arguments.
+
+* `ddbs_filter()`: uses `intersects` for `ST_Intersects` instead of `intersection`.
+
 ## NEW FEATURES
 
 * `ddbs_boundary()`: returns the boundary of geometries.
@@ -8,7 +14,7 @@
 
 * `ddbs_drivers()`: get list of GDAL drivers and file formats supported by DuckDB spatial extension.
 
-*`ddbs_join()`: new function to perform spatial join operations.
+* `ddbs_join()`: new function to perform spatial join operations.
 
 ## MINOR CHANGES
 

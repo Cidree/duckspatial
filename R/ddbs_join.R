@@ -10,8 +10,7 @@
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @param join A geometry predicate function. Defaults to `"ST_Intersects"`. See
 #'        the details for other options.
-#' @param conn A connection object to a DuckDB database. If `NULL`, the function
-#'        runs on a temporary DuckDB database.
+#' @template conn_null
 #' @param name A character string of length one specifying the name of the table,
 #'        or a character string of length two specifying the schema and table
 #'        names. If it's `NULL` (the default), it will return the result as an
@@ -125,7 +124,7 @@ ddbs_join <- function(x,
         x_list <- get_query_name(x)
         y_list <- get_query_name(y)
 
-        }
+    }
 
     ## get name
     x_geom <- get_geom_name(conn, x_list$query_name)
