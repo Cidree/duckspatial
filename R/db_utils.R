@@ -220,36 +220,39 @@ ddbs_glimpse <- function(conn,
 #'
 ddbs_create_conn <- function(dbdir = "tempdir"){
 
-        # check input
-        checkmate::assert_string(dbdir, pattern = "tempdir|memory")
-
+    # 0. Handle errors
     if (!dbdir %in% c("tempdir","memory")) {
             cli::cli_abort("dbdir should be one of <'tempdir'>, <'memory'>")
         }
 
 
-        # this creates a local database which allows DuckDB to
-        # perform **larger-than-memory** workloads
-        if(dbdir == 'tempdir'){
+    # this creates a local database which allows DuckDB to
+    # perform **larger-than-memory** workloads
+    if(dbdir == 'tempdir'){
 
-            db_path <- tempfile(pattern = 'duckspatial', fileext = '.duckdb')
-            conn <- duckdb::dbConnect(
-                duckdb::duckdb( bigint = "integer64" ),
-                dbdir= db_path
-                )
-            }
-
-        if(dbdir == 'memory'){
-
-            conn <- duckdb::dbConnect(
-                duckdb::duckdb( bigint = "integer64" ),
-                dbdir= ":memory:"
-                )
+        db_path <- tempfile(pattern = 'duckspatial', fileext = '.duckdb')
+        conn <- duckdb::dbConnect(
+             duckdb::duckdb(
+                 dbdir = db_path
+                 #, bigint = "integer64" ## in case the data includes big int
+                 )
+            )
         }
+
+    if(dbdir == 'memory'){
+
+        conn <- duckdb::dbConnect(
+            duckdb::duckdb(
+                dbdir = ":memory:"
+                #, bigint = "integer64" ## in case the data includes big int
+                )
+            )
+    }
 
     # Checks and installs the Spatial extension
     duckspatial::ddbs_install(conn, quiet = TRUE)
     duckspatial::ddbs_load(conn, quiet = TRUE)
+
 
         # # Set Number of cores for parallel operation
         # if (is.null(n_cores)) {
