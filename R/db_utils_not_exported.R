@@ -14,7 +14,7 @@ dbConnCheck <- function(conn) {
     } else if (is.null(conn)) { return(invisible(FALSE))
 
     } else {
-            cli::cli_abort("'conn' must be connection object: <duckdb_connection> from `duckdb`")
+        cli::cli_abort("'conn' must be connection object: <duckdb_connection> from `duckdb`")
     }
 }
 

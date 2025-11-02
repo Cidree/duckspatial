@@ -20,11 +20,11 @@ or a character string of length two specifying the schema and table
 names.}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS}
+doesn't have a \code{crs_column}, and you know the CRS.}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent}
+Set to \code{NULL} if absent.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}

@@ -10,11 +10,11 @@ convert_to_sf(data, crs, crs_column, x_geom)
 \item{data}{a tibble or data frame}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS}
+doesn't have a \code{crs_column}, and you know the CRS.}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent}
+Set to \code{NULL} if absent.}
 
 \item{x_geom}{name of geometry}
 }
