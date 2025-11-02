@@ -2,8 +2,13 @@
 
 ## NEW FEATURES
 
+* `ddbs_boundary()`: returns the boundary of geometries.
+
+* `ddbs_create_conn()`: new convinient function to create a duckdb connection.
+
+* `ddbs_drivers()`: get list of GDAL drivers and file formats supported by DuckDB spatial extension.
+
 *`ddbs_join()`: new function to perform spatial join operations.
-*`ddbs_create_conn()`: new convinient function to create a duckdb connection.
 
 ## MINOR CHANGES
 
