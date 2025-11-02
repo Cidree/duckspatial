@@ -3,6 +3,7 @@
 export(ddbs_boundary)
 export(ddbs_buffer)
 export(ddbs_centroid)
+export(ddbs_create_conn)
 export(ddbs_create_schema)
 export(ddbs_crs)
 export(ddbs_difference)

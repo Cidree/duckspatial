@@ -22,11 +22,11 @@ names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS}
+doesn't have a \code{crs_column}, and you know the CRS.}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent}
+Set to \code{NULL} if absent.}
 
 \item{clauses}{character, additional SQL code to modify the query from the
 table (e.g. "WHERE ...", "ORDER BY...")}

@@ -201,6 +201,76 @@ ddbs_glimpse <- function(conn,
 
 
 
+#' Create a duckdb connection
+#'
+#' @param dbdir String. Either `"tempdir"` or `"memory"`. Defaults to `"tempdir"`.
+#'
+#' @returns A `duckdb_connection`
+#' @export
+#'
+#' @examplesIf interactive()
+#' # load packages
+#' library(duckspatial)
+#'
+#' # create a duckdb database in disk
+#' conn <- ddbs_create_conn(dbdir = "tempdir")
+#'
+#' # create a duckdb database in memory
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+ddbs_create_conn <- function(dbdir = "tempdir"){
+
+    # 0. Handle errors
+    if (!dbdir %in% c("tempdir","memory")) {
+            cli::cli_abort("dbdir should be one of <'tempdir'>, <'memory'>")
+        }
+
+
+    # this creates a local database which allows DuckDB to
+    # perform **larger-than-memory** workloads
+    if(dbdir == 'tempdir'){
+
+        db_path <- tempfile(pattern = 'duckspatial', fileext = '.duckdb')
+        conn <- duckdb::dbConnect(
+             duckdb::duckdb(
+                 dbdir = db_path
+                 #, bigint = "integer64" ## in case the data includes big int
+                 )
+            )
+        }
+
+    if(dbdir == 'memory'){
+
+        conn <- duckdb::dbConnect(
+            duckdb::duckdb(
+                dbdir = ":memory:"
+                #, bigint = "integer64" ## in case the data includes big int
+                )
+            )
+    }
+
+    # Checks and installs the Spatial extension
+    duckspatial::ddbs_install(conn, quiet = TRUE)
+    duckspatial::ddbs_load(conn, quiet = TRUE)
+
+
+        # # Set Number of cores for parallel operation
+        # if (is.null(n_cores)) {
+        #     n_cores <- parallel::detectCores()
+        #     n_cores <- n_cores - 1
+        #     if (n_cores<1) {n_cores <- 1}
+        # }
+        #
+        # DBI::dbExecute(con, sprintf("SET threads = %s;", n_cores))
+
+        # Set Memory limit
+        # DBI::dbExecute(con, "SET memory_limit = '8GB'")
+
+        # DBI::dbExecute(con, "INSTALL arrow FROM community; LOAD arrow;")
+        # DBI::dbExecute(con, "LOAD arrow;")
+
+        return(conn)
+    }
 
 
 
@@ -222,7 +292,7 @@ ddbs_glimpse <- function(conn,
 #' conn <- dbConnect(duckdb())
 #' ddbs_install(conn)
 #' ddbs_load(conn)
-#' 
+#'
 #' ## check drivers
 #' ddbs_drivers(conn)
 ddbs_drivers <- function(conn) {

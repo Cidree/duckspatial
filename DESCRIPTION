@@ -1,22 +1,31 @@
-Package: duckspatial
 Type: Package
+Package: duckspatial
 Title: R Interface to 'DuckDB' Database with Spatial Extension
-Version: 0.2.0
-Authors@R: person("Adrián", "Cidre González", email = "adrian.cidre@gmail.com", role = c("aut", "cre"))
-Description: Provides an interface between R and the 'DuckDB' (see <https://duckdb.org>) database with spatial extensions. It supports reading, writing, and performing some geometric operations.
+Version: 0.2.0999
+Authors@R: c(
+    person("Adrián", "Cidre González", email = "adrian.cidre@gmail.com", role = c("aut", "cre")),
+    person("Rafael H. M.", "Pereira", , "rafa.pereira.br@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0003-2125-7465"))
+           )
+Description: Provides an interface between R and the 'DuckDB' (see <https://duckdb.org>) 
+             database with spatial extensions. It supports reading, writing, and 
+             performing some geometric operations.
+URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
+BugReports: https://github.com/Cidree/duckspatial/issues
 License: GPL (>= 3)
-Encoding: UTF-8
-LazyData: true
 Depends:
     R (>= 4.1.0)
 Imports: 
     cli,
+    duckdb,
     DBI,
     glue,
     sf
+Suggests: 
+    dplyr,
+    testthat (>= 3.0.0)
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
-Suggests: 
-    duckdb
-URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
-BugReports: https://github.com/Cidree/duckspatial/issues
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true

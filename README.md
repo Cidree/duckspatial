@@ -18,6 +18,7 @@ state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Last Month
 Downloads](https://cranlogs.r-pkg.org/badges/last-month/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial)
+[![check](https://github.com/Cidree/duckspatial/workflows/check/badge.svg)](https://github.com/Cidree/duckspatial/actions)
 <!-- badges: end -->
 
 **duckspatial** is an R package that simplifies the process of reading
@@ -29,7 +30,13 @@ data ecosystem.
 
 ## Installation
 
-You can install the development version of duckspatial from
+You can install duckspatial directly from CRAN with:
+
+``` r
+install.packages("duckspatial")
+```
+
+Or you can install the development version from
 [GitHub](https://github.com/) with:
 
 ``` r
@@ -47,7 +54,7 @@ library(duckdb)
 #> Loading required package: DBI
 library(duckspatial)
 library(sf)
-#> Linking to GEOS 3.13.1, GDAL 3.11.0, PROJ 9.6.0; sf_use_s2() is TRUE
+#> Linking to GEOS 3.13.0, GDAL 3.10.1, PROJ 9.5.1; sf_use_s2() is TRUE
 ```
 
 First, we create a connection with a DuckDB database (in this case in
@@ -93,15 +100,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 4 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -115.4635 ymin: -71.18817 xmax: 111.539 ymax: 85.84148
+#> Bounding box:  xmin: -103.4278 ymin: -77.84912 xmax: 174.5105 ymax: 78.06705
 #> Geodetic CRS:  WGS 84
-#>   id      a       b         c                    geometry
-#> 1  1 885810 tohjzsg eqatwiicz  POINT (47.98161 -71.18817)
-#> 2  2 226987 fadqruo xuxlgpjsu POINT (-115.4635 -51.29217)
-#> 3  3 651225 zsegfdh cplfshwwa  POINT (-36.80553 85.84148)
-#> 4  4 124181 fadqruo yfcockqvq POINT (-5.879732 -35.01169)
-#> 5  5 425637 oxmxllm cplfshwwa     POINT (111.539 56.5298)
-#> 6  6 373048 oxmxllm dqawapryg    POINT (37.39019 76.1379)
+#>   id      a       b         c                   geometry
+#> 1  1 606389 fdpqjuf jidixdnav  POINT (174.5105 -24.7815)
+#> 2  2 939676 vasjjuo xqeimufhi POINT (13.81659 -77.84912)
+#> 3  3 185581 gmzutwz lnppvwcsu POINT (-103.4278 78.06705)
+#> 4  4 479849 fdpqjuf xqeimufhi   POINT (151.779 74.97166)
+#> 5  5 289697 hecnvwr fmkexxkdl POINT (155.8306 -70.14185)
+#> 6  6 127492 hecnvwr bujybgkdp POINT (-41.31083 48.05544)
 ```
 
 Now we can insert the data into the database using the
@@ -120,7 +127,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   11.19
+#>      15
 ```
 
 ``` r
@@ -134,10 +141,10 @@ end_time <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>  119.15
+#>  221.88
 ```
 
-In this case, we can see that DuckDB was 10.6 times faster. Now we will
+In this case, we can see that DuckDB was 14.8 times faster. Now we will
 do the same exercise but reading the data back into R:
 
 ``` r
@@ -151,7 +158,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>   74.36
+#>    54.3
 ```
 
 ``` r
@@ -164,7 +171,7 @@ end_time       <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>   81.45
+#>   53.63
 ```
 
 For reading, we got similar results. Finally, don’t forget to disconnect
