@@ -223,6 +223,10 @@ ddbs_create_conn <- function(dbdir = "tempdir"){
         # check input
         checkmate::assert_string(dbdir, pattern = "tempdir|memory")
 
+    if (!dbdir %in% c("tempdir","memory")) {
+            cli::cli_abort("dbdir should be one of <'tempdir'>, <'memory'>")
+        }
+
 
         # this creates a local database which allows DuckDB to
         # perform **larger-than-memory** workloads
