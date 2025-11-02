@@ -28,33 +28,53 @@
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' # load packages
 #' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## database setup
-#' conn <- duckdb::dbConnect(duckdb::duckdb())
-#' ddbs_install(conn)
-#' ddbs_load(conn)
-#'
-#' ## read data
+#' # read polygons data
 #' countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#' argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#' brazil_sf <- subset(countries_sf, NAME_ENGL == "Brazil")
 #'
-#' ## store in duckdb
+#' # create points data
+#' n <- 100
+#' points_sf <- data.frame(
+#'     id = 1:n,
+#'     x = runif(n, min = -180, max = 180),
+#'     y = runif(n, min = -90, max = 90)
+#' ) |>
+#'     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+#'
+#'
+#'
+#' # option 1: passing sf objects
+#' output1 <- duckspatial::ddbs_join(
+#'     x = points_sf,
+#'     y = countries_sf,
+#'     join = "ST_Within"
+#' )
+#'
+#' plot(output1["CNTR_NAME"])
+#'
+#'
+#' ## option 2: passing the names of tables in a duckdb db
+#'
+#' # creates a duckdb
+#' conn <- duckspatial::ddbs_create_conn()
+#'
+#' # write sf to duckdb
+#' ddbs_write_vector(conn, points_sf, "points", overwrite = TRUE)
 #' ddbs_write_vector(conn, countries_sf, "countries", overwrite = TRUE)
-#' ddbs_write_vector(conn, argentina_sf, "argentina", overwrite = TRUE)
 #'
-#' ## spatial join: intersects
-#' temp_1 <- ddbs_join(
-#'     conn, x = "countries",
-#'     y = "argentina",
-#'     join = "ST_Intersects"
-#'     )
+#' # spatial join
+#' output2 <- ddbs_join(
+#'     conn,
+#'     x = "points",
+#'     y = "countries",
+#'     join = "ST_Within"
+#' )
 #'
-#' head(temp_1)
+#' plot(output2["CNTR_NAME"])
 #'
 #' }
 ddbs_join <- function(x,
@@ -67,11 +87,20 @@ ddbs_join <- function(x,
                       overwrite = FALSE,
                       quiet = FALSE) {
 
+    # 0. Handle errors
+    assert_xy(x, "x")
+    assert_xy(y, "y")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    assert_connflict(conn, xy = x, ref = "x")
+    assert_connflict(conn, xy = y, ref = "y")
+
     ## 1. check conn
-   is_duckdn_conn <- dbConnCheck(conn)
+   is_duckdb_conn <- dbConnCheck(conn)
 
    ## 2. prepares info for running the function on a temporary db
-   if (isFALSE(is_duckdn_conn)) {
+   if (isFALSE(is_duckdb_conn)) {
 
        # create conn
        conn <- duckspatial::ddbs_create_conn()
@@ -89,7 +118,7 @@ ddbs_join <- function(x,
 
 
    # prepares info for running the function in an existing db
-   if (isTRUE(is_duckdn_conn)) {
+   if (isTRUE(is_duckdb_conn)) {
 
        ## 2. get name of geometry column
         ## get convenient names for x and y
