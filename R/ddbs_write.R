@@ -19,12 +19,8 @@
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## connect to in memory database
-#' conn <- dbConnect(duckdb::duckdb())
-#'
-#' ## install the spatial exntesion
-#' ddbs_install(conn)
-#' ddbs_load(conn)
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## create random points
 #' random_points <- data.frame(

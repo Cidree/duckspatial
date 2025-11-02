@@ -4,10 +4,10 @@
 \alias{ddbs_create_conn}
 \title{Create a duckdb connection}
 \usage{
-ddbs_create_conn(dbdir = "tempdir")
+ddbs_create_conn(dbdir = "memory")
 }
 \arguments{
-\item{dbdir}{String. Either \code{"tempdir"} or \code{"memory"}. Defaults to \code{"tempdir"}.}
+\item{dbdir}{String. Either \code{"tempdir"} or \code{"memory"}. Defaults to \code{"memory"}.}
 }
 \value{
 A \code{duckdb_connection}
@@ -20,10 +20,10 @@ Create a duckdb connection
 # load packages
 library(duckspatial)
 
-# create a duckdb database in disk
-conn <- ddbs_create_conn(dbdir = "tempdir")
-
-# create a duckdb database in memory
+# create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
+
+# create a duckdb database in disk  (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "tempdir")
 \dontshow{\}) # examplesIf}
 }

@@ -15,13 +15,13 @@
 #' library(duckdb)
 #' library(duckspatial)
 #'
-#' ## connect to in memory database
+#' # connect to in memory database
 #' conn <- dbConnect(duckdb::duckdb())
 #'
-#' ## install the spatial exntesion
+#' # install the spatial extension
 #' ddbs_install(conn)
 #'
-#' ## disconnect from db
+#' # disconnect from db
 #' dbDisconnect(conn)
 ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 

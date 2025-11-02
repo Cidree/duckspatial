@@ -72,10 +72,8 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## database setup
-#' conn <- dbConnect(duckdb())
-#' ddbs_install(conn)
-#' ddbs_load(conn)
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -203,7 +201,7 @@ ddbs_glimpse <- function(conn,
 
 #' Create a duckdb connection
 #'
-#' @param dbdir String. Either `"tempdir"` or `"memory"`. Defaults to `"tempdir"`.
+#' @param dbdir String. Either `"tempdir"` or `"memory"`. Defaults to `"memory"`.
 #'
 #' @returns A `duckdb_connection`
 #' @export
@@ -212,13 +210,13 @@ ddbs_glimpse <- function(conn,
 #' # load packages
 #' library(duckspatial)
 #'
-#' # create a duckdb database in disk
-#' conn <- ddbs_create_conn(dbdir = "tempdir")
-#'
-#' # create a duckdb database in memory
+#' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
-ddbs_create_conn <- function(dbdir = "tempdir"){
+#' # create a duckdb database in disk  (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "tempdir")
+#'
+ddbs_create_conn <- function(dbdir = "memory"){
 
     # 0. Handle errors
     if (!dbdir %in% c("tempdir","memory")) {

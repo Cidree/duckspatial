@@ -23,13 +23,19 @@ assert_xy <- function(xy, ref = "x") {
 assert_name <- function(name = parent.frame()$name) {
 
     if (!any(is.character(name) | is.null(name)))
-        cli::cli_abort("'name' must be a string character",
+        cli::cli_abort("'name' must be a string character.",
+                       .frame = parent.frame()
+        )
+
+    if (length(name) != 1)
+        cli::cli_abort("'name' must be a string character of length one",
                        .frame = parent.frame()
                        )
+
  }
 
 assert_numeric <- function(arg, ref) {
-    
+
     if (!is.numeric(arg) || length(arg) != 1) {
         cli::cli_abort(
             "{.arg {ref}} must be a single numeric value.",

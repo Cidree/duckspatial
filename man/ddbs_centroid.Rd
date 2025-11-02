@@ -52,10 +52,8 @@ library(duckdb)
 library(duckspatial)
 library(sf)
 
-## database setup
-conn <- dbConnect(duckdb())
-ddbs_install(conn)
-ddbs_load(conn)
+# create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))

@@ -53,7 +53,7 @@ an sf object or TRUE (invisibly) for table creation
 }
 \description{
 Performs spatial joins of two geometries, and returns a \code{sf} object
-or creates a new table
+or creates a new table in a DuckDB database.
 }
 \details{
 Spatial Join Predicates:

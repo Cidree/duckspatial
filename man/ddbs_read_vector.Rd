@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_read.R
 \name{ddbs_read_vector}
 \alias{ddbs_read_vector}
-\title{Load vectorial data from DuckDB into R}
+\title{Load spatial vector data from DuckDB into R}
 \usage{
 ddbs_read_vector(
   conn,
@@ -48,12 +48,8 @@ library(duckdb)
 library(duckspatial)
 library(sf)
 
-## connect to in memory database
-conn <- dbConnect(duckdb::duckdb())
-
-## install the spatial exntesion
-ddbs_install(conn)
-ddbs_load(conn)
+# create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
 
 ## create random points
 random_points <- data.frame(

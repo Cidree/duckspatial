@@ -1,7 +1,7 @@
 #' Performs spatial joins of two geometries
 #'
 #' Performs spatial joins of two geometries, and returns a \code{sf} object
-#' or creates a new table
+#' or creates a new table in a DuckDB database.
 #'
 #' @param x An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
