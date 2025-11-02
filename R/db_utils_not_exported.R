@@ -10,8 +10,11 @@
 dbConnCheck <- function(conn) {
     if (inherits(conn, "duckdb_connection")) {
         return(invisible(TRUE))
+
+    } else if (is.null(conn)) { return(invisible(FALSE))
+
     } else {
-        cli::cli_abort("'conn' must be connection object: <duckdb_connection> from `duckdb`")
+            cli::cli_abort("'conn' must be connection object: <duckdb_connection> from `duckdb`")
     }
 }
 
@@ -56,7 +59,7 @@ get_query_name <- function(name) {
 
 
 #' Converts from data frame to sf
-#' 
+#'
 #' Converts a table that has been read from DuckDB into an sf object
 #'
 #' @param data a tibble or data frame
