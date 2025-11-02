@@ -22,15 +22,17 @@ assert_xy <- function(xy, ref = "x") {
 
 assert_name <- function(name = parent.frame()$name) {
 
-    if (!any(is.character(name) | is.null(name)))
+    if (!any(is.character(name) | is.null(name))) {
         cli::cli_abort("'name' must be a string character.",
                        .frame = parent.frame()
-        )
+                       )
+        }
 
-    if (length(name) != 1)
+    if (length(name) > 1) {
         cli::cli_abort("'name' must be a string character of length one",
                        .frame = parent.frame()
                        )
+        }
 
  }
 
