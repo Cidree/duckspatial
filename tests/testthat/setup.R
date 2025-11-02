@@ -1,8 +1,7 @@
+# skip tests on CRAN because they take too much time
+skip_if(Sys.getenv("TEST_ONE") != "")
 testthat::skip_on_cran()
-
-options(java.parameters = "-Xmx2G")
-
-if (Sys.getenv("NOT_CRAN") != "false") {
+testthat::skip_if_not_installed("duckdb")
 
     # read polygons data
     countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -19,4 +18,4 @@ if (Sys.getenv("NOT_CRAN") != "false") {
         sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 
 
-}
+
