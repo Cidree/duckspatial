@@ -10,7 +10,7 @@
 
 * `ddbs_boundary()`: returns the boundary of geometries.
 
-* `ddbs_create_conn()`: new convinient function to create a duckdb connection.
+* `ddbs_create_conn()`: new convenient function to create a DuckDB connection.
 
 * `ddbs_drivers()`: get list of GDAL drivers and file formats supported by DuckDB spatial extension.
 
@@ -18,7 +18,7 @@
 
 ## MINOR CHANGES
 
-* All functions now have a parameter `quiet` that allows users to supress informational messages. Closed [#3](https://github.com/Cidree/duckspatial/issues/3)
+* All functions now have a parameter `quiet` that allows users to suppress informational messages. Closed [#3](https://github.com/Cidree/duckspatial/issues/3)
 
 
 # duckspatial 0.2.0
