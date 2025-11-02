@@ -247,6 +247,10 @@ ddbs_create_conn <- function(dbdir = "tempdir"){
                 )
         }
 
+    # Checks and installs the Spatial extension
+    duckspatial::ddbs_install(conn)
+    duckspatial::ddbs_load(conn)
+
         # # Set Number of cores for parallel operation
         # if (is.null(n_cores)) {
         #     n_cores <- parallel::detectCores()
