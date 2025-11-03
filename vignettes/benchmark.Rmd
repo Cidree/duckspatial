@@ -99,7 +99,7 @@ points, {duckspatial} was `r time_diff`% faster and used `r memo_diff` times les
 memory than {sf}. Not bad.
 
 
-```{r, include=FALSE}
+```{r, echo=FALSE}
 # calculate difference in performance
 temp <- df_bench |> 
     filter(n == 10e6)
