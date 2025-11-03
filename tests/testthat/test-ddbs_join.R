@@ -53,7 +53,7 @@ testthat::test_that("expected behavior", {
     ddbs_write_vector(conn_test, countries_sf, "countries", overwrite = TRUE)
 
     # spatial join
-    output2 <- ddbs_join(
+    output2 <- tester(
         conn_test,
         x = "points",
         y = "countries",
@@ -63,7 +63,7 @@ testthat::test_that("expected behavior", {
     testthat::expect_true(is(output2 , 'sf'))
 
     # option 3: passing the names of tables in a duckdb db, creating new table in db
-    output3 <- ddbs_join(
+    output3 <- tester(
         conn_test,
         x = "points",
         y = "countries",

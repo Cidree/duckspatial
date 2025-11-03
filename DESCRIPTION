@@ -22,8 +22,13 @@ Imports:
     glue,
     sf
 Suggests: 
+    bench,
     dplyr,
+    ggplot2 (>= 3.3.1),
+    knitr,
     testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
