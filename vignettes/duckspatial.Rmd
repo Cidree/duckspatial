@@ -1,0 +1,31 @@
+---
+title: "Intro to duckspatial"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+code-annotations: hover
+urlcolor: blue
+vignette: >
+  %\VignetteIndexEntry{Intro to duckspatial}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+  
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = identical(tolower(Sys.getenv("NOT_CRAN")), "true"),
+  out.width = "100%"
+)
+
+# CRAN OMP THREAD LIMIT to avoid CRAN NOTE
+Sys.setenv(OMP_THREAD_LIMIT = 2)
+```
+
+**{duckspatial}** is an R package to run fast & memory-efficient operations in 
+spatial data. It leverage the fast analytical capabilities of [DuckDB](https://duckdb.org/) 
+and its spatial extension while maintaining compatibility with R’s spatial data ecosystem.
+
+
+...
+

@@ -25,10 +25,8 @@
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## database setup
-#' conn <- dbConnect(duckdb())
-#' ddbs_install(conn)
-#' ddbs_load(conn)
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
 #' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
@@ -47,7 +45,7 @@ ddbs_buffer <- function(x,
                         crs_column = "crs_duckspatial",
                         overwrite = FALSE,
                         quiet = FALSE) {
-    
+
     ## 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
@@ -164,10 +162,8 @@ ddbs_buffer <- function(x,
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## database setup
-#' conn <- dbConnect(duckdb())
-#' ddbs_install(conn)
-#' ddbs_load(conn)
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
 #' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))

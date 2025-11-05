@@ -16,9 +16,9 @@
 #' @template quiet
 #'
 #' @returns An sf object or TRUE (invisibly) for table creation
-#' 
+#'
 #' @template spatial_join_predicates
-#' 
+#'
 #' @export
 #'
 #' @examples
@@ -28,10 +28,8 @@
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## database setup
-#' conn <- dbConnect(duckdb())
-#' ddbs_install(conn)
-#' ddbs_load(conn)
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -53,7 +51,7 @@ ddbs_filter <- function(x,
                         crs_column = "crs_duckspatial",
                         overwrite = FALSE,
                         quiet = FALSE) {
-    
+
     # 0. Handle errors
     assert_xy(x, "x")
     assert_xy(y, "y")
@@ -68,10 +66,10 @@ ddbs_filter <- function(x,
     is_duckdb_conn <- dbConnCheck(conn)
     ## 1.2. prepares info for running the function on a temporary db
     if (isFALSE(is_duckdb_conn)) {
-        
+
         # create conn
         conn <- duckspatial::ddbs_create_conn()
-        
+
         # write tables, and get convenient names for x
         duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
         duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE)
@@ -145,7 +143,7 @@ ddbs_filter <- function(x,
 
     if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
     return(data_sf)
-    
+
 }
 
 

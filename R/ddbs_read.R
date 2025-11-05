@@ -1,5 +1,5 @@
 
-#' Load vectorial data from DuckDB into R
+#' Load spatial vector data from DuckDB into R
 #'
 #' Retrieves the data from a DuckDB table with a geometry column, and convert
 #' it to an R \code{sf} object.
@@ -20,12 +20,8 @@
 #' library(duckspatial)
 #' library(sf)
 #'
-#' ## connect to in memory database
-#' conn <- dbConnect(duckdb::duckdb())
-#'
-#' ## install the spatial exntesion
-#' ddbs_install(conn)
-#' ddbs_load(conn)
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## create random points
 #' random_points <- data.frame(
