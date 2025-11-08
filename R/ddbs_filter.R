@@ -8,9 +8,9 @@
 #' @param x A table with geometry column within the DuckDB database. Data is returned
 #' from this object
 #' @param y Y table with geometry column within the DuckDB database
-#' @template name
 #' @template predicate
 #' @template conn_null
+#' @template name
 #' @template crs
 #' @template overwrite
 #' @template quiet
@@ -44,8 +44,8 @@
 #' }
 ddbs_filter <- function(x,
                         y,
-                        conn = NULL,
                         predicate = "intersects",
+                        conn = NULL,
                         name = NULL,
                         crs = NULL,
                         crs_column = "crs_duckspatial",
