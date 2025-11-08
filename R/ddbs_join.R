@@ -8,7 +8,7 @@
 #'        Data is returned from this object.
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
-#' @param join A geometry predicate function. Defaults to `"ST_Intersects"`. See
+#' @param join A geometry predicate function. Defaults to `"intersects"`. See
 #'        the details for other options.
 #' @template conn_null
 #' @param name A character string of length one specifying the name of the table,
@@ -50,7 +50,7 @@
 #' output1 <- duckspatial::ddbs_join(
 #'     x = points_sf,
 #'     y = countries_sf,
-#'     join = "ST_Within"
+#'     join = "within"
 #' )
 #'
 #' plot(output1["CNTR_NAME"])
@@ -70,7 +70,7 @@
 #'     conn,
 #'     x = "points",
 #'     y = "countries",
-#'     join = "ST_Within"
+#'     join = "within"
 #' )
 #'
 #' plot(output2["CNTR_NAME"])
@@ -78,7 +78,7 @@
 #' }
 ddbs_join <- function(x,
                       y,
-                      join = "ST_Intersects",
+                      join = "intersects",
                       conn = NULL,
                       name = NULL,
                       crs = NULL,
@@ -95,46 +95,38 @@ ddbs_join <- function(x,
     assert_connflict(conn, xy = x, ref = "x")
     assert_connflict(conn, xy = y, ref = "y")
 
-    ## 1. check conn
-   is_duckdb_conn <- dbConnCheck(conn)
-
-   ## 2. prepares info for running the function on a temporary db
-   if (isFALSE(is_duckdb_conn)) {
+    # 1. Manage connection to DB
+    ## 1.1. check if connection is provided
+    is_duckdb_conn <- dbConnCheck(conn)
+    ## 1.2. prepares info for running the function on a temporary db
+    if (isFALSE(is_duckdb_conn)) {
 
        # create conn
        conn <- duckspatial::ddbs_create_conn()
 
-       # write tables
+       # write tables, and get convenient names for x
        duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
        duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE)
-
-       ## 2.1 get name of geometry column
-       ## get convenient names for x and y
        x_list <- get_query_name("tbl_x")
        y_list <- get_query_name("tbl_y")
 
-   }
-
-
-   # prepares info for running the function in an existing db
-   if (isTRUE(is_duckdb_conn)) {
-
-       ## 2. get name of geometry column
-        ## get convenient names for x and y
+    } else {
         x_list <- get_query_name(x)
         y_list <- get_query_name(y)
-
     }
 
-    ## get name
+    # 2. Prepare params for query
+    ## 2.1. select predicate
+    sel_pred <- get_st_predicate(join)
+    ## 2.2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
-
     y_geom <- get_geom_name(conn, y_list$query_name)
     y_rest <- get_geom_name(conn, y_list$query_name, rest = TRUE)
-    if (length(x_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{x_list$query_name}>.")
-    if (length(y_geom) == 0) cli::cli_abort("Geometry column wasn't found in table <{y_list$query_name}>.")
-
+    assert_geometry_column(x_geom, x_list)
+    assert_geometry_column(y_geom, y_list)
+    ## error if crs_column not found
+    assert_crs_column(crs_column, x_rest)
 
     # ## Create an rtree index on the x and y tables
     # # https://duckdb.org/docs/stable/core_extensions/spatial/r-tree_indexes
@@ -177,24 +169,21 @@ ddbs_join <- function(x,
             }
         }
 
-
-
-
         ## create query (no st_as_text)
         if (length(x_rest) == 0) {
             tmp.query <- glue::glue("
             SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+                   tbl_x.{x_geom} AS {x_geom}
             FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
             ")
         } else {
             tmp.query <- glue::glue("
             SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
                    {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+                   tbl_x.{x_geom} AS {x_geom}
             FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
 
         ")
         }

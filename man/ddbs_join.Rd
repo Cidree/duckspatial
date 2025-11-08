@@ -7,7 +7,7 @@
 ddbs_join(
   x,
   y,
-  join = "ST_Intersects",
+  join = "intersects",
   conn = NULL,
   name = NULL,
   crs = NULL,
@@ -24,7 +24,7 @@ Data is returned from this object.}
 \item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
 name of a table with geometry column within the DuckDB database \code{conn}.}
 
-\item{join}{A geometry predicate function. Defaults to \code{"ST_Intersects"}. See
+\item{join}{A geometry predicate function. Defaults to \code{"intersects"}. See
 the details for other options.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
@@ -101,7 +101,7 @@ points_sf <- data.frame(
 output1 <- duckspatial::ddbs_join(
     x = points_sf,
     y = countries_sf,
-    join = "ST_Within"
+    join = "within"
 )
 
 plot(output1["CNTR_NAME"])
@@ -121,7 +121,7 @@ output2 <- ddbs_join(
     conn,
     x = "points",
     y = "countries",
-    join = "ST_Within"
+    join = "within"
 )
 
 plot(output2["CNTR_NAME"])
