@@ -96,7 +96,8 @@ ddbs_load <- function(conn, quiet = FALSE) {
         cli::cli_abort("spatial extension is not installed, please use `ddbs_install()`")
 
     # 3. Load spatial extension
-    suppressMessages(DBI::dbExecute(conn, "LOAD spatial;"))
+    if (isFALSE(spatial_ext$loaded)) suppressMessages(DBI::dbExecute(conn, "LOAD spatial;"))
+
 
     if (isFALSE(quiet)) {
         cli::cli_alert_success("Spatial extension loaded")
