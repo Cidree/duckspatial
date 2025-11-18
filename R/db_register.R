@@ -51,7 +51,7 @@ ddbs_register_vector <- function(
         sub(pattern = "^main\\.", replacement = "")
     name_exists <- view_name %in% db_tables
     arrow_views <- try(
-        duckdb::duckdb_list_arrow(conn)$name,
+        duckdb::duckdb_list_arrow(conn),
         silent = TRUE
     )
     arrow_exists <- if (inherits(arrow_views, "try-error")) {
@@ -105,6 +105,15 @@ ddbs_register_vector <- function(
         wkb,
         schema = geoarrow::geoarrow_wkb()
     )
+
+    # Add CRS column
+    data_crs <- sf::st_crs(data_sf, parameters = TRUE)
+    crs_value <- if (!is.null(data_crs$srid) && nchar(data_crs$srid) > 0) {
+        data_crs$srid
+    } else {
+        data_crs$Wkt
+    }
+    df$crs_duckspatial <- crs_value
 
     arrow_table <- arrow::Table$create(df)
 

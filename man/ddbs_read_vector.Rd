@@ -38,8 +38,10 @@ Defaults to \code{FALSE}.}
 an sf object
 }
 \description{
-Retrieves the data from a DuckDB table with a geometry column, and convert
-it to an R \code{sf} object.
+Retrieves the data from a DuckDB table, view, or Arrow view with a geometry
+column, and converts it to an R \code{sf} object. This function works with
+both persistent tables created by \code{ddbs_write_vector} and temporary
+Arrow views created by \code{ddbs_register_vector}.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
@@ -65,11 +67,13 @@ random_points <- data.frame(
 ## convert to sf
 sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
 
-## insert data into the database
+## Example 1: Write and read persistent table
 ddbs_write_vector(conn, sf_points, "points")
-
-## read data back into R
 ddbs_read_vector(conn, "points", crs = 4326)
+
+## Example 2: Register and read Arrow view (faster, temporary)
+ddbs_register_vector(conn, sf_points, "points_view")
+ddbs_read_vector(conn, "points_view", crs = 4326)
 
 ## disconnect from db
 ddbs_stop_conn(conn)
