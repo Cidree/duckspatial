@@ -8,6 +8,7 @@
 #'        a local file that can be read with `ST_READ`
 #' @template name
 #' @template overwrite
+#' @param temp_view If `TRUE`, registers the `sf` object as a temporary Arrow-backed database 'view' using `ddbs_register_vector` instead of creating a persistent table. This is much faster but the view will not persist. Defaults to `FALSE`.
 #' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful import
@@ -44,8 +45,14 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-ddbs_write_vector <- function(conn, data, name, overwrite = FALSE, quiet = FALSE) {
-
+ddbs_write_vector <- function(
+    conn,
+    data,
+    name,
+    overwrite = FALSE,
+    temp_view = FALSE,
+    quiet = FALSE
+) {
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)

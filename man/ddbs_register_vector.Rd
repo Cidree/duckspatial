@@ -4,14 +4,24 @@
 \alias{ddbs_register_vector}
 \title{Register an SF Object as an Arrow Table in DuckDB}
 \usage{
-ddbs_register_vector(conn, data, name)
+ddbs_register_vector(conn, data, name, overwrite = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{conn}{A connection object to a DuckDB database}
 
-\item{data}{A \code{sf} object to register in the DuckDB database.}
+\item{data}{A \code{sf} object to write to the DuckDB database, or the path to
+a local file that can be read with \code{ST_READ}}
 
-\item{name}{The name of the temporary view to create in the database.}
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
+
+\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
+to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 TRUE (invisibly) on successful registration.

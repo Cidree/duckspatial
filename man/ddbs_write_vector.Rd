@@ -4,7 +4,14 @@
 \alias{ddbs_write_vector}
 \title{Write an SF Object to a DuckDB Database}
 \usage{
-ddbs_write_vector(conn, data, name, overwrite = FALSE, quiet = FALSE)
+ddbs_write_vector(
+  conn,
+  data,
+  name,
+  overwrite = FALSE,
+  temp_view = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{conn}{A connection object to a DuckDB database}
@@ -20,18 +27,20 @@ names. If \code{NULL} (the default), the function returns the result as an
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
 
+\item{temp_view}{If \code{TRUE}, registers the \code{sf} object as a temporary Arrow-backed database 'view' using \code{ddbs_register_vector} instead of creating a persistent table. This is much faster but the view will not persist. Defaults to \code{FALSE}.}
+
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
 }
 \value{
-TRUE (invisibly) for successful import
+TRUE (invisibly) for both table creation and the temporary Arrow-backed registration triggered by \code{temp_view = TRUE}.
 }
 \description{
 This function writes a Simple Features (SF) object into a DuckDB database as a new table.
 The table is created in the specified schema of the DuckDB database.
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 ## load packages
 library(duckdb)
 library(duckspatial)
@@ -59,6 +68,10 @@ ddbs_write_vector(conn, sf_points, "points")
 
 ## read data back into R
 ddbs_read_vector(conn, "points", crs = 4326)
+
+## use the fast arrow-based registration
+ddbs_write_vector(conn, sf_points, "points_view", temp_view = TRUE)
+dbExistsTable(conn, "points_view")
 
 ## disconnect from db
 dbDisconnect(conn)
