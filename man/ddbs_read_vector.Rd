@@ -72,6 +72,6 @@ ddbs_write_vector(conn, sf_points, "points")
 ddbs_read_vector(conn, "points", crs = 4326)
 
 ## disconnect from db
-dbDisconnect(conn)
+ddbs_stop_conn(conn)
 \dontshow{\}) # examplesIf}
 }

@@ -13,7 +13,7 @@
 #' library(duckspatial)
 #'
 #' ## connect to in memory database
-#' conn <- dbConnect(duckdb::duckdb())
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## create a new schema
 #' ddbs_create_schema(conn, "new_schema")
@@ -22,7 +22,7 @@
 #' dbGetQuery(conn, "SELECT * FROM information_schema.schemata;")
 #'
 #' ## disconnect from db
-#' dbDisconnect(conn)
+#' ddbs_stop_conn(conn)
 #'
 ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 
@@ -299,4 +299,31 @@ ddbs_drivers <- function(conn) {
   DBI::dbGetQuery(conn, "
       SELECT * FROM ST_Drivers()
     ")
+}
+
+#' Close a duckdb connection
+#'
+#' @template conn
+#'
+#' @returns TRUE (invisibly) for successful disconnection
+#' @export
+#'
+#' @examplesIf interactive()
+#' ## load packages
+#' library(duckspatial)
+#'
+#' ## create an in-memory duckdb database
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## close the connection
+#' ddbs_stop_conn(conn)
+#'
+ddbs_stop_conn <- function(conn) {
+    # Check if connection is correct
+    dbConnCheck(conn)
+
+    # Disconnect from database
+    DBI::dbDisconnect(conn)
+
+    return(invisible(TRUE))
 }

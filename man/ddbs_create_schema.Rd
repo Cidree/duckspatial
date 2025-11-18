@@ -26,7 +26,7 @@ library(duckdb)
 library(duckspatial)
 
 ## connect to in memory database
-conn <- dbConnect(duckdb::duckdb())
+conn <- ddbs_create_conn(dbdir = "memory")
 
 ## create a new schema
 ddbs_create_schema(conn, "new_schema")
@@ -35,6 +35,6 @@ ddbs_create_schema(conn, "new_schema")
 dbGetQuery(conn, "SELECT * FROM information_schema.schemata;")
 
 ## disconnect from db
-dbDisconnect(conn)
+ddbs_stop_conn(conn)
 
 }

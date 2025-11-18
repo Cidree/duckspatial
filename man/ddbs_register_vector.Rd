@@ -38,7 +38,7 @@ library(duckdb)
 library(duckspatial)
 library(sf)
 
-conn <- ddbs_create_conn()
+conn <- ddbs_create_conn("memory")
 
 nc <- st_read(system.file("shape/nc.shp", package="sf"), quiet = TRUE)
 
@@ -46,6 +46,6 @@ ddbs_register_vector(conn, nc, "nc_arrow_view")
 
 dbGetQuery(conn, "SELECT COUNT(*) FROM nc_arrow_view;")
 
-dbDisconnect(conn, shutdown = TRUE)
+ddbs_stop_conn(conn, shutdown = TRUE)
 }
 }

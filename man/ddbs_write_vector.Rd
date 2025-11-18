@@ -33,14 +33,14 @@ to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-TRUE (invisibly) for both table creation and the temporary Arrow-backed registration triggered by \code{temp_view = TRUE}.
+TRUE (invisibly) for successful import
 }
 \description{
 This function writes a Simple Features (SF) object into a DuckDB database as a new table.
 The table is created in the specified schema of the DuckDB database.
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
 library(duckdb)
 library(duckspatial)
@@ -68,10 +68,6 @@ ddbs_write_vector(conn, sf_points, "points")
 
 ## read data back into R
 ddbs_read_vector(conn, "points", crs = 4326)
-
-## use the fast arrow-based registration
-ddbs_write_vector(conn, sf_points, "points_view", temp_view = TRUE)
-dbExistsTable(conn, "points_view")
 
 ## disconnect from db
 dbDisconnect(conn)
