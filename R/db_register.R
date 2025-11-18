@@ -100,8 +100,12 @@ ddbs_register_vector <- function(
     df <- sf::st_drop_geometry(data_sf)
     wkb <- wk::as_wkb(sf::st_geometry(data_sf))
 
+    # Get original geometry column name
+    geom_col_name <- attr(data_sf, "sf_column")
+
     # Use geoarrow to create a geoarrow vector from WKB
-    df$geometry <- geoarrow::as_geoarrow_vctr(
+    # Assign to original geometry column name instead of hardcoded "geometry"
+    df[[geom_col_name]] <- geoarrow::as_geoarrow_vctr(
         wkb,
         schema = geoarrow::geoarrow_wkb()
     )

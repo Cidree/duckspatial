@@ -101,21 +101,43 @@ ddbs_read_vector <- function(conn,
       }
   }
 
-  ## get column names
+  ## get column names and prepare SQL
   if (object_type == "Arrow view") {
       # For Arrow views, PRAGMA table_info doesn't work, so we need to get columns differently
       all_cols <- DBI::dbListFields(conn, name_list$query_name)
-      # Arrow views created by ddbs_register_vector always have 'geometry' column
-      geom_name <- "geometry"
-      if (!geom_name %in% all_cols) {
+
+      # Dynamically identify geometry column (heuristic: look for standard names)
+      candidates <- c("geometry", "geom", "shape", "wkb_geometry")
+      geom_name <- intersect(all_cols, candidates)[1]
+
+      # Fallback if standard name not found: find column that's not crs_duckspatial
+      # The geometry column is added before crs_duckspatial, so it should be the
+      # last column before crs_duckspatial (or last column if excluding crs_duckspatial)
+      if (is.na(geom_name)) {
+          non_crs_cols <- setdiff(all_cols, crs_column)
+          if (length(non_crs_cols) > 0) {
+              # Take the LAST non-CRS column (geometry is added last during registration)
+              geom_name <- non_crs_cols[length(non_crs_cols)]
+          }
+      }
+
+      if (is.na(geom_name) || !geom_name %in% all_cols) {
           cli::cli_abort("Geometry column wasn't found in Arrow view <{name_list$query_name}>.")
       }
+
       no_geom_cols <- setdiff(all_cols, geom_name) |> paste(collapse = ", ")
+
+      # For Arrow views: Try ST_AsText directly first (geoarrow may already be recognized as GEOMETRY)
+      # If that fails, ST_GeomFromWKB will be needed, but geoarrow registration makes it GEOMETRY type
+      select_geom_sql <- glue::glue("ST_AsText({geom_name}) AS {geom_name}")
   } else {
       # For regular tables and views, use get_geom_name
       geom_name    <- get_geom_name(conn, name_list$query_name)
       no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE) |> paste(collapse = ", ")
       if (length(geom_name) == 0) cli::cli_abort("Geometry column wasn't found in table <{name_list$query_name}>.")
+
+      # For regular tables: already GEOMETRY type
+      select_geom_sql <- glue::glue("ST_AsText({geom_name}) AS {geom_name}")
   }
 
   # 2. Retrieve data
@@ -123,7 +145,7 @@ ddbs_read_vector <- function(conn,
   tmp.query <- glue::glue(
           "SELECT
           {no_geom_cols},
-          ST_AsText({geom_name}) AS {geom_name}
+          {select_geom_sql}
           FROM {name_list$query_name}"
   )
   tmp.query <- paste(tmp.query, clauses)

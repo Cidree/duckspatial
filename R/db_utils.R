@@ -100,9 +100,20 @@ ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
         schema_name <- "main"
         query_name <- name
     }
-    ## Check if table name exists
-    if (!table_name %in% DBI::dbListTables(conn))
+    ## Check if table name exists in Tables OR Arrow Views
+    table_exists <- table_name %in% DBI::dbListTables(conn)
+    arrow_exists <- FALSE
+
+    if (!table_exists) {
+        arrow_list <- try(duckdb::duckdb_list_arrow(conn), silent = TRUE)
+        if (!inherits(arrow_list, "try-error") && table_name %in% arrow_list) {
+            arrow_exists <- TRUE
+        }
+    }
+
+    if (!table_exists && !arrow_exists) {
         cli::cli_abort("The provided name is not present in the database.")
+    }
     ## check if geometry column is present
     crs_data  <- DBI::dbGetQuery(
         conn, glue::glue("SELECT {crs_column} FROM {query_name} LIMIT 1;")
