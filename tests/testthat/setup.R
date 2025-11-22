@@ -1,6 +1,6 @@
 # skip tests on CRAN because they take too much time
-skip_if(Sys.getenv("TEST_ONE") != "")
-testthat::skip_on_cran()
+# skip_if(Sys.getenv("TEST_ONE") != "")
+# testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
 # read polygons data
@@ -16,6 +16,3 @@ points_sf <- data.frame(
     y = runif(n, min = -90, max = 90)
 ) |>
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
-
-
-

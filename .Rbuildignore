@@ -10,3 +10,7 @@ internal/*
 ^CRAN-SUBMISSION$
 ^\.github$
 ^codecov\.yml$
+^ducksf$
+^private$
+^[.]?air[.]toml$
+^\.vscode$
