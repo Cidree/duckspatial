@@ -65,7 +65,7 @@
 #'
 #' # spatial join
 #' output2 <- ddbs_join(
-#'     conn,
+#'     conn = conn,
 #'     x = "points",
 #'     y = "countries",
 #'     join = "within"

@@ -68,7 +68,10 @@ argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duck
 ddbs_write_vector(conn, countries_sf, "countries")
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
-## intersection
-ddbs_intersection(conn, "countries", "argentina")
+## intersection inside the connection
+ddbs_intersection("countries", "argentina", conn)
+
+## intersection without using a connection
+ddbs_intersection(countries_sf, argentina_sf)
 }
 }

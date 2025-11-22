@@ -68,6 +68,9 @@ argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duck
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
 ## buffer
-ddbs_buffer(conn, "argentina", distance = 1)
+ddbs_buffer(conn = conn, "argentina", distance = 1)
+
+## buffer without using a connection
+ddbs_buffer(argentina_sf, distance = 1)
 }
 }

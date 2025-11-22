@@ -30,7 +30,7 @@
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
 #' # boundary
-#' b <- ddbs_boundary(conn, "argentina")
+#' b <- ddbs_boundary("argentina", conn)
 #' }
 ddbs_boundary <- function(x,
                         conn = NULL,

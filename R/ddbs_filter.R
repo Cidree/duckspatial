@@ -39,7 +39,10 @@
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
 #' ## filter countries touching argentina
-#' ddbs_filter(conn, "countries", "argentina", predicate = "touches")
+#' ddbs_filter(conn = conn, "countries", "argentina", predicate = "touches")
+#' 
+#' ## filter without using a connection
+#' ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
 #' }
 ddbs_filter <- function(x,
                         y,

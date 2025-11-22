@@ -33,8 +33,11 @@
 #' ddbs_write_vector(conn, countries_sf, "countries")
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
-#' ## intersection
-#' ddbs_intersection(conn, "countries", "argentina")
+#' ## intersection inside the connection
+#' ddbs_intersection("countries", "argentina", conn)
+#' 
+#' ## intersection without using a connection
+#' ddbs_intersection(countries_sf, argentina_sf)
 #' }
 ddbs_intersection <- function(x,
                               y,
@@ -189,8 +192,11 @@ ddbs_intersection <- function(x,
 #' ddbs_write_vector(conn, countries_sf, "countries")
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
-#' ## diffrence
-#' ddbs_difference(conn, "countries", "argentina")
+#' ## difference with a connection
+#' ddbs_difference("countries", "argentina", conn)
+#' 
+#' ## difference without a connection
+#' ddbs_difference(countries_sf, argentina_sf)
 #' }
 ddbs_difference <- function(x,
                             y,

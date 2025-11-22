@@ -118,7 +118,7 @@ ddbs_write_vector(conn, countries_sf, "countries", overwrite = TRUE)
 
 # spatial join
 output2 <- ddbs_join(
-    conn,
+    conn = conn,
     x = "points",
     y = "countries",
     join = "within"

@@ -68,7 +68,10 @@ argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duck
 ddbs_write_vector(conn, countries_sf, "countries")
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
-## diffrence
-ddbs_difference(conn, "countries", "argentina")
+## difference with a connection
+ddbs_difference("countries", "argentina", conn)
+
+## difference without a connection
+ddbs_difference(countries_sf, argentina_sf)
 }
 }

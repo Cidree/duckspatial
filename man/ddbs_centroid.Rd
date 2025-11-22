@@ -64,6 +64,9 @@ argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duck
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
 ## centroid
-ddbs_centroid(conn, "argentina")
+ddbs_centroid("argentina", conn)
+
+## centroid without using a connection
+ddbs_centroid(argentina_sf)
 }
 }

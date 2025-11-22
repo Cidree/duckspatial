@@ -64,6 +64,6 @@ argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duck
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
 # boundary
-b <- ddbs_boundary(conn, "argentina")
+b <- ddbs_boundary("argentina", conn)
 }
 }

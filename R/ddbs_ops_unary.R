@@ -35,7 +35,10 @@
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
 #' ## buffer
-#' ddbs_buffer(conn, "argentina", distance = 1)
+#' ddbs_buffer(conn = conn, "argentina", distance = 1)
+#' 
+#' ## buffer without using a connection
+#' ddbs_buffer(argentina_sf, distance = 1)
 #' }
 ddbs_buffer <- function(x,
                         distance,
@@ -172,7 +175,10 @@ ddbs_buffer <- function(x,
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
 #' ## centroid
-#' ddbs_centroid(conn, "argentina")
+#' ddbs_centroid("argentina", conn)
+#' 
+#' ## centroid without using a connection
+#' ddbs_centroid(argentina_sf)
 #' }
 ddbs_centroid <- function(x,
                         conn = NULL,

@@ -195,7 +195,7 @@ ddbs_area <- function(x,
 #' ## create a new table with length calculations
 #' ddbs_length("rivers", conn, name = "rivers_with_length")
 #' 
-#' ## calculate length in a sf object
+#' ## calculate length in a sf object (without a connection)
 #' ddbs_length(rivers_sf)
 ddbs_length <- function(x,
                         conn = NULL,
