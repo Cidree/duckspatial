@@ -56,6 +56,12 @@ ddbs_write_vector <- function(
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
+    
+    ## Handle temp_view
+    if (temp_view) {
+        return(ddbs_register_vector(conn, data, name, overwrite, quiet))
+    }
+
     ## convenient names of table and/or schema.table
     name_list <- get_query_name(name)
     ## get schema.table available in the database
@@ -106,11 +112,16 @@ ddbs_write_vector <- function(
         ## CRS
         ## get data CRS
         data_crs <- sf::st_crs(data, parameters = TRUE)
-        ## create new column with CRS as default value
-        DBI::dbExecute(conn, glue::glue("
+        
+        if (is.null(data_crs$srid) || is.na(data_crs$srid)) {
+            cli::cli_alert_warning("No CRS found in the input data. The table will be created without CRS information.")
+        } else {
+            ## create new column with CRS as default value
+            DBI::dbExecute(conn, glue::glue("
             ALTER TABLE {name_list$query_name}
             ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{data_crs$srid}';
         "))
+        }
 
     } else {
         ## check file extension
@@ -161,5 +172,3 @@ ddbs_write_vector <- function(
     return(invisible(TRUE))
 
 }
-
-
