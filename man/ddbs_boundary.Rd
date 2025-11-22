@@ -15,7 +15,9 @@ ddbs_boundary(
 )
 }
 \arguments{
-\item{x}{a table with a geometry column within the DuckDB database}
+\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database \code{conn}.
+Data is returned from this object.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}

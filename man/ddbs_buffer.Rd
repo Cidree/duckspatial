@@ -16,7 +16,9 @@ ddbs_buffer(
 )
 }
 \arguments{
-\item{x}{a table with a geometry column within the DuckDB database}
+\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database \code{conn}.
+Data is returned from this object.}
 
 \item{distance}{a numeric value specifying the buffer distance. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)}

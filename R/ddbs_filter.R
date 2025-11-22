@@ -5,8 +5,7 @@
 #'
 #' Filters data spatially based on a spatial predicate
 #'
-#' @param x A table with geometry column within the DuckDB database. Data is returned
-#' from this object
+#' @template x
 #' @param y Y table with geometry column within the DuckDB database
 #' @template predicate
 #' @template conn_null

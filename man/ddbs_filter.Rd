@@ -17,8 +17,9 @@ ddbs_filter(
 )
 }
 \arguments{
-\item{x}{A table with geometry column within the DuckDB database. Data is returned
-from this object}
+\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database \code{conn}.
+Data is returned from this object.}
 
 \item{y}{Y table with geometry column within the DuckDB database}
 

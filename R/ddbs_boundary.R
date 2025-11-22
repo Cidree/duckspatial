@@ -3,7 +3,7 @@
 #' Returns the boundary of geometries from a DuckDB table using the spatial extension.
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
-#' @param x a table with a geometry column within the DuckDB database
+#' @template x
 #' @template conn_null
 #' @template name
 #' @template crs

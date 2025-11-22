@@ -4,8 +4,7 @@
 #' Calculates the intersection of two geometries, and return a \code{sf} object
 #' or creates a new table
 #'
-#' @param x A table with geometry column within the DuckDB database. Data is returned
-#' from this object
+#' @template x
 #' @param y A table with geometry column within the DuckDB database
 #' @template conn_null
 #' @template name
@@ -161,8 +160,7 @@ ddbs_intersection <- function(x,
 #' Calculates the geometric difference of two geometries, and returns a \code{sf}
 #' object or creates a new table
 #'
-#' @param x A table with geometry column within the DuckDB database. Data is returned
-#' from this object
+#' @template x
 #' @param y A table with geometry column within the DuckDB database
 #' @template conn_null
 #' @template name

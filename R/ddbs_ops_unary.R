@@ -6,7 +6,7 @@
 #' Calculates the buffer of geometries from a DuckDB table using the spatial extension.
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
-#' @param x a table with a geometry column within the DuckDB database
+#' @template x
 #' @param distance a numeric value specifying the buffer distance. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
 #' @template conn_null
@@ -145,7 +145,7 @@ ddbs_buffer <- function(x,
 #' Calculates the centroids of geometries from a DuckDB table using the spatial extension.
 #' Returns the result as an \code{sf} object or creates a new table in the database.
 #'
-#' @param x A table with a geometry column within the DuckDB database
+#' @template x
 #' @template conn_null
 #' @template name
 #' @template crs
