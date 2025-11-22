@@ -113,7 +113,7 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
   if (is.null(target_crs)) {
     if (!is.null(crs_column) && crs_column %in% names(data)) {
       # Assume CRS is consistent across the table, take first non-NA
-      val <- na.omit(data[[crs_column]])[1]
+      val <- stats::na.omit(data[[crs_column]])[1]
       if (!is.na(val)) target_crs <- as.character(val)
       
       # Remove the CRS column from output
