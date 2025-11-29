@@ -28,6 +28,7 @@ reference:
   contents:
   - ddbs_read_vector
   - ddbs_write_vector
+  - ddbs_register_vector
 
 - title: Spatial operations (binary)
   contents:
@@ -50,6 +51,7 @@ reference:
 - title: SQL wrappers
   contents:
   - ddbs_create_conn
+  - ddbs_stop_conn
   - ddbs_create_schema
   - ddbs_crs
   - ddbs_drivers
@@ -75,4 +77,3 @@ navbar:
       icon: fa-github
       href: https://github.com/Cidree/duckspatial
       aria-label: GitHub
-
