@@ -65,8 +65,8 @@ ddbs_buffer <- function(x,
        # create conn
        conn <- duckspatial::ddbs_create_conn()
 
-       # write tables, and get convenient names for x
-       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+       # write tables, and get convenient names for xº
+       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE, temp_view = TRUE)
        x_list <- get_query_name("tbl_x")
 
    } else {
@@ -204,7 +204,7 @@ ddbs_centroid <- function(x,
        conn <- duckspatial::ddbs_create_conn()
 
        # write tables, and get convenient names for x
-       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
+       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE, temp_view = TRUE)
        x_list <- get_query_name("tbl_x")
 
    } else {

@@ -103,8 +103,8 @@ ddbs_join <- function(x,
        conn <- duckspatial::ddbs_create_conn()
 
        # write tables, and get convenient names for x
-       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE)
-       duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE)
+       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE, temp_view = TRUE)
+       duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE, temp_view = TRUE)
        x_list <- get_query_name("tbl_x")
        y_list <- get_query_name("tbl_y")
 
