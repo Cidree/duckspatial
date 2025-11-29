@@ -35,13 +35,17 @@ reference:
   - ddbs_difference
   - ddbs_intersection
   - ddbs_join
-- title: Unary Operations
 
 - title: Spatial operations (unary)
   contents:
   - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid
+
+- title: Spatial operations (measures)
+  contents:
+  - ddbs_area
+  - ddbs_length
 
 - title: Data manipulation
   contents:

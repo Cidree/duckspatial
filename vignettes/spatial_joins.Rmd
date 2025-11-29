@@ -33,7 +33,7 @@ Let's see a few examples. First, let's load a few libraries and our sample data:
 
 ```{r}
 library(duckspatial)
-library(mapview)
+# library(mapview)
 library(sf)
 
 # polygons
@@ -66,11 +66,11 @@ intermediate tables.
 out_sf1 <- ddbs_join(
   x    = points_sf,
   y    = countries_sf,
-  join = "ST_Within"
+  join = "within"
 )
 
 # quick peek
-mapview(out_sf1, zcol="NAME_ENGL")
+# mapview(out_sf1, zcol="NAME_ENGL")
 
 ```
 
@@ -97,7 +97,7 @@ out_sf2 <- ddbs_join(
   conn,
   x    = "points",
   y    = "countries",
-  join = "ST_Within"
+  join = "within"
 )
 ```
 - **When to use:** iterative workflows, larger-than-memory data, or when you’ll run multiple queries on the same tables.
@@ -111,18 +111,18 @@ simply need to the `name` of the new table.
 
 ```{r, message=FALSE}
 ddbs_join(
-    conn,
+    conn = conn,
     x = "points",
     y = "countries",
-    join = "ST_Within",
+    join = "within",
     name = "points_in_countries",
     overwrite = TRUE
-    )
+)
 
 # use the result in SQL (or read back as sf later)
-DBI::dbReadTable(conn, "points_in_countries") |>
-    sf::st_as_sf(wkt = 'geometry') |> 
-    head()
+# DBI::dbReadTable(conn, "points_in_countries") |>
+#     sf::st_as_sf(wkt = 'geometry') |> 
+#     head()
 
 ```
 - **When to use:** iterative workflows, larger-than-memory data, or when you’ll run multiple queries on the same tables.

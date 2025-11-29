@@ -14,3 +14,5 @@ internal/*
 ^private$
 ^[.]?air[.]toml$
 ^\.vscode$
+^doc$
+^Meta$

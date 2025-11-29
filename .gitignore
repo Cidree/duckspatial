@@ -6,3 +6,5 @@
 internal/*
 docs
 private
+/doc/
+/Meta/
