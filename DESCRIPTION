@@ -5,8 +5,10 @@ Version: 0.2.0999
 Authors@R: c(
     person("Adrián", "Cidre González", email = "adrian.cidre@gmail.com", role = c("aut", "cre")),
     person("Rafael H. M.", "Pereira", , "rafa.pereira.br@gmail.com", role = "aut",
-           comment = c(ORCID = "0000-0003-2125-7465"))
-           )
+           comment = c(ORCID = "0000-0003-2125-7465")),
+    person("Egor", "Kotov", , "kotov.egor@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0001-6690-5345"))
+    )
 Description: Provides an interface between R and the 'DuckDB' (see <https://duckdb.org>) 
              database with spatial extensions. It supports reading, writing, and 
              performing some geometric operations.
