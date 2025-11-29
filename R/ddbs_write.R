@@ -8,6 +8,7 @@
 #'        a local file that can be read with `ST_READ`
 #' @template name
 #' @template overwrite
+#' @param temp_view If `TRUE`, registers the `sf` object as a temporary Arrow-backed database 'view' using `ddbs_register_vector` instead of creating a persistent table. This is much faster but the view will not persist. Defaults to `FALSE`.
 #' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful import
@@ -40,11 +41,23 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
-ddbs_write_vector <- function(conn, data, name, overwrite = FALSE, quiet = FALSE) {
-
+ddbs_write_vector <- function(
+    conn,
+    data,
+    name,
+    overwrite = FALSE,
+    temp_view = FALSE,
+    quiet = FALSE
+) {
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
+    
+    ## Handle temp_view
+    if (temp_view) {
+        return(ddbs_register_vector(conn, data, name, overwrite, quiet))
+    }
+
     ## convenient names of table and/or schema.table
     name_list <- get_query_name(name)
     ## get schema.table available in the database
@@ -95,11 +108,16 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE, quiet = FALSE
         ## CRS
         ## get data CRS
         data_crs <- sf::st_crs(data, parameters = TRUE)
-        ## create new column with CRS as default value
-        DBI::dbExecute(conn, glue::glue("
+        
+        if (is.null(data_crs$srid) || is.na(data_crs$srid)) {
+            cli::cli_alert_warning("No CRS found in the input data. The table will be created without CRS information.")
+        } else {
+            ## create new column with CRS as default value
+            DBI::dbExecute(conn, glue::glue("
             ALTER TABLE {name_list$query_name}
             ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{data_crs$srid}';
         "))
+        }
 
     } else {
         ## check file extension
@@ -150,5 +168,3 @@ ddbs_write_vector <- function(conn, data, name, overwrite = FALSE, quiet = FALSE
     return(invisible(TRUE))
 
 }
-
-
