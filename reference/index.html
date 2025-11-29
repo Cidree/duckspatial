@@ -36,8 +36,7 @@
 
 
 
-
-    </div><div class="section level2">
+      <dl></dl></div><div class="section level2">
 
 
 
@@ -48,7 +47,8 @@
 
         </dt>
         <dd>Checks and installs the Spatial extension</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_load.html">ddbs_load()</a></code>
 
@@ -59,8 +59,7 @@
 
 
 
-
-    </div><div class="section level2">
+      <dl></dl></div><div class="section level2">
 
 
 
@@ -70,20 +69,27 @@
           <code><a href="ddbs_read_vector.html">ddbs_read_vector()</a></code>
 
         </dt>
-        <dd>Load vectorial data from DuckDB into R</dd>
-      </dl><dl><dt>
+        <dd>Load spatial vector data from DuckDB into R</dd>
+
+        <dt>
 
           <code><a href="ddbs_write_vector.html">ddbs_write_vector()</a></code>
 
         </dt>
         <dd>Write an SF Object to a DuckDB Database</dd>
+
+        <dt>
+
+          <code><a href="ddbs_register_vector.html">ddbs_register_vector()</a></code>
+
+        </dt>
+        <dd>Register an SF Object as an Arrow Table in DuckDB</dd>
       </dl></div><div class="section level2">
       <h2 id="spatial-operations-binary-">Spatial operations (binary)<a class="anchor" aria-label="anchor" href="#spatial-operations-binary-"></a></h2>
 
 
 
-
-    </div><div class="section level2">
+      <dl></dl></div><div class="section level2">
 
 
 
@@ -94,31 +100,26 @@
 
         </dt>
         <dd>Calculates the difference of two geometries</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_intersection.html">ddbs_intersection()</a></code>
 
         </dt>
         <dd>Calculates the intersection of two geometries</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_join.html">ddbs_join()</a></code>
 
         </dt>
         <dd>Performs spatial joins of two geometries</dd>
       </dl></div><div class="section level2">
-      <h2 id="unary-operations">Unary Operations<a class="anchor" aria-label="anchor" href="#unary-operations"></a></h2>
-
-
-
-
-    </div><div class="section level2">
       <h2 id="spatial-operations-unary-">Spatial operations (unary)<a class="anchor" aria-label="anchor" href="#spatial-operations-unary-"></a></h2>
 
 
 
-
-    </div><div class="section level2">
+      <dl></dl></div><div class="section level2">
 
 
 
@@ -129,25 +130,49 @@
 
         </dt>
         <dd>Returns the boundary of geometries</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_buffer.html">ddbs_buffer()</a></code>
 
         </dt>
         <dd>Creates a buffer around geometries</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_centroid.html">ddbs_centroid()</a></code>
 
         </dt>
         <dd>Calculates the centroid of geometries</dd>
       </dl></div><div class="section level2">
+      <h2 id="spatial-operations-measures-">Spatial operations (measures)<a class="anchor" aria-label="anchor" href="#spatial-operations-measures-"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ddbs_area.html">ddbs_area()</a></code>
+
+        </dt>
+        <dd>Calculates the area of geometries</dd>
+
+        <dt>
+
+          <code><a href="ddbs_length.html">ddbs_length()</a></code>
+
+        </dt>
+        <dd>Calculates the length of geometries</dd>
+      </dl></div><div class="section level2">
       <h2 id="data-manipulation">Data manipulation<a class="anchor" aria-label="anchor" href="#data-manipulation"></a></h2>
 
 
 
-
-    </div><div class="section level2">
+      <dl></dl></div><div class="section level2">
 
 
 
@@ -158,7 +183,8 @@
 
         </dt>
         <dd>Spatial Filter</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_join.html">ddbs_join()</a></code>
 
@@ -169,8 +195,7 @@
 
 
 
-
-    </div><div class="section level2">
+      <dl></dl></div><div class="section level2">
 
 
 
@@ -181,31 +206,43 @@
 
         </dt>
         <dd>Create a duckdb connection</dd>
-      </dl><dl><dt>
+
+        <dt>
+
+          <code><a href="ddbs_stop_conn.html">ddbs_stop_conn()</a></code>
+
+        </dt>
+        <dd>Close a duckdb connection</dd>
+
+        <dt>
 
           <code><a href="ddbs_create_schema.html">ddbs_create_schema()</a></code>
 
         </dt>
         <dd>Check and create schema</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_crs.html">ddbs_crs()</a></code>
 
         </dt>
         <dd>Check CRS of a table</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_drivers.html">ddbs_drivers()</a></code>
 
         </dt>
         <dd>Get list of GDAL drivers and file formats</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_glimpse.html">ddbs_glimpse()</a></code>
 
         </dt>
         <dd>Check first rows of the data</dd>
-      </dl><dl><dt>
+
+        <dt>
 
           <code><a href="ddbs_list_tables.html">ddbs_list_tables()</a></code>
 
@@ -217,11 +254,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira.</p>
+  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira, Egor Kotov.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

@@ -1,11 +1,17 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://cidree.github.io/duckspatial/404.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/LICENSE.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/articles/benchmark.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/articles/duckspatial.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/articles/index.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/articles/spatial_joins.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/authors.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/index.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/news/index.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf_native_geoarrow.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_area.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_boundary.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_buffer.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_centroid.html</loc></url>
@@ -19,12 +25,16 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_install.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_intersection.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_join.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_length.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_list_tables.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_load.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_read_vector.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_register_vector.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_vector.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_geom_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_query_name.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/get_st_predicate.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/index.html</loc></url>
 </urlset>
 

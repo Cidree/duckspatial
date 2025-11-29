@@ -35,15 +35,20 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0999" id="duckspatial-020999-dev">duckspatial 0.2.0999 dev<a class="anchor" aria-label="anchor" href="#duckspatial-020999-dev"></a></h2>
 <div class="section level3">
+<h3 id="major-changes-0-2-0999">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-0-2-0999"></a></h3>
+<ul><li><p><code>conn</code> argument defaults now to NULL. This parameter is not mandatory anymore in spatial operations, and it will be handled internally. The argument has been moved after <code>x</code> and <code>y</code> arguments.</p></li>
+<li><p><code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>: uses <code>intersects</code> for <code>ST_Intersects</code> instead of <code>intersection</code>.</p></li>
+</ul></div>
+<div class="section level3">
 <h3 id="new-features-0-2-0999">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-2-0999"></a></h3>
 <ul><li><p><code><a href="../reference/ddbs_boundary.html">ddbs_boundary()</a></code>: returns the boundary of geometries.</p></li>
-<li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: new convinient function to create a duckdb connection.</p></li>
+<li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: new convenient function to create a DuckDB connection.</p></li>
 <li><p><code><a href="../reference/ddbs_drivers.html">ddbs_drivers()</a></code>: get list of GDAL drivers and file formats supported by DuckDB spatial extension.</p></li>
-</ul><p>*<code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>: new function to perform spatial join operations.</p>
-</div>
+<li><p><code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>: new function to perform spatial join operations.</p></li>
+</ul></div>
 <div class="section level3">
 <h3 id="minor-changes-0-2-0999">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-0-2-0999"></a></h3>
-<ul><li>All functions now have a parameter <code>quiet</code> that allows users to supress informational messages. Closed <a href="https://github.com/Cidree/duckspatial/issues/3" class="external-link">#3</a>
+<ul><li>All functions now have a parameter <code>quiet</code> that allows users to suppress informational messages. Closed <a href="https://github.com/Cidree/duckspatial/issues/3" class="external-link">#3</a>
 </li>
 </ul></div>
 </div>
@@ -77,11 +82,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira.</p>
+  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira, Egor Kotov.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
