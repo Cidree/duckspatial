@@ -203,7 +203,7 @@ ddbs_join <- function(x,
             SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
                    ST_AsText(tbl_x.{x_geom}) AS {x_geom}
             FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
         ")
 
     } else {
@@ -212,7 +212,7 @@ ddbs_join <- function(x,
                    {paste0('tbl_y.', y_rest, collapse = ', ')},
                    ST_AsText(tbl_x.{x_geom}) AS {x_geom}
             FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {join}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
         ")
 
     }

@@ -65,7 +65,7 @@ run_benchmark <- function(n){
         duckspatial = duckspatial::ddbs_join(
             x = points_sf, 
             y = countries_sf, 
-            join = "ST_Within"),
+            join = "within"),
         
         sf = sf::st_join(
             x = points_sf, 
