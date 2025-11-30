@@ -115,7 +115,22 @@ elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 ```
 
-In this case, we can see that DuckDB was `r round(elapsed_gpkg / elapsed_duckdb, 1)` times faster. Now we will do the same exercise but reading the data back into R:
+In this case, we can see that DuckDB was `r round(elapsed_gpkg / elapsed_duckdb, 1)` times faster. We can also take advantage of the Arrow-backend database view by using the argument `temp_view = TRUE`:
+
+```{r}
+## write data monitoring processing time
+start_time <- proc.time()
+ddbs_write_vector(conn, sf_points, "test_points_view", temp_view = TRUE)
+end_time <- proc.time()
+
+## print elapsed time
+elapsed_duckdb_view <- end_time["elapsed"] - start_time["elapsed"]
+print(elapsed_duckdb_view)
+```
+
+This was `r round(elapsed_gpkg / elapsed_duckdb_view, 1)` times faster than `sf`, and `r round(elapsed_duckdb / elapsed_duckdb_view, 1)` times faster than create a table in DuckDB.
+
+Now we will do the same exercise but reading the data back into R:
 
 ```{r}
 ## write data monitoring processing time
