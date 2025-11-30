@@ -60,7 +60,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Benchmark</h1>
             
-            <h4 data-toc-skip class="date">2025-11-29</h4>
+            <h4 data-toc-skip class="date">2025-11-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/benchmark.Rmd" class="external-link"><code>vignettes/benchmark.Rmd</code></a></small>
       <div class="d-none name"><code>benchmark.Rmd</code></div>
@@ -155,7 +155,7 @@ memory.</li>
 <p>As one would expect, {sf} is faster for small data sets, when when
 the time difference is less than a couple seconds. For larger data sets,
 though, {duckspatial} gets much more efficient. In this example working
-with 10 million points, {duckspatial} was 60% faster and used 4.1 times
+with 10 million points, {duckspatial} was 50% faster and used 4.1 times
 less memory than {sf}. Not bad.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">df_bench</span><span class="op">)</span> <span class="op">+</span></span>

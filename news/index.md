@@ -26,6 +26,24 @@
 - [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md):
   new function to perform spatial join operations.
 
+- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md):
+  adds a new column with the length of the geometries
+
+- [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md):
+  adds a new column with the area of the geometries
+
+- [`ddbs_is_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_is_valid.md):
+  adds a new logical column asserting the simplicity of the geometries
+
+- [`ddbs_is_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_is_valid.md):
+  adds a new logical column asserting the validity of the geometries
+
+- [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md):
+  makes the geometries valid
+
+- [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md):
+  makes the geometries simple
+
 ### MINOR CHANGES
 
 - All functions now have a parameter `quiet` that allows users to

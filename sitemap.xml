@@ -24,12 +24,16 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_glimpse.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_install.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_intersection.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_is_simple.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_is_valid.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_join.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_length.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_list_tables.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_load.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_valid.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_read_vector.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_register_vector.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_simplify.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_vector.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_geom_name.html</loc></url>

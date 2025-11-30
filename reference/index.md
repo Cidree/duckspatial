@@ -20,6 +20,8 @@
 
 - [`ddbs_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_difference.md)
   : Calculates the difference of two geometries
+- [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md)
+  : Spatial Filter
 - [`ddbs_intersection()`](https://cidree.github.io/duckspatial/reference/ddbs_intersection.md)
   : Calculates the intersection of two geometries
 - [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md)
@@ -33,6 +35,14 @@
   : Creates a buffer around geometries
 - [`ddbs_centroid()`](https://cidree.github.io/duckspatial/reference/ddbs_centroid.md)
   : Calculates the centroid of geometries
+- [`ddbs_is_simple()`](https://cidree.github.io/duckspatial/reference/ddbs_is_simple.md)
+  : Check if geometries are simple
+- [`ddbs_is_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_is_valid.md)
+  : Check if geometries are valid
+- [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md)
+  : Make invalid geometries valid
+- [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md)
+  : Simplify geometries
 
 ## Spatial operations (measures)
 
@@ -40,13 +50,6 @@
   : Calculates the area of geometries
 - [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md)
   : Calculates the length of geometries
-
-## Data manipulation
-
-- [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md)
-  : Spatial Filter
-- [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md)
-  : Performs spatial joins of two geometries
 
 ## SQL wrappers
 

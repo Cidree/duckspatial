@@ -13,9 +13,9 @@ ddbs_area(
   x,
   conn = NULL,
   name = NULL,
+  new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  area_column = "area",
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -41,6 +41,11 @@ ddbs_area(
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
 
+- new_column:
+
+  Name of the new column to create on the input data. If NULL, the
+  function will return a vector with the result
+
 - crs:
 
   The coordinates reference system of the data. Specify if the data
@@ -52,11 +57,6 @@ ddbs_area(
   (created automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
-
-- area_column:
-
-  Character string specifying the name of the output area column.
-  Default is "area".
 
 - overwrite:
 
@@ -70,7 +70,7 @@ ddbs_area(
 
 ## Value
 
-an `sf` object or `TRUE` (invisibly) for table creation
+a vector, an `sf` object or `TRUE` (invisibly) for table creation
 
 ## Examples
 
@@ -103,19 +103,10 @@ ddbs_write_vector(conn, argentina_sf, "argentina")
 
 ## calculate area (returns sf object with area column)
 ddbs_area("argentina", conn)
-#> ✔ Query successful
-#> Simple feature collection with 1 feature and 7 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -8184715 ymin: -6872329 xmax: -5969406 ymax: -2489680
-#> Projected CRS: WGS 84 / Pseudo-Mercator
-#>   CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date         area
-#> 1      AR Argentina       ARG Argentina  AR 2021-01-01 4.253708e+12
-#>                         geometry
-#> 1 POLYGON ((-6973632 -2541624...
+#> [1] 4.253708e+12
 
 ## calculate area with custom column name
-ddbs_area("argentina", conn, area_column = "area_sqm")
+ddbs_area("argentina", conn, new_column = "area_sqm")
 #> ✔ Query successful
 #> Simple feature collection with 1 feature and 7 fields
 #> Geometry type: POLYGON
@@ -129,18 +120,9 @@ ddbs_area("argentina", conn, area_column = "area_sqm")
 
 ## create a new table with area calculations
 ddbs_area("argentina", conn, name = "argentina_with_area")
-#> ✔ Query successful
+#> [1] 4.253708e+12
 
 ## calculate area in a sf object
 ddbs_area(argentina_sf)
-#> ✔ Query successful
-#> Simple feature collection with 1 feature and 7 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -8184715 ymin: -6872329 xmax: -5969406 ymax: -2489680
-#> Projected CRS: WGS 84 / Pseudo-Mercator
-#>   CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date         area
-#> 1      AR Argentina       ARG Argentina  AR 2021-01-01 4.253708e+12
-#>                         geometry
-#> 1 POLYGON ((-6973632 -2541624...
+#> [1] 4.253708e+12
 ```
