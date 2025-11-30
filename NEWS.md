@@ -10,11 +10,16 @@
 
 * `ddbs_boundary()`: returns the boundary of geometries.
 
+* `ddbs_convex_hull()`: new function to create the convex hull enclosing a geometry.
+
 * `ddbs_create_conn()`: new convenient function to create a DuckDB connection.
 
 * `ddbs_drivers()`: get list of GDAL drivers and file formats supported by DuckDB spatial extension.
 
 * `ddbs_join()`: new function to perform spatial join operations.
+
+
+
 
 ## MINOR CHANGES
 
