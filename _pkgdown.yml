@@ -33,6 +33,7 @@ reference:
 - title: Spatial operations (binary)
   contents:
   - ddbs_difference
+  - ddbs_filter
   - ddbs_intersection
   - ddbs_join
 
@@ -50,11 +51,6 @@ reference:
   contents:
   - ddbs_area
   - ddbs_length
-
-- title: Data manipulation
-  contents:
-  - ddbs_filter
-  - ddbs_join
 
 - title: SQL wrappers
   contents:
