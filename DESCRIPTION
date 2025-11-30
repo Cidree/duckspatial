@@ -26,11 +26,12 @@ Imports:
     glue,
     sf,
     wk
-Suggests: 
+Suggests:
     bench,
     dplyr,
     ggplot2 (>= 3.3.1),
     knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
