@@ -46,6 +46,16 @@ assert_numeric <- function(arg, ref) {
     }
 }
 
+assert_numeric_interval <- function(arg, minn, maxx, ref) {
+
+    if (!is.numeric(arg) || min(arg) < minn || max(arg) > maxx) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single numeric value between {minn} and {maxx}.",
+            .frame = parent.frame()
+        )
+    }
+}
+
 
 # whether the function takes sf of string as xy input
 assert_connflict <- function(conn, xy, ref = "x") {
