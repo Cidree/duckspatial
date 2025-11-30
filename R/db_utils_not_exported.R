@@ -27,8 +27,13 @@ dbConnCheck <- function(conn) {
 #' @keywords internal
 #' @returns name of the geometry column of a table
 get_geom_name <- function(conn, x, rest = FALSE) {
-    info_tbl <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};"))
-    if (rest) info_tbl[!info_tbl$column_type == "GEOMETRY", "column_name"] else info_tbl[info_tbl$column_type == "GEOMETRY", "column_name"] 
+
+  ## check if the table exists
+  if (isFALSE(DBI::dbExistsTable(conn, x))) cli::cli_abort("The table <{x}> does not exist.")
+
+  ## get column names
+  info_tbl <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};"))
+  if (rest) info_tbl[!info_tbl$column_type == "GEOMETRY", "column_name"] else info_tbl[info_tbl$column_type == "GEOMETRY", "column_name"] 
 }
 
 
