@@ -10,12 +10,12 @@
 #' @template x
 #' @template conn_null
 #' @template name
+#' @template new_column
 #' @template crs
-#' @param area_column Character string specifying the name of the output area column. Default is "area".
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @returns a vector, an \code{sf} object or \code{TRUE} (invisibly) for table creation
 #' @export
 #'
 #' @examples
@@ -38,21 +38,22 @@
 #' ddbs_area("argentina", conn)
 #' 
 #' ## calculate area with custom column name
-#' ddbs_area("argentina", conn, area_column = "area_sqm")
+#' ddbs_area("argentina", conn, new_column = "area_sqm")
 #' 
 #' ## create a new table with area calculations
 #' ddbs_area("argentina", conn, name = "argentina_with_area")
 #' 
 #' ## calculate area in a sf object
 #' ddbs_area(argentina_sf)
-ddbs_area <- function(x,
-                      conn = NULL,
-                      name = NULL,
-                      crs = NULL,
-                      crs_column = "crs_duckspatial",
-                      area_column = "area",
-                      overwrite = FALSE,
-                      quiet = FALSE) {
+ddbs_area <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    new_column = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet = FALSE) {
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -83,7 +84,18 @@ ddbs_area <- function(x,
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3. if name is not NULL (i.e. no data frame returned)
+    ## 3. Handle new column = NULL
+    if (is.null(new_column)) {
+        tmp.query <- glue::glue("
+            SELECT ST_Area({x_geom}) as area, 
+            FROM {x_list$query_name}
+          ")
+
+          data_vec <- DBI::dbGetQuery(conn, tmp.query)
+          return(data_vec[, 1])
+    }
+
+    ## 4. if name is not NULL (i.e. no data frame returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
@@ -101,12 +113,12 @@ ddbs_area <- function(x,
         ## create query
         if (length(x_rest) == 0) {
             tmp.query <- glue::glue("
-            SELECT ST_Area({x_geom}) AS {area_column}, {x_geom}
+            SELECT ST_Area({x_geom}) AS {new_column}, {x_geom}
             FROM {x_list$query_name}
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Area({x_geom}) AS {area_column}, {x_geom}
+            SELECT {paste0(x_rest, collapse = ', ')}, ST_Area({x_geom}) AS {new_column}, {x_geom}
             FROM {x_list$query_name}
         ")
         }
@@ -120,23 +132,23 @@ ddbs_area <- function(x,
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+    # 5. Get data frame
+    ## 5.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_Area({x_geom}) AS {area_column}, ST_AsText({x_geom}) as {x_geom}
+            SELECT ST_Area({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name}
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Area({x_geom}) AS {area_column}, ST_AsText({x_geom}) as {x_geom}
+            SELECT {paste0(x_rest, collapse = ', ')}, ST_Area({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name}
         ")
     }
-    ## 4.2. retrieve results of the query
+    ## 5.2. retrieve results of the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF and return result
+    ## 6. convert to SF and return result
     data_sf <- convert_to_sf(
         data       = data_tbl,
         crs        = crs,
@@ -163,8 +175,8 @@ ddbs_area <- function(x,
 #' @template x
 #' @template conn_null
 #' @template name
+#' @template new_column
 #' @template crs
-#' @param length_column Character string specifying the name of the output length column. Default is "length".
 #' @template overwrite
 #' @template quiet
 #'
@@ -190,21 +202,22 @@ ddbs_area <- function(x,
 #' ddbs_length("rivers", conn)
 #' 
 #' ## calculate length with custom column name
-#' ddbs_length("rivers", conn, length_column = "length_meters")
+#' ddbs_length("rivers", conn, new_column = "length_meters")
 #' 
 #' ## create a new table with length calculations
 #' ddbs_length("rivers", conn, name = "rivers_with_length")
 #' 
 #' ## calculate length in a sf object (without a connection)
 #' ddbs_length(rivers_sf)
-ddbs_length <- function(x,
-                        conn = NULL,
-                        name = NULL,
-                        crs = NULL,
-                        crs_column = "crs_duckspatial",
-                        length_column = "length",
-                        overwrite = FALSE,
-                        quiet = FALSE) {
+ddbs_length <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    new_column = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet = FALSE) {
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -235,7 +248,18 @@ ddbs_length <- function(x,
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3. if name is not NULL (i.e. no data frame returned)
+    ## 3. Handle new column = NULL
+    if (is.null(new_column)) {
+        tmp.query <- glue::glue("
+            SELECT ST_Length({x_geom}) as length, 
+            FROM {x_list$query_name}
+          ")
+
+          data_vec <- DBI::dbGetQuery(conn, tmp.query)
+          return(data_vec[, 1])
+    }
+
+    ## 4. if name is not NULL (i.e. no data frame returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
@@ -253,12 +277,12 @@ ddbs_length <- function(x,
         ## create query
         if (length(x_rest) == 0) {
             tmp.query <- glue::glue("
-            SELECT ST_Length({x_geom}) AS {length_column}, {x_geom}
+            SELECT ST_Length({x_geom}) AS {new_column}, {x_geom}
             FROM {x_list$query_name}
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Length({x_geom}) AS {length_column}, {x_geom}
+            SELECT {paste0(x_rest, collapse = ', ')}, ST_Length({x_geom}) AS {new_column}, {x_geom}
             FROM {x_list$query_name}
         ")
         }
@@ -272,23 +296,23 @@ ddbs_length <- function(x,
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+    # 5. Get data frame
+    ## 5.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_Length({x_geom}) AS {length_column}, ST_AsText({x_geom}) as {x_geom}
+            SELECT ST_Length({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name}
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Length({x_geom}) AS {length_column}, ST_AsText({x_geom}) as {x_geom}
+            SELECT {paste0(x_rest, collapse = ', ')}, ST_Length({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name}
         ")
     }
-    ## 4.2. retrieve results of the query
+    ## 5.2. retrieve results of the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    ## 5. convert to SF and return result
+    ## 6. convert to SF and return result
     data_sf <- convert_to_sf(
         data       = data_tbl,
         crs        = crs,

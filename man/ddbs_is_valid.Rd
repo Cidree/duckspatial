@@ -8,7 +8,7 @@ ddbs_is_valid(
   x,
   conn = NULL,
   name = NULL,
-  isvalid_column = "isvalid",
+  new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
   overwrite = FALSE,
@@ -28,7 +28,8 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{isvalid_column}{Character string specifying the name of the output area column. Default is "isvalid".}
+\item{new_column}{Name of the new column to create on the input data. If NULL,
+the function will return a vector with the result}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
@@ -44,7 +45,7 @@ to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-an \code{sf} object with validity information or \code{TRUE} (invisibly) for table creation
+a vector, an \code{sf} object with validity information or \code{TRUE} (invisibly) for table creation
 }
 \description{
 Checks the validity of geometries from a DuckDB table using the spatial extension.

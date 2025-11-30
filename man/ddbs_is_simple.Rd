@@ -8,7 +8,7 @@ ddbs_is_simple(
   x,
   conn = NULL,
   name = NULL,
-  issimple_column = "issimple",
+  new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
   overwrite = FALSE,
@@ -28,12 +28,15 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{issimple_column}{Name of the column to store simplicity information. Default is "issimple".}
+\item{new_column}{Name of the new column to create on the input data. If NULL,
+the function will return a vector with the result}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{Name of the column to store CRS information. Default is "crs_duckspatial".}
+\item{crs_column}{a character string of length one specifying the column
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
+Set to \code{NULL} if absent.}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
@@ -42,7 +45,7 @@ to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-an \code{sf} object with simplicity information or \code{TRUE} (invisibly) for table creation
+a vector, an \code{sf} object with simplicity information or \code{TRUE} (invisibly) for table creation
 }
 \description{
 Checks if geometries are simple (no self-intersections) from a DuckDB table using the spatial extension.

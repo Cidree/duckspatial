@@ -33,7 +33,9 @@ names. If \code{NULL} (the default), the function returns the result as an
 \item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{Name of the column to store CRS information. Default is "crs_duckspatial".}
+\item{crs_column}{a character string of length one specifying the column
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
+Set to \code{NULL} if absent.}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}

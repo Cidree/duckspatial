@@ -8,9 +8,9 @@ ddbs_length(
   x,
   conn = NULL,
   name = NULL,
+  new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  length_column = "length",
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -28,14 +28,15 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
+\item{new_column}{Name of the new column to create on the input data. If NULL,
+the function will return a vector with the result}
+
 \item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
-
-\item{length_column}{Character string specifying the name of the output length column. Default is "length".}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
@@ -71,7 +72,7 @@ ddbs_write_vector(conn, rivers_sf, "rivers")
 ddbs_length("rivers", conn)
 
 ## calculate length with custom column name
-ddbs_length("rivers", conn, length_column = "length_meters")
+ddbs_length("rivers", conn, new_column = "length_meters")
 
 ## create a new table with length calculations
 ddbs_length("rivers", conn, name = "rivers_with_length")
