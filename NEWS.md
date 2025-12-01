@@ -20,8 +20,17 @@
 
 * `ddbs_join()`: new function to perform spatial join operations.
 
+* `ddbs_length()`: adds a new column with the length of the geometries
 
+* `ddbs_area()`: adds a new column with the area of the geometries
 
+* `ddbs_is_valid()`: adds a new logical column asserting the simplicity of the geometries
+
+* `ddbs_is_valid()`: adds a new logical column asserting the validity of the geometries
+
+* `ddbs_make_valid()`: makes the geometries valid
+
+* `ddbs_simplify()`: makes the geometries simple
 
 ## MINOR CHANGES
 
