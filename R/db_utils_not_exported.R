@@ -63,6 +63,54 @@ get_query_name <- function(name) {
 
 
 
+
+#' Get names for the query
+#'
+#' @param x sf or character
+#' @template conn_null
+#'
+#' @keywords internal
+#' @returns list with fixed names
+get_query_list <- function(x, conn) {
+
+  if (inherits(x, "sf")) {
+    
+    ## generate a unique temporary view name
+    temp_view_name <- paste0(
+      "temp_view_", 
+      gsub("-", "_", uuid::UUIDgenerate())
+    )
+    
+    # Write table with the unique name
+    duckspatial::ddbs_write_vector(
+      conn      = conn, 
+      data      = x, 
+      name      = temp_view_name, 
+      quiet     = TRUE, 
+      temp_view = TRUE
+    )
+    
+    ## ensure cleanup on exit
+    on.exit(
+      DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), 
+      add = TRUE
+    )
+    
+    x_list <- get_query_name(temp_view_name)
+
+} else {
+    x_list <- get_query_name(x)
+  }
+
+  return(x_list)
+
+}
+
+
+
+
+
+
 #' Converts from data frame to sf
 #'
 #' Converts a table that has been read from DuckDB into an sf object
@@ -210,3 +258,37 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
   return(sf_obj)
 }
   
+
+
+
+
+
+#' Feedback for overwrite argument
+#'
+#' @param x table name
+#' @template conn
+#' @template quiet
+#' @template overwrite
+#'
+#' @keywords internal
+#' @returns cli message
+overwrite_table <- function(x, conn, quiet, overwrite) {
+  if (overwrite) {
+    DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {x};"))
+    if (isFALSE(quiet)) cli::cli_alert_info("Table <{x}> dropped")
+  }
+}
+
+
+
+
+
+#' Feedback for query success
+#'
+#' @template quiet
+#'
+#' @keywords internal
+#' @returns cli message
+feedback_query <- function(quiet) {
+  if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
+}

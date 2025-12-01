@@ -74,15 +74,16 @@
 #' plot(output2["CNTR_NAME"])
 #'
 #' }
-ddbs_join <- function(x,
-                      y,
-                      join = "intersects",
-                      conn = NULL,
-                      name = NULL,
-                      crs = NULL,
-                      crs_column = "crs_duckspatial",
-                      overwrite = FALSE,
-                      quiet = FALSE) {
+ddbs_join <- function(
+    x,
+    y,
+    join = "intersects",
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet = FALSE) {
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -90,28 +91,18 @@ ddbs_join <- function(x,
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_connflict(conn, xy = x, ref = "x")
-    assert_connflict(conn, xy = y, ref = "y")
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided
+     # 1. Manage connection to DB
+    ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
-    ## 1.2. prepares info for running the function on a temporary db
     if (isFALSE(is_duckdb_conn)) {
-
-       # create conn
-       conn <- duckspatial::ddbs_create_conn()
-
-       # write tables, and get convenient names for x
-       duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE, temp_view = TRUE)
-       duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE, temp_view = TRUE)
-       x_list <- get_query_name("tbl_x")
-       y_list <- get_query_name("tbl_y")
-
-    } else {
-        x_list <- get_query_name(x)
-        y_list <- get_query_name(y)
+      conn <- duckspatial::ddbs_create_conn()  
+      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
+    ## 1.2. get query list of table names
+    x_list <- get_query_list(x, conn)
+    y_list <- get_query_list(y, conn)
+    
 
     # 2. Prepare params for query
     ## 2.1. select predicate
@@ -159,13 +150,7 @@ ddbs_join <- function(x,
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        if (overwrite) {
-            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-
-            if (isFALSE(quiet)) {
-                cli::cli_alert_info("Table <{name_list$query_name}> dropped")
-            }
-        }
+        overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
         ## create query (no st_as_text)
         if (length(x_rest) == 0) {
@@ -188,12 +173,7 @@ ddbs_join <- function(x,
 
         ## execute intersection query
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
-
-
-        if (isFALSE(quiet)) {
-            cli::cli_alert_success("Query successful")
-        }
-
+        feedback_query(quiet)
         return(invisible(TRUE))
     }
 
@@ -228,7 +208,7 @@ ddbs_join <- function(x,
         x_geom     = x_geom
     )
 
-    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
+    feedback_query(quiet)
     return(data_sf)
 }
 

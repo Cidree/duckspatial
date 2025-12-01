@@ -39,14 +39,15 @@
 #' ## intersection without using a connection
 #' ddbs_intersection(countries_sf, argentina_sf)
 #' }
-ddbs_intersection <- function(x,
-                              y,
-                              conn = NULL,
-                              name = NULL,
-                              crs = NULL,
-                              crs_column = "crs_duckspatial",
-                              overwrite = FALSE,
-                              quiet = FALSE) {
+ddbs_intersection <- function(
+    x,
+    y,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet = FALSE) {
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -54,28 +55,17 @@ ddbs_intersection <- function(x,
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_connflict(conn, xy = x, ref = "x")
-    assert_connflict(conn, xy = y, ref = "y")
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided
+     # 1. Manage connection to DB
+    ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
-    ## 1.2. prepares info for running the function on a temporary db
     if (isFALSE(is_duckdb_conn)) {
-
-        # create conn
-        conn <- duckspatial::ddbs_create_conn()
-
-        # write tables, and get convenient names for x
-        duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE, temp_view = TRUE)
-        duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE, temp_view = TRUE)
-        x_list <- get_query_name("tbl_x")
-        y_list <- get_query_name("tbl_y")
-
-    } else {
-        x_list <- get_query_name(x)
-        y_list <- get_query_name(y)
+      conn <- duckspatial::ddbs_create_conn()  
+      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
+    ## 1.2. get query list of table names
+    x_list <- get_query_list(x, conn)
+    y_list <- get_query_list(y, conn)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -91,13 +81,7 @@ ddbs_intersection <- function(x,
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        if (overwrite) {
-            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-
-            if (isFALSE(quiet)) {
-                cli::cli_alert_info("Table <{name_list$query_name}> dropped")
-            }
-        }
+        overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
         ## create query (no st_as_text)
         if (length(x_rest) == 0) {
@@ -115,11 +99,7 @@ ddbs_intersection <- function(x,
         }
         ## execute intersection query
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
-
-        if (isFALSE(quiet)) {
-            cli::cli_alert_success("Query successful")
-        }
-
+        feedback_query(quiet)
         return(invisible(TRUE))
     }
 
@@ -149,7 +129,7 @@ ddbs_intersection <- function(x,
         x_geom     = x_geom
     )
 
-    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
+    feedback_query(quiet)
     return(data_sf)
 }
 
@@ -213,28 +193,17 @@ ddbs_difference <- function(x,
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_connflict(conn, xy = x, ref = "x")
-    assert_connflict(conn, xy = y, ref = "y")
 
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided
+    ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
-    ## 1.2. prepares info for running the function on a temporary db
     if (isFALSE(is_duckdb_conn)) {
-
-        # create conn
-        conn <- duckspatial::ddbs_create_conn()
-
-        # write tables, and get convenient names for x
-        duckspatial::ddbs_write_vector(conn, data = x, name = "tbl_x", quiet = TRUE, temp_view = TRUE)
-        duckspatial::ddbs_write_vector(conn, data = y, name = "tbl_y", quiet = TRUE, temp_view = TRUE)
-        x_list <- get_query_name("tbl_x")
-        y_list <- get_query_name("tbl_y")
-
-    } else {
-        x_list <- get_query_name(x)
-        y_list <- get_query_name(y)
+      conn <- duckspatial::ddbs_create_conn()  
+      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
+    ## 1.2. get query list of table names
+    x_list <- get_query_list(x, conn)
+    y_list <- get_query_list(y, conn)
 
     # 2. Prepare params for query
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -250,13 +219,7 @@ ddbs_difference <- function(x,
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        if (overwrite) {
-            DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-
-            if (isFALSE(quiet)) {
-                cli::cli_alert_info("Table <{name_list$query_name}> dropped")
-            }
-        }
+        overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
         ## create query (no st_as_text)
         if (length(x_rest) == 0) {
@@ -286,10 +249,7 @@ ddbs_difference <- function(x,
           WHERE ST_IsEmpty({x_geom})
         "))
 
-        if (isFALSE(quiet)) {
-            cli::cli_alert_success("Query successful")
-        }
-
+        feedback_query(quiet)
         return(invisible(TRUE))
     }
 
@@ -327,7 +287,7 @@ ddbs_difference <- function(x,
     data_sf <- data_sf[!sf::st_is_empty(data_sf), ]
 
     ## return result
-    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
+    feedback_query(quiet)
     return(data_sf)
 
 

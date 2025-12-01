@@ -12,10 +12,10 @@ points_sf <- data.frame(
     y = runif(n, min = -90, max = 90)
     ) |>
     sf::st_as_sf(coords = c("x", "y"), crs = 4326) |>
-    st_geometry() |>
-    st_combine() |>
-    st_cast("MULTIPOINT") |>
-    st_as_sf()
+    sf::st_geometry() |>
+    sf::st_combine() |>
+    sf::st_cast("MULTIPOINT") |>
+    sf::st_as_sf()
 
 # helpers --------------------------------------------------------------
 
