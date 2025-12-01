@@ -54,7 +54,7 @@ library(duckdb)
 #> Loading required package: DBI
 library(duckspatial)
 library(sf)
-#> Linking to GEOS 3.13.0, GDAL 3.10.1, PROJ 9.5.1; sf_use_s2() is TRUE
+#> Linking to GEOS 3.13.1, GDAL 3.11.0, PROJ 9.6.0; sf_use_s2() is TRUE
 ```
 
 First, we create a connection with a DuckDB database (in this case in
@@ -67,7 +67,7 @@ conn <- dbConnect(duckdb())
 
 ## install and load spatial extension
 ddbs_install(conn)
-#> ℹ spatial extension version <a6a607f> is already installed in this database
+#> ℹ spatial extension version <d83faf8> is already installed in this database
 ddbs_load(conn)
 #> ✔ Spatial extension loaded
 ```
@@ -100,15 +100,15 @@ head(sf_points)
 #> Simple feature collection with 6 features and 4 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -103.4278 ymin: -77.84912 xmax: 174.5105 ymax: 78.06705
+#> Bounding box:  xmin: -124.2864 ymin: -72.15126 xmax: 163.8672 ymax: 75.7669
 #> Geodetic CRS:  WGS 84
-#>   id      a       b         c                   geometry
-#> 1  1 606389 fdpqjuf jidixdnav  POINT (174.5105 -24.7815)
-#> 2  2 939676 vasjjuo xqeimufhi POINT (13.81659 -77.84912)
-#> 3  3 185581 gmzutwz lnppvwcsu POINT (-103.4278 78.06705)
-#> 4  4 479849 fdpqjuf xqeimufhi   POINT (151.779 74.97166)
-#> 5  5 289697 hecnvwr fmkexxkdl POINT (155.8306 -70.14185)
-#> 6  6 127492 hecnvwr bujybgkdp POINT (-41.31083 48.05544)
+#>   id      a       b         c                    geometry
+#> 1  1 859568 coymaff jetjsaflm POINT (-124.2864 -37.90519)
+#> 2  2 598415 ppqzgog ilctisjkg   POINT (163.8672 53.59711)
+#> 3  3  50455 rzsltum kkcannydo POINT (-59.45239 -64.17698)
+#> 4  4 901453 nwmhqfb yhpawnmnl  POINT (57.81578 -72.15126)
+#> 5  5 424225 tspgmop yhpawnmnl   POINT (86.6534 -38.47388)
+#> 6  6 954935 coymaff yhpawnmnl   POINT (-116.6155 75.7669)
 ```
 
 Now we can insert the data into the database using the
@@ -127,7 +127,7 @@ end_time <- proc.time()
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>      15
+#>    7.73
 ```
 
 ``` r
@@ -141,24 +141,44 @@ end_time <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>  221.88
+#>   98.67
 ```
 
-In this case, we can see that DuckDB was 14.8 times faster. Now we will
-do the same exercise but reading the data back into R:
+In this case, we can see that DuckDB was 12.8 times faster. We can also
+take advantage of the Arrow-backend database view by using the argument
+`temp_view = TRUE`:
+
+``` r
+## write data monitoring processing time
+start_time <- proc.time()
+ddbs_write_vector(conn, sf_points, "test_points_view", temp_view = TRUE)
+#> ✔ Temporary view test_points_view registered
+end_time <- proc.time()
+
+## print elapsed time
+elapsed_duckdb_view <- end_time["elapsed"] - start_time["elapsed"]
+print(elapsed_duckdb_view)
+#> elapsed 
+#>    3.89
+```
+
+This was 25.4 times faster than `sf`, and 2 times faster than create a
+table in DuckDB.
+
+Now we will do the same exercise but reading the data back into R:
 
 ``` r
 ## write data monitoring processing time
 start_time <- proc.time()
 sf_points_ddbs <- ddbs_read_vector(conn, "test_points")
-#> ✔ Table test_points successfully imported.
+#> ✔ table test_points successfully imported.
 end_time <- proc.time()
 
 ## print elapsed time
 elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_duckdb)
 #> elapsed 
-#>    54.3
+#>   37.67
 ```
 
 ``` r
@@ -171,7 +191,7 @@ end_time       <- proc.time()
 elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
 print(elapsed_gpkg)
 #> elapsed 
-#>   53.63
+#>   31.26
 ```
 
 For reading, we got similar results. Finally, don’t forget to disconnect

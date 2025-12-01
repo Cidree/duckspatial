@@ -18,6 +18,10 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 
+# Initialize variables to prevent "object not found" error when eval=FALSE
+time_diff <- "XX"
+memo_diff <- "XX"
+
 # CRAN OMP THREAD LIMIT to avoid CRAN NOTE
 Sys.setenv(OMP_THREAD_LIMIT = 2)
 ```
