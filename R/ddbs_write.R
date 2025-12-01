@@ -69,10 +69,7 @@ ddbs_write_vector <- function(
         cli::cli_abort("The provided name is already present in the database. Please, use `overwrite = TRUE` or choose a different name.")
 
     # 2. Handle overwrite
-    if (overwrite) {
-        DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {name_list$query_name};"))
-        cli::cli_alert_info("Table {name_list$query_name} dropped")
-    }
+    overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
     ## 3. insert data
     if (inherits(data, "sf")) {
