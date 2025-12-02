@@ -85,3 +85,12 @@ assert_crs_column <- function(crs_column, cols) {
             cli::cli_abort("CRS column <{crs_column}> do not found in the table. If the data do not have CRS column, set the argument `crs_column = NULL`")
 
 }
+
+
+## assert id argument in predicate functions
+assert_predicate_id <- function(id, conn, lst) {
+    if (!is.null(id)) {
+        x_rest <- get_geom_name(conn, lst, rest = TRUE)
+        if (!id %in% x_rest) cli::cli_abort("<id> must be NULL or a column name of <x>")
+    }
+}

@@ -292,3 +292,45 @@ overwrite_table <- function(x, conn, quiet, overwrite) {
 feedback_query <- function(quiet) {
   if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
 }
+
+
+
+
+get_nrow <- function(conn, table) {
+  DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) as n FROM {table}"))$n
+}
+
+
+
+
+
+reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y) {
+
+  ## get number of rows
+  nrowx <- get_nrow(conn, x_list$query_name)
+  nrowy <- get_nrow(conn, y_list$query_name)
+
+  ## convert results to matrix -> to list
+  pred_mat  <- matrix(data$predicate, nrow = nrowx, ncol = nrowy, byrow = TRUE)
+  pred_list <- apply(pred_mat, 1, function(row) which(row))
+
+  ## rename list if id is provided
+  if (!is.null(id_x)) {
+    idx_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {id_x} as id FROM {x_list$query_name}"))$id
+    names(pred_list) <- idx_names
+  }
+
+  ## rename list if id is provided
+  if (!is.null(id_y)) {
+    idy_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {id_y} as id FROM {y_list$query_name}"))$id
+    pred_list <- lapply(pred_list, function(ind) {
+      if (length(ind) == 0) return(ind)
+      idy_names[ind]
+    })
+  }
+
+  return(pred_list)
+
+}
+
+
