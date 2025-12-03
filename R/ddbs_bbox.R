@@ -7,6 +7,9 @@
 #' table in the database.
 #'
 #' @template x
+#' @param by_feature Boolean. The function defaults to `FALSE`, and returns a
+#'        single bounding box for `x`. If `TRUE`, it return one bounding box for
+#'        each feature.
 #' @template conn_null
 #' @template name
 #' @template crs
@@ -44,6 +47,7 @@
 #' DBI::dbReadTable(conn, "argentina_bbox")
 #'
 ddbs_bbox <- function(x,
+                      by_feature = FALSE,
                       conn = NULL,
                       name = NULL,
                       crs = NULL,
@@ -54,6 +58,7 @@ ddbs_bbox <- function(x,
     # 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
+    assert_logic(by_feature, "by_feature")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     assert_connflict(conn, xy = x, ref = "x")
@@ -81,6 +86,30 @@ ddbs_bbox <- function(x,
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
     assert_geometry_column(x_geom, x_list)
 
+
+    # 3. Build base query
+
+    # set the extent_clause
+    if (isTRUE(by_feature)) {
+        st_extent_clause <- glue::glue("ST_Extent({x_geom})")
+    } else {
+        st_extent_clause <- glue::glue("ST_Extent(ST_Collect(LIST({x_geom})))")
+    }
+
+    tmp.query <- glue::glue(
+        "SELECT
+            ST_XMin(ext) AS min_x,
+            ST_YMin(ext) AS min_y,
+            ST_XMax(ext) AS max_x,
+            ST_YMax(ext) AS max_y
+         FROM (
+            SELECT {st_extent_clause} AS ext
+            FROM {x_list$query_name}
+            );"
+        )
+
+
+
     ## 3. if name is not NULL (i.e. no data frame returned)
     if (!is.null(name)) {
 
@@ -96,18 +125,6 @@ ddbs_bbox <- function(x,
             }
         }
 
-        ## create query
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT ST_Extent({x_geom})
-            FROM {x_list$query_name}
-        ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Extent({x_geom})
-            FROM {x_list$query_name}
-        ")
-        }
         ## execute area query
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
 
@@ -119,26 +136,12 @@ ddbs_bbox <- function(x,
     }
 
     # 4. Get data frame
-    ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_Extent({x_geom})
-            FROM {x_list$query_name}
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Extent({x_geom})
-            FROM {x_list$query_name}
-        ")
-    }
-    ## 4.2. retrieve results of the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
-    bbox <- data_tbl$`st_extent(geometry)`
-    # class(bbox) <- "bbox"
+    # class(data_tbl) <- "bbox"
 
     if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
-    return(bbox)
+    return(data_tbl)
 }
 
 

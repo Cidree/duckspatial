@@ -4,7 +4,7 @@ testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
 
-argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+rivers_sf <- sf::st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
 
 
 # helpers --------------------------------------------------------------
@@ -13,7 +13,8 @@ argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "
 conn_test <- duckspatial::ddbs_create_conn()
 
 # helper function
-tester <- function(x = argentina_sf,
+tester <- function(x = rivers_sf,
+                   by_feature = FALSE,
                    conn = NULL,
                    name = NULL,
                    crs = NULL,
@@ -22,6 +23,7 @@ tester <- function(x = argentina_sf,
                    quiet = FALSE) {
     ddbs_bbox(
         x,
+        by_feature,
         conn,
         name,
         crs,
@@ -39,19 +41,19 @@ testthat::test_that("expected behavior", {
 
     # option 1: passing sf objects
     output1 <- tester(
-        x = argentina_sf
+        x = rivers_sf,
     )
 
     testthat::expect_true(is(output1 , 'data.frame'))
 
     # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
-    ddbs_write_vector(conn_test, argentina_sf, "argentina_tbl", overwrite = TRUE)
+    ddbs_write_vector(conn_test, rivers_sf, "rivers_tbl", overwrite = TRUE)
 
     # spatial join
     output2 <- tester(
         conn_test,
-        x = "argentina_tbl"
+        x = "rivers_tbl"
     )
 
     testthat::expect_true(is(output2 , 'data.frame'))
@@ -59,7 +61,7 @@ testthat::test_that("expected behavior", {
     # option 3: passing the names of tables in a duckdb db, creating new table in db
     output3 <- tester(
         conn_test,
-        x = "argentina_tbl",
+        x = "rivers_tbl",
         name = "test_result",
         overwrite = TRUE
     )
@@ -79,23 +81,43 @@ testthat::test_that("expected behavior", {
 })
 
 
+testthat::test_that("expected behavior of by_feature", {
+
+    output1 <- tester(
+        x = rivers_sf,
+        by_feature = FALSE
+    )
+
+    testthat::expect_true(nrow(output1)==1)
+
+    output2 <- tester(
+        x = rivers_sf,
+        by_feature = TRUE
+    )
+
+    testthat::expect_true(nrow(output2)==nrow(rivers_sf))
+
+
+})
+
+
 testthat::test_that("error if table already exists", {
 
     # write table for the 1st time
-    testthat::expect_true(tester(x = "argentina_tbl",
+    testthat::expect_true(tester(x = "rivers_tbl",
                                     conn = conn_test,
                                     name = 'banana',
                                     overwrite = FALSE)
                              )
 
     # expected error if overwrite = FALSE
-    testthat::expect_error(tester(x = "argentina_tbl",
+    testthat::expect_error(tester(x = "rivers_tbl",
                                     conn = conn_test,
                                     name = 'banana',
                                     overwrite = FALSE))
 
     # overwrite table
-    testthat::expect_true(tester(x = "argentina_tbl",
+    testthat::expect_true(tester(x = "rivers_tbl",
                                     conn = conn_test,
                                     name = 'banana',
                                     overwrite = TRUE))
@@ -109,6 +131,7 @@ testthat::test_that("errors with incorrect input", {
 
     testthat::expect_error(tester(x = 999))
     testthat::expect_error(tester(conn = 999))
+    testthat::expect_error(tester(by_feature = 999))
     testthat::expect_error(tester(overwrite = 999))
     testthat::expect_error(tester(quiet = 999))
 
