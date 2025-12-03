@@ -25,7 +25,8 @@ Imports:
     DBI,
     glue,
     sf,
-    wk
+    wk,
+    uuid
 Suggests:
     bench,
     dplyr,
