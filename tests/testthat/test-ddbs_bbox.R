@@ -41,7 +41,7 @@ testthat::test_that("expected behavior", {
 
     # option 1: passing sf objects
     output1 <- tester(
-        x = rivers_sf,
+        x = rivers_sf
     )
 
     testthat::expect_true(is(output1 , 'data.frame'))
@@ -52,7 +52,7 @@ testthat::test_that("expected behavior", {
 
     # spatial join
     output2 <- tester(
-        conn_test,
+       conn = conn_test,
         x = "rivers_tbl"
     )
 
@@ -60,7 +60,7 @@ testthat::test_that("expected behavior", {
 
     # option 3: passing the names of tables in a duckdb db, creating new table in db
     output3 <- tester(
-        conn_test,
+       conn = conn_test,
         x = "rivers_tbl",
         name = "test_result",
         overwrite = TRUE
