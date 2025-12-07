@@ -111,3 +111,17 @@ assert_crs <- function(conn, x, y) {
 
 
 
+## assert that if `x` or `y` are character, connection cannot be NULL
+assert_conn_character <- function(conn, ...) {
+
+  ## get inputs into a list
+  inputs <- list(...)
+
+  ## check if they are character
+  inputs_check <- lapply(inputs, is.character) |> as.logical()
+
+  if (any(inputs_check) & is.null(conn)) {
+    cli::cli_abort("If a table name is provided in `x` or `y`, the connection cannot be NULL.")
+  }
+
+}

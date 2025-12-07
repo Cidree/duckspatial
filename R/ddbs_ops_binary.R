@@ -55,6 +55,7 @@ ddbs_intersection <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x, y)
 
      # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -194,6 +195,7 @@ ddbs_difference <- function(x,
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x, y)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection

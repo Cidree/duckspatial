@@ -110,6 +110,7 @@ ddbs_predicate <- function(
   assert_xy(x, "x")
   assert_xy(y, "y")
   assert_logic(quiet, "quiet")
+  assert_conn_character(conn, x, y)
 
   # 1. Manage connection to DB
   ## 1.1. check if connection is provided, otherwise create a temporary connection
