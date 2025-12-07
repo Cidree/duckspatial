@@ -94,3 +94,16 @@ assert_predicate_id <- function(id, conn, lst) {
         if (!id %in% x_rest) cli::cli_abort("<id> must be NULL or a column name of <x>")
     }
 }
+
+
+## assert if the CRS of `x` and `y` is the same
+assert_crs <- function(conn, x, y) {
+
+  ## get CRS
+  crs_x <- duckspatial::ddbs_crs(conn, x)
+  crs_y <- duckspatial::ddbs_crs(conn, y)
+
+  ## abort if CRS is different
+  if (crs_x != crs_y) cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
+
+}

@@ -102,6 +102,7 @@ ddbs_join <- function(
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
     y_list <- get_query_list(y, conn)
+    assert_crs(conn, x_list$query_name, y_list$query_name)
     
 
     # 2. Prepare params for query

@@ -82,7 +82,7 @@ ddbs_write_vector(conn, rivers_sf, "rivers")
 ddbs_intersects(countries_sf, rivers_sf, conn)
 
 ## Option 2: add ID column
-ddbs_intersects(countries_sf, rivers_sf, conn, "NAME_ENGL", "RIVER_NAME")
+ddbs_intersects(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
 
 ## Option 3: use table names inside duckdb
 ddbs_intersects("countries", "rivers", conn, "NAME_ENGL")
