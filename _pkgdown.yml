@@ -56,6 +56,7 @@ reference:
 
 - title: Spatial operations (unary)
   contents:
+  - ddbs_bbox
   - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid

@@ -6,6 +6,10 @@
 
 * `ddbs_filter()`: uses `intersects` for `ST_Intersects` instead of `intersection`.
 
+* Allow the use of either `sf` object or a DuckDB table as input/output in every operation.
+
+* Functions that use `x` and `y` arguments, can indistinctively use `sf`, DuckDB table name, or mixed.
+
 ## NEW FEATURES
 
 * `ddbs_boundary()`: returns the boundary of geometries.
@@ -31,6 +35,8 @@
 * `ddbs_make_valid()`: makes the geometries valid
 
 * `ddbs_simplify()`: makes the geometries simple
+
+* `ddbs_bbox()`: calculates the bounding box
 
 * **Spatial predicates**: spatial predicates are all included in a function called `ddbs_predicate()`, where the user can specify the spatial predicate. Another option, it's to use the spatial predicate function, such as `ddbs_intersects()`, `ddbs_crosses()`, `ddbs_touches()`, etc.
 
