@@ -159,18 +159,24 @@ convert_to_sf <- function(data, crs, crs_column, x_geom) {
 #' @returns character
 get_st_predicate <- function(predicate) {
     switch(predicate,
-      "intersects"   = "ST_Intersects",
-      "touches"      = "ST_Touches",
-      "contains"     = "ST_Contains",
-      "within"       = "ST_Within",  ## TODO -> add distance argument
-      "disjoint"     = "ST_Disjoint",
-      "equals"       = "ST_Equals",
-      "overlaps"     = "ST_Overlaps",
-      "crosses"      = "ST_Crosses",
-      "intersects_extent" = "ST_Intersects_Extent",
+      "intersects"            = "ST_Intersects",
+      "intersects_extent"     = "ST_Intersects_Extent",
+      "covers"                = "ST_Covers",
+      "touches"               = "ST_Touches",
+      "contains"              = "ST_Contains",
+      "contains_properly"     = "ST_ContainsProperly",
+      "within"                = "ST_Within", 
+      "within_properly"       = "ST_WithinProperly",
+      "disjoint"              = "ST_Disjoint",
+      "equals"                = "ST_Equals",
+      "overlaps"              = "ST_Overlaps",
+      "crosses"               = "ST_Crosses",
+      "covered_by"            = "ST_CoveredBy",
+      "intersects_extent"     = "ST_Intersects_Extent",
       cli::cli_abort(
-          "Predicate should be one of <intersects>, <touches>, <contains>,
-          <within>, <disjoin>, <equals>, <overlaps>, <crosses>, or <intersects_extent>"
+          "Predicate should be one of <intersects>, <intersects_extent>, <covers>, <touches>, 
+          <contains>, <contains_properly>, <within>, <within_properly>, <disjoint>, <equals>, 
+          <overlaps>, <crosses>, <covered_by>, or <intersects_extent>."
         )
       )
 }
@@ -304,15 +310,21 @@ get_nrow <- function(conn, table) {
 
 
 
-reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y) {
+reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, sparse) {
 
   ## get number of rows
   nrowx <- get_nrow(conn, x_list$query_name)
   nrowy <- get_nrow(conn, y_list$query_name)
 
   ## convert results to matrix -> to list
+  ## return matrix if sparse = FALSE
   pred_mat  <- matrix(data$predicate, nrow = nrowx, ncol = nrowy, byrow = TRUE)
+  if (isFALSE(sparse)) return(pred_mat)
+
   pred_list <- apply(pred_mat, 1, function(row) which(row))
+
+  ## return if no matches have been found
+  if (length(pred_list) == 0) return(NULL)
 
   ## rename list if id is provided
   if (!is.null(id_x)) {
