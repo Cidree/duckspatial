@@ -11,10 +11,22 @@
 - [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md):
   uses `intersects` for `ST_Intersects` instead of `intersection`.
 
+- Allow the use of either `sf` object or a DuckDB table as input/output
+  in every operation.
+
+- Functions that use `x` and `y` arguments, can indistinctively use
+  `sf`, DuckDB table name, or mixed.
+
 ### NEW FEATURES
 
 - [`ddbs_boundary()`](https://cidree.github.io/duckspatial/reference/ddbs_boundary.md):
   returns the boundary of geometries.
+
+- [`ddbs_concave_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_concave_hull.md):
+  new function to create the concave hull enclosing a geometry.
+
+- [`ddbs_convex_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_convex_hull.md):
+  new function to create the convex hull enclosing a geometry.
 
 - [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md):
   new convenient function to create a DuckDB connection.
@@ -43,6 +55,19 @@
 
 - [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md):
   makes the geometries simple
+
+- [`ddbs_bbox()`](https://cidree.github.io/duckspatial/reference/ddbs_bbox.md):
+  calculates the bounding box
+
+- **Spatial predicates**: spatial predicates are all included in a
+  function called
+  [`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
+  where the user can specify the spatial predicate. Another option, it’s
+  to use the spatial predicate function, such as
+  [`ddbs_intersects()`](https://cidree.github.io/duckspatial/reference/ddbs_intersects.md),
+  [`ddbs_crosses()`](https://cidree.github.io/duckspatial/reference/ddbs_crosses.md),
+  [`ddbs_touches()`](https://cidree.github.io/duckspatial/reference/ddbs_touches.md),
+  etc.
 
 ### MINOR CHANGES
 

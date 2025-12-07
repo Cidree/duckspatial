@@ -79,8 +79,6 @@ df_bench <- lapply(
 #> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 ```
 
 Now let’s have a look at the results.
@@ -88,7 +86,7 @@ Now let’s have a look at the results.
 As one would expect, {sf} is faster for small data sets, when when the
 time difference is less than a couple seconds. For larger data sets,
 though, {duckspatial} gets much more efficient. In this example working
-with 10 million points, {duckspatial} was 50% faster and used 4.1 times
+with 10 million points, {duckspatial} was 50% faster and used 4.2 times
 less memory than {sf}. Not bad.
 
 ``` r

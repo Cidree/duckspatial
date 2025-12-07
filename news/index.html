@@ -38,10 +38,14 @@
 <h3 id="major-changes-0-2-0999">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-0-2-0999"></a></h3>
 <ul><li><p><code>conn</code> argument defaults now to NULL. This parameter is not mandatory anymore in spatial operations, and it will be handled internally. The argument has been moved after <code>x</code> and <code>y</code> arguments.</p></li>
 <li><p><code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>: uses <code>intersects</code> for <code>ST_Intersects</code> instead of <code>intersection</code>.</p></li>
+<li><p>Allow the use of either <code>sf</code> object or a DuckDB table as input/output in every operation.</p></li>
+<li><p>Functions that use <code>x</code> and <code>y</code> arguments, can indistinctively use <code>sf</code>, DuckDB table name, or mixed.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-0-2-0999">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-2-0999"></a></h3>
 <ul><li><p><code><a href="../reference/ddbs_boundary.html">ddbs_boundary()</a></code>: returns the boundary of geometries.</p></li>
+<li><p><code><a href="../reference/ddbs_concave_hull.html">ddbs_concave_hull()</a></code>: new function to create the concave hull enclosing a geometry.</p></li>
+<li><p><code><a href="../reference/ddbs_convex_hull.html">ddbs_convex_hull()</a></code>: new function to create the convex hull enclosing a geometry.</p></li>
 <li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: new convenient function to create a DuckDB connection.</p></li>
 <li><p><code><a href="../reference/ddbs_drivers.html">ddbs_drivers()</a></code>: get list of GDAL drivers and file formats supported by DuckDB spatial extension.</p></li>
 <li><p><code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>: new function to perform spatial join operations.</p></li>
@@ -51,6 +55,8 @@
 <li><p><code><a href="../reference/ddbs_is_valid.html">ddbs_is_valid()</a></code>: adds a new logical column asserting the validity of the geometries</p></li>
 <li><p><code><a href="../reference/ddbs_make_valid.html">ddbs_make_valid()</a></code>: makes the geometries valid</p></li>
 <li><p><code><a href="../reference/ddbs_simplify.html">ddbs_simplify()</a></code>: makes the geometries simple</p></li>
+<li><p><code><a href="../reference/ddbs_bbox.html">ddbs_bbox()</a></code>: calculates the bounding box</p></li>
+<li><p><strong>Spatial predicates</strong>: spatial predicates are all included in a function called <code><a href="../reference/ddbs_predicate.html">ddbs_predicate()</a></code>, where the user can specify the spatial predicate. Another option, it’s to use the spatial predicate function, such as <code><a href="../reference/ddbs_intersects.html">ddbs_intersects()</a></code>, <code><a href="../reference/ddbs_crosses.html">ddbs_crosses()</a></code>, <code><a href="../reference/ddbs_touches.html">ddbs_touches()</a></code>, etc.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-changes-0-2-0999">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-0-2-0999"></a></h3>
