@@ -1,7 +1,7 @@
 
 
 
-#' Spatial Filter
+#' Performs spatial filter of two geometries
 #'
 #' Filters data spatially based on a spatial predicate
 #'
