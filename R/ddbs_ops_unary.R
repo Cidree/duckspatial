@@ -56,6 +56,7 @@ ddbs_buffer <- function(
     assert_numeric(distance, "distance")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -177,6 +178,7 @@ ddbs_centroid <- function(x,
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -303,6 +305,7 @@ ddbs_is_valid <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -447,6 +450,7 @@ ddbs_make_valid <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -578,6 +582,7 @@ ddbs_is_simple <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -724,8 +729,9 @@ ddbs_simplify <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
     if (missing(tolerance)) {
-        stop("tolerance parameter is required")
+        cli::cli_abort("tolerance parameter is required")
     }
 
     # 1. Manage connection to DB

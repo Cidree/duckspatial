@@ -55,6 +55,7 @@ ddbs_intersection <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x, y)
 
      # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -66,6 +67,7 @@ ddbs_intersection <- function(
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
     y_list <- get_query_list(y, conn)
+    assert_crs(conn, x_list$query_name, y_list$query_name)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -193,6 +195,7 @@ ddbs_difference <- function(x,
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x, y)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -204,6 +207,7 @@ ddbs_difference <- function(x,
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
     y_list <- get_query_list(y, conn)
+    assert_crs(conn, x_list$query_name, y_list$query_name)
 
     # 2. Prepare params for query
     x_geom <- get_geom_name(conn, x_list$query_name)

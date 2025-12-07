@@ -85,3 +85,43 @@ assert_crs_column <- function(crs_column, cols) {
             cli::cli_abort("CRS column <{crs_column}> do not found in the table. If the data do not have CRS column, set the argument `crs_column = NULL`")
 
 }
+
+
+## assert id argument in predicate functions
+assert_predicate_id <- function(id, conn, lst) {
+    if (!is.null(id)) {
+        x_rest <- get_geom_name(conn, lst, rest = TRUE)
+        if (!id %in% x_rest) cli::cli_abort("<id> must be NULL or a column name of <x>")
+    }
+}
+
+
+## assert if the CRS of `x` and `y` is the same
+assert_crs <- function(conn, x, y) {
+
+  ## get CRS
+  crs_x <- duckspatial::ddbs_crs(conn, x)
+  crs_y <- duckspatial::ddbs_crs(conn, y)
+
+  ## abort if CRS is different
+  if (crs_x != crs_y) cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
+
+}
+
+
+
+
+## assert that if `x` or `y` are character, connection cannot be NULL
+assert_conn_character <- function(conn, ...) {
+
+  ## get inputs into a list
+  inputs <- list(...)
+
+  ## check if they are character
+  inputs_check <- lapply(inputs, is.character) |> as.logical()
+
+  if (any(inputs_check) & is.null(conn)) {
+    cli::cli_abort("If a table name is provided in `x` or `y`, the connection cannot be NULL.")
+  }
+
+}

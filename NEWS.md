@@ -32,6 +32,8 @@
 
 * `ddbs_simplify()`: makes the geometries simple
 
+* **Spatial predicates**: spatial predicates are all included in a function called `ddbs_predicate()`, where the user can specify the spatial predicate. Another option, it's to use the spatial predicate function, such as `ddbs_intersects()`, `ddbs_crosses()`, `ddbs_touches()`, etc.
+
 ## MINOR CHANGES
 
 * All functions now have a parameter `quiet` that allows users to suppress informational messages. Closed [#3](https://github.com/Cidree/duckspatial/issues/3)

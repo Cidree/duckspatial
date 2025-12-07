@@ -1,7 +1,7 @@
 
 
 
-#' Spatial Filter
+#' Performs spatial filter of two geometries
 #'
 #' Filters data spatially based on a spatial predicate
 #'
@@ -61,6 +61,7 @@ ddbs_filter <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x, y)
 
     # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -72,6 +73,7 @@ ddbs_filter <- function(
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
     y_list <- get_query_list(y, conn)
+    assert_crs(conn, x_list$query_name, y_list$query_name)
 
     # 2. Prepare params for query
     ## 2.1. select predicate

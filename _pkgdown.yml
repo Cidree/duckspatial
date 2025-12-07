@@ -30,6 +30,23 @@ reference:
   - ddbs_write_vector
   - ddbs_register_vector
 
+- title: Spatial Predicates
+  contents:
+  - ddbs_predicate
+  - ddbs_contains
+  - ddbs_contains_properly
+  - ddbs_covered_by
+  - ddbs_covers
+  - ddbs_crosses
+  - ddbs_disjoint
+  - ddbs_equals
+  - ddbs_intersects
+  - ddbs_intersects_extent
+  - ddbs_overlaps
+  - ddbs_touches
+  - ddbs_within
+  - ddbs_within_properly
+
 - title: Spatial operations (binary)
   contents:
   - ddbs_difference
@@ -42,6 +59,8 @@ reference:
   - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid
+  - ddbs_concave_hull
+  - ddbs_convex_hull
   - ddbs_is_simple
   - ddbs_is_valid
   - ddbs_make_valid

@@ -80,6 +80,7 @@ ddbs_concave_hull <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
 
 
     # 1. Manage connection to DB

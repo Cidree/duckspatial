@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_filter.R
 \name{ddbs_filter}
 \alias{ddbs_filter}
-\title{Spatial Filter}
+\title{Performs spatial filter of two geometries}
 \usage{
 ddbs_filter(
   x,

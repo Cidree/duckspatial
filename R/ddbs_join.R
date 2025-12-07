@@ -91,6 +91,7 @@ ddbs_join <- function(
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x, y)
 
      # 1. Manage connection to DB
     ## 1.1. check if connection is provided, otherwise create a temporary connection
@@ -102,6 +103,7 @@ ddbs_join <- function(
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
     y_list <- get_query_list(y, conn)
+    assert_crs(conn, x_list$query_name, y_list$query_name)
     
 
     # 2. Prepare params for query
