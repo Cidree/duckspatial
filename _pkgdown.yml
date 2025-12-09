@@ -100,7 +100,7 @@ navbar:
     - text: "---"
     - text: Spatial Joins
       href: articles/spatial_joins.html
-    - text: Area Weighted Interpolation
+    - text: Areal-Weighted Interpolation
       href: articles/aw_interpolation.html
     - text: Benchmarks
       href: articles/benchmark.html
