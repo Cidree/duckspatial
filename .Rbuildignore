@@ -15,4 +15,5 @@ internal/*
 ^[.]?air[.]toml$
 ^\.vscode$
 ^doc$
+^docs$
 ^Meta$

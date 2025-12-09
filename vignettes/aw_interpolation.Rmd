@@ -1,0 +1,212 @@
+---
+title: "Areal Interpolation"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+code-annotations: hover
+urlcolor: blue
+vignette: >
+  %\VignetteIndexEntry{Areal Interpolation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  # eval = identical(tolower(Sys.getenv("NOT_CRAN")), "true"),
+  eval = TRUE,
+  out.width = "100%"
+)
+
+# CRAN OMP THREAD LIMIT to avoid CRAN NOTE
+Sys.setenv(OMP_THREAD_LIMIT = 2)
+```
+
+This vignette demonstrates how to use `ddbs_interpolate_aw()` to perform areal-weighted interpolation. This technique is essential when you need to transfer attributes from one set of polygons (source) to another incongruent set of polygons (target) based on their area of overlap.
+
+`ddbs_interpolate_aw()` can be 9-30x times faster than `sf::st_interpolate_aw` or [`areal::aw_interpolate`](https://chris-prener.github.io/areal/reference/aw_interpolate.html) (see benchmarks in [`{ducksf}`](https://www.ekotov.pro/ducksf/){target="_blank"} where prototype of `ddbs_interpolate_aw()` was originally developed).
+
+`duckspatial` handles these heavy geometric calculations efficiently using DuckDB. We will cover three scenarios:
+
+1.  **Extensive vs. Intensive**: Understanding the difference between mass-preserving counts and densities.
+2.  **Fast Output**: Returning a `tibble` (no geometry) for maximum speed.
+3.  **Database Mode**: Performing operations on persistent database tables.
+
+### Setup Data
+
+We will use the North Carolina dataset from the `sf` package as our **source**, and create a generic grid as our **target**. 
+
+*Note: We project the data to Albers Equal Area (EPSG:5070) because accurate interpolation requires an equal-area projection.*
+
+```{r setup, message=FALSE, warning=FALSE}
+library(duckspatial)
+library(sf)
+
+# 1. Load Source Data (NC Counties)
+nc <- st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+
+# 2. Transform to projected CRS (Albers) for accurate area calculations
+nc <- st_transform(nc, 5070)
+
+# 3. Create a Target Grid
+grid <- st_make_grid(nc, n = c(10, 5)) |> st_as_sf()
+
+# 4. Create Unique IDs (Required for interpolation)
+nc$source_id <- 1:nrow(nc)
+grid$target_id <- 1:nrow(grid)
+```
+
+## 1) Extensive vs. Intensive Interpolation
+
+Areal interpolation works differently depending on the nature of the data.
+
+### Case A: Extensive Variables (Counts)
+Variables like population counts or total births (`BIR74`) are **spatially extensive**. If a source polygon is split in half, the count should also be split in half. We use `weight = "total"` to ensure strict mass preservation relative to the source.
+
+```{r}
+# Interpolate Total Births (Extensive)
+res_extensive <- ddbs_interpolate_aw(
+  target = grid,
+  source = nc,
+  tid = "target_id",
+  sid = "source_id",
+  extensive = "BIR74",
+  weight = "total",
+  output = "sf"
+)
+```
+
+**Verification:** The total sum of births in the result should match the original data (mass preservation).
+
+```{r}
+orig_sum <- sum(nc$BIR74)
+new_sum  <- sum(res_extensive$BIR74, na.rm = TRUE)
+
+sprintf("Original: %s | Interpolated: %s", orig_sum, round(new_sum, 1))
+```
+
+### Case B: Intensive Variables (Densities/Ratios)
+Variables like population density or infection rates are **spatially intensive**. If a source polygon is split, the density remains the same in both pieces. `duckspatial` handles this by calculating the area-weighted average.
+
+```{r}
+# Interpolate 'BIR74' treating it as an intensive variable (e.g. density assumption)
+res_intensive <- ddbs_interpolate_aw(
+  target = grid,
+  source = nc,
+  tid = "target_id",
+  sid = "source_id",
+  intensive = "BIR74", # Treated as density here
+  weight = "sum",      # Standard behavior for intensive vars
+  output = "sf"
+)
+```
+
+### Visual Comparison
+
+Notice the difference in patterns. Extensive interpolation accumulates values based on how much "stuff" falls into a grid cell, while intensive interpolation smoothes the values based on overlap.
+
+```{r, fig.height=5, fig.width=7}
+# Combine for plotting
+plot_data <- res_extensive[, "BIR74"]
+names(plot_data)[1] <- "Extensive_Count"
+plot_data$Intensive_Value <- res_intensive$BIR74
+
+plot(plot_data[c("Extensive_Count", "Intensive_Value")], 
+     main = "Interpolation Methods Comparison",
+     border = "grey90",
+     key.pos = 4)
+```
+
+## 2) High Performance: Output as Tibble
+
+If you are working with massive datasets, constructing the geometry for the result `sf` object can be slow. If you only need the interpolated numbers, set `output = "tibble"`. This skips the geometry construction step and is significantly faster.
+
+```{r}
+# Return a standard data.frame/tibble without geometry
+res_tbl <- ddbs_interpolate_aw(
+  target = grid,
+  source = nc,
+  tid = "target_id",
+  sid = "source_id",
+  extensive = "BIR74",
+  output = "tibble"
+)
+
+head(res_tbl)
+```
+
+## 3) Database Mode: Large Data Workflows
+
+For datasets larger than memory, or for persistent pipelines, you can perform the interpolation directly inside the DuckDB database without pulling data into R until the end.
+
+First, let's establish a connection and load our spatial layers into tables.
+
+```{r}
+# Create connection
+conn <- ddbs_create_conn()
+
+# Write layers to DuckDB
+ddbs_write_vector(conn, nc, "nc_table", overwrite = TRUE)
+ddbs_write_vector(conn, grid, "grid_table", overwrite = TRUE)
+```
+
+Now we run the interpolation by referencing the table names. We can also use the `name` argument to save the result directly to a new table instead of returning it to R.
+
+```{r}
+# Run interpolation and save to new table 'nc_grid_births'
+ddbs_interpolate_aw(
+  conn = conn,
+  target = "grid_table",
+  source = "nc_table",
+  tid = "target_id",
+  sid = "source_id",
+  extensive = "BIR74",
+  weight = "total",
+  name = "nc_grid_births", # <--- Writes to DB
+  overwrite = TRUE
+)
+
+# Verify the table was created
+DBI::dbListTables(conn)
+```
+
+We can now query this table or read it back later.
+
+```{r}
+# Read the result back from the database
+final_sf <- ddbs_read_vector(conn, "nc_grid_births")
+
+head(final_sf)
+```
+
+If we only wanted the database table, without the geometry, we could do:
+
+```{r}
+ddbs_interpolate_aw(
+  conn = conn,
+  target = "grid_table",
+  source = "nc_table",
+  tid = "target_id",
+  sid = "source_id",
+  extensive = "BIR74",
+  weight = "total",
+  name = "nc_grid_births", # <--- Writes to DB
+  overwrite = TRUE,
+  output = "tibble"
+)
+```
+
+And preview this table directly in the database:
+
+```{r}
+DBI::dbGetQuery(conn, "SELECT * FROM nc_grid_births LIMIT 5")
+```
+
+### Cleanup
+
+Always close the connection when finished.
+
+```{r}
+duckdb::dbDisconnect(conn)
+```
