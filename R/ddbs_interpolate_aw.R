@@ -293,9 +293,10 @@ ddbs_interpolate_aw <- function(
         t.{tid} AS tid,
         COALESCE(ST_Area(ST_Intersection({s_alias}, {t_alias})), 0) AS overlap_area
       FROM 
-        (SELECT *, {s_geom_expr} AS {s_alias} FROM {s_source_sql}) s,
+        (SELECT *, {s_geom_expr} AS {s_alias} FROM {s_source_sql}) s
+      INNER JOIN
         (SELECT *, {t_geom_expr} AS {t_alias} FROM {t_list$query_name}) t
-      WHERE ST_Intersects({s_alias}, {t_alias})
+      ON ST_Intersects({s_alias}, {t_alias})
     )
   ")
 
