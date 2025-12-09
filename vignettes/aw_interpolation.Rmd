@@ -25,7 +25,7 @@ Sys.setenv(OMP_THREAD_LIMIT = 2)
 
 This vignette demonstrates how to use `ddbs_interpolate_aw()` to perform areal-weighted interpolation. This technique is essential when you need to transfer attributes from one set of polygons (source) to another incongruent set of polygons (target) based on their area of overlap.
 
-`ddbs_interpolate_aw()` can be 9-30x times faster than `sf::st_interpolate_aw` or [`areal::aw_interpolate`](https://chris-prener.github.io/areal/reference/aw_interpolate.html) (see benchmarks in [`{ducksf}`](https://www.ekotov.pro/ducksf/){target="_blank"} where prototype of `ddbs_interpolate_aw()` was originally developed).
+`ddbs_interpolate_aw()` can be 9-30x faster than `sf::st_interpolate_aw` or [`areal::aw_interpolate`](https://chris-prener.github.io/areal/reference/aw_interpolate.html) (see benchmarks in [`{ducksf}`](https://www.ekotov.pro/ducksf/){target="_blank"} where prototype of `ddbs_interpolate_aw()` was originally developed).
 
 `duckspatial` handles these heavy geometric calculations efficiently using DuckDB. We will cover three scenarios:
 
