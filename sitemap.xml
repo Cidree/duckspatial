@@ -1,6 +1,7 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://cidree.github.io/duckspatial/404.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/LICENSE.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/articles/aw_interpolation.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/articles/benchmark.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/articles/duckspatial.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/articles/index.html</loc></url>
@@ -33,6 +34,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_filter.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_glimpse.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_install.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_interpolate_aw.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_intersection.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_intersects.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_intersects_extent.html</loc></url>
@@ -55,7 +57,6 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_vector.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/feedback_query.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_geom_name.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/get_query_list.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_query_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_st_predicate.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/index.html</loc></url>

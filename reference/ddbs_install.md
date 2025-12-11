@@ -40,7 +40,7 @@ conn <- dbConnect(duckdb::duckdb())
 
 # install the spatial extension
 ddbs_install(conn)
-#> ℹ spatial extension version <d83faf8> is already installed in this database
+#> ℹ spatial extension version <2f2668d> is already installed in this database
 
 # disconnect from db
 dbDisconnect(conn)

@@ -8,7 +8,8 @@
 - **Rafael H. M. Pereira**. Author.
   [](https://orcid.org/0000-0003-2125-7465)
 
-- **Egor Kotov**. Author. [](https://orcid.org/0000-0001-6690-5345)
+- **[Egor Kotov](https://www.ekotov.pro/)**. Author.
+  [](https://orcid.org/0000-0001-6690-5345)
 
 ## Citation
 

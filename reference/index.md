@@ -57,6 +57,8 @@
   : Calculates the intersection of two geometries
 - [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md)
   : Performs spatial joins of two geometries
+- [`ddbs_interpolate_aw()`](https://cidree.github.io/duckspatial/reference/ddbs_interpolate_aw.md)
+  : Areal-Weighted Interpolation using DuckDB
 
 ## Spatial operations (unary)
 

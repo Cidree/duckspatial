@@ -79,6 +79,8 @@ df_bench <- lapply(
 #> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 ```
 
 Now let’s have a look at the results.
