@@ -17,6 +17,8 @@ template:
 authors:
   Adrián Cidre González:
     href: https://adrian-cidre.com/
+  Egor Kotov:
+    href: https://www.ekotov.pro/
 
 reference:
 - title: Spatial extension
@@ -53,6 +55,7 @@ reference:
   - ddbs_filter
   - ddbs_intersection
   - ddbs_join
+  - ddbs_interpolate_aw
 
 - title: Spatial operations (unary)
   contents:
@@ -90,6 +93,17 @@ navbar:
     href: index.html
   - text: Reference
     href: reference/index.html
+  - text: Articles
+    menu:
+    - text: Get Started
+      href: articles/duckspatial.html
+    - text: "---"
+    - text: Spatial Joins
+      href: articles/spatial_joins.html
+    - text: Areal-Weighted Interpolation
+      href: articles/aw_interpolation.html
+    - text: Benchmarks
+      href: articles/benchmark.html
   - text: News
     href: news/index.html
   structure:
@@ -101,3 +115,15 @@ navbar:
       icon: fa-github
       href: https://github.com/Cidree/duckspatial
       aria-label: GitHub
+
+articles:
+  - title: "Introduction"
+    contents:
+      - duckspatial
+  - title: "Advanced Features"
+    contents:
+      - spatial_joins
+      - aw_interpolation
+  - title: "Performance"
+    contents:
+      - benchmark

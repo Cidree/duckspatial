@@ -18,7 +18,7 @@ names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
-to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
+to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
