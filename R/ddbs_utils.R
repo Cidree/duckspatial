@@ -210,7 +210,10 @@ ddbs_glimpse <- function(conn,
 
 
 
-#' Create a duckdb connection
+#' Create a DuckDB connection with spatial extension
+#' 
+#' It creates a DuckDB connection, and then it installs and loads the
+#' spatial extension
 #'
 #' @param dbdir String. Either `"tempdir"` or `"memory"`. Defaults to `"memory"`.
 #'
@@ -259,7 +262,7 @@ ddbs_create_conn <- function(dbdir = "memory"){
     }
 
     # Checks and installs the Spatial extension
-    duckspatial::ddbs_install(conn, quiet = TRUE)
+    duckspatial::ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
     duckspatial::ddbs_load(conn, quiet = TRUE)
 
 
