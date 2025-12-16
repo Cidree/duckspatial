@@ -56,8 +56,6 @@ reference:
 
 - title: Spatial operations (unary)
   contents:
-  - ddbs_bbox
-  - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid
   - ddbs_concave_hull
@@ -66,6 +64,11 @@ reference:
   - ddbs_is_valid
   - ddbs_make_valid
   - ddbs_simplify
+
+- title: Spatial Extent
+  - ddbs_bbox
+  - ddbs_boundary
+  - ddbs_envelope
 
 - title: Spatial operations (measures)
   contents:
