@@ -9,20 +9,23 @@ testthat::skip_if_not_installed("duckdb")
 # create duckdb connection
 conn_test <- duckspatial::ddbs_create_conn()
 
+# using fewer points
+points_sf <- points_sf[1:10,]
+
 # helper function
 tester <- function(x = points_sf,
-                   y = countries_sf,
-                   join = "intersects",
+                   y = points_sf,
+                   dist_type = "haversine",
                    conn = NULL,
                    name = NULL,
                    crs = NULL,
                    crs_column = "crs_duckspatial",
                    overwrite = FALSE,
                    quiet = FALSE) {
-    ddbs_join(
+    ddbs_distance(
         x,
         y,
-        join,
+        dist_type,
         conn,
         name,
         crs,
@@ -41,47 +44,47 @@ testthat::test_that("expected behavior", {
     # option 1: passing sf objects
     output1 <- tester(
         x = points_sf,
-        y = countries_sf,
-        join = "within"
+        y = points_sf
     )
 
-    testthat::expect_true(is(output1 , 'sf'))
+    testthat::expect_true(is(output1 , 'data.frame'))
 
     # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
     ddbs_write_vector(conn_test, points_sf, "points", overwrite = TRUE)
-    ddbs_write_vector(conn_test, countries_sf, "countries", overwrite = TRUE)
 
     # spatial join
     output2 <- tester(
         conn = conn_test,
         x = "points",
-        y = "countries",
-        join = "within"
+        y = "points"
     )
 
-    testthat::expect_true(is(output2 , 'sf'))
+    testthat::expect_true(is(output2 , 'data.frame'))
 
     # option 3: passing the names of tables in a duckdb db, creating new table in db
     output3 <- tester(
         conn = conn_test,
         x = "points",
-        y = "countries",
-        join = "within",
+        y = "points",
         name = "test_result",
         overwrite = TRUE
     )
 
     testthat::expect_true(output3)
+    testthat::expect_true(
+        is(
+            DBI::dbReadTable(conn_test, "test_result"),
+            'data.frame')
+        )
 
-    # TODO - Review this because it fails
-    # output3 <- DBI::dbReadTable(conn_test, "test_result") |>
-    #     sf::st_as_sf(wkt = 'geometry')
-
-    # testthat::expect_true(is(output3 , 'sf'))
-
-    ddbs_read_vector(conn = conn_test, name = "test_result", crs = 4326)
-
+    # planar distances
+    output_planar <- tester(
+        x = points_sf,
+        y = countries_sf,
+        dist_type = "planar"
+    )
+    testthat::expect_true(is(output_planar , 'data.frame'))
 
     # show and suppress messages
     testthat::expect_message( tester() )
@@ -94,37 +97,52 @@ testthat::test_that("expected behavior", {
 testthat::test_that("error if table already exists", {
 
     # write table for the 1st time
-    testthat::expect_true(tester(x = "points",
-                                    y = "countries",
-                                    conn = conn_test,
-                                    name = 'banana',
-                                    overwrite = FALSE)
-                             )
+    testthat::expect_true(tester(conn = conn_test,
+                                 name = 'banana',
+                                 overwrite = FALSE)
+                          )
 
     # expected error if overwrite = FALSE
     testthat::expect_error(tester(x = "points",
-                                    y = "countries",
+                                    y = "points",
                                     conn = conn_test,
                                     name = 'banana',
-                                    overwrite = FALSE))
+                                    overwrite = FALSE)
+                           )
 
     # overwrite table
-    testthat::expect_true(tester(x = "points",
-                                    y = "countries",
-                                    conn = conn_test,
-                                    name = 'banana',
-                                    overwrite = TRUE))
+    testthat::expect_true(tester(conn = conn_test,
+                                 name = 'banana',
+                                 overwrite = TRUE)
+                          )
 
 
 })
 
 # expected errors --------------------------------------------------------------
 
-testthat::test_that("errors with incorrect input", {
+testthat::test_that("incorrect geometry or crs", {
+
+    # not POINT with haversine distance
+    testthat::expect_error(
+        tester(x = points_sf, y = countries_sf)
+        )
+
+    # wrong crs with haversine distance
+    points_sf_utm <- sf::st_transform(points_sf, 3857)
+    testthat::expect_error(
+        tester(x = points_sf_utm, y = points_sf_utm)
+    )
+
+})
+
+
+
+testthat::test_that("incorrect input", {
 
     testthat::expect_error(tester(x = 999))
     testthat::expect_error(tester(y = 999))
-    testthat::expect_error(tester(join = 999))
+    testthat::expect_error(tester(dist_type = 999))
     testthat::expect_error(tester(conn = 999))
     testthat::expect_error(tester(overwrite = 999))
     testthat::expect_error(tester(quiet = 999))
