@@ -41,7 +41,7 @@
 #'     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 #'
 #' # option 1: passing sf objects
-#' output1h <- duckspatial::ddbs_distance(
+#' output1 <- duckspatial::ddbs_distance(
 #'     x = points_sf,
 #'     y = points_sf,
 #'     dist_type = "haversine"
