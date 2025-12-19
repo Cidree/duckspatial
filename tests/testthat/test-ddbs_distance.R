@@ -17,20 +17,12 @@ tester <- function(x = points_sf,
                    y = points_sf,
                    dist_type = "haversine",
                    conn = NULL,
-                   name = NULL,
-                   crs = NULL,
-                   crs_column = "crs_duckspatial",
-                   overwrite = FALSE,
                    quiet = FALSE) {
     ddbs_distance(
         x,
         y,
         dist_type,
         conn,
-        name,
-        crs,
-        crs_column,
-        overwrite,
         quiet
     )
 }
@@ -47,7 +39,8 @@ testthat::test_that("expected behavior", {
         y = points_sf
     )
 
-    testthat::expect_true(is(output1 , 'data.frame'))
+    testthat::expect_true(is(output1 , 'matrix'))
+    testthat::expect_true(all(dim(output1)== c(10,10)))
 
     # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
@@ -60,23 +53,7 @@ testthat::test_that("expected behavior", {
         y = "points"
     )
 
-    testthat::expect_true(is(output2 , 'data.frame'))
-
-    # option 3: passing the names of tables in a duckdb db, creating new table in db
-    output3 <- tester(
-        conn = conn_test,
-        x = "points",
-        y = "points",
-        name = "test_result",
-        overwrite = TRUE
-    )
-
-    testthat::expect_true(output3)
-    testthat::expect_true(
-        is(
-            DBI::dbReadTable(conn_test, "test_result"),
-            'data.frame')
-        )
+    testthat::expect_true(is(output2 , 'matrix'))
 
     # planar distances
     output_planar <- tester(
@@ -84,7 +61,7 @@ testthat::test_that("expected behavior", {
         y = countries_sf,
         dist_type = "planar"
     )
-    testthat::expect_true(is(output_planar , 'data.frame'))
+    testthat::expect_true(is(output_planar , 'matrix'))
 
     # show and suppress messages
     testthat::expect_message( tester() )
@@ -94,30 +71,30 @@ testthat::test_that("expected behavior", {
 })
 
 
-testthat::test_that("error if table already exists", {
-
-    # write table for the 1st time
-    testthat::expect_true(tester(conn = conn_test,
-                                 name = 'banana',
-                                 overwrite = FALSE)
-                          )
-
-    # expected error if overwrite = FALSE
-    testthat::expect_error(tester(x = "points",
-                                    y = "points",
-                                    conn = conn_test,
-                                    name = 'banana',
-                                    overwrite = FALSE)
-                           )
-
-    # overwrite table
-    testthat::expect_true(tester(conn = conn_test,
-                                 name = 'banana',
-                                 overwrite = TRUE)
-                          )
-
-
-})
+# testthat::test_that("error if table already exists", {
+#
+#     # write table for the 1st time
+#     testthat::expect_true(tester(conn = conn_test,
+#                                  name = 'banana',
+#                                  overwrite = FALSE)
+#                           )
+#
+#     # expected error if overwrite = FALSE
+#     testthat::expect_error(tester(x = "points",
+#                                     y = "points",
+#                                     conn = conn_test,
+#                                     name = 'banana',
+#                                     overwrite = FALSE)
+#                            )
+#
+#     # overwrite table
+#     testthat::expect_true(tester(conn = conn_test,
+#                                  name = 'banana',
+#                                  overwrite = TRUE)
+#                           )
+#
+#
+# })
 
 # expected errors --------------------------------------------------------------
 
@@ -149,8 +126,6 @@ testthat::test_that("incorrect input", {
 
     testthat::expect_error(tester(x = "999", conn = conn_test))
     testthat::expect_error(tester(y = "999", conn = conn_test))
-
-    testthat::expect_error(tester(conn = conn_test, name = c('banana', 'banana')))
 
 
     })

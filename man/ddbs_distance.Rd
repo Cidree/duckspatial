@@ -4,17 +4,7 @@
 \alias{ddbs_distance}
 \title{Returns the distance between two geometries}
 \usage{
-ddbs_distance(
-  x,
-  y,
-  dist_type = "haversine",
-  conn = NULL,
-  name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
-  overwrite = FALSE,
-  quiet = FALSE
-)
+ddbs_distance(x, y, dist_type = "haversine", conn = NULL, quiet = FALSE)
 }
 \arguments{
 \item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
@@ -33,21 +23,6 @@ of the input.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
-
-\item{name}{A character string of length one specifying the name of the table,
-or a character string of length two specifying the schema and table
-names. If it's \code{NULL} (the default), it will return the result as an
-\code{sf} object.}
-
-\item{crs}{The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
-
-\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
-to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
@@ -75,7 +50,7 @@ points_sf <- data.frame(
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 
 # option 1: passing sf objects
-output1h <- duckspatial::ddbs_distance(
+output1 <- duckspatial::ddbs_distance(
     x = points_sf,
     y = points_sf,
     dist_type = "haversine"
@@ -99,17 +74,6 @@ output2 <- ddbs_distance(
     dist_type = "haversine"
 )
 head(output2)
-
-## option 3: passing the names of tables in a duckdb db and output as db table
-ddbs_distance(
-    conn = conn,
-    x = "points",
-    y = "points",
-    dist_type = "haversine",
-    name = "dist_table"
-    )
-
-DBI::dbReadTable(conn, "dist_table")
 
 }
 }
