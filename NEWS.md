@@ -14,6 +14,8 @@
 
 * `ddbs_boundary()`: returns the boundary of geometries.
 
+* `ddbs_combine()`: combines geometries into a multi-geometry
+
 * `ddbs_concave_hull()`: new function to create the concave hull enclosing a geometry.
 
 * `ddbs_convex_hull()`: new function to create the convex hull enclosing a geometry.
@@ -37,6 +39,8 @@
 * `ddbs_simplify()`: makes the geometries simple
 
 * `ddbs_bbox()`: calculates the bounding box
+
+* `ddbs_union()`: union of geometries
 
 * **Spatial predicates**: spatial predicates are all included in a function called `ddbs_predicate()`, where the user can specify the spatial predicate. Another option, it's to use the spatial predicate function, such as `ddbs_intersects()`, `ddbs_crosses()`, `ddbs_touches()`, etc.
 
