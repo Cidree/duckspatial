@@ -128,10 +128,6 @@ ddbs_distance <- function(
     y_geom <- get_geom_name(conn, y_list$query_name)
     assert_geometry_column(y_geom, y_list)
 
-    ## check if id column name exists in x or y
-    assert_predicate_id(id_x, conn, x_list$query_name)
-    assert_predicate_id(id_y, conn, y_list$query_name)
-
     # 3. Get data frame
     ## 3.1. create query
     tmp.query <- glue::glue("
