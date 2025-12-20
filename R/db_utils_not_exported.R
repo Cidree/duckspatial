@@ -70,6 +70,7 @@ get_query_name <- function(name) {
 #' @template conn_null
 #'
 #' @keywords internal
+#' @noRd
 #' @returns list with fixed names
 get_query_list <- function(x, conn) {
 
@@ -346,4 +347,37 @@ reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, spars
 
 }
 
-
+#' Convert CRS input to DuckDB SQL literal
+#'
+#' Helper to format numeric EPSG codes, WKT strings, or `sf::st_crs` objects
+#' into a SQL literal string compatible with `ST_Transform`.
+#'
+#' @param x numeric (EPSG), character (WKT/Proj), or `sf` crs object
+#'
+#' @keywords internal
+#' @noRd
+#' @returns character string (e.g. "'EPSG:4326'") or "NULL"
+crs_to_sql <- function(x) {
+  if (is.null(x) || (is.atomic(x) && all(is.na(x)))) return("NULL")
+  
+  if (inherits(x, "crs")) {
+    if (!is.na(x$epsg)) return(paste0("'EPSG:", x$epsg, "'"))
+    if (!is.null(x$wkt)) {
+      # Escape single quotes for SQL
+      val_clean <- gsub("'", "''", x$wkt)
+      return(paste0("'", val_clean, "'"))
+    }
+    return("NULL")
+  } 
+  
+  if (is.numeric(x)) {
+    return(paste0("'EPSG:", as.integer(x), "'"))
+  }
+  
+  if (is.character(x)) {
+    val_clean <- gsub("'", "''", x)
+    return(paste0("'", val_clean, "'"))
+  }
+  
+  return("NULL")
+}

@@ -125,3 +125,23 @@ assert_conn_character <- function(conn, ...) {
   }
 
 }
+
+#' Assert that columns exist in a table
+#'
+#' @param conn DuckDB connection
+#' @param table Table name
+#' @param cols Vector of column names to check
+#' @param ref Reference name for error message
+#' @noRd
+#' @returns invisible(TRUE)
+assert_col_exists <- function(conn, table, cols, ref) {
+    avail <- DBI::dbListFields(conn, table)
+    missing <- setdiff(cols, avail)
+    if (length(missing) > 0) {
+        # Rephrased to put the vector first, helping cli resolve pluralization quantity
+        cli::cli_abort(
+            "{.val {missing}} column{?s} not found in {.arg {ref}} table."
+        )
+    }
+    invisible(TRUE)
+}

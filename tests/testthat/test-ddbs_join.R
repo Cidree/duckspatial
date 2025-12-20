@@ -54,7 +54,7 @@ testthat::test_that("expected behavior", {
 
     # spatial join
     output2 <- tester(
-        conn_test,
+        conn = conn_test,
         x = "points",
         y = "countries",
         join = "within"
@@ -64,7 +64,7 @@ testthat::test_that("expected behavior", {
 
     # option 3: passing the names of tables in a duckdb db, creating new table in db
     output3 <- tester(
-        conn_test,
+        conn = conn_test,
         x = "points",
         y = "countries",
         join = "within",
@@ -80,7 +80,7 @@ testthat::test_that("expected behavior", {
 
     # testthat::expect_true(is(output3 , 'sf'))
 
-    ddbs_read_vector(conn_test, name = "test_result", crs = 4326)
+    ddbs_read_vector(conn = conn_test, name = "test_result", crs = 4326)
 
 
     # show and suppress messages

@@ -28,6 +28,7 @@ Imports:
     wk,
     uuid
 Suggests:
+    areal,
     bench,
     dplyr,
     ggplot2 (>= 3.3.1),
