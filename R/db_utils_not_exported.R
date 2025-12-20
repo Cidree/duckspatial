@@ -173,9 +173,10 @@ get_st_predicate <- function(predicate) {
       "crosses"               = "ST_Crosses",
       "covered_by"            = "ST_CoveredBy",
       "intersects_extent"     = "ST_Intersects_Extent",
+      "dwithin"               = "ST_DWithin",
       cli::cli_abort(
           "Predicate should be one of <intersects>, <intersects_extent>, <covers>, <touches>, 
-          <contains>, <contains_properly>, <within>, <within_properly>, <disjoint>, <equals>, 
+          <contains>, <contains_properly>, <within>, <within_properly>, <dwithin> <disjoint>, <equals>, 
           <overlaps>, <crosses>, <covered_by>, or <intersects_extent>."
         )
       )
@@ -321,7 +322,7 @@ reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, spars
   pred_mat  <- matrix(data$predicate, nrow = nrowx, ncol = nrowy, byrow = TRUE)
   if (isFALSE(sparse)) return(pred_mat)
 
-  pred_list <- apply(pred_mat, 1, function(row) which(row))
+  pred_list <- apply(pred_mat, 1, function(row) which(row), simplify = FALSE)
 
   ## return if no matches have been found
   if (length(pred_list) == 0) return(NULL)

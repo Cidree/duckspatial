@@ -12,6 +12,7 @@ ddbs_predicate(
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
+  distance = NULL,
   quiet = FALSE
 )
 }
@@ -38,6 +39,9 @@ replace the integer indices returned in each element of the list.}
 
 \item{sparse}{A logical value. If \code{TRUE}, it returns a sparse index list. If \code{FALSE},
 it returns a dense logical matrix.}
+
+\item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
+the coordinate system of the geometry (e.g. degrees or meters)}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
@@ -77,6 +81,7 @@ geometries in \code{x} and \code{y} using the specified predicate.
 \item \strong{touches}: Geometries share a boundary but interiors do not intersect
 \item \strong{disjoint}: Geometries have no points in common
 \item \strong{within}: Geometry \code{x} is completely inside geometry \code{y}
+\item \strong{dwithin}: Geometry \code{x} is completely within a distance of geometry \code{y}
 \item \strong{contains}: Geometry \code{x} completely contains geometry \code{y}
 \item \strong{overlaps}: Geometries share some but not all points
 \item \strong{crosses}: Geometries have some interior points in common

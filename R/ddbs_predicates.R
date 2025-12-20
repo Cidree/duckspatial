@@ -16,6 +16,8 @@
 #' @template predicate
 #' @template conn_null
 #' @template predicate_args
+#' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
+#' the coordinate system of the geometry (e.g. degrees or meters)
 #' @template quiet
 #' 
 #' @details
@@ -31,6 +33,7 @@
 #' - **touches**: Geometries share a boundary but interiors do not intersect
 #' - **disjoint**: Geometries have no points in common
 #' - **within**: Geometry `x` is completely inside geometry `y`
+#' - **dwithin**: Geometry `x` is completely within a distance of geometry `y`
 #' - **contains**: Geometry `x` completely contains geometry `y`
 #' - **overlaps**: Geometries share some but not all points
 #' - **crosses**: Geometries have some interior points in common
@@ -104,6 +107,7 @@ ddbs_predicate <- function(
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
+  distance = NULL,
   quiet = FALSE) {
 
   ## 0. Handle errors
@@ -140,11 +144,27 @@ ddbs_predicate <- function(
 
   # 3. Get data frame
   ## 3.1. create query
-  tmp.query <- glue::glue("
-    SELECT {st_predicate}(x.{x_geom}, y.{y_geom}) as predicate
-    FROM {x_list$query_name} x
-    CROSS JOIN {y_list$query_name} y
-  ")     
+  if (st_predicate == "ST_DWithin") {
+
+    ## if distance is not specified, it will use ST_Within
+    if (is.null(distance)) {
+      cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
+      distance <- 0
+    }
+
+    tmp.query <- glue::glue("
+      SELECT {st_predicate}(x.{x_geom}, y.{y_geom}, {distance}) as predicate
+      FROM {x_list$query_name} x
+      CROSS JOIN {y_list$query_name} y
+    ") 
+
+  } else {
+    tmp.query <- glue::glue("
+      SELECT {st_predicate}(x.{x_geom}, y.{y_geom}) as predicate
+      FROM {x_list$query_name} x
+      CROSS JOIN {y_list$query_name} y
+    ")  
+  }
   ## 3.2. retrieve results from the query
   data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -161,7 +181,7 @@ ddbs_predicate <- function(
 
   feedback_query(quiet)
   return(result_lst)
-}
+  }
 
 
 
@@ -214,7 +234,16 @@ ddbs_intersects <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "intersects", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "intersects", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -269,7 +298,16 @@ ddbs_covers <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "covers", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "covers", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -323,7 +361,84 @@ ddbs_touches <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "touches", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "touches", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
+  
+}
+
+
+
+
+
+
+#' Within Distance predicate
+#'
+#' Tests if geometries in `x` are within a specified distance of `y`. Returns TRUE if
+#' geometries are within the distance.
+#'
+#' @template x
+#' @param y An `sf` spatial object. Alternatively, it can be a string with the
+#'        name of a table with geometry column within the DuckDB database `conn`.
+#' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
+#' the coordinate system of the geometry (e.g. degrees or meters)
+#' @template conn_null
+#' @template predicate_args
+#' @template quiet
+#' 
+#' @details
+#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' `predicate = "dwithin"`.
+#'
+#' @returns
+#' A list where each element contains indices (or IDs) of geometries in `y` that
+#' touch the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
+#'
+#' @seealso [ddbs_predicate()] for other spatial predicates.
+#'
+#' @export
+#'
+#' @examples
+#' 
+#' ## load packages
+#' library(dplyr)
+#' library(duckspatial)
+#' library(sf)
+#' 
+#' ## read countries data, and rivers
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial"))
+#' countries_filter_sf <- countries_sf |> filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
+#' 
+#' ## check countries within 1 degree of distance
+#' ddbs_is_within_distance(countries_filter_sf, countries_sf, 1)
+ddbs_is_within_distance <- function(
+  x,
+  y,
+  distance = NULL,
+  conn = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE) {
+
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "dwithin", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    distance  = distance,
+    quiet     = quiet
+  )
   
 }
 
@@ -433,7 +548,16 @@ ddbs_within <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "within", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "within", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -488,7 +612,16 @@ ddbs_contains <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "contains", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "contains", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -543,7 +676,16 @@ ddbs_overlaps <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "overlaps", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "overlaps", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -598,7 +740,16 @@ ddbs_crosses <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "crosses", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "crosses", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -651,7 +802,16 @@ ddbs_equals <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "equals", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "equals", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -706,7 +866,16 @@ ddbs_covered_by <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "covered_by", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "covered_by", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -764,7 +933,16 @@ ddbs_intersects_extent <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "intersects_extent", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "intersects_extent", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -819,7 +997,16 @@ ddbs_contains_properly <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "contains_properly", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "contains_properly", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
@@ -874,7 +1061,16 @@ ddbs_within_properly <- function(
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "within_properly", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "within_properly", 
+    conn      = conn, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
   
 }
 
