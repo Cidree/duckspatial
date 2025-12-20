@@ -17,6 +17,14 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../index.html"><span class="fa fa-home"></span></a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/duckspatial.html">Get Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/spatial_joins.html">Spatial Joins</a></li>
+    <li><a class="dropdown-item" href="../articles/aw_interpolation.html">Areal-Weighted Interpolation</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmark.html">Benchmarks</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -32,9 +40,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="spatial-extension">Spatial extension<a class="anchor" aria-label="anchor" href="#spatial-extension"></a></h2>
+      <h2 id="setup-and-connection">Setup and Connection<a class="anchor" aria-label="anchor" href="#setup-and-connection"></a></h2>
 
-
+      <div class="section-desc"><p>Install spatial extension and manage database connections</p></div>
 
 
     </div><div class="section level2">
@@ -54,10 +62,22 @@
 
         </dt>
         <dd>Loads the Spatial extension</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_create_conn.html">ddbs_create_conn()</a></code>
+
+        </dt>
+        <dd>Create a DuckDB connection with spatial extension</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_stop_conn.html">ddbs_stop_conn()</a></code>
+
+        </dt>
+        <dd>Close a duckdb connection</dd>
       </dl></div><div class="section level2">
-      <h2 id="read-write">Read/Write<a class="anchor" aria-label="anchor" href="#read-write"></a></h2>
+      <h2 id="data-import-export">Data Import/Export<a class="anchor" aria-label="anchor" href="#data-import-export"></a></h2>
 
-
+      <div class="section-desc"><p>Read and write spatial data</p></div>
 
 
     </div><div class="section level2">
@@ -86,7 +106,7 @@
       </dl></div><div class="section level2">
       <h2 id="spatial-predicates">Spatial Predicates<a class="anchor" aria-label="anchor" href="#spatial-predicates"></a></h2>
 
-
+      <div class="section-desc"><p>Test spatial relationships between geometries</p></div>
 
 
     </div><div class="section level2">
@@ -174,14 +194,20 @@
         <dd>Spatial within predicate</dd>
       </dl><dl><dt>
 
+          <code><a href="ddbs_is_within_distance.html">ddbs_is_within_distance()</a></code>
+
+        </dt>
+        <dd>Within Distance predicate</dd>
+      </dl><dl><dt>
+
           <code><a href="ddbs_within_properly.html">ddbs_within_properly()</a></code>
 
         </dt>
         <dd>Spatial within properly predicate</dd>
       </dl></div><div class="section level2">
-      <h2 id="spatial-operations-binary-">Spatial operations (binary)<a class="anchor" aria-label="anchor" href="#spatial-operations-binary-"></a></h2>
+      <h2 id="spatial-joins-and-filters">Spatial Joins and Filters<a class="anchor" aria-label="anchor" href="#spatial-joins-and-filters"></a></h2>
 
-
+      <div class="section-desc"><p>Binary operations combining two geometries</p></div>
 
 
     </div><div class="section level2">
@@ -191,10 +217,10 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_difference.html">ddbs_difference()</a></code>
+          <code><a href="ddbs_join.html">ddbs_join()</a></code>
 
         </dt>
-        <dd>Calculates the difference of two geometries</dd>
+        <dd>Performs spatial joins of two geometries</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_filter.html">ddbs_filter()</a></code>
@@ -203,20 +229,108 @@
         <dd>Performs spatial filter of two geometries</dd>
       </dl><dl><dt>
 
+          <code><a href="ddbs_difference.html">ddbs_difference()</a></code>
+
+        </dt>
+        <dd>Calculates the difference of two geometries</dd>
+      </dl><dl><dt>
+
           <code><a href="ddbs_intersection.html">ddbs_intersection()</a></code>
 
         </dt>
         <dd>Calculates the intersection of two geometries</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_join.html">ddbs_join()</a></code>
+          <code><a href="ddbs_interpolate_aw.html">ddbs_interpolate_aw()</a></code>
 
         </dt>
-        <dd>Performs spatial joins of two geometries</dd>
+        <dd>Areal-Weighted Interpolation using DuckDB</dd>
       </dl></div><div class="section level2">
-      <h2 id="spatial-operations-unary-">Spatial operations (unary)<a class="anchor" aria-label="anchor" href="#spatial-operations-unary-"></a></h2>
+      <h2 id="geometry-processing">Geometry Processing<a class="anchor" aria-label="anchor" href="#geometry-processing"></a></h2>
+
+      <div class="section-desc"><p>Modify and process individual geometries</p></div>
 
 
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ddbs_buffer.html">ddbs_buffer()</a></code>
+
+        </dt>
+        <dd>Creates a buffer around geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_centroid.html">ddbs_centroid()</a></code>
+
+        </dt>
+        <dd>Calculates the centroid of geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_simplify.html">ddbs_simplify()</a></code>
+
+        </dt>
+        <dd>Simplify geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_convex_hull.html">ddbs_convex_hull()</a></code>
+
+        </dt>
+        <dd>Returns the convex hull enclosing the geometry</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_concave_hull.html">ddbs_concave_hull()</a></code>
+
+        </dt>
+        <dd>Returns the concave hull enclosing the geometry</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_make_valid.html">ddbs_make_valid()</a></code>
+
+        </dt>
+        <dd>Make invalid geometries valid</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_combine.html">ddbs_combine()</a></code>
+
+        </dt>
+        <dd>Combine geometries into a single MULTI-geometry</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_union.html">ddbs_union()</a></code>
+
+        </dt>
+        <dd>Union of geometries</dd>
+      </dl></div><div class="section level2">
+      <h2 id="geometry-validation">Geometry Validation<a class="anchor" aria-label="anchor" href="#geometry-validation"></a></h2>
+
+      <div class="section-desc"><p>Check geometry validity</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ddbs_is_simple.html">ddbs_is_simple()</a></code>
+
+        </dt>
+        <dd>Check if geometries are simple</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_is_valid.html">ddbs_is_valid()</a></code>
+
+        </dt>
+        <dd>Check if geometries are valid</dd>
+      </dl></div><div class="section level2">
+      <h2 id="spatial-extent-and-boundaries">Spatial Extent and Boundaries<a class="anchor" aria-label="anchor" href="#spatial-extent-and-boundaries"></a></h2>
+
+      <div class="section-desc"><p>Extract geometry bounds and envelopes</p></div>
 
 
     </div><div class="section level2">
@@ -238,56 +352,61 @@
         <dd>Returns the boundary of geometries</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_buffer.html">ddbs_buffer()</a></code>
+          <code><a href="ddbs_envelope.html">ddbs_envelope()</a></code>
 
         </dt>
-        <dd>Creates a buffer around geometries</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_centroid.html">ddbs_centroid()</a></code>
-
-        </dt>
-        <dd>Calculates the centroid of geometries</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_concave_hull.html">ddbs_concave_hull()</a></code>
-
-        </dt>
-        <dd>Returns the concave hull enclosing the geometry</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_convex_hull.html">ddbs_convex_hull()</a></code>
-
-        </dt>
-        <dd>Returns the convex hull enclosing the geometry</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_is_simple.html">ddbs_is_simple()</a></code>
-
-        </dt>
-        <dd>Check if geometries are simple</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_is_valid.html">ddbs_is_valid()</a></code>
-
-        </dt>
-        <dd>Check if geometries are valid</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_make_valid.html">ddbs_make_valid()</a></code>
-
-        </dt>
-        <dd>Make invalid geometries valid</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_simplify.html">ddbs_simplify()</a></code>
-
-        </dt>
-        <dd>Simplify geometries</dd>
+        <dd>Returns the envelope (bounding box) of geometries</dd>
       </dl></div><div class="section level2">
-      <h2 id="spatial-operations-measures-">Spatial operations (measures)<a class="anchor" aria-label="anchor" href="#spatial-operations-measures-"></a></h2>
+      <h2 id="affine-transformations">Affine Transformations<a class="anchor" aria-label="anchor" href="#affine-transformations"></a></h2>
+
+      <div class="section-desc"><p>Geometric transformations (rotate, scale, flip, shift)</p></div>
 
 
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ddbs_rotate.html">ddbs_rotate()</a></code>
+
+        </dt>
+        <dd>Rotate geometries around centroid</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_rotate_3d.html">ddbs_rotate_3d()</a></code>
+
+        </dt>
+        <dd>Rotate 3D geometries around an axis</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_scale.html">ddbs_scale()</a></code>
+
+        </dt>
+        <dd>Scale geometries by X and Y factors</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_shift.html">ddbs_shift()</a></code>
+
+        </dt>
+        <dd>Shift geometries by X and Y offsets</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_flip.html">ddbs_flip()</a></code>
+
+        </dt>
+        <dd>Flip geometries horizontally or vertically</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_shear.html">ddbs_shear()</a></code>
+
+        </dt>
+        <dd>Shear geometries</dd>
+      </dl></div><div class="section level2">
+      <h2 id="measurements">Measurements<a class="anchor" aria-label="anchor" href="#measurements"></a></h2>
+
+      <div class="section-desc"><p>Calculate geometric properties</p></div>
 
 
     </div><div class="section level2">
@@ -303,14 +422,20 @@
         <dd>Calculates the area of geometries</dd>
       </dl><dl><dt>
 
+          <code><a href="ddbs_distance.html">ddbs_distance()</a></code>
+
+        </dt>
+        <dd>Returns the distance between two geometries</dd>
+      </dl><dl><dt>
+
           <code><a href="ddbs_length.html">ddbs_length()</a></code>
 
         </dt>
         <dd>Calculates the length of geometries</dd>
       </dl></div><div class="section level2">
-      <h2 id="sql-wrappers">SQL wrappers<a class="anchor" aria-label="anchor" href="#sql-wrappers"></a></h2>
+      <h2 id="database-utilities">Database Utilities<a class="anchor" aria-label="anchor" href="#database-utilities"></a></h2>
 
-
+      <div class="section-desc"><p>Helper functions for database management</p></div>
 
 
     </div><div class="section level2">
@@ -320,22 +445,22 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_create_conn.html">ddbs_create_conn()</a></code>
-
-        </dt>
-        <dd>Create a duckdb connection</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_stop_conn.html">ddbs_stop_conn()</a></code>
-
-        </dt>
-        <dd>Close a duckdb connection</dd>
-      </dl><dl><dt>
-
           <code><a href="ddbs_create_schema.html">ddbs_create_schema()</a></code>
 
         </dt>
         <dd>Check and create schema</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_list_tables.html">ddbs_list_tables()</a></code>
+
+        </dt>
+        <dd>Check tables and schemas inside a database</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_glimpse.html">ddbs_glimpse()</a></code>
+
+        </dt>
+        <dd>Check first rows of the data</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_crs.html">ddbs_crs()</a></code>
@@ -348,25 +473,13 @@
 
         </dt>
         <dd>Get list of GDAL drivers and file formats</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_glimpse.html">ddbs_glimpse()</a></code>
-
-        </dt>
-        <dd>Check first rows of the data</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_list_tables.html">ddbs_list_tables()</a></code>
-
-        </dt>
-        <dd>Check tables and schemas inside a database</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira, Egor Kotov.</p>
+  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira, <a href="https://www.ekotov.pro/" class="external-link">Egor Kotov</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

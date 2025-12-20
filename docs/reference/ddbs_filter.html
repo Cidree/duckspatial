@@ -17,6 +17,14 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../index.html"><span class="fa fa-home"></span></a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/duckspatial.html">Get Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/spatial_joins.html">Spatial Joins</a></li>
+    <li><a class="dropdown-item" href="../articles/aw_interpolation.html">Areal-Weighted Interpolation</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmark.html">Benchmarks</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -47,6 +55,7 @@
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
+<span>  distance <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -94,9 +103,14 @@ storing the CRS (created automatically by <code><a href="ddbs_write_vector.html"
 Set to <code>NULL</code> if absent.</p></dd>
 
 
+<dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
+<dd><p>a numeric value specifying the distance for ST_DWithin. Units correspond to
+the coordinate system of the geometry (e.g. degrees or meters)</p></dd>
+
+
 <dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
 <dd><p>Boolean. whether to overwrite the existing table if it exists. Defaults
-to <code>FALSE</code>. This argument is ignore when <code>name</code> is <code>NULL</code>.</p></dd>
+to <code>FALSE</code>. This argument is ignored when <code>name</code> is <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -159,7 +173,7 @@ most commonly used ones, taking two geometries a and b:</p><ul><li><p><code>"ST_
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira, Egor Kotov.</p>
+  <p>Developed by <a href="https://adrian-cidre.com/" class="external-link">Adrián Cidre González</a>, Rafael H. M. Pereira, <a href="https://www.ekotov.pro/" class="external-link">Egor Kotov</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
