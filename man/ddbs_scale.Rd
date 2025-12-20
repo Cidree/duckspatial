@@ -26,9 +26,9 @@ Data is returned from this object.}
 
 \item{y_scale}{numeric value specifying the scaling factor in the Y direction (default = 1)}
 
-\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied to each
-geometry independently. If \code{FALSE} (default), the geometric operation is applied
-to the data as a whole}
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE} (default), the geometric
+operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}

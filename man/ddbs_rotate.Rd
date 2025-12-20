@@ -28,9 +28,9 @@ Data is returned from this object.}
 
 \item{units}{character string specifying angle units: "degrees" (default) or "radians"}
 
-\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied to each
-geometry independently. If \code{FALSE} (default), the geometric operation is applied
-to the data as a whole}
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE} (default), the geometric
+operation is applied to the data as a whole.}
 
 \item{center_x}{numeric value for the X coordinate of rotation center. If NULL,
 rotates around the centroid of each geometry}
