@@ -12,6 +12,8 @@
 
 ## NEW FEATURES
 
+* Affine functions: `ddbs_rotate()`, `ddbs_rotate_3d()`, `ddbs_shift()`, `ddbs_flip()`, `ddbs_scale()`, and `ddbs_shear()`.
+
 * `ddbs_boundary()`: returns the boundary of geometries.
 
 * `ddbs_combine()`: combines geometries into a multi-geometry

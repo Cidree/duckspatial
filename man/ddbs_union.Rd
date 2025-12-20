@@ -44,7 +44,7 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 Default is \code{"crs_duckspatial"}}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
-to \code{FALSE}. This argument is ignore when \code{name} is \code{NULL}.}
+to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
