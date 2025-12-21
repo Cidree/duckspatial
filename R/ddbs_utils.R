@@ -10,6 +10,7 @@
 #' @examples
 #' ## load packages
 #' library(duckspatial)
+#' library(duckdb)
 #'
 #' ## connect to in memory database
 #' conn <- ddbs_create_conn(dbdir = "memory")
@@ -133,6 +134,8 @@ ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
 #'
 #' @examplesIf interactive()
 #' ## TODO
+#' 2+2
+#'
 ddbs_list_tables <- function(conn) {
   DBI::dbGetQuery(conn, "
       SELECT table_schema, table_name, table_type
@@ -158,6 +161,8 @@ ddbs_list_tables <- function(conn) {
 #'
 #' @examplesIf interactive()
 #' ## TODO
+#' 2+2
+#'
 ddbs_glimpse <- function(conn,
                          name,
                          crs = NULL,

@@ -38,5 +38,6 @@ Check first rows of the data
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## TODO
+2+2
 \dontshow{\}) # examplesIf}
 }

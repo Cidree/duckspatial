@@ -663,10 +663,11 @@ ddbs_contains <- function(
 #' ## read countries data, and rivers
 #' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID == c("PT", "ES", "FR", "FI"))
 #'
-#' ddbs_overlaps(countries_sf, countries_sf)
+#' spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "FI"))
+#'
+#' ddbs_overlaps(countries_sf, spain_sf)
 ddbs_overlaps <- function(
   x,
   y,

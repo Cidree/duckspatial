@@ -23,6 +23,7 @@ Check and create schema
 \examples{
 ## load packages
 library(duckspatial)
+library(duckdb)
 
 ## connect to in memory database
 conn <- ddbs_create_conn(dbdir = "memory")
