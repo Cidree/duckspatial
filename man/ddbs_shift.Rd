@@ -50,8 +50,8 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Shifts (translates) geometries from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Shifts (translates) geometries from a \code{sf} object or a DuckDB table. Returns
+the result as an \code{sf} object or creates a new  table in the database.
 This function is equivalent to \code{terra::shift()}.
 }
 \examples{

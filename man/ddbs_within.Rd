@@ -42,7 +42,7 @@ A list where each element contains indices (or IDs) of geometries in \code{y} th
 contain the corresponding geometry in \code{x}. See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if geometries in \code{x} are within geometries in \code{y}. Returns TRUE if
+Tests if geometries in \code{x} are within geometries in \code{y}. Returns \code{TRUE} if
 geometry \code{x} is completely inside geometry \code{y}.
 }
 \details{

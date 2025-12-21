@@ -54,9 +54,9 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Rotates 3D geometries from a DuckDB table around the X, Y, or Z axis using the
-spatial extension. Returns the result as an \code{sf} object or creates a new
-table in the database.
+Rotates 3D geometries from from a \code{sf} object or a DuckDB table around the X,
+Y, or Z axis. Returns the result as an \code{sf} object or creates a new table
+in the database.
 }
 \examples{
 \dontrun{

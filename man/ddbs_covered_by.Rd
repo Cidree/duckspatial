@@ -42,8 +42,9 @@ A list where each element contains indices (or IDs) of geometries in \code{y} th
 cover the corresponding geometry in \code{x}. See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if geometries in \code{x} are covered by geometries in \code{y}. Returns TRUE if
-geometry \code{x} is completely covered by geometry \code{y} (no point of \code{x} lies outside \code{y}).
+Tests if geometries in \code{x} are covered by geometries in \code{y}. Returns \code{TRUE} if
+geometry \code{x} is completely covered by geometry \code{y} (no point of \code{x} lies
+outside \code{y}).
 }
 \details{
 This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate()}} with

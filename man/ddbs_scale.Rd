@@ -55,8 +55,8 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Scales geometries around the centroid of the geometry using DuckDB.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Scales geometries around the centroid of the geometry. Returns the result as
+an \code{sf} object or creates a new table in the database.
 }
 \examples{
 \dontrun{

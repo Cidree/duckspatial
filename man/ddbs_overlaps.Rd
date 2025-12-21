@@ -42,8 +42,9 @@ A list where each element contains indices (or IDs) of geometries in \code{y} th
 overlap the corresponding geometry in \code{x}. See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if geometries in \code{x} overlap geometries in \code{y}. Returns TRUE if
-geometries share some but not all points, and the intersection has the same dimension as the geometries.
+Tests if geometries in \code{x} overlap geometries in \code{y}. Returns \code{TRUE} if
+geometries share some but not all points, and the intersection has the same
+dimension as the geometries.
 }
 \details{
 This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate()}} with

@@ -57,9 +57,9 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Applies a shear transformation to geometries from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object or creates a new table in the database.
-Shearing skews the geometry by shifting coordinates proportionally.
+Applies a shear transformation to geometries from a \code{sf} object or a DuckDB
+table. Returns the result as an \code{sf} object or creates a new table in the
+database. Shearing skews the geometry by shifting coordinates proportionally.
 }
 \examples{
 \dontrun{

@@ -43,9 +43,9 @@ bounding box intersects the bounding box of the corresponding geometry in \code{
 See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if the bounding box of geometries in \code{x} intersect the bounding box of geometries in \code{y}.
-Returns TRUE if the extents (bounding boxes) overlap. This is faster than full geometry intersection
-but less precise.
+Tests if the bounding box of geometries in \code{x} intersect the bounding box of
+geometries in \code{y}. Returns \code{TRUE} if the extents (bounding boxes) overlap.
+This is faster than full geometry intersection but less precise.
 }
 \details{
 This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate()}} with

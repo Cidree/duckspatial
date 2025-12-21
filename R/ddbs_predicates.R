@@ -188,7 +188,7 @@ ddbs_predicate <- function(
 
 #' Spatial intersects predicate
 #'
-#' Tests if geometries in `x` intersect geometries in `y`. Returns TRUE if
+#' Tests if geometries in `x` intersect geometries in `y`. Returns `TRUE` if
 #' geometries share at least one point in common.
 #'
 #' @template x
@@ -252,7 +252,7 @@ ddbs_intersects <- function(
 
 #' Spatial covers predicate
 #'
-#' Tests if geometries in `x` cover geometries in `y`. Returns TRUE if
+#' Tests if geometries in `x` cover geometries in `y`. Returns `TRUE` if
 #' geometry `x` completely covers geometry `y` (no point of `y` lies outside `x`).
 #'
 #' @template x
@@ -316,7 +316,7 @@ ddbs_covers <- function(
 
 #' Spatial touches predicate
 #'
-#' Tests if geometries in `x` touch geometries in `y`. Returns TRUE if
+#' Tests if geometries in `x` touch geometries in `y`. Returns `TRUE` if
 #' geometries share a boundary but their interiors do not intersect.
 #'
 #' @template x
@@ -380,8 +380,8 @@ ddbs_touches <- function(
 
 #' Within Distance predicate
 #'
-#' Tests if geometries in `x` are within a specified distance of `y`. Returns TRUE if
-#' geometries are within the distance.
+#' Tests if geometries in `x` are within a specified distance of `y`. Returns
+#' `TRUE` if geometries are within the distance.
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
@@ -447,8 +447,8 @@ ddbs_is_within_distance <- function(
 
 #' Spatial disjoint predicate
 #'
-#' Tests if geometries in `x` are disjoint from geometries in `y`. Returns TRUE if
-#' geometries have no points in common.
+#' Tests if geometries in `x` are disjoint from geometries in `y`. Returns `TRUE`
+#' if geometries have no points in common.
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
@@ -502,7 +502,7 @@ ddbs_disjoint <- function(
 
 #' Spatial within predicate
 #'
-#' Tests if geometries in `x` are within geometries in `y`. Returns TRUE if
+#' Tests if geometries in `x` are within geometries in `y`. Returns `TRUE` if
 #' geometry `x` is completely inside geometry `y`.
 #'
 #' @template x
@@ -566,7 +566,7 @@ ddbs_within <- function(
 
 #' Spatial contains predicate
 #'
-#' Tests if geometries in `x` contain geometries in `y`. Returns TRUE if
+#' Tests if geometries in `x` contain geometries in `y`. Returns `TRUE` if
 #' geometry `x` completely contains geometry `y`.
 #'
 #' @template x
@@ -630,8 +630,9 @@ ddbs_contains <- function(
 
 #' Spatial overlaps predicate
 #'
-#' Tests if geometries in `x` overlap geometries in `y`. Returns TRUE if
-#' geometries share some but not all points, and the intersection has the same dimension as the geometries.
+#' Tests if geometries in `x` overlap geometries in `y`. Returns `TRUE` if
+#' geometries share some but not all points, and the intersection has the same
+#' dimension as the geometries.
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
@@ -694,7 +695,7 @@ ddbs_overlaps <- function(
 
 #' Spatial crosses predicate
 #'
-#' Tests if geometries in `x` cross geometries in `y`. Returns TRUE if
+#' Tests if geometries in `x` cross geometries in `y`. Returns `TRUE` if
 #' geometries have some but not all interior points in common.
 #'
 #' @template x
@@ -758,8 +759,8 @@ ddbs_crosses <- function(
 
 #' Spatial equals predicate
 #'
-#' Tests if geometries in `x` are spatially equal to geometries in `y`. Returns TRUE if
-#' geometries are topologically equivalent (same shape and location).
+#' Tests if geometries in `x` are spatially equal to geometries in `y`. Returns
+#' `TRUE` if geometries are topologically equivalent (same shape and location).
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
@@ -820,8 +821,9 @@ ddbs_equals <- function(
 
 #' Spatial covered by predicate
 #'
-#' Tests if geometries in `x` are covered by geometries in `y`. Returns TRUE if
-#' geometry `x` is completely covered by geometry `y` (no point of `x` lies outside `y`).
+#' Tests if geometries in `x` are covered by geometries in `y`. Returns `TRUE` if
+#' geometry `x` is completely covered by geometry `y` (no point of `x` lies
+#' outside `y`).
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
@@ -884,9 +886,9 @@ ddbs_covered_by <- function(
 
 #' Spatial intersects extent predicate
 #'
-#' Tests if the bounding box of geometries in `x` intersect the bounding box of geometries in `y`.
-#' Returns TRUE if the extents (bounding boxes) overlap. This is faster than full geometry intersection
-#' but less precise.
+#' Tests if the bounding box of geometries in `x` intersect the bounding box of
+#' geometries in `y`. Returns `TRUE` if the extents (bounding boxes) overlap.
+#' This is faster than full geometry intersection but less precise.
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
@@ -951,8 +953,9 @@ ddbs_intersects_extent <- function(
 
 #' Spatial contains properly predicate
 #'
-#' Tests if geometries in `x` properly contain geometries in `y`. Returns TRUE if
-#' geometry `y` is completely inside geometry `x` and does not touch its boundary.
+#' Tests if geometries in `x` properly contain geometries in `y`. Returns `TRUE`
+#' if geometry `y` is completely inside geometry `x` and does not touch its
+#' boundary.
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
@@ -1015,8 +1018,9 @@ ddbs_contains_properly <- function(
 
 #' Spatial within properly predicate
 #'
-#' Tests if geometries in `x` are properly within geometries in `y`. Returns TRUE if
-#' geometry `x` is completely inside geometry `y` and does not touch its boundary.
+#' Tests if geometries in `x` are properly within geometries in `y`. Returns
+#' `TRUE` if geometry `x` is completely inside geometry `y` and does not touch
+#' its boundary.
 #'
 #' @template x
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the

@@ -46,8 +46,8 @@ A list where each element contains indices (or IDs) of geometries in \code{y} th
 touch the corresponding geometry in \code{x}. See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if geometries in \code{x} are within a specified distance of \code{y}. Returns TRUE if
-geometries are within the distance.
+Tests if geometries in \code{x} are within a specified distance of \code{y}. Returns
+\code{TRUE} if geometries are within the distance.
 }
 \details{
 This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate()}} with

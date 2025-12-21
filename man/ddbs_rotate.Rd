@@ -63,8 +63,8 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Rotates geometries from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Rotates geometries from from a \code{sf} object or a DuckDB table. Returns the
+result as an \code{sf} object or creates a new table in the database.
 }
 \examples{
 \dontrun{
