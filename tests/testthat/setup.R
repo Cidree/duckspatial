@@ -9,7 +9,7 @@ countries_sf <- subset(countries_sf, CNTR_ID %in% c("AR", "BR", "BO", "PE", "PY"
 argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
 
 # read lines data
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
+rivers_sf <- sf::st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
 
 ## create points data
 set.seed(42)
