@@ -12,7 +12,6 @@
 #'
 #' @examples
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #'
 #' # connect to in memory database
@@ -70,7 +69,6 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 #'
 #' @examplesIf interactive()
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #'
 #' ## connect to in memory database

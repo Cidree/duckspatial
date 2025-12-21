@@ -4,7 +4,7 @@
 #'
 #' Calculates the area of geometries from a DuckDB table or a `sf` object
 #' Returns the result as an \code{sf} object with an area column or creates a new table in the database.
-#' Note: Area units depend on the CRS of the input geometries (e.g., square meters for projected CRS, 
+#' Note: Area units depend on the CRS of the input geometries (e.g., square meters for projected CRS,
 #' or degrees for geographic CRS).
 #'
 #' @template x
@@ -20,29 +20,28 @@
 #'
 #' @examples
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
-#' 
+#'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |> 
+#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |>
 #'     st_transform("EPSG:3857")
-#' 
+#'
 #' ## store in duckdb
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
-#' 
+#'
 #' ## calculate area (returns sf object with area column)
 #' ddbs_area("argentina", conn)
-#' 
+#'
 #' ## calculate area with custom column name
 #' ddbs_area("argentina", conn, new_column = "area_sqm")
-#' 
+#'
 #' ## create a new table with area calculations
 #' ddbs_area("argentina", conn, name = "argentina_with_area")
-#' 
+#'
 #' ## calculate area in a sf object
 #' ddbs_area(argentina_sf)
 ddbs_area <- function(
@@ -66,12 +65,12 @@ ddbs_area <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    
+
 
     # 2. Get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -81,7 +80,7 @@ ddbs_area <- function(
     ## 3. Handle new column = NULL
     if (is.null(new_column)) {
         tmp.query <- glue::glue("
-            SELECT ST_Area({x_geom}) as area, 
+            SELECT ST_Area({x_geom}) as area,
             FROM {x_list$query_name}
           ")
 
@@ -153,7 +152,7 @@ ddbs_area <- function(
 #'
 #' Calculates the length of geometries from a DuckDB table or a `sf` object
 #' Returns the result as an \code{sf} object with a length column or creates a new table in the database.
-#' Note: Length units depend on the CRS of the input geometries (e.g., meters for projected CRS, 
+#' Note: Length units depend on the CRS of the input geometries (e.g., meters for projected CRS,
 #' or degrees for geographic CRS).
 #'
 #' @template x
@@ -169,28 +168,27 @@ ddbs_area <- function(
 #'
 #' @examples
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
-#' 
+#'
 #' ## read data
 #' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
-#' 
+#'
 #' ## store in duckdb
 #' ddbs_write_vector(conn, rivers_sf, "rivers")
-#' 
+#'
 #' ## calculate length (returns sf object with length column)
 #' ddbs_length("rivers", conn)
-#' 
+#'
 #' ## calculate length with custom column name
 #' ddbs_length("rivers", conn, new_column = "length_meters")
-#' 
+#'
 #' ## create a new table with length calculations
 #' ddbs_length("rivers", conn, name = "rivers_with_length")
-#' 
+#'
 #' ## calculate length in a sf object (without a connection)
 #' ddbs_length(rivers_sf)
 ddbs_length <- function(
@@ -214,12 +212,12 @@ ddbs_length <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    
+
     # 2. Get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
@@ -228,7 +226,7 @@ ddbs_length <- function(
     ## 3. Handle new column = NULL
     if (is.null(new_column)) {
         tmp.query <- glue::glue("
-            SELECT ST_Length({x_geom}) as length, 
+            SELECT ST_Length({x_geom}) as length,
             FROM {x_list$query_name}
           ")
 

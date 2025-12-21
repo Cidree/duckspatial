@@ -69,7 +69,6 @@ Returns the result as an \code{sf} object or creates a new table in the database
 \examples{
 \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

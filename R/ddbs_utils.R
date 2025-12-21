@@ -9,7 +9,6 @@
 #'
 #' @examples
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #'
 #' ## connect to in memory database
@@ -211,7 +210,7 @@ ddbs_glimpse <- function(conn,
 
 
 #' Create a DuckDB connection with spatial extension
-#' 
+#'
 #' It creates a DuckDB connection, and then it installs and loads the
 #' spatial extension
 #'

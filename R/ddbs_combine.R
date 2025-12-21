@@ -27,8 +27,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
-#' library(duckdb)
+#' # load packages
 #' library(duckspatial)
 #' library(dplyr)
 #' library(sf)
@@ -36,22 +35,22 @@
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
-#' ## read data
+#' # read data
 #' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
 #'
-#' ## store in duckdb
+#' # store in duckdb
 #' ddbs_write_vector(conn, rivers_sf, "rivers")
 #'
-#' ## union all geometries into one
+#' # union all geometries into one
 #' ddbs_union(conn = conn, "rivers")
 #'
-#' ## union without using a connection
+#' # union without using a connection
 #' ddbs_union(rivers_sf)
 #'
-#' ## union geometries grouped by a column
+#' # union geometries grouped by a column
 #' ddbs_union(conn = conn, "rivers", by = "RIVER_NAME")
 #'
-#' ## store result in a new table
+#' # store result in a new table
 #' ddbs_union(conn = conn, "rivers", name = "rivers_union")
 #' }
 ddbs_union <- function(
@@ -346,27 +345,26 @@ ddbs_union <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
-#' library(duckdb)
+#' # load packages
 #' library(duckspatial)
 #' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
-#' ## read data
+#' # read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 #'
-#' ## store in duckdb
+#' # store in duckdb
 #' ddbs_write_vector(conn, countries_sf, "countries")
 #'
-#' ## combine all geometries into one
+#' # combine all geometries into one
 #' ddbs_combine(conn = conn, "countries")
 #'
-#' ## combine without using a connection
+#' # combine without using a connection
 #' ddbs_combine(countries_sf)
 #'
-#' ## store result in a new table
+#' # store result in a new table
 #' ddbs_combine(conn = conn, "countries", name = "countries_combined")
 #' }
 ddbs_combine <- function(

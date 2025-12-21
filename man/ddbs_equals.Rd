@@ -57,7 +57,7 @@ library(duckspatial)
 library(sf)
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ddbs_equals(countries_sf, countries_sf, id_x = "NAME_ENGL")

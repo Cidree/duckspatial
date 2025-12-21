@@ -102,7 +102,6 @@ values of an identifier column in \code{x} or \code{y}, respectively.
 \examples{
 
 ## Load packages
-library(duckdb)
 library(duckspatial)
 library(dplyr)
 library(sf)
@@ -111,9 +110,9 @@ library(sf)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
   st_transform(st_crs(countries_sf))
 
 ## Store in DuckDB
@@ -124,7 +123,7 @@ ddbs_write_vector(conn, rivers_sf, "rivers")
 ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
 
 ## Example 2: Find neighboring countries
-ddbs_predicate(countries_sf, countries_sf, predicate = "touches", 
+ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
                id_x = "NAME_ENGL", id_y = "NAME_ENGL")
 
 ## Example 3: Find rivers that don't intersect countries

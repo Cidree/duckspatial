@@ -53,7 +53,6 @@ object or creates a new table
 \examples{
 \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

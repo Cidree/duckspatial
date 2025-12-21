@@ -51,7 +51,6 @@ from a DuckDB table using the spatial extension. Returns the result as an
 \examples{
 \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

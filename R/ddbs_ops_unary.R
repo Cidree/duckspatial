@@ -21,7 +21,6 @@
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -36,7 +35,7 @@
 #'
 #' ## buffer
 #' ddbs_buffer(conn = conn, "argentina", distance = 1)
-#' 
+#'
 #' ## buffer without using a connection
 #' ddbs_buffer(argentina_sf, distance = 1)
 #' }
@@ -62,7 +61,7 @@ ddbs_buffer <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -146,7 +145,6 @@ ddbs_buffer <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -161,7 +159,7 @@ ddbs_buffer <- function(
 #'
 #' ## centroid
 #' ddbs_centroid("argentina", conn)
-#' 
+#'
 #' ## centroid without using a connection
 #' ddbs_centroid(argentina_sf)
 #' }
@@ -184,7 +182,7 @@ ddbs_centroid <- function(x,
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -254,7 +252,7 @@ ddbs_centroid <- function(x,
 #' Check if geometries are valid
 #'
 #' Checks the validity of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean validity column or creates 
+#' Returns the result as an \code{sf} object with a boolean validity column or creates
 #' a new table in the database.
 #'
 #' @template x
@@ -271,7 +269,6 @@ ddbs_centroid <- function(x,
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -286,7 +283,7 @@ ddbs_centroid <- function(x,
 #'
 #' ## check validity
 #' ddbs_is_valid("argentina", conn)
-#' 
+#'
 #' ## check validity without using a connection
 #' ddbs_is_valid(argentina_sf)
 #' }
@@ -311,7 +308,7 @@ ddbs_is_valid <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -321,11 +318,11 @@ ddbs_is_valid <- function(
     x_geom <- get_geom_name(conn, x_list$query_name)
     x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
     assert_geometry_column(x_geom, x_list)
-    
+
     ## 3. Handle new column = NULL
     if (is.null(new_column)) {
         tmp.query <- glue::glue("
-            SELECT ST_IsValid({x_geom}) as isvalid, 
+            SELECT ST_IsValid({x_geom}) as isvalid,
             FROM {x_list$query_name}
           ")
 
@@ -345,15 +342,15 @@ ddbs_is_valid <- function(
         ## create query (no st_as_text)
         if (length(x_rest) == 0) {
             tmp.query <- glue::glue("
-            SELECT ST_IsValid({x_geom}) as {new_column}, 
+            SELECT ST_IsValid({x_geom}) as {new_column},
             {x_geom}
             FROM {x_list$query_name};
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_IsValid({x_geom}) as {new_column}, 
-            {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_IsValid({x_geom}) as {new_column},
+            {x_geom}
             FROM {x_list$query_name};
         ")
         }
@@ -367,15 +364,15 @@ ddbs_is_valid <- function(
     ## 5.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_IsValid({x_geom}) as {new_column}, 
+            SELECT ST_IsValid({x_geom}) as {new_column},
             ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_IsValid({x_geom}) as {new_column}, 
-            ST_AsText({x_geom}) as {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_IsValid({x_geom}) as {new_column},
+            ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     }
@@ -417,7 +414,6 @@ ddbs_is_valid <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -432,7 +428,7 @@ ddbs_is_valid <- function(
 #'
 #' ## make valid
 #' ddbs_make_valid("countries", conn)
-#' 
+#'
 #' ## make valid without using a connection
 #' ddbs_make_valid(countries_sf)
 #' }
@@ -456,7 +452,7 @@ ddbs_make_valid <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -484,8 +480,8 @@ ddbs_make_valid <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_MakeValid({x_geom}) as {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_MakeValid({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
         }
@@ -504,8 +500,8 @@ ddbs_make_valid <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_AsText(ST_MakeValid({x_geom})) as {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_AsText(ST_MakeValid({x_geom})) as {x_geom}
             FROM {x_list$query_name};
         ")
     }
@@ -531,13 +527,13 @@ ddbs_make_valid <- function(
 #' Check if geometries are simple
 #'
 #' Checks if geometries are simple (no self-intersections) from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean simplicity column or creates 
+#' Returns the result as an \code{sf} object with a boolean simplicity column or creates
 #' a new table in the database.
 #'
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template new_column 
+#' @template new_column
 #' @template crs
 #' @template overwrite
 #' @template quiet
@@ -548,7 +544,6 @@ ddbs_make_valid <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -563,7 +558,7 @@ ddbs_make_valid <- function(
 #'
 #' ## check simplicity
 #' ddbs_is_simple("argentina", conn)
-#' 
+#'
 #' ## check simplicity without using a connection
 #' ddbs_is_simple(argentina_sf)
 #' }
@@ -588,7 +583,7 @@ ddbs_is_simple <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -602,7 +597,7 @@ ddbs_is_simple <- function(
     ## 3. Handle new column = NULL
     if (is.null(new_column)) {
         tmp.query <- glue::glue("
-            SELECT ST_IsSimple({x_geom}) as issimple, 
+            SELECT ST_IsSimple({x_geom}) as issimple,
             FROM {x_list$query_name}
           ")
 
@@ -622,15 +617,15 @@ ddbs_is_simple <- function(
       ## create query (no st_as_text)
       if (length(x_rest) == 0) {
           tmp.query <- glue::glue("
-            SELECT ST_IsSimple({x_geom}) as {new_column}, 
+            SELECT ST_IsSimple({x_geom}) as {new_column},
             {x_geom}
             FROM {x_list$query_name};
         ")
       } else {
           tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_IsSimple({x_geom}) as {new_column}, 
-            {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_IsSimple({x_geom}) as {new_column},
+            {x_geom}
             FROM {x_list$query_name};
         ")
       }
@@ -638,22 +633,22 @@ ddbs_is_simple <- function(
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
         feedback_query(quiet)
         return(invisible(TRUE))
-      
+
     }
 
     # 5. Get data frame
     ## 5.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_IsSimple({x_geom}) as {new_column}, 
+            SELECT ST_IsSimple({x_geom}) as {new_column},
             ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_IsSimple({x_geom}) as {new_column}, 
-            ST_AsText({x_geom}) as {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_IsSimple({x_geom}) as {new_column},
+            ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     }
@@ -695,7 +690,6 @@ ddbs_is_simple <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -710,7 +704,7 @@ ddbs_is_simple <- function(
 #'
 #' ## simplify with tolerance of 0.01
 #' ddbs_simplify("countries", conn, tolerance = 0.01)
-#' 
+#'
 #' ## simplify without using a connection
 #' ddbs_simplify(countries_sf, tolerance = 0.01)
 #' }
@@ -738,7 +732,7 @@ ddbs_simplify <- function(
         ## 1.1. check if connection is provided, otherwise create a temporary connection
         is_duckdb_conn <- dbConnCheck(conn)
         if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()  
+        conn <- duckspatial::ddbs_create_conn()
         on.exit(duckdb::dbDisconnect(conn), add = TRUE)
         }
         ## 1.2. get query list of table names
@@ -766,8 +760,8 @@ ddbs_simplify <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_Simplify({x_geom}, {tolerance}) as {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_Simplify({x_geom}, {tolerance}) as {x_geom}
             FROM {x_list$query_name};
         ")
         }
@@ -786,8 +780,8 @@ ddbs_simplify <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, 
-            ST_AsText(ST_Simplify({x_geom}, {tolerance})) as {x_geom} 
+            SELECT {paste0(x_rest, collapse = ', ')},
+            ST_AsText(ST_Simplify({x_geom}, {tolerance})) as {x_geom}
             FROM {x_list$query_name};
         ")
     }

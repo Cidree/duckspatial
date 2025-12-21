@@ -10,7 +10,6 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'

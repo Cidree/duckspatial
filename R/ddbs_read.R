@@ -18,7 +18,6 @@
 #'
 #' @examplesIf interactive()
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'

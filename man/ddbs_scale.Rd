@@ -61,7 +61,6 @@ Returns the result as an \code{sf} object or creates a new table in the database
 \examples{
 \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 
@@ -69,7 +68,7 @@ library(sf)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb

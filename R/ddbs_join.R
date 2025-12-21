@@ -26,7 +26,6 @@
 #' @examples
 #' \dontrun{
 #' # load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -97,14 +96,14 @@ ddbs_join <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
     y_list <- get_query_list(y, conn)
     assert_crs(conn, x_list$query_name, y_list$query_name)
-    
+
 
     # 2. Prepare params for query
     ## 2.1. select predicate

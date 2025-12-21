@@ -22,7 +22,6 @@ Check and create schema
 }
 \examples{
 ## load packages
-library(duckdb)
 library(duckspatial)
 
 ## connect to in memory database

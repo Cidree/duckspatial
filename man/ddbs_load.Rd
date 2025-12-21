@@ -21,7 +21,6 @@ Checks if a spatial extension is installed, and loads it in a DuckDB database
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
-library(duckdb)
 library(duckspatial)
 
 ## connect to in memory database

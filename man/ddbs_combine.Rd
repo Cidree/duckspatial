@@ -50,27 +50,26 @@ a new table in the database.
 }
 \examples{
 \dontrun{
-## load packages
-library(duckdb)
+# load packages
 library(duckspatial)
 library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
-## read data
+# read data
 countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 
-## store in duckdb
+# store in duckdb
 ddbs_write_vector(conn, countries_sf, "countries")
 
-## combine all geometries into one
+# combine all geometries into one
 ddbs_combine(conn = conn, "countries")
 
-## combine without using a connection
+# combine without using a connection
 ddbs_combine(countries_sf)
 
-## store result in a new table
+# store result in a new table
 ddbs_combine(conn = conn, "countries", name = "countries_combined")
 }
 }

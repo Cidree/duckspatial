@@ -46,7 +46,6 @@ Arrow views created by \code{ddbs_register_vector}.
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

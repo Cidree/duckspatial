@@ -28,7 +28,6 @@
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -43,10 +42,10 @@
 #'
 #' ## rotate 45 degrees
 #' ddbs_rotate(conn = conn, "argentina", angle = 45)
-#' 
+#'
 #' ## rotate 90 degrees around a specific point
 #' ddbs_rotate(conn = conn, "argentina", angle = 90, center_x = -64, center_y = -34)
-#' 
+#'
 #' ## rotate without using a connection
 #' ddbs_rotate(argentina_sf, angle = 45)
 #' }
@@ -73,7 +72,7 @@ ddbs_rotate <- function(
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x)
-    
+
     ## validate center coordinates
     if (!is.null(center_x) && !is.numeric(center_x)) {
         cli::cli_abort("center_x must be numeric", call. = FALSE)
@@ -81,11 +80,11 @@ ddbs_rotate <- function(
     if (!is.null(center_y) && !is.numeric(center_y)) {
         cli::cli_abort("center_y must be numeric", call. = FALSE)
     }
-    if ((!is.null(center_x) && is.null(center_y)) || 
+    if ((!is.null(center_x) && is.null(center_y)) ||
         (is.null(center_x) && !is.null(center_y))) {
         cli::cli_abort("Both center_x and center_y must be provided together or both NULL", call. = FALSE)
     }
-    
+
     ## validate by_feature and center interaction
     if (!is.null(center_x) && !by_feature) {
         cli::cli_abort("center_x and center_y cannot be used when by_feature = FALSE", call. = FALSE)
@@ -95,7 +94,7 @@ ddbs_rotate <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -112,11 +111,11 @@ ddbs_rotate <- function(
     } else {
         angle_rad <- angle
     }
-    
+
     ## 2.2. Calculate rotation matrix parameters
     cos_angle <- cos(angle_rad)
     sin_angle <- sin(angle_rad)
-    
+
     ## 2.3. Build rotation query
     if (by_feature) {
         # Rotate each feature around its own centroid or specified center
@@ -125,7 +124,7 @@ ddbs_rotate <- function(
             rotation_expr <- glue::glue(
                 "ST_Affine(
                     ST_Translate({x_geom}, -ST_X(ST_Centroid({x_geom})), -ST_Y(ST_Centroid({x_geom}))),
-                    {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle}, 
+                    {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle},
                     ST_X(ST_Centroid({x_geom})), ST_Y(ST_Centroid({x_geom}))
                 )"
             )
@@ -134,7 +133,7 @@ ddbs_rotate <- function(
             rotation_expr <- glue::glue(
                 "ST_Affine(
                     ST_Translate({x_geom}, {-center_x}, {-center_y}),
-                    {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle}, 
+                    {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle},
                     {center_x}, {center_y}
                 )"
             )
@@ -143,11 +142,11 @@ ddbs_rotate <- function(
         # Rotate all features together around the dataset's overall centroid
         rotation_expr <- glue::glue(
             "ST_Affine(
-                ST_Translate({x_geom}, 
-                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                ST_Translate({x_geom},
+                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                     -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
-                {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle}, 
-                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle},
+                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                 (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
             )"
         )
@@ -210,8 +209,8 @@ ddbs_rotate <- function(
 
 #' Rotate 3D geometries around an axis
 #'
-#' Rotates 3D geometries from a DuckDB table around the X, Y, or Z axis using the 
-#' spatial extension. Returns the result as an \code{sf} object or creates a new 
+#' Rotates 3D geometries from a DuckDB table around the X, Y, or Z axis using the
+#' spatial extension. Returns the result as an \code{sf} object or creates a new
 #' table in the database.
 #'
 #' @template x
@@ -231,7 +230,6 @@ ddbs_rotate <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -239,7 +237,7 @@ ddbs_rotate <- function(
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read 3D data
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
@@ -247,13 +245,13 @@ ddbs_rotate <- function(
 #'
 #' ## rotate 45 degrees around X axis (pitch)
 #' ddbs_rotate_3d(conn = conn, "countries", angle = 45, axis = "x")
-#' 
+#'
 #' ## rotate 90 degrees around Y axis (yaw)
 #' ddbs_rotate_3d(conn = conn, "countries", angle = 30, axis = "y")
-#' 
+#'
 #' ## rotate 180 degrees around Z axis (roll)
 #' ddbs_rotate_3d(conn = conn, "countries", angle = 180, axis = "z")
-#' 
+#'
 #' ## rotate without using a connection
 #' ddbs_rotate_3d(countries_sf, angle = 45, axis = "z")
 #' }
@@ -282,7 +280,7 @@ ddbs_rotate_3d <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -299,7 +297,7 @@ ddbs_rotate_3d <- function(
     } else {
         angle_rad <- angle
     }
-    
+
     ## 2.2. Build rotation expression
     rotation_expr <- glue::glue("ST_Rotate{axis}({x_geom}, {angle_rad})")
 
@@ -380,7 +378,6 @@ ddbs_rotate_3d <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -395,7 +392,7 @@ ddbs_rotate_3d <- function(
 #'
 #' ## shift 10 degrees east and 5 degrees north
 #' ddbs_shift(conn = conn, "argentina", dx = 10, dy = 5)
-#' 
+#'
 #' ## shift without using a connection
 #' ddbs_shift(argentina_sf, dx = 10, dy = 5)
 #' }
@@ -423,7 +420,7 @@ ddbs_shift <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -500,8 +497,8 @@ ddbs_shift <- function(
 #' This function is equivalent to \code{terra::flip()}.
 #'
 #' @template x
-#' @param direction character string specifying the flip direction: "horizontal" (default) 
-#' or "vertical". Horizontal flips across the Y-axis (left-right), vertical flips across 
+#' @param direction character string specifying the flip direction: "horizontal" (default)
+#' or "vertical". Horizontal flips across the Y-axis (left-right), vertical flips across
 #' the X-axis (top-bottom)
 #' @template by_feature
 #' @template conn_null
@@ -516,7 +513,6 @@ ddbs_shift <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -531,10 +527,10 @@ ddbs_shift <- function(
 #'
 #' ## flip all features together as a whole (default)
 #' ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = FALSE)
-#' 
+#'
 #' ## flip each feature independently
 #' ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = TRUE)
-#' 
+#'
 #' ## flip without using a connection
 #' ddbs_flip(argentina_sf, direction = "horizontal")
 #' }
@@ -562,7 +558,7 @@ ddbs_flip <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -602,11 +598,11 @@ ddbs_flip <- function(
             # Flip left-right around overall centroid X
             flip_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom}, 
-                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                    ST_Translate({x_geom},
+                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                         0),
                     -1, 0, 0, 1,
-                    (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                    (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                     0
                 )"
             )
@@ -614,11 +610,11 @@ ddbs_flip <- function(
             # Flip top-bottom around overall centroid Y
             flip_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom}, 
-                        0, 
+                    ST_Translate({x_geom},
+                        0,
                         -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
                     1, 0, 0, -1,
-                    0, 
+                    0,
                     (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
                 )"
             )
@@ -701,7 +697,6 @@ ddbs_flip <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -709,7 +704,7 @@ ddbs_flip <- function(
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
@@ -717,16 +712,16 @@ ddbs_flip <- function(
 #'
 #' ## scale to 150% in both directions
 #' ddbs_scale(conn = conn, "countries", x_scale = 1.5, y_scale = 1.5)
-#' 
+#'
 #' ## scale to 200% horizontally, 50% vertically
 #' ddbs_scale(conn = conn, "countries", x_scale = 2, y_scale = 0.5)
-#' 
+#'
 #' ## scale all features together (default)
 #' ddbs_scale(countries_sf, x_scale = 1.5, y_scale = 1.5, by_feature = FALSE)
-#' 
+#'
 #' ## scale each feature independently
 #' ddbs_scale(countries_sf, x_scale = 1.5, y_scale = 1.5, by_feature = TRUE)
-#' 
+#'
 #' }
 ddbs_scale <- function(
     x,
@@ -754,7 +749,7 @@ ddbs_scale <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -783,12 +778,12 @@ ddbs_scale <- function(
         scale_expr <- glue::glue(
             "ST_Translate(
                 ST_Scale(
-                    ST_Translate({x_geom}, 
-                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                    ST_Translate({x_geom},
+                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                         -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
                     {x_scale}, {y_scale}
                 ),
-                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                 (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
             )"
         )
@@ -873,7 +868,6 @@ ddbs_scale <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -881,7 +875,7 @@ ddbs_scale <- function(
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
@@ -889,13 +883,13 @@ ddbs_scale <- function(
 #'
 #' ## shear in X direction (creates italic-like effect)
 #' ddbs_shear(conn = conn, "countries", x_shear = 0.3, y_shear = 0)
-#' 
+#'
 #' ## shear in Y direction
 #' ddbs_shear(conn = conn, "countries", x_shear = 0, y_shear = 0.3)
-#' 
+#'
 #' ## shear in both directions
 #' ddbs_shear(conn = conn, "countries", x_shear = 0.2, y_shear = 0.2)
-#' 
+#'
 #' ## shear without using a connection
 #' ddbs_shear(countries_sf, x_shear = 0.3, y_shear = 0)
 #' }
@@ -925,7 +919,7 @@ ddbs_shear <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -951,11 +945,11 @@ ddbs_shear <- function(
         # Shear all features together around the dataset's overall centroid
         shear_expr <- glue::glue(
             "ST_Affine(
-                ST_Translate({x_geom}, 
-                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                ST_Translate({x_geom},
+                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                     -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
                 1, {x_shear}, {y_shear}, 1,
-                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}), 
+                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
                 (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
             )"
         )

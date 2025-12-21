@@ -18,7 +18,6 @@
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -35,7 +34,7 @@
 #'
 #' ## intersection inside the connection
 #' ddbs_intersection("countries", "argentina", conn)
-#' 
+#'
 #' ## intersection without using a connection
 #' ddbs_intersection(countries_sf, argentina_sf)
 #' }
@@ -61,7 +60,7 @@ ddbs_intersection <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -159,7 +158,6 @@ ddbs_intersection <- function(
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -176,7 +174,7 @@ ddbs_intersection <- function(
 #'
 #' ## difference with a connection
 #' ddbs_difference("countries", "argentina", conn)
-#' 
+#'
 #' ## difference without a connection
 #' ddbs_difference(countries_sf, argentina_sf)
 #' }
@@ -201,7 +199,7 @@ ddbs_difference <- function(x,
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names

@@ -19,15 +19,15 @@
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
 #' @template quiet
-#' 
+#'
 #' @details
-#' 
+#'
 #' This function provides a unified interface to all spatial predicate operations
 #' in DuckDB's spatial extension. It performs pairwise comparisons between all
 #' geometries in `x` and `y` using the specified predicate.
 #'
 #' ## Available Predicates
-#' 
+#'
 #' - **intersects**: Geometries share at least one point
 #' - **covers**: Geometry `x` completely covers geometry `y`
 #' - **touches**: Geometries share a boundary but interiors do not intersect
@@ -54,49 +54,48 @@
 #'
 #' - Each element contains:
 #'   - **integer vector** of row indices of `y` that satisfy the predicate with
-#'     the corresponding geometry of `x`, or  
+#'     the corresponding geometry of `x`, or
 #'   - **character vector** if `id_y` is supplied.
 #'
 #' - The names of the list elements:
-#'   - are integer row numbers of `x`, or  
+#'   - are integer row numbers of `x`, or
 #'   - the values of `id_x` if provided.
-#' 
+#'
 #' If there's no match between `x` and `y` it returns `NULL`
 #'
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## Load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(dplyr)
 #' library(sf)
-#' 
+#'
 #' ## create in-memory DuckDB database
 #' conn <- ddbs_create_conn(dbdir = "memory")
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ## Store in DuckDB
 #' ddbs_write_vector(conn, countries_sf, "countries")
 #' ddbs_write_vector(conn, rivers_sf, "rivers")
-#' 
+#'
 #' ## Example 1: Check which rivers intersect each country
 #' ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
-#' 
+#'
 #' ## Example 2: Find neighboring countries
-#' ddbs_predicate(countries_sf, countries_sf, predicate = "touches", 
+#' ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
 #'                id_x = "NAME_ENGL", id_y = "NAME_ENGL")
-#' 
+#'
 #' ## Example 3: Find rivers that don't intersect countries
 #' ddbs_predicate(countries_sf, rivers_sf, predicate = "disjoint",
 #'                id_x = "NAME_ENGL", id_y = "RIVER_NAME")
-#' 
+#'
 #' ## Example 4: Use table names inside duckdb
 #' ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
 ddbs_predicate <- function(
@@ -120,7 +119,7 @@ ddbs_predicate <- function(
   ## 1.1. check if connection is provided, otherwise create a temporary connection
   is_duckdb_conn <- dbConnCheck(conn)
   if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
   }
   ## 1.2. get query list of table names
@@ -131,13 +130,13 @@ ddbs_predicate <- function(
   ## 2. get name of geometry columns
   x_geom <- get_geom_name(conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
-  
+
   y_geom <- get_geom_name(conn, y_list$query_name)
   assert_geometry_column(y_geom, y_list)
 
   ## check if id column name exists in x or y
-  assert_predicate_id(id_x, conn, x_list$query_name)  
-  assert_predicate_id(id_y, conn, y_list$query_name)  
+  assert_predicate_id(id_x, conn, x_list$query_name)
+  assert_predicate_id(id_y, conn, y_list$query_name)
 
   ## get predicate
   st_predicate <- get_st_predicate(predicate)
@@ -156,14 +155,14 @@ ddbs_predicate <- function(
       SELECT {st_predicate}(x.{x_geom}, y.{y_geom}, {distance}) as predicate
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
-    ") 
+    ")
 
   } else {
     tmp.query <- glue::glue("
       SELECT {st_predicate}(x.{x_geom}, y.{y_geom}) as predicate
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
-    ")  
+    ")
   }
   ## 3.2. retrieve results from the query
   data_tbl <- DBI::dbGetQuery(conn, tmp.query)
@@ -172,7 +171,7 @@ ddbs_predicate <- function(
   result_lst <- reframe_predicate_data(
     conn   = conn,
     data   = data_tbl,
-    x_list = x_list, 
+    x_list = x_list,
     y_list = y_list,
     id_x   = id_x,
     id_y   = id_y,
@@ -198,9 +197,9 @@ ddbs_predicate <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "intersects"`.
 #'
 #' @returns
@@ -212,18 +211,18 @@ ddbs_predicate <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_intersects(countries_sf, rivers_sf, id_x = "NAME_ENGL")
 ddbs_intersects <- function(
   x,
@@ -235,16 +234,16 @@ ddbs_intersects <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "intersects", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "intersects",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -262,9 +261,9 @@ ddbs_intersects <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "covers"`.
 #'
 #' @returns
@@ -276,18 +275,18 @@ ddbs_intersects <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_covers(countries_sf, rivers_sf, id_x = "NAME_ENGL")
 ddbs_covers <- function(
   x,
@@ -299,16 +298,16 @@ ddbs_covers <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "covers", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "covers",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -326,9 +325,9 @@ ddbs_covers <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "touches"`.
 #'
 #' @returns
@@ -340,16 +339,16 @@ ddbs_covers <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
 #' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial"))
 #' countries_filter_sf <- countries_sf |> filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' 
+#'
 #' # Find neighboring countries
 #' ddbs_touches(countries_filter_sf, countries_sf, id_x = "NAME_ENGL", id_y = "NAME_ENGL")
 ddbs_touches <- function(
@@ -362,16 +361,16 @@ ddbs_touches <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "touches", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "touches",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -392,9 +391,9 @@ ddbs_touches <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "dwithin"`.
 #'
 #' @returns
@@ -406,16 +405,16 @@ ddbs_touches <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
 #' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial"))
 #' countries_filter_sf <- countries_sf |> filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' 
+#'
 #' ## check countries within 1 degree of distance
 #' ddbs_is_within_distance(countries_filter_sf, countries_sf, 1)
 ddbs_is_within_distance <- function(
@@ -429,17 +428,17 @@ ddbs_is_within_distance <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "dwithin", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "dwithin",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     distance  = distance,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -457,9 +456,9 @@ ddbs_is_within_distance <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "disjoint"`.
 #'
 #' @returns
@@ -471,18 +470,18 @@ ddbs_is_within_distance <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_disjoint(countries_sf, rivers_sf, id_x = "NAME_ENGL")
 ddbs_disjoint <- function(
   x,
@@ -494,7 +493,7 @@ ddbs_disjoint <- function(
   quiet = FALSE) {
 
   ddbs_predicate(x, y, "disjoint", conn, id_x, id_y, sparse, quiet)
-  
+
 }
 
 
@@ -512,9 +511,9 @@ ddbs_disjoint <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "within"`.
 #'
 #' @returns
@@ -526,18 +525,18 @@ ddbs_disjoint <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_within(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
 ddbs_within <- function(
   x,
@@ -549,16 +548,16 @@ ddbs_within <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "within", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "within",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -576,9 +575,9 @@ ddbs_within <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "contains"`.
 #'
 #' @returns
@@ -590,18 +589,18 @@ ddbs_within <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_contains(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
 ddbs_contains <- function(
   x,
@@ -613,16 +612,16 @@ ddbs_contains <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "contains", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "contains",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -640,9 +639,9 @@ ddbs_contains <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "overlaps"`.
 #'
 #' @returns
@@ -654,18 +653,18 @@ ddbs_contains <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID == c("PT", "ES", "FR", "FI"))
-#' 
+#'
 #' ddbs_overlaps(countries_sf, countries_sf)
 ddbs_overlaps <- function(
   x,
@@ -677,16 +676,16 @@ ddbs_overlaps <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "overlaps", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "overlaps",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -704,9 +703,9 @@ ddbs_overlaps <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "crosses"`.
 #'
 #' @returns
@@ -718,18 +717,18 @@ ddbs_overlaps <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_crosses(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
 ddbs_crosses <- function(
   x,
@@ -741,16 +740,16 @@ ddbs_crosses <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "crosses", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "crosses",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -768,9 +767,9 @@ ddbs_crosses <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "equals"`.
 #'
 #' @returns
@@ -782,16 +781,16 @@ ddbs_crosses <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' 
+#'
 #' ddbs_equals(countries_sf, countries_sf, id_x = "NAME_ENGL")
 ddbs_equals <- function(
   x,
@@ -803,16 +802,16 @@ ddbs_equals <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "equals", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "equals",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -830,9 +829,9 @@ ddbs_equals <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "covered_by"`.
 #'
 #' @returns
@@ -844,18 +843,18 @@ ddbs_equals <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_covered_by(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
 ddbs_covered_by <- function(
   x,
@@ -867,16 +866,16 @@ ddbs_covered_by <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "covered_by", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "covered_by",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -885,7 +884,7 @@ ddbs_covered_by <- function(
 
 #' Spatial intersects extent predicate
 #'
-#' Tests if the bounding box of geometries in `x` intersect the bounding box of geometries in `y`. 
+#' Tests if the bounding box of geometries in `x` intersect the bounding box of geometries in `y`.
 #' Returns TRUE if the extents (bounding boxes) overlap. This is faster than full geometry intersection
 #' but less precise.
 #'
@@ -895,14 +894,14 @@ ddbs_covered_by <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "intersects_extent"`.
 #'
 #' @returns
 #' A list where each element contains indices (or IDs) of geometries in `y` whose
-#' bounding box intersects the bounding box of the corresponding geometry in `x`. 
+#' bounding box intersects the bounding box of the corresponding geometry in `x`.
 #' See [`ddbs_predicate()`] for details.
 #'
 #' @seealso [ddbs_predicate()] for other spatial predicates.
@@ -910,18 +909,18 @@ ddbs_covered_by <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' # Fast bounding box intersection check
 #' ddbs_intersects_extent(countries_sf, rivers_sf, id_x = "NAME_ENGL")
 ddbs_intersects_extent <- function(
@@ -934,16 +933,16 @@ ddbs_intersects_extent <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "intersects_extent", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "intersects_extent",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -961,9 +960,9 @@ ddbs_intersects_extent <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "contains_properly"`.
 #'
 #' @returns
@@ -975,18 +974,18 @@ ddbs_intersects_extent <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_contains_properly(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
 ddbs_contains_properly <- function(
   x,
@@ -998,16 +997,16 @@ ddbs_contains_properly <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "contains_properly", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "contains_properly",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 
@@ -1025,9 +1024,9 @@ ddbs_contains_properly <- function(
 #' @template conn_null
 #' @template predicate_args
 #' @template quiet
-#' 
+#'
 #' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with 
+#' This is a convenience wrapper around [`ddbs_predicate()`] with
 #' `predicate = "within_properly"`.
 #'
 #' @returns
@@ -1039,18 +1038,18 @@ ddbs_contains_properly <- function(
 #' @export
 #'
 #' @examples
-#' 
+#'
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
 #' library(sf)
-#' 
+#'
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
 #'   st_transform(st_crs(countries_sf))
-#' 
+#'
 #' ddbs_within_properly(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
 ddbs_within_properly <- function(
   x,
@@ -1062,16 +1061,16 @@ ddbs_within_properly <- function(
   quiet = FALSE) {
 
   ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "within_properly", 
-    conn      = conn, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
+    x         = x,
+    y         = y,
+    predicate = "within_properly",
+    conn      = conn,
+    id_x      = id_x,
+    id_y      = id_y,
+    sparse    = sparse,
     quiet     = quiet
   )
-  
+
 }
 
 

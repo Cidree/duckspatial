@@ -62,8 +62,7 @@ Returns the result as an \code{sf} object or creates a new table in the database
 }
 \examples{
 \dontrun{
-## load packages
-library(duckdb)
+# load packages
 library(duckspatial)
 library(dplyr)
 library(sf)
@@ -71,22 +70,22 @@ library(sf)
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
-## read data
+# read data
 rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
 
-## store in duckdb
+# store in duckdb
 ddbs_write_vector(conn, rivers_sf, "rivers")
 
-## union all geometries into one
+# union all geometries into one
 ddbs_union(conn = conn, "rivers")
 
-## union without using a connection
+# union without using a connection
 ddbs_union(rivers_sf)
 
-## union geometries grouped by a column
+# union geometries grouped by a column
 ddbs_union(conn = conn, "rivers", by = "RIVER_NAME")
 
-## store result in a new table
+# store result in a new table
 ddbs_union(conn = conn, "rivers", name = "rivers_union")
 }
 }

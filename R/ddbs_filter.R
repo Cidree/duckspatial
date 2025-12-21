@@ -25,7 +25,6 @@
 #' @examples
 #' \dontrun{
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -42,7 +41,7 @@
 #'
 #' ## filter countries touching argentina
 #' ddbs_filter(conn = conn, "countries", "argentina", predicate = "touches")
-#' 
+#'
 #' ## filter without using a connection
 #' ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
 #' }
@@ -70,7 +69,7 @@ ddbs_filter <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -103,29 +102,29 @@ ddbs_filter <- function(
 
         ## if distance is not specified, it will use ST_Within
         if (sel_pred == "ST_DWithin") {
-            
+
             if (is.null(distance)) {
                 cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
                 distance <- 0
             }
-            
+
             tmp.query <- glue::glue("
                 CREATE TABLE {name_list$query_name} AS
                 SELECT {rest_query} v1.{x_geom} AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
             ")
-        
+
         } else {
             tmp.query <- glue::glue("
                 CREATE TABLE {name_list$query_name} AS
                 SELECT {rest_query} v1.{x_geom} AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
-            ") 
-        }   
+            ")
+        }
 
-        
+
         ## execute filter query
         DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
@@ -141,23 +140,23 @@ ddbs_filter <- function(
             distance <- 0
         }
 
-        data_tbl <- DBI::dbGetQuery(            
+        data_tbl <- DBI::dbGetQuery(
             conn, glue::glue("
                 SELECT {rest_query} ST_AsText(v1.{x_geom}) AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
             ")
         )
-    
-    } else {        
+
+    } else {
         data_tbl <- DBI::dbGetQuery(
             conn, glue::glue("
                 SELECT {rest_query} ST_AsText(v1.{x_geom}) AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
             ")
-        ) 
-    }    
+        )
+    }
 
     ## 5. convert to SF and return result
     data_sf <- convert_to_sf(

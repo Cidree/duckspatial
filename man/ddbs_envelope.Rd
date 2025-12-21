@@ -64,7 +64,6 @@ is returned that encompasses the entire dataset.
 \examples{
 \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

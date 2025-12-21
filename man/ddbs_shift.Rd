@@ -57,7 +57,6 @@ This function is equivalent to \code{terra::shift()}.
 \examples{
 \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

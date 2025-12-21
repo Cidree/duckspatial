@@ -22,7 +22,6 @@ Checks if a spatial extension is available, and installs it in a DuckDB database
 }
 \examples{
 ## load packages
-library(duckdb)
 library(duckspatial)
 
 # connect to in memory database
