@@ -52,7 +52,7 @@ ddbs_boundary <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -119,12 +119,12 @@ ddbs_boundary <- function(
 
 #' Returns the envelope (bounding box) of geometries
 #'
-#' Returns the minimum bounding rectangle (envelope) of geometries from a DuckDB table 
-#' using the spatial extension. Returns the result as an \code{sf} object or creates 
+#' Returns the minimum bounding rectangle (envelope) of geometries from a DuckDB table
+#' using the spatial extension. Returns the result as an \code{sf} object or creates
 #' a new table in the database.
 #'
 #' @template x
-#' @param by_feature Logical. If \code{TRUE}, returns one envelope per feature. 
+#' @param by_feature Logical. If \code{TRUE}, returns one envelope per feature.
 #' If \code{FALSE} (default), returns a single envelope for all geometries combined.
 #' @template conn_null
 #' @template name
@@ -136,7 +136,7 @@ ddbs_boundary <- function(
 #' ST_Envelope returns the minimum bounding rectangle (MBR) of a geometry as a polygon.
 #' For points and lines, this creates a rectangular polygon that encompasses the geometry.
 #' For polygons, it returns the smallest rectangle that contains the entire polygon.
-#' 
+#'
 #' When \code{by_feature = FALSE}, all geometries are combined and a single envelope
 #' is returned that encompasses the entire dataset.
 #'
@@ -150,21 +150,24 @@ ddbs_boundary <- function(
 #' library(duckspatial)
 #' library(sf)
 #'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
-#'
 #' # read data
 #' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+#'
+#' # input as sf, and output as sf
+#' env <- ddbs_envelope(x = argentina_sf, by_feature = TRUE)
+#'
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' # store in duckdb
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
 #' # envelope for each feature
 #' env <- ddbs_envelope("argentina", conn, by_feature = TRUE)
-#' 
+#'
 #' # single envelope for entire dataset
 #' env_all <- ddbs_envelope("argentina", conn, by_feature = FALSE)
-#' 
+#'
 #' # create a new table with envelopes
 #' ddbs_envelope("argentina", conn, name = "argentina_bbox", by_feature = TRUE)
 #' }
@@ -190,7 +193,7 @@ ddbs_envelope <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -222,12 +225,12 @@ ddbs_envelope <- function(
         if (isTRUE(by_feature)) {
             if (length(x_rest) == 0) {
                 tmp.query <- glue::glue("
-                SELECT {st_envelope_clause} as {x_geom} 
+                SELECT {st_envelope_clause} as {x_geom}
                 FROM {x_list$query_name};
             ")
             } else {
                 tmp.query <- glue::glue("
-                SELECT {paste0(x_rest, collapse = ', ')}, {st_envelope_clause} as {x_geom} 
+                SELECT {paste0(x_rest, collapse = ', ')}, {st_envelope_clause} as {x_geom}
                 FROM {x_list$query_name};
             ")
             }
@@ -238,7 +241,7 @@ ddbs_envelope <- function(
             FROM {x_list$query_name};
         ")
         }
-        
+
         ## execute query
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
         feedback_query(quiet)
@@ -254,8 +257,8 @@ ddbs_envelope <- function(
             ")
         } else {
             tmp.query <- glue::glue("
-                SELECT {paste0(x_rest, collapse = ', ')}, 
-                ST_AsText({st_envelope_clause}) as {x_geom} 
+                SELECT {paste0(x_rest, collapse = ', ')},
+                ST_AsText({st_envelope_clause}) as {x_geom}
                 FROM {x_list$query_name};
             ")
         }
@@ -266,7 +269,7 @@ ddbs_envelope <- function(
             FROM {x_list$query_name};
         ")
     }
-    
+
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
