@@ -90,7 +90,7 @@ assert_crs_column <- function(crs_column, cols) {
 ## assert id argument in predicate functions
 assert_predicate_id <- function(id, conn, lst) {
     if (!is.null(id)) {
-        x_rest <- get_geom_name(conn, lst, rest = TRUE)
+        x_rest <- get_geom_name(conn, lst, rest = TRUE, collapse = FALSE)
         if (!id %in% x_rest) cli::cli_abort("<id> must be NULL or a column name of <x>")
     }
 }

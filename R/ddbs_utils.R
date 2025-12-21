@@ -160,8 +160,19 @@ ddbs_list_tables <- function(conn) {
 #' @export
 #'
 #' @examplesIf interactive()
-#' ## TODO
-#' 2+2
+#' library(duckspatial)
+#' library(sf)
+#'
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+#'
+#' ## store in duckdb
+#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#'
+#' ddbs_glimpse(conn, "argentina")
 #'
 ddbs_glimpse <- function(conn,
                          name,
@@ -177,7 +188,7 @@ ddbs_glimpse <- function(conn,
     name_list <- get_query_name(name)
     ## get column names
     geom_name    <- get_geom_name(conn, name_list$query_name)
-    no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE) |> paste(collapse = ", ")
+    no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE, collapse = TRUE)
 
     # 3. Get data
     ## get data as table

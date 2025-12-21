@@ -1,71 +1,71 @@
 #' Areal-Weighted Interpolation using DuckDB
 #'
 #' @description
-#' Transfers attribute data from a source spatial layer to a target spatial layer based 
-#' on the area of overlap between their geometries. This function executes all spatial 
-#' calculations within DuckDB, enabling efficient processing of large datasets without 
+#' Transfers attribute data from a source spatial layer to a target spatial layer based
+#' on the area of overlap between their geometries. This function executes all spatial
+#' calculations within DuckDB, enabling efficient processing of large datasets without
 #' loading all geometries into R memory.
 #'
 #' @details
 #' Areal-weighted interpolation is used when the source and target geometries are incongruent (they do not align). It relies on the assumption of **uniform distribution**: values in the source polygons are assumed to be spread evenly across the polygon's area.
-#' 
+#'
 #' **Coordinate Systems:**
-#' Area calculations are highly sensitive to the Coordinate Reference System (CRS). 
-#' While the function can run on geographic coordinates (lon/lat), it is strongly recommended 
-#' to use a **projected CRS** (e.g., EPSG:3857, UTM, or Albers) to ensure accurate area measurements. 
+#' Area calculations are highly sensitive to the Coordinate Reference System (CRS).
+#' While the function can run on geographic coordinates (lon/lat), it is strongly recommended
+#' to use a **projected CRS** (e.g., EPSG:3857, UTM, or Albers) to ensure accurate area measurements.
 #' Use the \code{join_crs} argument to project data on-the-fly during the interpolation.
 #'
 #' **Extensive vs. Intensive Variables:**
 #' \itemize{
-#'   \item **Extensive** variables are counts or absolute amounts (e.g., total population, 
-#'   number of voters). When a source polygon is split, the value is divided proportionally 
+#'   \item **Extensive** variables are counts or absolute amounts (e.g., total population,
+#'   number of voters). When a source polygon is split, the value is divided proportionally
 #'   to the area.
-#'   \item **Intensive** variables are ratios, rates, or densities (e.g., population density, 
+#'   \item **Intensive** variables are ratios, rates, or densities (e.g., population density,
 #'   cancer rates). When a source polygon is split, the value remains constant for each piece.
 #' }
-#' 
+#'
 #' **Mass Preservation (The \code{weight} argument):**
 #' For extensive variables, the choice of weight determines the denominator used in calculations:
 #' \itemize{
-#'   \item \code{"sum"} (default): The denominator is the sum of all overlapping areas 
-#'   for that source feature. This preserves the "mass" of the variable *relative to the target's coverage*. 
-#'   If the target polygons do not completely cover a source polygon, some data is technically "lost" 
+#'   \item \code{"sum"} (default): The denominator is the sum of all overlapping areas
+#'   for that source feature. This preserves the "mass" of the variable *relative to the target's coverage*.
+#'   If the target polygons do not completely cover a source polygon, some data is technically "lost"
 #'   because it falls outside the target area. This matches \code{areal::aw_interpolate(weight="sum")}.
-#'   \item \code{"total"}: The denominator is the full geometric area of the source feature. 
-#'   This assumes the source value is distributed over the entire source polygon. If the target 
-#'   covers only 50% of the source, only 50% of the value is transferred. This is strictly 
+#'   \item \code{"total"}: The denominator is the full geometric area of the source feature.
+#'   This assumes the source value is distributed over the entire source polygon. If the target
+#'   covers only 50% of the source, only 50% of the value is transferred. This is strictly
 #'   mass-preserving relative to the source. This matches \code{sf::st_interpolate_aw(extensive=TRUE)}.
 #' }
-#' *Note:* Intensive variables are always calculated using the \code{"sum"} logic (averaging 
+#' *Note:* Intensive variables are always calculated using the \code{"sum"} logic (averaging
 #' based on intersection areas) regardless of this parameter.
 #'
-#' @param target An \code{sf} object or the name of a persistent table in the DuckDB connection 
+#' @param target An \code{sf} object or the name of a persistent table in the DuckDB connection
 #'   representing the destination geometries.
-#' @param source An \code{sf} object or the name of a persistent table in the DuckDB connection 
+#' @param source An \code{sf} object or the name of a persistent table in the DuckDB connection
 #'   containing the data to be interpolated.
 #' @param tid Character. The name of the column in \code{target} that uniquely identifies features.
 #' @param sid Character. The name of the column in \code{source} that uniquely identifies features.
-#' @param extensive Character vector. Names of columns in \code{source} to be treated as 
+#' @param extensive Character vector. Names of columns in \code{source} to be treated as
 #'   spatially extensive (e.g., population counts).
-#' @param intensive Character vector. Names of columns in \code{source} to be treated as 
+#' @param intensive Character vector. Names of columns in \code{source} to be treated as
 #'   spatially intensive (e.g., population density).
-#' @param weight Character. Determines the denominator calculation for extensive variables. 
+#' @param weight Character. Determines the denominator calculation for extensive variables.
 #'   Either \code{"sum"} (default) or \code{"total"}. See **Mass Preservation** in Details.
-#' @param output Character. One of \code{"sf"} (default) or \code{"tibble"}. 
+#' @param output Character. One of \code{"sf"} (default) or \code{"tibble"}.
 #'   \itemize{
 #'     \item \code{"sf"}: The result includes the geometry column of the target.
-#'     \item \code{"tibble"}: The result **excludes the geometry column**. This is significantly faster 
+#'     \item \code{"tibble"}: The result **excludes the geometry column**. This is significantly faster
 #'     and consumes less storage.
 #'   }
 #'   **Note:** This argument also controls the schema of the created table if \code{name} is provided.
-#' @param keep_NA Logical. If \code{TRUE} (default), returns all features from the target, 
-#'   even those that do not overlap with the source (values will be NA). If \code{FALSE}, 
+#' @param keep_NA Logical. If \code{TRUE} (default), returns all features from the target,
+#'   even those that do not overlap with the source (values will be NA). If \code{FALSE},
 #'   performs an inner join, dropping non-overlapping target features.
-#' @param na.rm Logical. If \code{TRUE}, source features with \code{NA} values in the 
-#'   interpolated variables are completely removed from the calculation (area calculations 
+#' @param na.rm Logical. If \code{TRUE}, source features with \code{NA} values in the
+#'   interpolated variables are completely removed from the calculation (area calculations
 #'   will behave as if that polygon did not exist). Defaults to \code{FALSE}.
-#' @param join_crs Numeric or Character (optional). EPSG code or WKT for the CRS to use 
-#'   for area calculations. If provided, both \code{target} and \code{source} are transformed 
+#' @param join_crs Numeric or Character (optional). EPSG code or WKT for the CRS to use
+#'   for area calculations. If provided, both \code{target} and \code{source} are transformed
 #'   to this CRS within the database before interpolation.
 #' @template conn_null
 #' @template name
@@ -73,18 +73,18 @@
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns 
+#' @returns
 #' \itemize{
-#'   \item If \code{name} is \code{NULL} (default): Returns an \code{sf} object (if \code{output="sf"}) 
+#'   \item If \code{name} is \code{NULL} (default): Returns an \code{sf} object (if \code{output="sf"})
 #'   or a \code{tibble} (if \code{output="tibble"}).
-#'   \item If \code{name} is provided: Returns \code{TRUE} invisibly and creates a persistent table 
-#'   in the DuckDB database. 
+#'   \item If \code{name} is provided: Returns \code{TRUE} invisibly and creates a persistent table
+#'   in the DuckDB database.
 #'   \itemize{
 #'      \item If \code{output="sf"}, the table **includes** the geometry column.
 #'      \item If \code{output="tibble"}, the table **excludes** the geometry column (pure attributes).
 #'   }
 #' }
-#' 
+#'
 #' @examples
 #' \donttest{
 #' library(sf)
@@ -108,7 +108,7 @@
 #'   extensive = "BIR74",
 #'   weight = "total"
 #' )
-#' 
+#'
 #' # Check mass preservation
 #' sum(res_ext$BIR74, na.rm = TRUE) / sum(nc$BIR74) # Should be ~1
 #'
@@ -125,7 +125,7 @@
 #' plot(res_ext["BIR74"], main = "Extensive (Total Count)", border = NA)
 #' plot(res_int["BIR74"], main = "Intensive (Weighted Avg)", border = NA)
 #' }
-#' 
+#'
 #' @seealso
 #' \code{\link[areal:aw_interpolate]{areal::aw_interpolate()}} — reference implementation.
 #'
@@ -133,7 +133,7 @@
 #' Prener, C. and Revord, C. (2019). \emph{areal: An R package for areal weighted interpolation}.
 #' \emph{Journal of Open Source Software}, 4(37), 1221.
 #' Available at: \url{https://doi.org/10.21105/joss.01221}
-#' 
+#'
 #' @export
 ddbs_interpolate_aw <- function(
     target,
@@ -198,16 +198,16 @@ ddbs_interpolate_aw <- function(
   # 2. Get Geometry and Attribute Columns
   t_geom <- get_geom_name(conn, t_list$query_name)
   s_geom <- get_geom_name(conn, s_list$query_name)
-  
+
   # 2.1 Get Attribute Columns (target columns to keep)
-  t_rest <- get_geom_name(conn, t_list$query_name, rest = TRUE)
+  t_rest <- get_geom_name(conn, t_list$query_name, rest = TRUE, collapse = FALSE)
 
   # 2.1 Column Conflict Prevention
   # Check if interpolated vars already exist in target (excluding tid)
   interp_vars <- c(extensive, intensive)
   conflicts <- intersect(interp_vars, t_rest)
   conflicts <- setdiff(conflicts, tid) # ignore tid overlap as we join on it
-  
+
   if (length(conflicts) > 0) {
     cli::cli_warn(c(
       "Column name conflict detected.",
@@ -221,7 +221,7 @@ ddbs_interpolate_aw <- function(
   # 3. Validate IDs and Variables exist
   assert_col_exists(conn, t_list$query_name, tid, "target")
   assert_col_exists(conn, s_list$query_name, sid, "source")
-  
+
   if (!is.null(extensive)) assert_col_exists(conn, s_list$query_name, extensive, "source")
   if (!is.null(intensive)) assert_col_exists(conn, s_list$query_name, intensive, "source")
 
@@ -235,7 +235,7 @@ ddbs_interpolate_aw <- function(
   # This prevents Binder Errors if the column is missing (e.g., when inputs have NA CRS)
   t_fields <- DBI::dbListFields(conn, t_list$query_name)
   s_fields <- DBI::dbListFields(conn, s_list$query_name)
-  
+
   t_has_crs <- crs_column %in% t_fields
   s_has_crs <- crs_column %in% s_fields
 
@@ -250,7 +250,7 @@ ddbs_interpolate_aw <- function(
     # We retrieve the sf::st_crs object from the DB metadata
     t_crs <- ddbs_crs(conn, t_list$query_name, crs_column)
     s_crs <- ddbs_crs(conn, s_list$query_name, crs_column)
-    
+
     # Convert those objects to SQL literals
     t_crs_sql <- crs_to_sql(t_crs)
     s_crs_sql <- crs_to_sql(s_crs)
@@ -269,7 +269,7 @@ ddbs_interpolate_aw <- function(
       # Mismatch: One has CRS, one does not
       cli::cli_abort("CRS mismatch: One input has a defined CRS and the other does not.")
     }
-    # If neither has CRS (t_has_crs=FALSE, s_has_crs=FALSE), 
+    # If neither has CRS (t_has_crs=FALSE, s_has_crs=FALSE),
     # we assume they are both planar/NA and proceed without error.
   }
 
@@ -288,11 +288,11 @@ ddbs_interpolate_aw <- function(
   # 5.1 Intersection/Overlap CTE
   overlap_cte <- glue::glue("
     overlap_calc AS (
-      SELECT 
-        s.{sid} AS sid, 
+      SELECT
+        s.{sid} AS sid,
         t.{tid} AS tid,
         COALESCE(ST_Area(ST_Intersection({s_alias}, {t_alias})), 0) AS overlap_area
-      FROM 
+      FROM
         (SELECT *, {s_geom_expr} AS {s_alias} FROM {s_source_sql}) s
       INNER JOIN
         (SELECT *, {t_geom_expr} AS {t_alias} FROM {t_list$query_name}) t
@@ -302,7 +302,7 @@ ddbs_interpolate_aw <- function(
 
   # 5.2 Denominators
   denom_ctes <- character()
-  
+
   if (!is.null(extensive)) {
     if (weight == "sum") {
       # Matches areal::aw_interpolate(weight="sum")
@@ -363,7 +363,7 @@ ddbs_interpolate_aw <- function(
     FROM overlap_calc o
     JOIN {src_join_sql} src ON o.sid = src.{sid}
   ")
-  
+
   if (!is.null(extensive)) {
     joins_sql <- paste(joins_sql, "LEFT JOIN denom_extensive dens ON o.sid = dens.sid")
   }
@@ -373,7 +373,7 @@ ddbs_interpolate_aw <- function(
 
   agg_cte <- glue::glue("
     aggregated_values AS (
-      SELECT 
+      SELECT
         o.tid,
         {agg_fields}
       {joins_sql}
@@ -385,7 +385,7 @@ ddbs_interpolate_aw <- function(
   # Explicitly select target columns to keep attributes
   t_cols_select <- if(length(t_rest) > 0) paste0("tgt.", t_rest, collapse = ", ") else ""
   if (t_cols_select != "") t_cols_select <- paste0(t_cols_select, ", ")
-  
+
   # Apply keep_NA logic
   # if keep_NA=TRUE, use LEFT JOIN (preserve all targets)
   # if keep_NA=FALSE, use INNER JOIN (keep only targets with interpolated data)
@@ -393,11 +393,11 @@ ddbs_interpolate_aw <- function(
   full_ctes <- paste(c(overlap_cte, denom_ctes, agg_cte), collapse = ",\n")
 
   # 6.1 Handle Output Type: SF vs Tibble (no geometry)
-  
+
   if (output == "sf") {
     # Standard spatial return
     final_select <- glue::glue("
-      SELECT 
+      SELECT
         {t_cols_select}
         ST_AsText(tgt.{t_geom}) as {t_geom},
         av.* EXCLUDE (tid)
@@ -405,7 +405,7 @@ ddbs_interpolate_aw <- function(
       {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
     ")
     table_select <- glue::glue("
-      SELECT 
+      SELECT
         {t_cols_select}
         tgt.{t_geom} as {t_geom},
         av.* EXCLUDE (tid)
@@ -415,42 +415,42 @@ ddbs_interpolate_aw <- function(
   } else {
     # Tibble return: Do NOT select geometry (much faster)
     final_select <- glue::glue("
-      SELECT 
+      SELECT
         {t_cols_select}
         av.* EXCLUDE (tid)
       FROM {t_list$query_name} tgt
       {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
     ")
-    
+
     # For table creation, we also drop geometry if output="tibble"
     table_select <- final_select
   }
 
   # 6.2 Execute
-  
+
   if (!is.null(name)) {
     name_list <- get_query_name(name)
     overwrite_table(name_list$query_name, conn, quiet, overwrite)
-    
+
     # CREATE TABLE must precede WITH for standard CTE usage in DuckDB statements like this
     full_sql <- glue::glue("
-      CREATE TABLE {name_list$query_name} AS 
+      CREATE TABLE {name_list$query_name} AS
       WITH {full_ctes}
       {table_select}
     ")
-    
+
     DBI::dbExecute(conn, full_sql)
     feedback_query(quiet)
     return(invisible(TRUE))
   }
-  
+
   full_sql <- glue::glue("
     WITH {full_ctes}
     {final_select}
   ")
-  
+
   data_tbl <- DBI::dbGetQuery(conn, full_sql)
-  
+
   if (output == "sf") {
     data_sf <- convert_to_sf(
       data       = data_tbl,

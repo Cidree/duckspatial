@@ -102,7 +102,7 @@ ddbs_rotate <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 2.1. Convert angle to radians if needed
@@ -168,7 +168,7 @@ ddbs_rotate <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, {rotation_expr} as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, {rotation_expr} as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute rotation query
@@ -185,7 +185,7 @@ ddbs_rotate <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText({rotation_expr}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText({rotation_expr}) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
@@ -288,7 +288,7 @@ ddbs_rotate_3d <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 2.1. Convert angle to radians if needed
@@ -317,7 +317,7 @@ ddbs_rotate_3d <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, {rotation_expr} as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, {rotation_expr} as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute rotation query
@@ -334,7 +334,7 @@ ddbs_rotate_3d <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText({rotation_expr}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText({rotation_expr}) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
@@ -428,7 +428,7 @@ ddbs_shift <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 2.1. Build shift expression using ST_Affine
@@ -451,7 +451,7 @@ ddbs_shift <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, {shift_expr} as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, {shift_expr} as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute shift query
@@ -468,7 +468,7 @@ ddbs_shift <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText({shift_expr}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText({shift_expr}) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
@@ -566,7 +566,7 @@ ddbs_flip <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 2.1. Build flip expression using ST_Affine
@@ -637,7 +637,7 @@ ddbs_flip <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, {flip_expr} as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, {flip_expr} as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute flip query
@@ -654,7 +654,7 @@ ddbs_flip <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText({flip_expr}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText({flip_expr}) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
@@ -757,7 +757,7 @@ ddbs_scale <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 2.1. Build scale expression using ST_Scale
@@ -805,7 +805,7 @@ ddbs_scale <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, {scale_expr} as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, {scale_expr} as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute scale query
@@ -822,7 +822,7 @@ ddbs_scale <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText({scale_expr}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText({scale_expr}) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
@@ -927,7 +927,7 @@ ddbs_shear <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 2.1. Build shear expression using ST_Affine
@@ -971,7 +971,7 @@ ddbs_shear <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, {shear_expr} as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, {shear_expr} as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute shear query
@@ -988,7 +988,7 @@ ddbs_shear <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText({shear_expr}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText({shear_expr}) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query

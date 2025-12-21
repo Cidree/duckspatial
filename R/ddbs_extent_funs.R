@@ -30,7 +30,7 @@
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
 #' # boundary
-#' b <- ddbs_boundary("argentina", conn)
+#' b <- ddbs_boundary(x = "argentina", conn)
 #' }
 ddbs_boundary <- function(
     x,
@@ -60,7 +60,7 @@ ddbs_boundary <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
@@ -79,7 +79,7 @@ ddbs_boundary <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Boundary({x_geom}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_Boundary({x_geom}) as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute intersection query
@@ -95,7 +95,7 @@ ddbs_boundary <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText(ST_Boundary({x_geom})) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText(ST_Boundary({x_geom})) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## send the query
@@ -201,7 +201,7 @@ ddbs_envelope <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. Build envelope clause based on by_feature
@@ -230,7 +230,7 @@ ddbs_envelope <- function(
             ")
             } else {
                 tmp.query <- glue::glue("
-                SELECT {paste0(x_rest, collapse = ', ')}, {st_envelope_clause} as {x_geom}
+                SELECT {x_rest}, {st_envelope_clause} as {x_geom}
                 FROM {x_list$query_name};
             ")
             }
@@ -257,7 +257,7 @@ ddbs_envelope <- function(
             ")
         } else {
             tmp.query <- glue::glue("
-                SELECT {paste0(x_rest, collapse = ', ')},
+                SELECT {x_rest},
                 ST_AsText({st_envelope_clause}) as {x_geom}
                 FROM {x_list$query_name};
             ")
@@ -371,7 +371,7 @@ ddbs_bbox <- function(x,
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
 

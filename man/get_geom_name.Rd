@@ -4,7 +4,7 @@
 \alias{get_geom_name}
 \title{Get column names in a DuckDB database}
 \usage{
-get_geom_name(conn, x, rest = FALSE)
+get_geom_name(conn, x, rest = FALSE, collapse = FALSE)
 }
 \arguments{
 \item{conn}{A connection object to a DuckDB database}

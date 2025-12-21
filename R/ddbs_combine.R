@@ -82,7 +82,7 @@ ddbs_union <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
     assert_geometry_column(x_geom, x_list)
 
     ## Handle ST_Union(x, y) - pairwise union of two geometries
@@ -96,7 +96,7 @@ ddbs_union <- function(
 
         ## Get y geometry column
         y_geom <- get_geom_name(conn, y_list$query_name)
-        y_rest <- get_geom_name(conn, y_list$query_name, rest = TRUE)
+        # y_rest <- get_geom_name(conn, y_list$query_name, rest = TRUE)
         assert_geometry_column(y_geom, y_list)
 
         ## 3. if name is not NULL (i.e. no SF returned)

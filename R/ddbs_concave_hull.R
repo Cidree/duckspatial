@@ -95,7 +95,7 @@ ddbs_concave_hull <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
@@ -114,7 +114,7 @@ ddbs_concave_hull <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_ConcaveHull({x_geom}, {ratio}, {allow_holes}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_ConcaveHull({x_geom}, {ratio}, {allow_holes}) as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute intersection query
@@ -130,7 +130,7 @@ ddbs_concave_hull <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText(ST_ConcaveHull({x_geom}, {ratio}, {allow_holes})) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText(ST_ConcaveHull({x_geom}, {ratio}, {allow_holes})) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## send the query
