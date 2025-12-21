@@ -51,7 +51,18 @@ ddbs_glimpse(
 
 ``` r
 if (FALSE) { # interactive()
-## TODO
-2+2
+library(duckspatial)
+library(sf)
+
+# create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
+
+## read data
+argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+
+## store in duckdb
+ddbs_write_vector(conn, argentina_sf, "argentina")
+
+ddbs_glimpse(conn, "argentina")
 }
 ```

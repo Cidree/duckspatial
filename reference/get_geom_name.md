@@ -5,7 +5,7 @@ Get column names in a DuckDB database
 ## Usage
 
 ``` r
-get_geom_name(conn, x, rest = FALSE)
+get_geom_name(conn, x, rest = FALSE, collapse = FALSE)
 ```
 
 ## Arguments
