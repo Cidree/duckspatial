@@ -55,7 +55,6 @@ or degrees for geographic CRS).
 }
 \examples{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 
@@ -63,7 +62,7 @@ library(sf)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |> 
+argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |>
     st_transform("EPSG:3857")
 
 ## store in duckdb

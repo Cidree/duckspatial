@@ -42,7 +42,7 @@ A list where each element contains indices (or IDs) of geometries in \code{y} th
 are covered by the corresponding geometry in \code{x}. See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if geometries in \code{x} cover geometries in \code{y}. Returns TRUE if
+Tests if geometries in \code{x} cover geometries in \code{y}. Returns \code{TRUE} if
 geometry \code{x} completely covers geometry \code{y} (no point of \code{y} lies outside \code{x}).
 }
 \details{
@@ -57,9 +57,9 @@ library(duckspatial)
 library(sf)
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
   st_transform(st_crs(countries_sf))
 
 ddbs_covers(countries_sf, rivers_sf, id_x = "NAME_ENGL")

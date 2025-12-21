@@ -12,6 +12,7 @@ ddbs_filter(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  distance = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -40,6 +41,9 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 \item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
+
+\item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
+the coordinate system of the geometry (e.g. degrees or meters)}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
@@ -77,7 +81,6 @@ most commonly used ones, taking two geometries a and b:
 \examples{
 \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

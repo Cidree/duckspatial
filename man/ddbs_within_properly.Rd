@@ -42,8 +42,9 @@ A list where each element contains indices (or IDs) of geometries in \code{y} th
 properly contain the corresponding geometry in \code{x}. See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if geometries in \code{x} are properly within geometries in \code{y}. Returns TRUE if
-geometry \code{x} is completely inside geometry \code{y} and does not touch its boundary.
+Tests if geometries in \code{x} are properly within geometries in \code{y}. Returns
+\code{TRUE} if geometry \code{x} is completely inside geometry \code{y} and does not touch
+its boundary.
 }
 \details{
 This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate()}} with
@@ -57,9 +58,9 @@ library(duckspatial)
 library(sf)
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
   st_transform(st_crs(countries_sf))
 
 ddbs_within_properly(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")

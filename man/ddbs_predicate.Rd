@@ -12,6 +12,7 @@ ddbs_predicate(
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
+  distance = NULL,
   quiet = FALSE
 )
 }
@@ -38,6 +39,9 @@ replace the integer indices returned in each element of the list.}
 
 \item{sparse}{A logical value. If \code{TRUE}, it returns a sparse index list. If \code{FALSE},
 it returns a dense logical matrix.}
+
+\item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
+the coordinate system of the geometry (e.g. degrees or meters)}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
@@ -77,6 +81,7 @@ geometries in \code{x} and \code{y} using the specified predicate.
 \item \strong{touches}: Geometries share a boundary but interiors do not intersect
 \item \strong{disjoint}: Geometries have no points in common
 \item \strong{within}: Geometry \code{x} is completely inside geometry \code{y}
+\item \strong{dwithin}: Geometry \code{x} is completely within a distance of geometry \code{y}
 \item \strong{contains}: Geometry \code{x} completely contains geometry \code{y}
 \item \strong{overlaps}: Geometries share some but not all points
 \item \strong{crosses}: Geometries have some interior points in common
@@ -97,7 +102,6 @@ values of an identifier column in \code{x} or \code{y}, respectively.
 \examples{
 
 ## Load packages
-library(duckdb)
 library(duckspatial)
 library(dplyr)
 library(sf)
@@ -106,9 +110,9 @@ library(sf)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
   st_transform(st_crs(countries_sf))
 
 ## Store in DuckDB
@@ -119,7 +123,7 @@ ddbs_write_vector(conn, rivers_sf, "rivers")
 ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
 
 ## Example 2: Find neighboring countries
-ddbs_predicate(countries_sf, countries_sf, predicate = "touches", 
+ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
                id_x = "NAME_ENGL", id_y = "NAME_ENGL")
 
 ## Example 3: Find rivers that don't intersect countries

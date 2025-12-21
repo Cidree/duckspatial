@@ -9,8 +9,8 @@
 #'
 #' @examples
 #' ## load packages
-#' library(duckdb)
 #' library(duckspatial)
+#' library(duckdb)
 #'
 #' ## connect to in memory database
 #' conn <- ddbs_create_conn(dbdir = "memory")
@@ -134,6 +134,8 @@ ddbs_crs <- function(conn, name, crs_column = "crs_duckspatial") {
 #'
 #' @examplesIf interactive()
 #' ## TODO
+#' 2+2
+#'
 ddbs_list_tables <- function(conn) {
   DBI::dbGetQuery(conn, "
       SELECT table_schema, table_name, table_type
@@ -159,6 +161,8 @@ ddbs_list_tables <- function(conn) {
 #'
 #' @examplesIf interactive()
 #' ## TODO
+#' 2+2
+#'
 ddbs_glimpse <- function(conn,
                          name,
                          crs = NULL,
@@ -210,7 +214,10 @@ ddbs_glimpse <- function(conn,
 
 
 
-#' Create a duckdb connection
+#' Create a DuckDB connection with spatial extension
+#'
+#' It creates a DuckDB connection, and then it installs and loads the
+#' spatial extension
 #'
 #' @param dbdir String. Either `"tempdir"` or `"memory"`. Defaults to `"memory"`.
 #'
@@ -259,7 +266,7 @@ ddbs_create_conn <- function(dbdir = "memory"){
     }
 
     # Checks and installs the Spatial extension
-    duckspatial::ddbs_install(conn, quiet = TRUE)
+    duckspatial::ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
     duckspatial::ddbs_load(conn, quiet = TRUE)
 
 

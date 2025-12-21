@@ -63,7 +63,7 @@ assert_connflict <- function(conn, xy, ref = "x") {
     is_duckdn_conn <- dbConnCheck(conn)
 
 
-    if (inherits(xy, "sf") & is_duckdn_conn) {
+    if (inherits(xy, "sf") && is_duckdn_conn) {
         cli::cli_abort(
             "If you pass a {.arg {ref}}, it must be a string when {.arg conn} is provided.",
             .frame = parent.frame()

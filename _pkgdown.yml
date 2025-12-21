@@ -21,18 +21,23 @@ authors:
     href: https://www.ekotov.pro/
 
 reference:
-- title: Spatial extension
+- title: Setup and Connection
+  desc: Install spatial extension and manage database connections
   contents:
   - ddbs_install
   - ddbs_load
+  - ddbs_create_conn
+  - ddbs_stop_conn
 
-- title: Read/Write
+- title: Data Import/Export
+  desc: Read and write spatial data
   contents:
   - ddbs_read_vector
   - ddbs_write_vector
   - ddbs_register_vector
 
 - title: Spatial Predicates
+  desc: Test spatial relationships between geometries
   contents:
   - ddbs_predicate
   - ddbs_contains
@@ -47,43 +52,68 @@ reference:
   - ddbs_overlaps
   - ddbs_touches
   - ddbs_within
+  - ddbs_is_within_distance
   - ddbs_within_properly
 
-- title: Spatial operations (binary)
+- title: Spatial Joins and Filters
+  desc: Binary operations combining two geometries
   contents:
-  - ddbs_difference
-  - ddbs_filter
-  - ddbs_intersection
   - ddbs_join
+  - ddbs_filter
+  - ddbs_difference
+  - ddbs_intersection
   - ddbs_interpolate_aw
 
-- title: Spatial operations (unary)
+- title: Geometry Processing
+  desc: Modify and process individual geometries
+  contents:
+  - ddbs_buffer
+  - ddbs_centroid
+  - ddbs_simplify
+  - ddbs_convex_hull
+  - ddbs_concave_hull
+  - ddbs_make_valid
+  - ddbs_combine
+  - ddbs_union
+
+- title: Geometry Validation
+  desc: Check geometry validity
+  contents:
+  - ddbs_is_simple
+  - ddbs_is_valid
+
+- title: Spatial Extent and Boundaries
+  desc: Extract geometry bounds and envelopes
   contents:
   - ddbs_bbox
   - ddbs_boundary
-  - ddbs_buffer
-  - ddbs_centroid
-  - ddbs_concave_hull
-  - ddbs_convex_hull
-  - ddbs_is_simple
-  - ddbs_is_valid
-  - ddbs_make_valid
-  - ddbs_simplify
+  - ddbs_envelope
 
-- title: Spatial operations (measures)
+- title: Affine Transformations
+  desc: Geometric transformations (rotate, scale, flip, shift)
+  contents:
+  - ddbs_rotate
+  - ddbs_rotate_3d
+  - ddbs_scale
+  - ddbs_shift
+  - ddbs_flip
+  - ddbs_shear
+
+- title: Measurements
+  desc: Calculate geometric properties
   contents:
   - ddbs_area
+  - ddbs_distance
   - ddbs_length
 
-- title: SQL wrappers
+- title: Database Utilities
+  desc: Helper functions for database management
   contents:
-  - ddbs_create_conn
-  - ddbs_stop_conn
   - ddbs_create_schema
+  - ddbs_list_tables
+  - ddbs_glimpse
   - ddbs_crs
   - ddbs_drivers
-  - ddbs_glimpse
-  - ddbs_list_tables
 
 navbar:
   title: duckspatial

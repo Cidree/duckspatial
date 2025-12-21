@@ -18,5 +18,6 @@ Check tables and schemas inside a database
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## TODO
+2+2
 \dontshow{\}) # examplesIf}
 }

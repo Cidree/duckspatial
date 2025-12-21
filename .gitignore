@@ -4,7 +4,7 @@
 .Ruserdata
 
 internal/*
-docs
+/docs/
 private
 /doc/
 /Meta/

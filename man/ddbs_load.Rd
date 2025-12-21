@@ -21,17 +21,17 @@ Checks if a spatial extension is installed, and loads it in a DuckDB database
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
-library(duckdb)
 library(duckspatial)
+library(duckdb)
 
 ## connect to in memory database
-conn <- dbConnect(duckdb::duckdb())
+conn <- duckdb::dbConnect(duckdb::duckdb())
 
 ## install the spatial exntesion
 ddbs_install(conn)
 ddbs_load(conn)
 
 ## disconnect from db
-dbDisconnect(conn)
+duckdb::dbDisconnect(conn)
 \dontshow{\}) # examplesIf}
 }

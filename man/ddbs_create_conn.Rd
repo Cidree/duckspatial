@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_utils.R
 \name{ddbs_create_conn}
 \alias{ddbs_create_conn}
-\title{Create a duckdb connection}
+\title{Create a DuckDB connection with spatial extension}
 \usage{
 ddbs_create_conn(dbdir = "memory")
 }
@@ -13,7 +13,8 @@ ddbs_create_conn(dbdir = "memory")
 A \code{duckdb_connection}
 }
 \description{
-Create a duckdb connection
+It creates a DuckDB connection, and then it installs and loads the
+spatial extension
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

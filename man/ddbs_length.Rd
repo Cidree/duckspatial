@@ -55,7 +55,6 @@ or degrees for geographic CRS).
 }
 \examples{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

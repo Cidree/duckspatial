@@ -34,7 +34,6 @@ permanently materialized in the database.
 }
 \examples{
 \dontrun{
-library(duckdb)
 library(duckspatial)
 library(sf)
 

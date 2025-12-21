@@ -42,7 +42,6 @@ The table is created in the specified schema of the DuckDB database.
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

@@ -42,7 +42,7 @@ A list where each element contains indices (or IDs) of geometries in \code{y} th
 touch the corresponding geometry in \code{x}. See \code{\link[=ddbs_predicate]{ddbs_predicate()}} for details.
 }
 \description{
-Tests if geometries in \code{x} touch geometries in \code{y}. Returns TRUE if
+Tests if geometries in \code{x} touch geometries in \code{y}. Returns \code{TRUE} if
 geometries share a boundary but their interiors do not intersect.
 }
 \details{
