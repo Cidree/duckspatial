@@ -29,7 +29,6 @@
 #' \dontrun{
 #' # load packages
 #' library(duckspatial)
-#' library(dplyr)
 #' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
