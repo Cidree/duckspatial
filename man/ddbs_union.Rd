@@ -64,7 +64,6 @@ Returns the result as an \code{sf} object or creates a new table in the database
 \dontrun{
 # load packages
 library(duckspatial)
-library(dplyr)
 library(sf)
 
 # create a duckdb database in memory (with spatial extension)
