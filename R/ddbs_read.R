@@ -129,7 +129,7 @@ ddbs_read_vector <- function(
     } else {
         # For regular tables and views, use get_geom_name
         geom_name    <- get_geom_name(conn, name_list$query_name)
-        no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE) |> paste(collapse = ", ")
+        no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE, collapse = TRUE)
         if (length(geom_name) == 0) cli::cli_abort("Geometry column wasn't found in table <{name_list$query_name}>.")
 
         # For regular tables: already GEOMETRY type

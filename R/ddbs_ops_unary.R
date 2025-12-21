@@ -69,7 +69,7 @@ ddbs_buffer <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
@@ -88,7 +88,7 @@ ddbs_buffer <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Buffer({x_geom}, {distance}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_Buffer({x_geom}, {distance}) as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute intersection query
@@ -105,7 +105,7 @@ ddbs_buffer <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
@@ -191,7 +191,7 @@ ddbs_centroid <- function(x,
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
@@ -210,7 +210,7 @@ ddbs_centroid <- function(x,
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Centroid({x_geom}) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_Centroid({x_geom}) as {x_geom} FROM {x_list$query_name};
         ")
         }
         ## execute intersection query
@@ -227,7 +227,7 @@ ddbs_centroid <- function(x,
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_AsText(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsText(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
@@ -316,7 +316,7 @@ ddbs_is_valid <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. Handle new column = NULL
@@ -348,7 +348,7 @@ ddbs_is_valid <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_IsValid({x_geom}) as {new_column},
             {x_geom}
             FROM {x_list$query_name};
@@ -370,7 +370,7 @@ ddbs_is_valid <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_IsValid({x_geom}) as {new_column},
             ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name};
@@ -460,7 +460,7 @@ ddbs_make_valid <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
@@ -480,7 +480,7 @@ ddbs_make_valid <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_MakeValid({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
@@ -500,7 +500,7 @@ ddbs_make_valid <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_AsText(ST_MakeValid({x_geom})) as {x_geom}
             FROM {x_list$query_name};
         ")
@@ -591,7 +591,7 @@ ddbs_is_simple <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. Handle new column = NULL
@@ -623,7 +623,7 @@ ddbs_is_simple <- function(
         ")
       } else {
           tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_IsSimple({x_geom}) as {new_column},
             {x_geom}
             FROM {x_list$query_name};
@@ -646,7 +646,7 @@ ddbs_is_simple <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_IsSimple({x_geom}) as {new_column},
             ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name};
@@ -740,7 +740,7 @@ ddbs_simplify <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. if name is not NULL (i.e. no SF returned)
@@ -760,7 +760,7 @@ ddbs_simplify <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_Simplify({x_geom}, {tolerance}) as {x_geom}
             FROM {x_list$query_name};
         ")
@@ -780,7 +780,7 @@ ddbs_simplify <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')},
+            SELECT {x_rest},
             ST_AsText(ST_Simplify({x_geom}, {tolerance})) as {x_geom}
             FROM {x_list$query_name};
         ")

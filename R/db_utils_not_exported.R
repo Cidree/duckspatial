@@ -26,14 +26,27 @@ dbConnCheck <- function(conn) {
 #'
 #' @keywords internal
 #' @returns name of the geometry column of a table
-get_geom_name <- function(conn, x, rest = FALSE) {
+get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE) {
 
-  ## check if the table exists
-  if (isFALSE(DBI::dbExistsTable(conn, x))) cli::cli_abort("The table <{x}> does not exist.")
+    # check if the table exists
+    if (isFALSE(DBI::dbExistsTable(conn, x))) {
+        cli::cli_abort("The table <{x}> does not exist.")
+    }
 
-  ## get column names
-  info_tbl <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};"))
-  if (rest) info_tbl[!info_tbl$column_type == "GEOMETRY", "column_name"] else info_tbl[info_tbl$column_type == "GEOMETRY", "column_name"] 
+    # get column names
+    info_tbl <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};"))
+    other_cols <- if (rest) {
+        info_tbl[!info_tbl$column_type == "GEOMETRY", "column_name"]
+    } else {
+        info_tbl[info_tbl$column_type == "GEOMETRY", "column_name"]
+    }
+
+    # collapse columns with quoted names
+    if (isTRUE(collapse)) {
+        other_cols <- glue::glue_collapse(glue::glue('"{other_cols}"'), sep = ", ")
+    }
+
+    return(other_cols)
 }
 
 
@@ -75,28 +88,28 @@ get_query_name <- function(name) {
 get_query_list <- function(x, conn) {
 
   if (inherits(x, "sf")) {
-    
+
     ## generate a unique temporary view name
     temp_view_name <- paste0(
-      "temp_view_", 
+      "temp_view_",
       gsub("-", "_", uuid::UUIDgenerate())
     )
-    
+
     # Write table with the unique name
     duckspatial::ddbs_write_vector(
-      conn      = conn, 
-      data      = x, 
-      name      = temp_view_name, 
-      quiet     = TRUE, 
+      conn      = conn,
+      data      = x,
+      name      = temp_view_name,
+      quiet     = TRUE,
       temp_view = TRUE
     )
-    
+
     ## ensure cleanup on exit
     on.exit(
-      DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), 
+      DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
       add = TRUE
     )
-    
+
     x_list <- get_query_name(temp_view_name)
 
 } else {
@@ -166,7 +179,7 @@ get_st_predicate <- function(predicate) {
       "touches"               = "ST_Touches",
       "contains"              = "ST_Contains",
       "contains_properly"     = "ST_ContainsProperly",
-      "within"                = "ST_Within", 
+      "within"                = "ST_Within",
       "within_properly"       = "ST_WithinProperly",
       "disjoint"              = "ST_Disjoint",
       "equals"                = "ST_Equals",
@@ -176,8 +189,8 @@ get_st_predicate <- function(predicate) {
       "intersects_extent"     = "ST_Intersects_Extent",
       "dwithin"               = "ST_DWithin",
       cli::cli_abort(
-          "Predicate should be one of <intersects>, <intersects_extent>, <covers>, <touches>, 
-          <contains>, <contains_properly>, <within>, <within_properly>, <dwithin> <disjoint>, <equals>, 
+          "Predicate should be one of <intersects>, <intersects_extent>, <covers>, <touches>,
+          <contains>, <contains_properly>, <within>, <within_properly>, <dwithin> <disjoint>, <equals>,
           <overlaps>, <crosses>, <covered_by>, or <intersects_extent>."
         )
       )
@@ -200,7 +213,7 @@ get_st_predicate <- function(predicate) {
 #' @keywords internal
 #' @returns sf
 convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
-  
+
   # 1. Resolve CRS
   # If CRS is passed explicitly, use it.
   # Otherwise, try to find it in the dataframe column 'crs_column'
@@ -210,22 +223,22 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
       # Assume CRS is consistent across the table, take first non-NA
       val <- stats::na.omit(data[[crs_column]])[1]
       if (!is.na(val)) target_crs <- as.character(val)
-      
+
       # Remove the CRS column from output
       data[[crs_column]] <- NULL
     }
   }
-  
+
   # 2. Check Geometry Type and Convert
   geom_data <- data[[x_geom]]
-  
+
   if (inherits(geom_data, "blob") || is.list(geom_data)) {
     # --- FAST PATH: Binary/Arrow Data ---
     # This handles WKB blobs from DuckDB (Native GeoArrow or ST_AsWKB)
-    
+
     # Strip attributes (like 'arrow_binary' or 'blob') to ensure it's a clean list for wk
     attributes(geom_data) <- NULL
-    
+
     # Verify it's not empty and contains raw vectors (WKB)
     # If it's a list of raw vectors, use wk::new_wk_wkb -> geoarrow
     if (length(geom_data) > 0 && is.raw(geom_data[[1]])) {
@@ -246,26 +259,26 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
         data[[x_geom]] <- sf::st_as_sfc(structure(geom_data, class = "WKB"))
       })
     }
-    
+
   } else if (is.character(geom_data)) {
     # --- SLOW PATH: WKT Strings ---
     # Used if the query explicitly used ST_AsText() or older DuckDB versions
     data[[x_geom]] <- sf::st_as_sfc(geom_data)
   }
-  
+
   # 3. Construct SF Object
   # Use st_as_sf with the pre-converted geometry column
   # We explicitly set the geometry column name to handle cases where x_geom isn't "geometry"
   sf_obj <- sf::st_as_sf(data, sf_column_name = x_geom)
-  
+
   # 4. Assign CRS if found
   if (!is.null(target_crs)) {
     sf::st_crs(sf_obj) <- sf::st_crs(target_crs)
   }
-  
+
   return(sf_obj)
 }
-  
+
 
 
 
@@ -359,7 +372,7 @@ reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, spars
 #' @returns character string (e.g. "'EPSG:4326'") or "NULL"
 crs_to_sql <- function(x) {
   if (is.null(x) || (is.atomic(x) && all(is.na(x)))) return("NULL")
-  
+
   if (inherits(x, "crs")) {
     if (!is.na(x$epsg)) return(paste0("'EPSG:", x$epsg, "'"))
     if (!is.null(x$wkt)) {
@@ -368,16 +381,16 @@ crs_to_sql <- function(x) {
       return(paste0("'", val_clean, "'"))
     }
     return("NULL")
-  } 
-  
+  }
+
   if (is.numeric(x)) {
     return(paste0("'EPSG:", as.integer(x), "'"))
   }
-  
+
   if (is.character(x)) {
     val_clean <- gsub("'", "''", x)
     return(paste0("'", val_clean, "'"))
   }
-  
+
   return("NULL")
 }

@@ -82,7 +82,7 @@ ddbs_filter <- function(
     sel_pred <- get_st_predicate(predicate)
     ## 2.2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
     y_geom <- get_geom_name(conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)

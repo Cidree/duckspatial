@@ -74,7 +74,7 @@ ddbs_area <- function(
 
     # 2. Get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. Handle new column = NULL
@@ -105,7 +105,7 @@ ddbs_area <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Area({x_geom}) AS {new_column}, {x_geom}
+            SELECT {x_rest}, ST_Area({x_geom}) AS {new_column}, {x_geom}
             FROM {x_list$query_name}
         ")
         }
@@ -124,7 +124,7 @@ ddbs_area <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Area({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
+            SELECT {x_rest}, ST_Area({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name}
         ")
     }
@@ -220,7 +220,7 @@ ddbs_length <- function(
 
     # 2. Get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     assert_geometry_column(x_geom, x_list)
 
     ## 3. Handle new column = NULL
@@ -251,7 +251,7 @@ ddbs_length <- function(
         ")
         } else {
             tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Length({x_geom}) AS {new_column}, {x_geom}
+            SELECT {x_rest}, ST_Length({x_geom}) AS {new_column}, {x_geom}
             FROM {x_list$query_name}
         ")
         }
@@ -271,7 +271,7 @@ ddbs_length <- function(
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0(x_rest, collapse = ', ')}, ST_Length({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
+            SELECT {x_rest}, ST_Length({x_geom}) AS {new_column}, ST_AsText({x_geom}) as {x_geom}
             FROM {x_list$query_name}
         ")
     }
