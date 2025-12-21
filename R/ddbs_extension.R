@@ -13,15 +13,16 @@
 #' @examples
 #' ## load packages
 #' library(duckspatial)
+#' library(duckdb)
 #'
 #' # connect to in memory database
-#' conn <- dbConnect(duckdb::duckdb())
+#' conn <- duckdb::dbConnect(duckdb::duckdb())
 #'
 #' # install the spatial extension
 #' ddbs_install(conn)
 #'
 #' # disconnect from db
-#' dbDisconnect(conn)
+#' duckdb::dbDisconnect(conn)
 ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 
     # 1. Get extensions list
@@ -35,7 +36,7 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
         cli::cli_abort("spatial extension is not available")
     ## 2.3. Check if it's installed
     spatial_ext <- ext[ext$extension_name == "spatial", ]
-    if (spatial_ext$installed & !upgrade) {
+    if (spatial_ext$installed && !upgrade) {
 
         if (isFALSE(quiet)) {
             cli::cli_alert_info("spatial extension version <{spatial_ext$extension_version}> is already installed in this database")
@@ -70,16 +71,17 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 #' @examplesIf interactive()
 #' ## load packages
 #' library(duckspatial)
+#' library(duckdb)
 #'
 #' ## connect to in memory database
-#' conn <- dbConnect(duckdb::duckdb())
+#' conn <- duckdb::dbConnect(duckdb::duckdb())
 #'
 #' ## install the spatial exntesion
 #' ddbs_install(conn)
 #' ddbs_load(conn)
 #'
 #' ## disconnect from db
-#' dbDisconnect(conn)
+#' duckdb::dbDisconnect(conn)
 ddbs_load <- function(conn, quiet = FALSE) {
 
     # 1. Get extensions list
