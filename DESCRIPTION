@@ -9,9 +9,11 @@ Authors@R: c(
     person("Egor", "Kotov", , "kotov.egor@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0001-6690-5345"))
     )
-Description: Provides an interface between R and the 'DuckDB' (see <https://duckdb.org>) 
-             database with spatial extensions. It supports reading, writing, and 
-             performing some geometric operations.
+Description: Fast & memory-efficient functions to analyze and manipulate large 
+             spatial data data sets. It leverages the fast analytical 
+             capabilities of DuckDB and its spatial extension (see https://duckdb.org/docs/stable/core_extensions/spatial/overview) 
+             while maintaining compatibility with R’s spatial data ecosystem to 
+             work with spatial vector data.
 URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
 BugReports: https://github.com/Cidree/duckspatial/issues
 License: GPL (>= 3)
