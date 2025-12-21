@@ -47,7 +47,6 @@ TRUE (invisibly) on successful registration.
 
 ``` r
 if (FALSE) { # \dontrun{
-library(duckdb)
 library(duckspatial)
 library(sf)
 

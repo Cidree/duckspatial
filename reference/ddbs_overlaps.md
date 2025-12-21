@@ -1,6 +1,6 @@
 # Spatial overlaps predicate
 
-Tests if geometries in `x` overlap geometries in `y`. Returns TRUE if
+Tests if geometries in `x` overlap geometries in `y`. Returns `TRUE` if
 geometries share some but not all points, and the intersection has the
 same dimension as the geometries.
 
@@ -85,10 +85,11 @@ library(duckspatial)
 library(sf)
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
-  filter(CNTR_ID == c("PT", "ES", "FR", "FI"))
+
+spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+  filter(CNTR_ID %in% c("PT", "ES", "FR", "FI"))
 #> Reading layer `countries' from data source 
 #>   `/home/runner/work/_temp/Library/duckspatial/spatial/countries.geojson' 
 #>   using driver `GeoJSON'
@@ -97,12 +98,19 @@ spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspat
 #> Dimension:     XY
 #> Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187
 #> Geodetic CRS:  WGS 84
-#> Warning: There was 1 warning in `stopifnot()`.
-#> ℹ In argument: `CNTR_ID == c("PT", "ES", "FR", "FI")`.
-#> Caused by warning in `CNTR_ID == c("PT", "ES", "FR", "FI")`:
-#> ! longer object length is not a multiple of shorter object length
 
-ddbs_overlaps(countries_sf, countries_sf)
+ddbs_overlaps(countries_sf, spain_sf)
 #> ✔ Query successful
-#> NULL
+#> [[1]]
+#> integer(0)
+#> 
+#> [[2]]
+#> integer(0)
+#> 
+#> [[3]]
+#> integer(0)
+#> 
+#> [[4]]
+#> integer(0)
+#> 
 ```

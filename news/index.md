@@ -19,8 +19,20 @@
 
 ### NEW FEATURES
 
+- Affine functions:
+  [`ddbs_rotate()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate.md),
+  [`ddbs_rotate_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate_3d.md),
+  [`ddbs_shift()`](https://cidree.github.io/duckspatial/reference/ddbs_shift.md),
+  [`ddbs_flip()`](https://cidree.github.io/duckspatial/reference/ddbs_flip.md),
+  [`ddbs_scale()`](https://cidree.github.io/duckspatial/reference/ddbs_scale.md),
+  and
+  [`ddbs_shear()`](https://cidree.github.io/duckspatial/reference/ddbs_shear.md).
+
 - [`ddbs_boundary()`](https://cidree.github.io/duckspatial/reference/ddbs_boundary.md):
   returns the boundary of geometries.
+
+- [`ddbs_combine()`](https://cidree.github.io/duckspatial/reference/ddbs_combine.md):
+  combines geometries into a multi-geometry
 
 - [`ddbs_concave_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_concave_hull.md):
   new function to create the concave hull enclosing a geometry.
@@ -58,6 +70,9 @@
 
 - [`ddbs_bbox()`](https://cidree.github.io/duckspatial/reference/ddbs_bbox.md):
   calculates the bounding box
+
+- [`ddbs_union()`](https://cidree.github.io/duckspatial/reference/ddbs_union.md):
+  union of geometries
 
 - **Spatial predicates**: spatial predicates are all included in a
   function called

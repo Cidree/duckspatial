@@ -76,7 +76,6 @@ an `sf` object or `TRUE` (invisibly) for table creation
 
 ``` r
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

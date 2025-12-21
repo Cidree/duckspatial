@@ -31,8 +31,9 @@ TRUE (invisibly) for successful schema creation
 
 ``` r
 ## load packages
-library(duckdb)
 library(duckspatial)
+library(duckdb)
+#> Loading required package: DBI
 
 ## connect to in memory database
 conn <- ddbs_create_conn(dbdir = "memory")

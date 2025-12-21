@@ -1,8 +1,8 @@
 # Spatial equals predicate
 
 Tests if geometries in `x` are spatially equal to geometries in `y`.
-Returns TRUE if geometries are topologically equivalent (same shape and
-location).
+Returns `TRUE` if geometries are topologically equivalent (same shape
+and location).
 
 ## Usage
 
@@ -85,11 +85,21 @@ library(duckspatial)
 library(sf)
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 
 ddbs_equals(countries_sf, countries_sf, id_x = "NAME_ENGL")
 #> ✔ Query successful
-#>    Spain   France    Italy Portugal 
-#>        1        2        3        4 
+#> $Spain
+#> [1] 1
+#> 
+#> $France
+#> [1] 2
+#> 
+#> $Italy
+#> [1] 3
+#> 
+#> $Portugal
+#> [1] 4
+#> 
 ```

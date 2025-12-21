@@ -1,7 +1,7 @@
 # Spatial intersects extent predicate
 
 Tests if the bounding box of geometries in `x` intersect the bounding
-box of geometries in `y`. Returns TRUE if the extents (bounding boxes)
+box of geometries in `y`. Returns `TRUE` if the extents (bounding boxes)
 overlap. This is faster than full geometry intersection but less
 precise.
 
@@ -87,9 +87,9 @@ library(duckspatial)
 library(sf)
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
   st_transform(st_crs(countries_sf))
 #> Reading layer `rivers' from data source 
 #>   `/home/runner/work/_temp/Library/duckspatial/spatial/rivers.geojson' 

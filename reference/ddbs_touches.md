@@ -1,6 +1,6 @@
 # Spatial touches predicate
 
-Tests if geometries in `x` touch geometries in `y`. Returns TRUE if
+Tests if geometries in `x` touch geometries in `y`. Returns `TRUE` if
 geometries share a boundary but their interiors do not intersect.
 
 ## Usage

@@ -29,17 +29,17 @@ TRUE (invisibly) for successful installation
 ``` r
 if (FALSE) { # interactive()
 ## load packages
-library(duckdb)
 library(duckspatial)
+library(duckdb)
 
 ## connect to in memory database
-conn <- dbConnect(duckdb::duckdb())
+conn <- duckdb::dbConnect(duckdb::duckdb())
 
 ## install the spatial exntesion
 ddbs_install(conn)
 ddbs_load(conn)
 
 ## disconnect from db
-dbDisconnect(conn)
+duckdb::dbDisconnect(conn)
 }
 ```

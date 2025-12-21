@@ -23,5 +23,6 @@ ddbs_list_tables(conn)
 ``` r
 if (FALSE) { # interactive()
 ## TODO
+2+2
 }
 ```

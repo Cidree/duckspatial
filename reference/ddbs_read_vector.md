@@ -62,7 +62,6 @@ an sf object
 ``` r
 if (FALSE) { # interactive()
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

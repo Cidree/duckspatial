@@ -76,8 +76,6 @@ a vector, an `sf` object or `TRUE` (invisibly) for table creation
 
 ``` r
 ## load packages
-library(duckdb)
-#> Loading required package: DBI
 library(duckspatial)
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
@@ -86,7 +84,7 @@ library(sf)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |> 
+argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |>
     st_transform("EPSG:3857")
 #> Reading layer `argentina' from data source 
 #>   `/home/runner/work/_temp/Library/duckspatial/spatial/argentina.geojson' 

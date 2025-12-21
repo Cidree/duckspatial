@@ -1,6 +1,7 @@
-# Create a duckdb connection
+# Create a DuckDB connection with spatial extension
 
-Create a duckdb connection
+It creates a DuckDB connection, and then it installs and loads the
+spatial extension
 
 ## Usage
 

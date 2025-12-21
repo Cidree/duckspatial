@@ -52,5 +52,6 @@ ddbs_glimpse(
 ``` r
 if (FALSE) { # interactive()
 ## TODO
+2+2
 }
 ```

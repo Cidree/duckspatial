@@ -113,7 +113,6 @@ overview of the most commonly used ones, taking two geometries a and b:
 ``` r
 if (FALSE) { # \dontrun{
 # load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

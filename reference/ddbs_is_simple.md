@@ -76,7 +76,6 @@ a vector, an `sf` object with simplicity information or `TRUE`
 ``` r
 if (FALSE) { # \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

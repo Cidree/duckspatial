@@ -64,6 +64,7 @@ spatial predicate.</p>
 <span>  id_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  id_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sparse <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  distance <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -109,6 +110,11 @@ replace the integer indices returned in each element of the list.</p></dd>
 it returns a dense logical matrix.</p></dd>
 
 
+<dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
+<dd><p>a numeric value specifying the distance for ST_DWithin. Units correspond to
+the coordinate system of the geometry (e.g. degrees or meters)</p></dd>
+
+
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>A logical value. If <code>TRUE</code>, suppresses any informational messages.
 Defaults to <code>FALSE</code>.</p></dd>
@@ -137,6 +143,7 @@ geometries in <code>x</code> and <code>y</code> using the specified predicate.</
 <li><p><strong>touches</strong>: Geometries share a boundary but interiors do not intersect</p></li>
 <li><p><strong>disjoint</strong>: Geometries have no points in common</p></li>
 <li><p><strong>within</strong>: Geometry <code>x</code> is completely inside geometry <code>y</code></p></li>
+<li><p><strong>dwithin</strong>: Geometry <code>x</code> is completely within a distance of geometry <code>y</code></p></li>
 <li><p><strong>contains</strong>: Geometry <code>x</code> completely contains geometry <code>y</code></p></li>
 <li><p><strong>overlaps</strong>: Geometries share some but not all points</p></li>
 <li><p><strong>crosses</strong>: Geometries have some interior points in common</p></li>
@@ -157,7 +164,6 @@ values of an identifier column in <code>x</code> or <code>y</code>, respectively
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Load packages</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
@@ -166,9 +172,9 @@ values of an identifier column in <code>x</code> or <code>y</code>, respectively
 <span class="r-in"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span>dbdir <span class="op">=</span> <span class="st">"memory"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## read countries data, and rivers</span></span></span>
-<span class="r-in"><span><span class="va">countries_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">read_sf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
+<span class="r-in"><span><span class="va">countries_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">read_sf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">CNTR_ID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PT"</span>, <span class="st">"ES"</span>, <span class="st">"FR"</span>, <span class="st">"IT"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">rivers_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/rivers.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span></span>
+<span class="r-in"><span><span class="va">rivers_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/rivers.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">countries_sf</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Reading layer `rivers' from data source </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   `/home/runner/work/_temp/Library/duckspatial/spatial/rivers.geojson' </span>
@@ -207,7 +213,7 @@ values of an identifier column in <code>x</code> or <code>y</code>, respectively
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Example 2: Find neighboring countries</span></span></span>
-<span class="r-in"><span><span class="fu">ddbs_predicate</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">countries_sf</span>, predicate <span class="op">=</span> <span class="st">"touches"</span>, </span></span>
+<span class="r-in"><span><span class="fu">ddbs_predicate</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">countries_sf</span>, predicate <span class="op">=</span> <span class="st">"touches"</span>,</span></span>
 <span class="r-in"><span>               id_x <span class="op">=</span> <span class="st">"NAME_ENGL"</span>, id_y <span class="op">=</span> <span class="st">"NAME_ENGL"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $Spain</span>
@@ -340,7 +346,18 @@ values of an identifier column in <code>x</code> or <code>y</code>, respectively
 <span class="r-in"><span><span class="co">## Example 4: Use table names inside duckdb</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_predicate</span><span class="op">(</span><span class="st">"countries"</span>, <span class="st">"rivers"</span>, predicate <span class="op">=</span> <span class="st">"within"</span>, <span class="va">conn</span>, <span class="st">"NAME_ENGL"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $Spain</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $France</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $Italy</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $Portugal</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

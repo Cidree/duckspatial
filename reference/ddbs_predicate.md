@@ -16,6 +16,7 @@ ddbs_predicate(
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
+  distance = NULL,
   quiet = FALSE
 )
 ```
@@ -59,6 +60,12 @@ ddbs_predicate(
 
   A logical value. If `TRUE`, it returns a sparse index list. If
   `FALSE`, it returns a dense logical matrix.
+
+- distance:
+
+  a numeric value specifying the distance for ST_DWithin. Units
+  correspond to the coordinate system of the geometry (e.g. degrees or
+  meters)
 
 - quiet:
 
@@ -104,6 +111,9 @@ predicate.
 
 - **within**: Geometry `x` is completely inside geometry `y`
 
+- **dwithin**: Geometry `x` is completely within a distance of geometry
+  `y`
+
 - **contains**: Geometry `x` completely contains geometry `y`
 
 - **overlaps**: Geometries share some but not all points
@@ -134,7 +144,6 @@ the values of an identifier column in `x` or `y`, respectively.
 
 ``` r
 ## Load packages
-library(duckdb)
 library(duckspatial)
 library(dplyr)
 library(sf)
@@ -143,9 +152,9 @@ library(sf)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
   st_transform(st_crs(countries_sf))
 #> Reading layer `rivers' from data source 
 #>   `/home/runner/work/_temp/Library/duckspatial/spatial/rivers.geojson' 
@@ -184,7 +193,7 @@ ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
 #> 
 
 ## Example 2: Find neighboring countries
-ddbs_predicate(countries_sf, countries_sf, predicate = "touches", 
+ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
                id_x = "NAME_ENGL", id_y = "NAME_ENGL")
 #> ✔ Query successful
 #> $Spain
@@ -317,5 +326,16 @@ ddbs_predicate(countries_sf, rivers_sf, predicate = "disjoint",
 ## Example 4: Use table names inside duckdb
 ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
 #> ✔ Query successful
-#> NULL
+#> $Spain
+#> integer(0)
+#> 
+#> $France
+#> integer(0)
+#> 
+#> $Italy
+#> integer(0)
+#> 
+#> $Portugal
+#> integer(0)
+#> 
 ```

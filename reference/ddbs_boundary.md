@@ -1,8 +1,8 @@
 # Returns the boundary of geometries
 
-Returns the boundary of geometries from a DuckDB table using the spatial
-extension. Returns the result as an `sf` object or creates a new table
-in the database.
+Returns the boundary of geometries from a `sf` object or a DuckDB table.
+Returns the result as an `sf` object or creates a new table in the
+database.
 
 ## Usage
 
@@ -69,7 +69,6 @@ an `sf` object or `TRUE` (invisibly) for table creation
 ``` r
 if (FALSE) { # \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

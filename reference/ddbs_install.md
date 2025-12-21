@@ -32,16 +32,16 @@ TRUE (invisibly) for successful installation
 
 ``` r
 ## load packages
-library(duckdb)
 library(duckspatial)
+library(duckdb)
 
 # connect to in memory database
-conn <- dbConnect(duckdb::duckdb())
+conn <- duckdb::dbConnect(duckdb::duckdb())
 
 # install the spatial extension
 ddbs_install(conn)
 #> ℹ spatial extension version <2f2668d> is already installed in this database
 
 # disconnect from db
-dbDisconnect(conn)
+duckdb::dbDisconnect(conn)
 ```

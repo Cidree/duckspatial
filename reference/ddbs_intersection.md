@@ -73,7 +73,6 @@ an sf object or TRUE (invisibly) for table creation
 ``` r
 if (FALSE) { # \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 

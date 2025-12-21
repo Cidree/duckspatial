@@ -13,6 +13,7 @@ ddbs_filter(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  distance = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -58,6 +59,12 @@ ddbs_filter(
   (created automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
+
+- distance:
+
+  a numeric value specifying the distance for ST_DWithin. Units
+  correspond to the coordinate system of the geometry (e.g. degrees or
+  meters)
 
 - overwrite:
 
@@ -110,7 +117,6 @@ overview of the most commonly used ones, taking two geometries a and b:
 ``` r
 if (FALSE) { # \dontrun{
 ## load packages
-library(duckdb)
 library(duckspatial)
 library(sf)
 
