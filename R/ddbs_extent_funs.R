@@ -1,7 +1,8 @@
 #' Returns the boundary of geometries
 #'
-#' Returns the boundary of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Returns the boundary of geometries from a `sf` object or a DuckDB table.
+#' Returns the result as an \code{sf} object or creates a new table in the
+#' database.
 #'
 #' @template x
 #' @template conn_null
@@ -119,8 +120,8 @@ ddbs_boundary <- function(
 
 #' Returns the envelope (bounding box) of geometries
 #'
-#' Returns the minimum bounding rectangle (envelope) of geometries from a DuckDB table
-#' using the spatial extension. Returns the result as an \code{sf} object or creates
+#' Returns the minimum bounding rectangle (envelope) of geometries from a `sf`
+#' object or a DuckDB table. Returns the result as an \code{sf} object or creates
 #' a new table in the database.
 #'
 #' @template x
@@ -133,9 +134,10 @@ ddbs_boundary <- function(
 #' @template quiet
 #'
 #' @details
-#' ST_Envelope returns the minimum bounding rectangle (MBR) of a geometry as a polygon.
-#' For points and lines, this creates a rectangular polygon that encompasses the geometry.
-#' For polygons, it returns the smallest rectangle that contains the entire polygon.
+#' ST_Envelope returns the minimum bounding rectangle (MBR) of a geometry as a
+#' polygon. For points and lines, this creates a rectangular polygon that
+#' encompasses the geometry. For polygons, it returns the smallest rectangle
+#' that contains the entire polygon.
 #'
 #' When \code{by_feature = FALSE}, all geometries are combined and a single envelope
 #' is returned that encompasses the entire dataset.

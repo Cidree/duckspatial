@@ -48,14 +48,15 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Returns the minimum bounding rectangle (envelope) of geometries from a DuckDB table
-using the spatial extension. Returns the result as an \code{sf} object or creates
+Returns the minimum bounding rectangle (envelope) of geometries from a \code{sf}
+object or a DuckDB table. Returns the result as an \code{sf} object or creates
 a new table in the database.
 }
 \details{
-ST_Envelope returns the minimum bounding rectangle (MBR) of a geometry as a polygon.
-For points and lines, this creates a rectangular polygon that encompasses the geometry.
-For polygons, it returns the smallest rectangle that contains the entire polygon.
+ST_Envelope returns the minimum bounding rectangle (MBR) of a geometry as a
+polygon. For points and lines, this creates a rectangular polygon that
+encompasses the geometry. For polygons, it returns the smallest rectangle
+that contains the entire polygon.
 
 When \code{by_feature = FALSE}, all geometries are combined and a single envelope
 is returned that encompasses the entire dataset.
@@ -67,11 +68,14 @@ library(duckdb)
 library(duckspatial)
 library(sf)
 
-# create a duckdb database in memory (with spatial extension)
-conn <- ddbs_create_conn(dbdir = "memory")
-
 # read data
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+
+# input as sf, and output as sf
+env <- ddbs_envelope(x = argentina_sf, by_feature = TRUE)
+
+# create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
 
 # store in duckdb
 ddbs_write_vector(conn, argentina_sf, "argentina")

@@ -53,7 +53,7 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Computes the union of geometries from DuckDB tables using the spatial extension.
+Computes the union of geometries from a \code{sf} objects or a DuckDB tables using.
 This is equivalent to \code{sf::st_union()}. The function supports three modes:
 (1) union all geometries from a single object into one geometry,
 (2) union geometries from a single object grouped by one or more columns,

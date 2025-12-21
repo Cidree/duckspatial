@@ -1,9 +1,6 @@
-
-
-
 #' Union of geometries
 #'
-#' Computes the union of geometries from DuckDB tables using the spatial extension.
+#' Computes the union of geometries from a `sf` objects or a DuckDB tables using.
 #' This is equivalent to \code{sf::st_union()}. The function supports three modes:
 #' (1) union all geometries from a single object into one geometry,
 #' (2) union geometries from a single object grouped by one or more columns,
@@ -47,13 +44,13 @@
 #'
 #' ## union all geometries into one
 #' ddbs_union(conn = conn, "rivers")
-#' 
+#'
 #' ## union without using a connection
 #' ddbs_union(rivers_sf)
-#' 
+#'
 #' ## union geometries grouped by a column
 #' ddbs_union(conn = conn, "rivers", by = "RIVER_NAME")
-#' 
+#'
 #' ## store result in a new table
 #' ddbs_union(conn = conn, "rivers", name = "rivers_union")
 #' }
@@ -79,7 +76,7 @@ ddbs_union <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -95,85 +92,85 @@ ddbs_union <- function(
         ## Check y
         assert_xy(y, "y")
         assert_conn_character(conn, y)
-        
+
         ## Get y query list
         y_list <- get_query_list(y, conn)
-        
+
         ## Get y geometry column
         y_geom <- get_geom_name(conn, y_list$query_name)
         y_rest <- get_geom_name(conn, y_list$query_name, rest = TRUE)
         assert_geometry_column(y_geom, y_list)
-        
+
         ## 3. if name is not NULL (i.e. no SF returned)
         if (!is.null(name)) {
             ## convenient names of table and/or schema.table
             name_list <- get_query_name(name)
-            
+
             ## handle overwrite
             overwrite_table(name_list$query_name, conn, quiet, overwrite)
-            
+
             ## create query for pairwise union (no st_as_text)
             ## assuming row-wise union based on row number
             if (crs_column %in% x_rest) {
                 tmp.query <- glue::glue("
-                    SELECT 
+                    SELECT
                         ROW_NUMBER() OVER () as row_id,
                         x.{crs_column},
                         ST_Union(x.{x_geom}, y.{y_geom}) as {x_geom}
-                    FROM 
+                    FROM
                         (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) x
-                    JOIN 
+                    JOIN
                         (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_list$query_name}) y
                     ON x.rn = y.rn;
                 ")
             } else {
                 tmp.query <- glue::glue("
-                    SELECT 
+                    SELECT
                         ROW_NUMBER() OVER () as row_id,
                         ST_Union(x.{x_geom}, y.{y_geom}) as {x_geom}
-                    FROM 
+                    FROM
                         (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) x
-                    JOIN 
+                    JOIN
                         (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_list$query_name}) y
                     ON x.rn = y.rn;
                 ")
             }
-            
+
             ## execute union query
             DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
             feedback_query(quiet)
             return(invisible(TRUE))
         }
-        
+
         ## 4. create the base query with ST_AsText
         if (crs_column %in% x_rest) {
             tmp.query <- glue::glue("
-                SELECT 
+                SELECT
                     ROW_NUMBER() OVER () as row_id,
                     x.{crs_column},
                     ST_AsText(ST_Union(x.{x_geom}, y.{y_geom})) as {x_geom}
-                FROM 
+                FROM
                     (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) x
-                JOIN 
+                JOIN
                     (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_list$query_name}) y
                 ON x.rn = y.rn;
             ")
         } else {
             tmp.query <- glue::glue("
-                SELECT 
+                SELECT
                     ROW_NUMBER() OVER () as row_id,
                     ST_AsText(ST_Union(x.{x_geom}, y.{y_geom})) as {x_geom}
-                FROM 
+                FROM
                     (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) x
-                JOIN 
+                JOIN
                     (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_list$query_name}) y
                 ON x.rn = y.rn;
             ")
         }
-        
+
         ## send the query
         data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-        
+
         ## 5. convert to SF and return result
         data_sf <- convert_to_sf(
             data       = data_tbl,
@@ -181,7 +178,7 @@ ddbs_union <- function(
             crs_column = crs_column,
             x_geom     = x_geom
         )
-        
+
         feedback_query(quiet)
         return(data_sf)
     }
@@ -202,7 +199,7 @@ ddbs_union <- function(
             # Keep crs_column if it exists
             if (crs_column %in% x_rest) {
                 tmp.query <- glue::glue("
-                    SELECT FIRST({crs_column}) as {crs_column}, ST_Union_Agg({x_geom}) as {x_geom} 
+                    SELECT FIRST({crs_column}) as {crs_column}, ST_Union_Agg({x_geom}) as {x_geom}
                     FROM {x_list$query_name};
                 ")
             } else {
@@ -213,10 +210,10 @@ ddbs_union <- function(
         } else {
             # Union geometries grouped by specified columns
             by_cols <- paste0(by, collapse = ", ")
-            
+
             # Remove crs_column from other columns to handle it separately
             other_cols <- setdiff(x_rest, c(by, crs_column))
-            
+
             if (crs_column %in% x_rest) {
                 if (length(other_cols) == 0) {
                     tmp.query <- glue::glue("
@@ -249,7 +246,7 @@ ddbs_union <- function(
                 }
             }
         }
-        
+
         ## execute union query
         DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
         feedback_query(quiet)
@@ -261,7 +258,7 @@ ddbs_union <- function(
         # Union all geometries into a single geometry
         if (crs_column %in% x_rest) {
             tmp.query <- glue::glue("
-                SELECT FIRST({crs_column}) as {crs_column}, ST_AsText(ST_Union_Agg({x_geom})) as {x_geom} 
+                SELECT FIRST({crs_column}) as {crs_column}, ST_AsText(ST_Union_Agg({x_geom})) as {x_geom}
                 FROM {x_list$query_name};
             ")
         } else {
@@ -272,10 +269,10 @@ ddbs_union <- function(
     } else {
         # Union geometries grouped by specified columns
         by_cols <- paste0(by, collapse = ", ")
-        
+
         # Remove crs_column from other columns to handle it separately
         other_cols <- setdiff(x_rest, c(by, crs_column))
-        
+
         if (crs_column %in% x_rest) {
             if (length(other_cols) == 0) {
                 tmp.query <- glue::glue("
@@ -308,7 +305,7 @@ ddbs_union <- function(
             }
         }
     }
-    
+
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -330,9 +327,10 @@ ddbs_union <- function(
 
 #' Combine geometries into a single MULTI-geometry
 #'
-#' Combines all geometries from a DuckDB table into a single MULTI-geometry
-#' using the spatial extension. This is equivalent to \code{sf::st_combine()}.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Combines all geometries from a `sf` object or a DuckDB table into a single
+#' MULTI-geometry using the spatial extension. This is equivalent to
+#' \code{sf::st_combine()}. Returns the result as an \code{sf} object or creates
+#' a new table in the database.
 #'
 #' @template x
 #' @template conn_null
@@ -364,10 +362,10 @@ ddbs_union <- function(
 #'
 #' ## combine all geometries into one
 #' ddbs_combine(conn = conn, "countries")
-#' 
+#'
 #' ## combine without using a connection
 #' ddbs_combine(countries_sf)
-#' 
+#'
 #' ## store result in a new table
 #' ddbs_combine(conn = conn, "countries", name = "countries_combined")
 #' }
@@ -391,7 +389,7 @@ ddbs_combine <- function(
     ## 1.1. check if connection is provided, otherwise create a temporary connection
     is_duckdb_conn <- dbConnCheck(conn)
     if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()  
+      conn <- duckspatial::ddbs_create_conn()
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
     }
     ## 1.2. get query list of table names
@@ -401,7 +399,7 @@ ddbs_combine <- function(
     x_geom <- get_geom_name(conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    
+
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -414,10 +412,10 @@ ddbs_combine <- function(
 
         ## create the query
         tmp.query <- glue::glue("
-            SELECT 
+            SELECT
                 ST_Collect(LIST({x_geom})) as {x_geom},
                 FIRST({crs_column}) as {crs_column}
-            FROM 
+            FROM
                 {x_list$query_name};
         ")
 
@@ -431,10 +429,10 @@ ddbs_combine <- function(
 
     ## create the query
     tmp.query <- glue::glue("
-        SELECT 
+        SELECT
             ST_AsText(ST_Collect(LIST({x_geom}))) as {x_geom},
             FIRST({crs_column}) as {crs_column}
-        FROM 
+        FROM
             {x_list$query_name};
     ")
 

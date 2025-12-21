@@ -43,9 +43,10 @@ Defaults to \code{FALSE}.}
 an \code{sf} object or \code{TRUE} (invisibly) for table creation
 }
 \description{
-Combines all geometries from a DuckDB table into a single MULTI-geometry
-using the spatial extension. This is equivalent to \code{sf::st_combine()}.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Combines all geometries from a \code{sf} object or a DuckDB table into a single
+MULTI-geometry using the spatial extension. This is equivalent to
+\code{sf::st_combine()}. Returns the result as an \code{sf} object or creates
+a new table in the database.
 }
 \examples{
 \dontrun{
