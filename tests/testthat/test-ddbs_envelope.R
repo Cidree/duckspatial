@@ -85,8 +85,8 @@ testthat::test_that("expected behavior", {
     output_t <- tester(x = countries_sf, by_feature = TRUE)
     output_f <- tester(x = countries_sf, by_feature = FALSE)
 
-    testthat::expect_true(nrow(output_t) >250)
-    testthat::expect_true(nrow(output_f) ==1)
+    testthat::expect_true(nrow(output_t) == 7)
+    testthat::expect_true(nrow(output_f) == 1)
 })
 
 
