@@ -109,10 +109,25 @@ result_sf <- ddbs_join(
   y = countries_sf,
   join = "intersects"
 )
+
+head(result_sf)
 ```
 
 - **When to use:** quick analysis, prototyping, or when you don’t need to persist 
 intermediate tables.
+
+
+## Creating a DuckDB connection
+
+The next workflows use a DuckDB connection, which makes these workflows much more
+efficient for working with large spatial data sets in general. To create a DuckDB connection, we use the `ddbs_create_conn()` function, which automatically creates 
+the database connection and installs / loads DuckDB's spatial extension in a 
+single call.
+
+```{r, message=FALSE}
+# create duckdb con and install / load spatial extension
+conn <- duckspatial::ddbs_create_conn()
+```
 
 
 ## Workflow 2: `sf` input → DuckDB table
@@ -121,11 +136,14 @@ This workflow is ideal when you start in R, but want to persist results efficien
 in the database without load the results to memory. You pass `sf` objects as input, 
 and {duckspatial} writes the output directly to DuckDB. 
 
-The only difference is that here you also pass the `name` of the table that should 
-be written with the output to DuckDB.
+The only difference is that here you also pass the `name` of the table that 
+should be written with the output to DuckDB and the database `conn` where the 
+table should saved.
+
 
 ```{r, message=FALSE}
 ddbs_join(
+    conn = conn,
     x = points_sf,
     y = countries_sf,
     join = "intersects", 
@@ -133,23 +151,26 @@ ddbs_join(
 )
 
 ```
+
+And if you want to fetch the table to memory, the `ddbs_read_vector()` allows you
+to read a table and return it as a `sf` object.
+
+
+```{r, message=FALSE}
+tbl <- ddbs_read_vector(
+    conn = conn,
+    name = "points_in_countries_tbl"
+    )
+
+head(tbl)
+
+```
 ## Workflow 3: DuckDB tables → `sf` output
 
 In this workflow, your spatial data lives inside DuckDB as tables but you want 
-to return the output of `sf` objects to memory. So let's create a duckdb
-connection and write the tables to duckdb.
+to return the output of `sf` objects to memory.
 
-To do this, we use the `ddbs_create_conn()` function, which automatically creates 
-a duckdb connection and installs / loads DuckDB's spatial extension in a single 
-call.
-
-```{r, message=FALSE}
-# create duckdb con and install / load spatial extension
-conn <- duckspatial::ddbs_create_conn()
-```
-
-Now you can easily write `sf` objects as tables to duckdb with the `ddbs_write_vector()` function by passing the `sf` data and indicating the `name` of the table to be written
-in the database.
+You can easily write `sf` objects as tables to duckdb with the `ddbs_write_vector()` function by passing the `sf` data and indicating the `name` of the table to be written in the database.
 
 ```{r, message=FALSE}
 # write `sf` objects as tables to duckdb
@@ -164,11 +185,12 @@ duckspatial::ddbs_write_vector(
     data = points_sf, 
     name = "points"
     )
+
 ```
 
 
-In this approach, you perform a spatial operation passing table names and you get 
-an `sf` object back.
+To perform a spatial operation, you pass the table names and you get an `sf` 
+object back.
 
 ```{r, message=FALSE}
 result_sf <- ddbs_join(
@@ -196,6 +218,13 @@ ddbs_join(
   name = "points_in_countries_tbl", 
   overwrite = TRUE
   )
+
+
+# and read the table to memory as sf
+# tbl <- ddbs_read_vector(
+#     conn = conn,
+#     name = "points_in_countries_tbl"
+#     )
 
 ``` 
 - **When to use:** Very large datasets, Production pipelines with multiple steps
