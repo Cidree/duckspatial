@@ -22,10 +22,182 @@ knitr::opts_chunk$set(
 Sys.setenv(OMP_THREAD_LIMIT = 2)
 ```
 
-**{duckspatial}** is an R package to run fast & memory-efficient operations in 
-spatial data. It leverage the fast analytical capabilities of [DuckDB](https://duckdb.org/) 
-and its spatial extension while maintaining compatibility with R’s spatial data ecosystem.
+The **{duckspatial}** package provides fast and memory-efficient functions to 
+analyze and manipulate large spatial vector datasets in R. It allows R users to 
+benefit directly from the analytical power of [DuckDB and its spatial extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions), 
+while remaining fully compatible with R’s spatial ecosystem, especially **{sf}**.
+
+At its core, **{duckspatial}** bridges two worlds:
+
+- R spatial workflows based on {sf} objects
+- Database-backed spatial analytics powered by DuckDB SQL
+
+This design makes **{duckspatial}** especially well suited for:
+
+- Working with large spatial data sets
+- Speeding up spatial analysis at scale
+- Workflows with larger-than memory data
 
 
-...
+# Installation
+
+You can install **{duckspatial}** directly from CRAN with:
+
+``` r
+install.packages("duckspatial")
+```
+
+Or you can install the development version from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("pak")
+pak::pak("Cidree/duckspatial")
+```
+
+# Core idea: flexible spatial workflows
+
+A central design principle of **{duckspatial}** is that the same spatial operation 
+can be used in different ways, depending on how your data is stored and how you 
+want to manage memory and performance. Most functions in **{duckspatial}** support 
+four complementary workflows:
+
+1. Input`sf` → Output `sf`
+4. Input `sf` → Output DuckDB table
+2. Input DuckDB table → Output `sf`
+3. Input DuckDB table → Output DuckDB table
+
+Let's see a few examples to illustrate these workflows with a few sample data 
+sets.
+
+```{r, message=FALSE}
+library(duckspatial)
+library(sf)
+
+# polygons
+countries_sf  <- sf::st_read(
+    system.file("spatial/countries.geojson",  package = "duckspatial"),
+    quiet = TRUE
+    )
+
+# create random points
+set.seed(42)
+n <- 10000
+points_sf <- data.frame(
+  id = 1:n,
+  x  = runif(n, min = -180, max = 180),
+  y  = runif(n, min =  -90, max =  90)
+) |>
+  sf::st_as_sf(coords = c("x","y"), crs = 4326)
+
+```
+
+## Workflow 1: `sf` input → `sf` output
+
+The simplest way to perform fast spatial operations. Here you pass `sf` objects as 
+inputs, and under the hood {duckspatial}:
+
+- Registers them temporarily in DuckDB
+- Executes the spatial operation using SQL
+- Returns the result as an {sf} object
+
+In this example, we use `ddbs_join()` (which is equivalent to `sf::st_join`) to 
+determine which country is intersected by each point.
+
+```{r, message=FALSE}
+result_sf <- ddbs_join(
+  x = points_sf,
+  y = countries_sf,
+  join = "intersects"
+)
+```
+
+- **When to use:** quick analysis, prototyping, or when you don’t need to persist 
+intermediate tables.
+
+
+## Workflow 2: `sf` input → DuckDB table
+
+This workflow is ideal when you start in R, but want to persist results efficiently 
+in the database without load the results to memory. You pass `sf` objects as input, 
+and {duckspatial} writes the output directly to DuckDB. 
+
+The only difference is that here you also pass the `name` of the table that should 
+be written with the output to DuckDB.
+
+```{r, message=FALSE}
+ddbs_join(
+    x = points_sf,
+    y = countries_sf,
+    join = "intersects", 
+    name = "points_in_countries_tbl"
+)
+
+```
+## Workflow 3: DuckDB tables → `sf` output
+
+In this workflow, your spatial data lives inside DuckDB as tables but you want 
+to return the output of `sf` objects to memory. So let's create a duckdb
+connection and write the tables to duckdb.
+
+To do this, we use the `ddbs_create_conn()` function, which automatically creates 
+a duckdb connection and installs / loads DuckDB's spatial extension in a single 
+call.
+
+```{r, message=FALSE}
+# create duckdb con and install / load spatial extension
+conn <- duckspatial::ddbs_create_conn()
+```
+
+Now you can easily write `sf` objects as tables to duckdb with the `ddbs_write_vector()` function by passing the `sf` data and indicating the `name` of the table to be written
+in the database.
+
+```{r, message=FALSE}
+# write `sf` objects as tables to duckdb
+duckspatial::ddbs_write_vector(
+    conn = conn, 
+    data = countries_sf, 
+    name = "countries"
+    )
+
+duckspatial::ddbs_write_vector(
+    conn = conn, 
+    data = points_sf, 
+    name = "points"
+    )
+```
+
+
+In this approach, you perform a spatial operation passing table names and you get 
+an `sf` object back.
+
+```{r, message=FALSE}
+result_sf <- ddbs_join(
+  conn = conn,
+  x = "points",
+  y = "countries",
+  join = "intersects"
+  )
+
+``` 
+- **When to use:** iterative workflows, larger-than-memory data, or when you’ll run multiple queries on the same tables.
+
+
+## Workflow 4: DuckDB tables → DuckDB table
+
+This is the fastest and most scalable workflow. The entire computation happens 
+inside DuckDB, and the result is written to a new database table.
+
+```{r, message=FALSE}
+ddbs_join(
+  conn = conn,
+  x = "points",
+  y = "countries",
+  join = "intersects", 
+  name = "points_in_countries_tbl", 
+  overwrite = TRUE
+  )
+
+``` 
+- **When to use:** Very large datasets, Production pipelines with multiple steps
+and when results will be reused downstream in DuckDB
 
