@@ -70,7 +70,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Intro to duckspatial</h1>
             
-            <h4 data-toc-skip class="date">2025-12-21</h4>
+            <h4 data-toc-skip class="date">2025-12-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/duckspatial.Rmd" class="external-link"><code>vignettes/duckspatial.Rmd</code></a></small>
       <div class="d-none name"><code>duckspatial.Rmd</code></div>
@@ -78,13 +78,250 @@
 
     
     
-<p><strong>{duckspatial}</strong> is an R package to run fast &amp;
-memory-efficient operations in spatial data. It leverage the fast
-analytical capabilities of <a href="https://duckdb.org/" class="external-link">DuckDB</a> and
-its spatial extension while maintaining compatibility with R’s spatial
-data ecosystem.</p>
-<p>…</p>
-  </main>
+<p>The <strong>{duckspatial}</strong> package provides fast and
+memory-efficient functions to analyze and manipulate large spatial
+vector datasets in R. It allows R users to benefit directly from the
+analytical power of <a href="https://duckdb.org/docs/stable/core_extensions/spatial/functions" class="external-link">DuckDB
+and its spatial extension</a>, while remaining fully compatible with R’s
+spatial ecosystem, especially <strong>{sf}</strong>.</p>
+<p>At its core, <strong>{duckspatial}</strong> bridges two worlds:</p>
+<ul>
+<li>R spatial workflows based on {sf} objects</li>
+<li>Database-backed spatial analytics powered by DuckDB SQL</li>
+</ul>
+<p>This design makes <strong>{duckspatial}</strong> especially well
+suited for:</p>
+<ul>
+<li>Working with large spatial data sets</li>
+<li>Speeding up spatial analysis at scale</li>
+<li>Workflows with larger-than memory data</li>
+</ul>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>You can install <strong>{duckspatial}</strong> directly from CRAN
+with:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"duckspatial"</span><span class="op">)</span></span></code></pre></div>
+<p>Or you can install the development version from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Cidree/duckspatial"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="core-idea-flexible-spatial-workflows">Core idea: flexible spatial workflows<a class="anchor" aria-label="anchor" href="#core-idea-flexible-spatial-workflows"></a>
+</h2>
+<p>A central design principle of <strong>{duckspatial}</strong> is that
+the same spatial operation can be used in different ways, depending on
+how your data is stored and how you want to manage memory and
+performance. Most functions in <strong>{duckspatial}</strong> support
+four complementary workflows:</p>
+<ol style="list-style-type: decimal">
+<li>Input<code>sf</code> → Output <code>sf</code>
+</li>
+<li>Input <code>sf</code> → Output DuckDB table</li>
+<li>Input DuckDB table → Output <code>sf</code>
+</li>
+<li>Input DuckDB table → Output DuckDB table</li>
+</ol>
+<p>Let’s see a few examples to illustrate these workflows with a few
+sample data sets.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># polygons</span></span>
+<span><span class="va">countries_sf</span>  <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>,  package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span>,</span>
+<span>    quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># create random points</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">10000</span></span>
+<span><span class="va">points_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n</span>,</span>
+<span>  x  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">180</span>, max <span class="op">=</span> <span class="fl">180</span><span class="op">)</span>,</span>
+<span>  y  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span>  <span class="op">-</span><span class="fl">90</span>, max <span class="op">=</span>  <span class="fl">90</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>,<span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="workflow-1-sf-input-sf-output">Workflow 1: <code>sf</code> input → <code>sf</code> output<a class="anchor" aria-label="anchor" href="#workflow-1-sf-input-sf-output"></a>
+</h3>
+<p>The simplest way to perform fast spatial operations. Here you pass
+<code>sf</code> objects as inputs, and under the hood {duckspatial}:</p>
+<ul>
+<li>Registers them temporarily in DuckDB</li>
+<li>Executes the spatial operation using SQL</li>
+<li>Returns the result as an {sf} object</li>
+</ul>
+<p>In this example, we use <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> (which is equivalent
+to <code><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">sf::st_join</a></code>) to determine which country is intersected
+by each point.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
+<span>  x <span class="op">=</span> <span class="va">points_sf</span>,</span>
+<span>  y <span class="op">=</span> <span class="va">countries_sf</span>,</span>
+<span>  join <span class="op">=</span> <span class="st">"intersects"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result_sf</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Simple feature collection with 6 features and 8 fields</span></span>
+<span><span class="co">#&gt; Geometry type: POINT</span></span>
+<span><span class="co">#&gt; Dimension:     XY</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591</span></span>
+<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
+<span><span class="co">#&gt;     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date crs_duckspatial.1</span></span>
+<span><span class="co">#&gt; 1  708      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt;                      geometry</span></span>
+<span><span class="co">#&gt; 1 POINT (-72.75607 -50.15994)</span></span>
+<span><span class="co">#&gt; 2 POINT (-68.77194 -48.12303)</span></span>
+<span><span class="co">#&gt; 3 POINT (-70.82253 -46.23146)</span></span>
+<span><span class="co">#&gt; 4  POINT (-71.6444 -44.25323)</span></span>
+<span><span class="co">#&gt; 5 POINT (-71.18679 -44.60882)</span></span>
+<span><span class="co">#&gt; 6 POINT (-67.79479 -43.01591)</span></span></code></pre></div>
+<ul>
+<li>
+<strong>When to use:</strong> quick analysis, prototyping, or when
+you don’t need to persist intermediate tables.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="creating-a-duckdb-connection">Creating a DuckDB connection<a class="anchor" aria-label="anchor" href="#creating-a-duckdb-connection"></a>
+</h3>
+<p>The next workflows use a DuckDB connection, which makes these
+workflows much more efficient for working with large spatial data sets
+in general. To create a DuckDB connection, we use the
+<code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> function, which automatically creates
+the database connection and installs / loads DuckDB’s spatial extension
+in a single call.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># create duckdb con and install / load spatial extension</span></span>
+<span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="workflow-2-sf-input-duckdb-table">Workflow 2: <code>sf</code> input → DuckDB table<a class="anchor" aria-label="anchor" href="#workflow-2-sf-input-duckdb-table"></a>
+</h3>
+<p>This workflow is ideal when you start in R, but want to persist
+results efficiently in the database without load the results to memory.
+You pass <code>sf</code> objects as input, and {duckspatial} writes the
+output directly to DuckDB.</p>
+<p>The only difference is that here you also pass the <code>name</code>
+of the table that should be written with the output to DuckDB and the
+database <code>conn</code> where the table should saved.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
+<span>    conn <span class="op">=</span> <span class="va">conn</span>,</span>
+<span>    x <span class="op">=</span> <span class="va">points_sf</span>,</span>
+<span>    y <span class="op">=</span> <span class="va">countries_sf</span>,</span>
+<span>    join <span class="op">=</span> <span class="st">"intersects"</span>, </span>
+<span>    name <span class="op">=</span> <span class="st">"points_in_countries_tbl"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>And if you want to fetch the table to memory, the
+<code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code> allows you to read a table and return it
+as a <code>sf</code> object.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tbl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_read_vector.html">ddbs_read_vector</a></span><span class="op">(</span></span>
+<span>    conn <span class="op">=</span> <span class="va">conn</span>,</span>
+<span>    name <span class="op">=</span> <span class="st">"points_in_countries_tbl"</span></span>
+<span>    <span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">tbl</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Simple feature collection with 6 features and 8 fields</span></span>
+<span><span class="co">#&gt; Geometry type: POINT</span></span>
+<span><span class="co">#&gt; Dimension:     XY</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591</span></span>
+<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
+<span><span class="co">#&gt;     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date crs_duckspatial_1</span></span>
+<span><span class="co">#&gt; 1  708      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt; 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326</span></span>
+<span><span class="co">#&gt;                      geometry</span></span>
+<span><span class="co">#&gt; 1 POINT (-72.75607 -50.15994)</span></span>
+<span><span class="co">#&gt; 2 POINT (-68.77194 -48.12303)</span></span>
+<span><span class="co">#&gt; 3 POINT (-70.82253 -46.23146)</span></span>
+<span><span class="co">#&gt; 4  POINT (-71.6444 -44.25323)</span></span>
+<span><span class="co">#&gt; 5 POINT (-71.18679 -44.60882)</span></span>
+<span><span class="co">#&gt; 6 POINT (-67.79479 -43.01591)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="workflow-3-duckdb-tables-sf-output">Workflow 3: DuckDB tables → <code>sf</code> output<a class="anchor" aria-label="anchor" href="#workflow-3-duckdb-tables-sf-output"></a>
+</h3>
+<p>In this workflow, your spatial data lives inside DuckDB as tables but
+you want to return the output of <code>sf</code> objects to memory.</p>
+<p>You can easily write <code>sf</code> objects as tables to duckdb with
+the <code><a href="../reference/ddbs_write_vector.html">ddbs_write_vector()</a></code> function by passing the
+<code>sf</code> data and indicating the <code>name</code> of the table
+to be written in the database.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># write `sf` objects as tables to duckdb</span></span>
+<span><span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span></span>
+<span>    conn <span class="op">=</span> <span class="va">conn</span>, </span>
+<span>    data <span class="op">=</span> <span class="va">countries_sf</span>, </span>
+<span>    name <span class="op">=</span> <span class="st">"countries"</span></span>
+<span>    <span class="op">)</span></span>
+<span></span>
+<span><span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span></span>
+<span>    conn <span class="op">=</span> <span class="va">conn</span>, </span>
+<span>    data <span class="op">=</span> <span class="va">points_sf</span>, </span>
+<span>    name <span class="op">=</span> <span class="st">"points"</span></span>
+<span>    <span class="op">)</span></span></code></pre></div>
+<p>To perform a spatial operation, you pass the table names and you get
+an <code>sf</code> object back.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
+<span>  conn <span class="op">=</span> <span class="va">conn</span>,</span>
+<span>  x <span class="op">=</span> <span class="st">"points"</span>,</span>
+<span>  y <span class="op">=</span> <span class="st">"countries"</span>,</span>
+<span>  join <span class="op">=</span> <span class="st">"intersects"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<ul>
+<li>
+<strong>When to use:</strong> iterative workflows,
+larger-than-memory data, or when you’ll run multiple queries on the same
+tables.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="workflow-4-duckdb-tables-duckdb-table">Workflow 4: DuckDB tables → DuckDB table<a class="anchor" aria-label="anchor" href="#workflow-4-duckdb-tables-duckdb-table"></a>
+</h3>
+<p>This is the fastest and most scalable workflow. The entire
+computation happens inside DuckDB, and the result is written to a new
+database table.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
+<span>  conn <span class="op">=</span> <span class="va">conn</span>,</span>
+<span>  x <span class="op">=</span> <span class="st">"points"</span>,</span>
+<span>  y <span class="op">=</span> <span class="st">"countries"</span>,</span>
+<span>  join <span class="op">=</span> <span class="st">"intersects"</span>, </span>
+<span>  name <span class="op">=</span> <span class="st">"points_in_countries_tbl"</span>, </span>
+<span>  overwrite <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="co"># and read the table to memory as sf</span></span>
+<span><span class="co"># tbl &lt;- ddbs_read_vector(</span></span>
+<span><span class="co">#     conn = conn,</span></span>
+<span><span class="co">#     name = "points_in_countries_tbl"</span></span>
+<span><span class="co">#     )</span></span></code></pre></div>
+<ul>
+<li>
+<strong>When to use:</strong> Very large datasets, Production
+pipelines with multiple steps and when results will be reused downstream
+in DuckDB</li>
+</ul>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

@@ -1,13 +1,28 @@
 # duckspatial
 
-**duckspatial** is an R package that simplifies the process of reading
-and writing vector spatial data (e.g., `sf` objects) in a
-[DuckDB](https://duckdb.org/) database. This package is designed for
-users working with geospatial data who want to leverage DuckDB’s fast
-analytical capabilities while maintaining compatibility with R’s spatial
-data ecosystem.
+The **{duckspatial}** package provides fast and memory-efficient
+functions to analyze and manipulate large spatial vector datasets in R.
+It allows R users to benefit directly from the analytical power of
+[DuckDB and its spatial
+extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions),
+while remaining fully compatible with R’s spatial ecosystem, especially
+**{sf}**.
 
-## Installation
+At its core, **{duckspatial}** bridges two worlds:
+
+- R spatial workflows based on {sf} objects
+- Database-backed spatial analytics powered by DuckDB SQL
+
+This design makes **{duckspatial}** especially well suited for:
+
+- Working with large spatial data sets
+- Speeding up spatial analysis at scale
+- Workflows where data does not fit comfortably in memory
+
+Importantly, **{duckspatial}** brings the power of DuckDB spatial to R
+users while keeping workflows similar to {sf} .
+
+# Installation
 
 You can install duckspatial directly from CRAN with:
 
@@ -23,163 +38,18 @@ Or you can install the development version from
 pak::pak("Cidree/duckspatial")
 ```
 
-## Example
+# Core idea: flexible spatial workflows
 
-This is a basic example which shows how to set up DuckDB for spatial
-data manipulation, and how to write/read vector data.
+A central design principle of {duckspatial} is that the same spatial
+operation can be used in different ways, depending on how your data is
+stored and how you want to manage memory and performance.
 
-``` r
-library(duckdb)
-#> Loading required package: DBI
-library(duckspatial)
-library(sf)
-#> Linking to GEOS 3.13.1, GDAL 3.11.0, PROJ 9.6.0; sf_use_s2() is TRUE
-```
+Most functions in {duckspatial} support four complementary workflows:
 
-First, we create a connection with a DuckDB database (in this case in
-memory database), and we make sure that the spatial extension is
-installed, and we load it:
+1.  Input`sf` → Output `sf`
+2.  Input `sf` → Output DuckDB table
+3.  Input DuckDB table → Output `sf`
+4.  Input DuckDB table → Output DuckDB table
 
-``` r
-## create connection
-conn <- dbConnect(duckdb())
-
-## install and load spatial extension
-ddbs_install(conn)
-#> ℹ spatial extension version <d83faf8> is already installed in this database
-ddbs_load(conn)
-#> ✔ Spatial extension loaded
-```
-
-Now we can get some data to insert into the database. We are creating
-10,000,000 random points.
-
-``` r
-## random word generator
-random_word <- function(length = 5) {
-    paste0(sample(letters, length, replace = TRUE), collapse = "")
-}
-
-## create n points
-n <- 10000000
-random_points <- data.frame(
-  id = 1:n,
-  x = runif(n, min = -180, max = 180),  
-  y = runif(n, min = -90, max = 90),
-  a = sample(1:1000000, size = n, replace = TRUE),
-  b = sample(replicate(10, random_word(7)), size = n, replace = TRUE),
-  c = sample(replicate(10, random_word(9)), size = n, replace = TRUE)
-)
-
-## convert to sf
-sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
-
-## view first rows
-head(sf_points)
-#> Simple feature collection with 6 features and 4 fields
-#> Geometry type: POINT
-#> Dimension:     XY
-#> Bounding box:  xmin: -124.2864 ymin: -72.15126 xmax: 163.8672 ymax: 75.7669
-#> Geodetic CRS:  WGS 84
-#>   id      a       b         c                    geometry
-#> 1  1 859568 coymaff jetjsaflm POINT (-124.2864 -37.90519)
-#> 2  2 598415 ppqzgog ilctisjkg   POINT (163.8672 53.59711)
-#> 3  3  50455 rzsltum kkcannydo POINT (-59.45239 -64.17698)
-#> 4  4 901453 nwmhqfb yhpawnmnl  POINT (57.81578 -72.15126)
-#> 5  5 424225 tspgmop yhpawnmnl   POINT (86.6534 -38.47388)
-#> 6  6 954935 coymaff yhpawnmnl   POINT (-116.6155 75.7669)
-```
-
-Now we can insert the data into the database using the
-[`ddbs_write_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)
-function. We use the
-[`proc.time()`](https://rdrr.io/r/base/proc.time.html) function to
-calculate how long does it take, and we can compare it with writing a
-shapefile with the
-[`write_sf()`](https://r-spatial.github.io/sf/reference/st_write.html)
-function:
-
-``` r
-## write data monitoring processing time
-start_time <- proc.time()
-ddbs_write_vector(conn, sf_points, "test_points")
-#> ✔ Table test_points successfully imported
-end_time <- proc.time()
-
-## print elapsed time
-elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_duckdb)
-#> elapsed 
-#>    7.73
-```
-
-``` r
-## write data monitoring processing time
-start_time <- proc.time()
-gpkg_file <- tempfile(fileext = ".gpkg")
-write_sf(sf_points, gpkg_file)
-end_time <- proc.time()
-
-## print elapsed time
-elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_gpkg)
-#> elapsed 
-#>   98.67
-```
-
-In this case, we can see that DuckDB was 12.8 times faster. We can also
-take advantage of the Arrow-backend database view by using the argument
-`temp_view = TRUE`:
-
-``` r
-## write data monitoring processing time
-start_time <- proc.time()
-ddbs_write_vector(conn, sf_points, "test_points_view", temp_view = TRUE)
-#> ✔ Temporary view test_points_view registered
-end_time <- proc.time()
-
-## print elapsed time
-elapsed_duckdb_view <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_duckdb_view)
-#> elapsed 
-#>    3.89
-```
-
-This was 25.4 times faster than `sf`, and 2 times faster than create a
-table in DuckDB.
-
-Now we will do the same exercise but reading the data back into R:
-
-``` r
-## write data monitoring processing time
-start_time <- proc.time()
-sf_points_ddbs <- ddbs_read_vector(conn, "test_points")
-#> ✔ table test_points successfully imported.
-end_time <- proc.time()
-
-## print elapsed time
-elapsed_duckdb <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_duckdb)
-#> elapsed 
-#>   37.67
-```
-
-``` r
-## write data monitoring processing time
-start_time     <- proc.time()
-sf_points_ddbs <- read_sf(gpkg_file)
-end_time       <- proc.time()
-
-## print elapsed time
-elapsed_gpkg <- end_time["elapsed"] - start_time["elapsed"]
-print(elapsed_gpkg)
-#> elapsed 
-#>   31.26
-```
-
-For reading, we got similar results. Finally, don’t forget to disconnect
-from the database:
-
-``` r
-dbDisconnect(conn)
-```
+See the [“Get Started” vignette for
+examples](https://Cidree.github.io/duckspatial/articles/duckspatial.html).
