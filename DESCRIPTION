@@ -26,13 +26,15 @@ Imports:
     glue,
     sf,
     wk,
-    uuid
+    uuid,
+    rlang
 Suggests:
     areal,
     bench,
     dplyr,
     ggplot2 (>= 3.3.1),
     knitr,
+    quadkeyr,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: 
