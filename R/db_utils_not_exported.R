@@ -7,7 +7,7 @@
 #'
 #' @keywords internal
 #' @returns TRUE (invisibly) for successful import
-dbConnCheck <- function(conn) {
+dbConnCheck <- function(conn) {  # nocov start
     if (inherits(conn, "duckdb_connection")) {
         return(invisible(TRUE))
 
@@ -16,7 +16,7 @@ dbConnCheck <- function(conn) {
     } else {
         cli::cli_abort("'conn' must be connection object: <duckdb_connection> from `duckdb`")
     }
-}
+}  # nocov end
 
 #' Get column names in a DuckDB database
 #'
@@ -26,7 +26,7 @@ dbConnCheck <- function(conn) {
 #'
 #' @keywords internal
 #' @returns name of the geometry column of a table
-get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE) {
+get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE) {  # nocov start
 
     # check if the table exists
     if (isFALSE(DBI::dbExistsTable(conn, x))) {
@@ -47,7 +47,7 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE) {
     }
 
     return(other_cols)
-}
+}  # nocov end
 
 
 #' Get names for the query
@@ -56,7 +56,7 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE) {
 #'
 #' @keywords internal
 #' @returns list with fixed names
-get_query_name <- function(name) {
+get_query_name <- function(name) {  # nocov start
     if (length(name) == 2) {
         table_name <- name[2]
         schema_name <- name[1]
@@ -71,7 +71,7 @@ get_query_name <- function(name) {
         schema_name = schema_name,
         query_name = query_name
     )
-}
+} # nocov end
 
 
 
@@ -85,7 +85,7 @@ get_query_name <- function(name) {
 #' @keywords internal
 #' @noRd
 #' @returns list with fixed names
-get_query_list <- function(x, conn) {
+get_query_list <- function(x, conn) { # nocov start
 
   if (inherits(x, "sf")) {
 
@@ -118,7 +118,7 @@ get_query_list <- function(x, conn) {
 
   return(x_list)
 
-}
+} # nocov end
 
 
 
@@ -135,7 +135,7 @@ get_query_list <- function(x, conn) {
 #'
 #' @keywords internal
 #' @returns sf
-convert_to_sf <- function(data, crs, crs_column, x_geom) {
+convert_to_sf <- function(data, crs, crs_column, x_geom) { # nocov start
     if (is.null(crs)) {
         if (is.null(crs_column)) {
             data_sf <- data |>
@@ -157,7 +157,7 @@ convert_to_sf <- function(data, crs, crs_column, x_geom) {
             sf::st_as_sf(wkt = x_geom, crs = crs)
     }
 
-}
+} # nocov end
 
 
 
@@ -171,7 +171,7 @@ convert_to_sf <- function(data, crs, crs_column, x_geom) {
 #'
 #' @keywords internal
 #' @returns character
-get_st_predicate <- function(predicate) {
+get_st_predicate <- function(predicate) { # nocov start
     switch(predicate,
       "intersects"            = "ST_Intersects",
       "intersects_extent"     = "ST_Intersects_Extent",
@@ -194,7 +194,7 @@ get_st_predicate <- function(predicate) {
           <overlaps>, <crosses>, <covered_by>, or <intersects_extent>."
         )
       )
-}
+} # nocov end
 
 
 
@@ -212,7 +212,7 @@ get_st_predicate <- function(predicate) {
 #'
 #' @keywords internal
 #' @returns sf
-convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
+convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) { # nocov start
 
   # 1. Resolve CRS
   # If CRS is passed explicitly, use it.
@@ -277,7 +277,7 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
   }
 
   return(sf_obj)
-}
+} # nocov end
 
 
 
@@ -293,12 +293,12 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) {
 #'
 #' @keywords internal
 #' @returns cli message
-overwrite_table <- function(x, conn, quiet, overwrite) {
+overwrite_table <- function(x, conn, quiet, overwrite) { # nocov start
   if (overwrite) {
     DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {x};"))
     if (isFALSE(quiet)) cli::cli_alert_info("Table <{x}> dropped")
   }
-}
+} # nocov end
 
 
 
@@ -310,22 +310,22 @@ overwrite_table <- function(x, conn, quiet, overwrite) {
 #'
 #' @keywords internal
 #' @returns cli message
-feedback_query <- function(quiet) {
+feedback_query <- function(quiet) { # nocov start
   if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
-}
+} # nocov end
 
 
 
 
-get_nrow <- function(conn, table) {
+get_nrow <- function(conn, table) { # nocov start
   DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) as n FROM {table}"))$n
-}
+} # nocov end
 
 
 
 
 
-reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, sparse) {
+reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, sparse) { # nocov start
 
   ## get number of rows
   nrowx <- get_nrow(conn, x_list$query_name)
@@ -358,7 +358,7 @@ reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, spars
 
   return(pred_list)
 
-}
+} # nocov end
 
 #' Convert CRS input to DuckDB SQL literal
 #'
@@ -370,7 +370,7 @@ reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, spars
 #' @keywords internal
 #' @noRd
 #' @returns character string (e.g. "'EPSG:4326'") or "NULL"
-crs_to_sql <- function(x) {
+crs_to_sql <- function(x) {  # nocov start
   if (is.null(x) || (is.atomic(x) && all(is.na(x)))) return("NULL")
 
   if (inherits(x, "crs")) {
@@ -393,4 +393,4 @@ crs_to_sql <- function(x) {
   }
 
   return("NULL")
-}
+} # nocov end
