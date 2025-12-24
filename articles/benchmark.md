@@ -24,6 +24,7 @@ library(duckspatial)
 library(bench)
 library(dplyr)
 library(ggplot2)
+options(scipen = 999)
 
 # read polygons data
 countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
@@ -69,12 +70,14 @@ run_benchmark <- function(n){
 }
 
 
-# From 10K points to 10 million points
+# From 100K points to 1 million and 10 million points
 df_bench <- lapply(
-    X = c(10e3, 10e4, 10e5),
+    X = c(10e4, 10e5, 10e6),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
@@ -83,11 +86,11 @@ df_bench <- lapply(
 
 Now let’s have a look at the results.
 
-As one would expect, {sf} is faster for small data sets, when when the
-time difference is less than a couple seconds. For larger data sets,
-though, {duckspatial} gets much more efficient. In this example working
-with 10 million points, {duckspatial} was 50% faster and used 4.1 times
-less memory than {sf}. Not bad.
+As one would expect, {sf} is faster for small data sets, when the time
+difference is less than a couple seconds. For larger data sets, though,
+{duckspatial} gets much more efficient. In this example working with 10
+million points, {duckspatial} was 50% faster and used 4.2 times less
+memory than {sf}. Not bad.
 
 ``` r
 ggplot(data = df_bench) +
