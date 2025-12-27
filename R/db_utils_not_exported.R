@@ -200,7 +200,7 @@ get_st_predicate <- function(predicate) { # nocov start
 
 
 
-
+# TODO: convert_to_sf_native_geoarrow needs to be renamed, as it actually no longer uses geoarrow for conversion
 #' Converts from data frame to sf using native geoarrow
 #'
 #' Converts a table that has been read from DuckDB into an sf object.
@@ -240,14 +240,12 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) { # noc
     attributes(geom_data) <- NULL
 
     # Verify it's not empty and contains raw vectors (WKB)
-    # If it's a list of raw vectors, use wk::new_wk_wkb -> geoarrow
+    # If it's a list of raw vectors, use wk::new_wk_wkb
     if (length(geom_data) > 0 && is.raw(geom_data[[1]])) {
       # Wrap as WKB
       wkb_obj <- wk::new_wk_wkb(geom_data)
-      # Convert to GeoArrow Vector (Zero-copy optimized)
-      ga_vctr <- geoarrow::as_geoarrow_vctr(wkb_obj)
       # Materialize as SFC (Simple Feature Column)
-      data[[x_geom]] <- sf::st_as_sfc(ga_vctr)
+      data[[x_geom]] <- sf::st_as_sfc(wkb_obj)
     } else {
       # Fallback: Try converting directly (e.g., if it's already a geoarrow list structure)
       # This handles cases where DuckDB sends native arrow geometry structures
