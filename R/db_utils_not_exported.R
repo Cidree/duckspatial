@@ -197,14 +197,9 @@ get_st_predicate <- function(predicate) { # nocov start
 } # nocov end
 
 
-
-
-
-# TODO: convert_to_sf_native_geoarrow needs to be renamed, as it actually no longer uses geoarrow for conversion
-#' Converts from data frame to sf using native geoarrow
+#' Converts from data frame to sf using WKB conversion
 #'
 #' Converts a table that has been read from DuckDB into an sf object.
-#' Optimized to handle Arrow-native binary streams using wk and geoarrow.
 #'
 #' @param data a tibble or data frame
 #' @template crs
@@ -212,7 +207,7 @@ get_st_predicate <- function(predicate) { # nocov start
 #'
 #' @keywords internal
 #' @returns sf
-convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) { # nocov start
+convert_to_sf_wkb <- function(data, crs, crs_column, x_geom) { # nocov start
 
   # 1. Resolve CRS
   # If CRS is passed explicitly, use it.
@@ -233,27 +228,33 @@ convert_to_sf_native_geoarrow <- function(data, crs, crs_column, x_geom) { # noc
   geom_data <- data[[x_geom]]
 
   if (inherits(geom_data, "blob") || is.list(geom_data)) {
-    # --- FAST PATH: Binary/Arrow Data ---
-    # This handles WKB blobs from DuckDB (Native GeoArrow or ST_AsWKB)
+    # --- FAST PATH: Binary Data ---
 
-    # Strip attributes (like 'arrow_binary' or 'blob') to ensure it's a clean list for wk
-    attributes(geom_data) <- NULL
-
-    # Verify it's not empty and contains raw vectors (WKB)
-    # If it's a list of raw vectors, use wk::new_wk_wkb
-    if (length(geom_data) > 0 && is.raw(geom_data[[1]])) {
-      # Wrap as WKB
+    # Attempt to use wk directly.
+    # We use tryCatch because:
+    # 1. It handles lists where the first element is NULL (which is.raw() misses)
+    # 2. It safely falls back if the list contains non-WKB data
+    
+    wk_success <- tryCatch({
+      # Strip attributes (like 'blob') to ensure it's a clean list for wk
+      attributes(geom_data) <- NULL
+      
+      # OPTIMIZATION: Zero-copy wrap and convert
       wkb_obj <- wk::new_wk_wkb(geom_data)
-      # Materialize as SFC (Simple Feature Column)
       data[[x_geom]] <- sf::st_as_sfc(wkb_obj)
-    } else {
-      # Fallback: Try converting directly (e.g., if it's already a geoarrow list structure)
-      # This handles cases where DuckDB sends native arrow geometry structures
+      TRUE
+    }, error = function(e) {
+      FALSE
+    })
+
+    if (!wk_success) {
+      # --- FALLBACK PATH ---
+      # Used if wk failed (e.g., data is native arrow structure or complex list)
       tryCatch({
         ga_vctr <- geoarrow::as_geoarrow_vctr(geom_data)
         data[[x_geom]] <- sf::st_as_sfc(ga_vctr)
       }, error = function(e) {
-        # Final fallback: if all else fails, try standard sf blob reading
+        # Final fallback: standard sf blob reading
         data[[x_geom]] <- sf::st_as_sfc(structure(geom_data, class = "WKB"))
       })
     }
