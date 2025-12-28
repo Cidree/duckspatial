@@ -13,6 +13,8 @@ data sets used in this benchmark.
 library(duckspatial)
 library(bench)
 library(dplyr)
+library(sf)
+library(lwgeom)
 library(ggplot2)
 options(scipen = 999)
 
@@ -73,17 +75,17 @@ of points.
   way less memory.
 
 ``` r
-run_benchmark <- function(n){
+run_benchmark <- function(points_sf){
     
-    set.seed(42)
-
-    ## create points data
-    points_sf <- data.frame(
-        id = 1:n,
-        x = runif(n, min = -180, max = 180),  
-        y = runif(n, min = -90, max = 90)
-        ) |> 
-        sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+    # set.seed(42)
+    # 
+    # ## create points data
+    # points_sf <- data.frame(
+    #     id = 1:n,
+    #     x = runif(n, min = -180, max = 180),  
+    #     y = runif(n, min = -90, max = 90)
+    #     ) |> 
+    #     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
     
     temp_bench <- bench::mark(
         iterations = 1, 
@@ -107,7 +109,7 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_join <- lapply(
-    X = c(10e4, 10e5, 10e6),
+    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
@@ -130,7 +132,7 @@ Now let’s have a look at the results.
 As one would expect, {sf} is faster for small data sets, when the time
 difference is less than a couple seconds. For larger data sets, though,
 {duckspatial} gets much more efficient. In this example working with 10
-million points, {duckspatial} was 100% faster and used 4.3 times less
+million points, {duckspatial} was NA% faster and used NA times less
 memory than {sf}. Not bad.
 
 ``` r
@@ -149,17 +151,7 @@ ggplot(data = df_bench_join) +
 ## Spatial filter
 
 ``` r
-run_benchmark <- function(n){
-    
-    set.seed(42)
-
-    ## create points data
-    points_sf <- data.frame(
-        id = 1:n,
-        x = runif(n, min = -180, max = 180),  
-        y = runif(n, min = -90, max = 90)
-        ) |> 
-        sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+run_benchmark <- function(points_sf){
     
     temp_bench <- bench::mark(
         iterations = 1, 
@@ -182,10 +174,14 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_filter <- lapply(
-    X = c(10e4, 10e5, 10e6),
+    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 
@@ -233,9 +229,10 @@ run_benchmark <- function(n){
         check = FALSE, 
         duckspatial = duckspatial::ddbs_distance(
             x = points_sf, 
-            y = points_sf),
+            y = points_sf, 
+            dist_type = "planar"),
         
-        sf = sf::st_filter(
+        sf = sf::st_distance(
             x = points_sf, 
             y = points_sf)
         )
@@ -249,15 +246,17 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_distance <- lapply(
-    X = c(1000),
+    X = c(500, 1000, 10000),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 
 
 # calculate difference in performance
 temp <- df_bench_distance |> 
-    filter(n == 10e4)
+    filter(n == 1000)
 
 memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),1))*100
