@@ -36,6 +36,7 @@ Suggests:
     dplyr,
     ggplot2 (>= 3.3.1),
     knitr,
+    lwgeom,
     quadkeyr,
     rmarkdown,
     terra,

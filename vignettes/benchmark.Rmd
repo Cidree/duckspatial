@@ -39,6 +39,8 @@ used in this benchmark.
 library(duckspatial)
 library(bench)
 library(dplyr)
+library(sf)
+library(lwgeom)
 library(ggplot2)
 options(scipen = 999)
 
@@ -89,17 +91,17 @@ don't matter that much. However, for large data sets (e.g. above 100K points),
 {duckspatial} is much faster and uses way less memory. 
 
 ```{r, message = FALSE}
-run_benchmark <- function(n){
+run_benchmark <- function(points_sf){
     
-    set.seed(42)
-
-    ## create points data
-    points_sf <- data.frame(
-        id = 1:n,
-        x = runif(n, min = -180, max = 180),  
-        y = runif(n, min = -90, max = 90)
-        ) |> 
-        sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+    # set.seed(42)
+    # 
+    # ## create points data
+    # points_sf <- data.frame(
+    #     id = 1:n,
+    #     x = runif(n, min = -180, max = 180),  
+    #     y = runif(n, min = -90, max = 90)
+    #     ) |> 
+    #     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
     
     temp_bench <- bench::mark(
         iterations = 1, 
@@ -123,7 +125,7 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_join <- lapply(
-    X = c(10e4, 10e5, 10e6),
+    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
@@ -163,17 +165,7 @@ ggplot(data = df_bench_join) +
 # Spatial filter
 
 ```{r, message = FALSE}
-run_benchmark <- function(n){
-    
-    set.seed(42)
-
-    ## create points data
-    points_sf <- data.frame(
-        id = 1:n,
-        x = runif(n, min = -180, max = 180),  
-        y = runif(n, min = -90, max = 90)
-        ) |> 
-        sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+run_benchmark <- function(points_sf){
     
     temp_bench <- bench::mark(
         iterations = 1, 
@@ -196,7 +188,7 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_filter <- lapply(
-    X = c(10e4, 10e5, 10e6),
+    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
