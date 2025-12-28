@@ -2,7 +2,7 @@
 title: "Benchmark"
 date: "`r Sys.Date()`"
 output:
-  rmarkdown::html_vignette:
+  html_document:
     code_folding: hide   # or "hide" "show"
 code-annotations: hover
 urlcolor: blue
