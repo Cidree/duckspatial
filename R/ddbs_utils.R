@@ -187,7 +187,7 @@ ddbs_glimpse <- function(conn,
     ## convenient names of table and/or schema.table
     name_list <- get_query_name(name)
     ## get column names
-    geom_name    <- get_geom_name(conn, name_list$query_name)
+    x_geom    <- get_geom_name(conn, name_list$query_name)
     no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE, collapse = TRUE)
 
     # 3. Get data
@@ -195,25 +195,17 @@ ddbs_glimpse <- function(conn,
     data_tbl <- DBI::dbGetQuery(conn, glue::glue("
       SELECT
       {no_geom_cols},
-      ST_AsText({geom_name}) AS {geom_name}
+      ST_AsWKB({x_geom}) AS {x_geom}
       FROM {name}
       LIMIT 10;
   "))
     ## Convert to sf
-    if (is.null(crs)) {
-        if (is.null(crs_column)) {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = geom_name)
-        } else {
-            data_sf <- data_tbl |>
-                sf::st_as_sf(wkt = geom_name, crs = data_tbl[1, crs_column])
-            data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-        }
-
-    } else {
-        data_sf <- data_tbl |>
-            sf::st_as_sf(wkt = geom_name, crs = crs)
-    }
+    data_sf <- convert_to_sf_wkb(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
 
     if (isFALSE(quiet)) {
         cli::cli_alert_success("Showing first 10 rows of the data")

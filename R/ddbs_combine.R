@@ -140,13 +140,13 @@ ddbs_union <- function(
             return(invisible(TRUE))
         }
 
-        ## 4. create the base query with ST_AsText
+        ## 4. create the base query with ST_AsWKB
         if (crs_column %in% x_rest) {
             tmp.query <- glue::glue("
                 SELECT
                     ROW_NUMBER() OVER () as row_id,
                     x.{crs_column},
-                    ST_AsText(ST_Union(x.{x_geom}, y.{y_geom})) as {x_geom}
+                    ST_AsWKB(ST_Union(x.{x_geom}, y.{y_geom})) as {x_geom}
                 FROM
                     (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) x
                 JOIN
@@ -157,7 +157,7 @@ ddbs_union <- function(
             tmp.query <- glue::glue("
                 SELECT
                     ROW_NUMBER() OVER () as row_id,
-                    ST_AsText(ST_Union(x.{x_geom}, y.{y_geom})) as {x_geom}
+                    ST_AsWKB(ST_Union(x.{x_geom}, y.{y_geom})) as {x_geom}
                 FROM
                     (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) x
                 JOIN
@@ -170,7 +170,7 @@ ddbs_union <- function(
         data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
         ## 5. convert to SF and return result
-        data_sf <- convert_to_sf(
+        data_sf <- convert_to_sf_wkb(
             data       = data_tbl,
             crs        = crs,
             crs_column = crs_column,
@@ -256,12 +256,12 @@ ddbs_union <- function(
         # Union all geometries into a single geometry
         if (crs_column %in% x_rest) {
             tmp.query <- glue::glue("
-                SELECT FIRST({crs_column}) as {crs_column}, ST_AsText(ST_Union_Agg({x_geom})) as {x_geom}
+                SELECT FIRST({crs_column}) as {crs_column}, ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom}
                 FROM {x_list$query_name};
             ")
         } else {
             tmp.query <- glue::glue("
-                SELECT ST_AsText(ST_Union_Agg({x_geom})) as {x_geom} FROM {x_list$query_name};
+                SELECT ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom} FROM {x_list$query_name};
             ")
         }
     } else {
@@ -274,14 +274,14 @@ ddbs_union <- function(
         if (crs_column %in% x_rest) {
             if (length(other_cols) == 0) {
                 tmp.query <- glue::glue("
-                    SELECT {by_cols}, FIRST({crs_column}) as {crs_column}, ST_AsText(ST_Union_Agg({x_geom})) as {x_geom}
+                    SELECT {by_cols}, FIRST({crs_column}) as {crs_column}, ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom}
                     FROM {x_list$query_name}
                     GROUP BY {by_cols};
                 ")
             } else {
                 other_cols_agg <- paste0("FIRST(", other_cols, ") as ", other_cols, collapse = ", ")
                 tmp.query <- glue::glue("
-                    SELECT {by_cols}, {other_cols_agg}, FIRST({crs_column}) as {crs_column}, ST_AsText(ST_Union_Agg({x_geom})) as {x_geom}
+                    SELECT {by_cols}, {other_cols_agg}, FIRST({crs_column}) as {crs_column}, ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom}
                     FROM {x_list$query_name}
                     GROUP BY {by_cols};
                 ")
@@ -289,14 +289,14 @@ ddbs_union <- function(
         } else {
             if (length(other_cols) == 0) {
                 tmp.query <- glue::glue("
-                    SELECT {by_cols}, ST_AsText(ST_Union_Agg({x_geom})) as {x_geom}
+                    SELECT {by_cols}, ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom}
                     FROM {x_list$query_name}
                     GROUP BY {by_cols};
                 ")
             } else {
                 other_cols_agg <- paste0("FIRST(", other_cols, ") as ", other_cols, collapse = ", ")
                 tmp.query <- glue::glue("
-                    SELECT {by_cols}, {other_cols_agg}, ST_AsText(ST_Union_Agg({x_geom})) as {x_geom}
+                    SELECT {by_cols}, {other_cols_agg}, ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom}
                     FROM {x_list$query_name}
                     GROUP BY {by_cols};
                 ")
@@ -308,7 +308,7 @@ ddbs_union <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
@@ -427,7 +427,7 @@ ddbs_combine <- function(
     ## create the query
     tmp.query <- glue::glue("
         SELECT
-            ST_AsText(ST_Collect(LIST({x_geom}))) as {x_geom},
+            ST_AsWKB(ST_Collect(LIST({x_geom}))) as {x_geom},
             FIRST({crs_column}) as {crs_column}
         FROM
             {x_list$query_name};
@@ -437,7 +437,7 @@ ddbs_combine <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,

@@ -10,6 +10,8 @@
 
 * Functions that use `x` and `y` arguments, can indistinctively use `sf`, DuckDB table name, or mixed.
 
+* #15 Significant improvement of the speed of `ddbs_read_vector()`, and internal transformation of `data.frame` to `sf`, through optimizations with `wkb`.
+
 ## NEW FEATURES
 
 * Affine functions: `ddbs_rotate()`, `ddbs_rotate_3d()`, `ddbs_shift()`, `ddbs_flip()`, `ddbs_scale()`, and `ddbs_shear()`.
@@ -43,6 +45,8 @@
 * `ddbs_bbox()`: calculates the bounding box
 
 * `ddbs_union()`: union of geometries
+
+* `ddbs_quadkey()`: calculates quadkey tiles from point geometries
 
 * **Spatial predicates**: spatial predicates are all included in a function called `ddbs_predicate()`, where the user can specify the spatial predicate. Another option, it's to use the spatial predicate function, such as `ddbs_intersects()`, `ddbs_crosses()`, `ddbs_touches()`, etc.
 

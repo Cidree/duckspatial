@@ -101,18 +101,18 @@ ddbs_buffer <- function(
     ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_AsText(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
+            SELECT ST_AsWKB(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsText(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsWKB(ST_Buffer({x_geom}, {distance})) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
@@ -223,18 +223,18 @@ ddbs_centroid <- function(x,
     ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_AsText(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
+            SELECT ST_AsWKB(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsText(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsWKB(ST_Centroid({x_geom})) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
@@ -365,14 +365,14 @@ ddbs_is_valid <- function(
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT ST_IsValid({x_geom}) as {new_column},
-            ST_AsText({x_geom}) as {x_geom}
+            ST_AsWKB({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
             SELECT {x_rest},
             ST_IsValid({x_geom}) as {new_column},
-            ST_AsText({x_geom}) as {x_geom}
+            ST_AsWKB({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     }
@@ -380,7 +380,7 @@ ddbs_is_valid <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 6. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
@@ -495,13 +495,13 @@ ddbs_make_valid <- function(
     ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_AsText(ST_MakeValid({x_geom})) as {x_geom}
+            SELECT ST_AsWKB(ST_MakeValid({x_geom})) as {x_geom}
             FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
             SELECT {x_rest},
-            ST_AsText(ST_MakeValid({x_geom})) as {x_geom}
+            ST_AsWKB(ST_MakeValid({x_geom})) as {x_geom}
             FROM {x_list$query_name};
         ")
     }
@@ -509,7 +509,7 @@ ddbs_make_valid <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
@@ -641,14 +641,14 @@ ddbs_is_simple <- function(
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT ST_IsSimple({x_geom}) as {new_column},
-            ST_AsText({x_geom}) as {x_geom}
+            ST_AsWKB({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
             SELECT {x_rest},
             ST_IsSimple({x_geom}) as {new_column},
-            ST_AsText({x_geom}) as {x_geom}
+            ST_AsWKB({x_geom}) as {x_geom}
             FROM {x_list$query_name};
         ")
     }
@@ -656,7 +656,7 @@ ddbs_is_simple <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 6. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
@@ -775,13 +775,13 @@ ddbs_simplify <- function(
     ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_AsText(ST_Simplify({x_geom}, {tolerance})) as {x_geom}
+            SELECT ST_AsWKB(ST_Simplify({x_geom}, {tolerance})) as {x_geom}
             FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
             SELECT {x_rest},
-            ST_AsText(ST_Simplify({x_geom}, {tolerance})) as {x_geom}
+            ST_AsWKB(ST_Simplify({x_geom}, {tolerance})) as {x_geom}
             FROM {x_list$query_name};
         ")
     }
@@ -789,7 +789,7 @@ ddbs_simplify <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,

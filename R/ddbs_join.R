@@ -159,7 +159,7 @@ ddbs_join <- function(
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
             SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+                   ST_AsWKB(tbl_x.{x_geom}) AS {x_geom}
             FROM {x_list$query_name} tbl_x
             JOIN {y_list$query_name} tbl_y
             ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
@@ -169,7 +169,7 @@ ddbs_join <- function(
         tmp.query <- glue::glue("
             SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
                    {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   ST_AsText(tbl_x.{x_geom}) AS {x_geom}
+                   ST_AsWKB(tbl_x.{x_geom}) AS {x_geom}
             FROM {x_list$query_name} tbl_x
             JOIN {y_list$query_name} tbl_y
             ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
@@ -181,7 +181,7 @@ ddbs_join <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,

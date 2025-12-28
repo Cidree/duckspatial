@@ -108,13 +108,13 @@ ddbs_intersection <- function(
     ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_AsText(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
+            SELECT ST_AsWKB(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
             FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsText(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
+            SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsWKB(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
             FROM {x_list$query_name} v1, {y_list$query_name} v2
             WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
@@ -123,7 +123,7 @@ ddbs_intersection <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
@@ -259,7 +259,7 @@ ddbs_difference <- function(x,
     ## 4.1. create query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_AsText(ST_Difference(
+            SELECT ST_AsWKB(ST_Difference(
                 ST_MakeValid(v1.{x_geom}),
                 ST_MakeValid(v2.{y_geom})))
             AS {x_geom}
@@ -267,7 +267,7 @@ ddbs_difference <- function(x,
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsText(ST_Difference(
+            SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsWKB(ST_Difference(
                 ST_MakeValid(v1.{x_geom}),
                 ST_MakeValid(v2.{y_geom})))
             AS {x_geom}
@@ -278,7 +278,7 @@ ddbs_difference <- function(x,
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,
