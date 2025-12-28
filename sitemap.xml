@@ -10,7 +10,7 @@
 <url><loc>https://cidree.github.io/duckspatial/index.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/news/index.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf_native_geoarrow.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf_wkb.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_area.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_bbox.html</loc></url>
