@@ -110,7 +110,7 @@ ddbs_filter <- function(
 
             tmp.query <- glue::glue("
                 CREATE TABLE {name_list$query_name} AS
-                SELECT {rest_query} v1.{x_geom} AS {x_geom}
+                SELECT DISTINCT {rest_query} v1.{x_geom} AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
             ")
@@ -118,7 +118,7 @@ ddbs_filter <- function(
         } else {
             tmp.query <- glue::glue("
                 CREATE TABLE {name_list$query_name} AS
-                SELECT {rest_query} v1.{x_geom} AS {x_geom}
+                SELECT DISTINCT {rest_query} v1.{x_geom} AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
             ")
@@ -142,7 +142,7 @@ ddbs_filter <- function(
 
         data_tbl <- DBI::dbGetQuery(
             conn, glue::glue("
-                SELECT {rest_query} ST_AsText(v1.{x_geom}) AS {x_geom}
+                SELECT DISTINCT {rest_query} ST_AsText(v1.{x_geom}) AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
             ")
@@ -151,7 +151,7 @@ ddbs_filter <- function(
     } else {
         data_tbl <- DBI::dbGetQuery(
             conn, glue::glue("
-                SELECT {rest_query} ST_AsText(v1.{x_geom}) AS {x_geom}
+                SELECT DISTINCT {rest_query} ST_AsText(v1.{x_geom}) AS {x_geom}
                 FROM {x_list$query_name} v1, {y_list$query_name} v2
                 WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
             ")
