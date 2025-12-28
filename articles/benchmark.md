@@ -107,10 +107,12 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_join <- lapply(
-    X = c(10e4, 10e5),
+    X = c(10e4, 10e5, 10e6),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 
@@ -128,7 +130,7 @@ Now let’s have a look at the results.
 As one would expect, {sf} is faster for small data sets, when the time
 difference is less than a couple seconds. For larger data sets, though,
 {duckspatial} gets much more efficient. In this example working with 10
-million points, {duckspatial} was 100% faster and used 3.5 times less
+million points, {duckspatial} was 100% faster and used 4.3 times less
 memory than {sf}. Not bad.
 
 ``` r
@@ -180,12 +182,10 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_filter <- lapply(
-    X = c(10e4, 10e5),
+    X = c(10e4, 10e5, 10e6),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 

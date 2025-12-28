@@ -2,7 +2,8 @@
 
 Flips (reflects) geometries around the centroid. Returns the result as
 an `sf` object or creates a new table in the database. This function is
-equivalent to `terra::flip()`.
+equivalent to
+[`terra::flip()`](https://rspatial.github.io/terra/reference/flip.html).
 
 ## Usage
 

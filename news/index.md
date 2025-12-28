@@ -17,6 +17,12 @@
 - Functions that use `x` and `y` arguments, can indistinctively use
   `sf`, DuckDB table name, or mixed.
 
+- [\#15](https://github.com/Cidree/duckspatial/issues/15) Significant
+  improvement of the speed of
+  [`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md),
+  and internal transformation of `data.frame` to `sf`, through
+  optimizations with `wkb`.
+
 ### NEW FEATURES
 
 - Affine functions:
@@ -73,6 +79,9 @@
 
 - [`ddbs_union()`](https://cidree.github.io/duckspatial/reference/ddbs_union.md):
   union of geometries
+
+- [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md):
+  calculates quadkey tiles from point geometries
 
 - **Spatial predicates**: spatial predicates are all included in a
   function called

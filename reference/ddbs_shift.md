@@ -2,7 +2,8 @@
 
 Shifts (translates) geometries from a `sf` object or a DuckDB table.
 Returns the result as an `sf` object or creates a new table in the
-database. This function is equivalent to `terra::shift()`.
+database. This function is equivalent to
+[`terra::shift()`](https://rspatial.github.io/terra/reference/shift.html).
 
 ## Usage
 
