@@ -107,18 +107,18 @@ ddbs_convex_hull <- function(
     ## 4. create the base query
     if (length(x_rest) == 0) {
         tmp.query <- glue::glue("
-            SELECT ST_AsText(ST_ConvexHull({x_geom})) as {x_geom} FROM {x_list$query_name};
+            SELECT ST_AsWKB(ST_ConvexHull({x_geom})) as {x_geom} FROM {x_list$query_name};
         ")
     } else {
         tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsText(ST_ConvexHull({x_geom})) as {x_geom} FROM {x_list$query_name};
+            SELECT {x_rest}, ST_AsWKB(ST_ConvexHull({x_geom})) as {x_geom} FROM {x_list$query_name};
         ")
     }
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
         crs_column = crs_column,

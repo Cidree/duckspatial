@@ -399,7 +399,7 @@ ddbs_interpolate_aw <- function(
     final_select <- glue::glue("
       SELECT
         {t_cols_select}
-        ST_AsText(tgt.{t_geom}) as {t_geom},
+        ST_AsWKB(tgt.{t_geom}) as {t_geom},
         av.* EXCLUDE (tid)
       FROM {t_list$query_name} tgt
       {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
@@ -452,7 +452,7 @@ ddbs_interpolate_aw <- function(
   data_tbl <- DBI::dbGetQuery(conn, full_sql)
 
   if (output == "sf") {
-    data_sf <- convert_to_sf(
+    data_sf <- convert_to_sf_wkb(
       data       = data_tbl,
       crs        = crs,
       crs_column = crs_column,
