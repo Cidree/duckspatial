@@ -86,10 +86,10 @@ test_that("ddbs_read_vector handles tables with no CRS info", {
   ddbs_write_vector(conn = conn_test, data = points_no_crs, name = "test_no_crs_read", overwrite = TRUE)
 
   # Read without specifying CRS (should result in NA CRS)
-  # expect_message(
-  #   result <- ddbs_read_vector(conn_test, "test_no_crs_read"),
-  #   "No CRS found"
-  # )
+  expect_message(
+    result <- ddbs_read_vector(conn_test, "test_no_crs_read"),
+    "No CRS found"
+  )
   expect_true(is.na(sf::st_crs(result)))
 
   # Read while specifying CRS

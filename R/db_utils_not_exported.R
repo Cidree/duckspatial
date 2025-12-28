@@ -224,6 +224,11 @@ convert_to_sf_wkb <- function(data, crs, crs_column, x_geom) { # nocov start
     }
   }
 
+  # Add warning if still no CRS found
+  if (is.null(target_crs)) {
+    cli::cli_alert_warning("No CRS found for the imported table.")
+  }
+
   # 2. Check Geometry Type and Convert
   geom_data <- data[[x_geom]]
 
