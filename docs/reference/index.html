@@ -52,18 +52,6 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_install.html">ddbs_install()</a></code>
-
-        </dt>
-        <dd>Checks and installs the Spatial extension</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_load.html">ddbs_load()</a></code>
-
-        </dt>
-        <dd>Loads the Spatial extension</dd>
-      </dl><dl><dt>
-
           <code><a href="ddbs_create_conn.html">ddbs_create_conn()</a></code>
 
         </dt>
@@ -74,6 +62,18 @@
 
         </dt>
         <dd>Close a duckdb connection</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_install.html">ddbs_install()</a></code>
+
+        </dt>
+        <dd>Checks and installs the Spatial extension</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_load.html">ddbs_load()</a></code>
+
+        </dt>
+        <dd>Loads the Spatial extension</dd>
       </dl></div><div class="section level2">
       <h2 id="data-import-export">Data Import/Export<a class="anchor" aria-label="anchor" href="#data-import-export"></a></h2>
 
@@ -115,12 +115,6 @@
 
 
       <dl><dt>
-
-          <code><a href="ddbs_predicate.html">ddbs_predicate()</a></code>
-
-        </dt>
-        <dd>Spatial predicate operations</dd>
-      </dl><dl><dt>
 
           <code><a href="ddbs_contains.html">ddbs_contains()</a></code>
 
@@ -176,10 +170,22 @@
         <dd>Spatial intersects extent predicate</dd>
       </dl><dl><dt>
 
+          <code><a href="ddbs_is_within_distance.html">ddbs_is_within_distance()</a></code>
+
+        </dt>
+        <dd>Within Distance predicate</dd>
+      </dl><dl><dt>
+
           <code><a href="ddbs_overlaps.html">ddbs_overlaps()</a></code>
 
         </dt>
         <dd>Spatial overlaps predicate</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_predicate.html">ddbs_predicate()</a></code>
+
+        </dt>
+        <dd>Spatial predicate operations</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_touches.html">ddbs_touches()</a></code>
@@ -192,12 +198,6 @@
 
         </dt>
         <dd>Spatial within predicate</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_is_within_distance.html">ddbs_is_within_distance()</a></code>
-
-        </dt>
-        <dd>Within Distance predicate</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_within_properly.html">ddbs_within_properly()</a></code>
@@ -217,10 +217,10 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_join.html">ddbs_join()</a></code>
+          <code><a href="ddbs_difference.html">ddbs_difference()</a></code>
 
         </dt>
-        <dd>Performs spatial joins of two geometries</dd>
+        <dd>Calculates the difference of two geometries</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_filter.html">ddbs_filter()</a></code>
@@ -229,10 +229,10 @@
         <dd>Performs spatial filter of two geometries</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_difference.html">ddbs_difference()</a></code>
+          <code><a href="ddbs_interpolate_aw.html">ddbs_interpolate_aw()</a></code>
 
         </dt>
-        <dd>Calculates the difference of two geometries</dd>
+        <dd>Areal-Weighted Interpolation using DuckDB</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_intersection.html">ddbs_intersection()</a></code>
@@ -241,10 +241,10 @@
         <dd>Calculates the intersection of two geometries</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_interpolate_aw.html">ddbs_interpolate_aw()</a></code>
+          <code><a href="ddbs_join.html">ddbs_join()</a></code>
 
         </dt>
-        <dd>Areal-Weighted Interpolation using DuckDB</dd>
+        <dd>Performs spatial joins of two geometries</dd>
       </dl></div><div class="section level2">
       <h2 id="geometry-processing">Geometry Processing<a class="anchor" aria-label="anchor" href="#geometry-processing"></a></h2>
 
@@ -270,16 +270,10 @@
         <dd>Calculates the centroid of geometries</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_simplify.html">ddbs_simplify()</a></code>
+          <code><a href="ddbs_combine.html">ddbs_combine()</a></code>
 
         </dt>
-        <dd>Simplify geometries</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_convex_hull.html">ddbs_convex_hull()</a></code>
-
-        </dt>
-        <dd>Returns the convex hull enclosing the geometry</dd>
+        <dd>Combine geometries into a single MULTI-geometry</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_concave_hull.html">ddbs_concave_hull()</a></code>
@@ -288,16 +282,28 @@
         <dd>Returns the concave hull enclosing the geometry</dd>
       </dl><dl><dt>
 
+          <code><a href="ddbs_convex_hull.html">ddbs_convex_hull()</a></code>
+
+        </dt>
+        <dd>Returns the convex hull enclosing the geometry</dd>
+      </dl><dl><dt>
+
           <code><a href="ddbs_make_valid.html">ddbs_make_valid()</a></code>
 
         </dt>
         <dd>Make invalid geometries valid</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_combine.html">ddbs_combine()</a></code>
+          <code><a href="ddbs_simplify.html">ddbs_simplify()</a></code>
 
         </dt>
-        <dd>Combine geometries into a single MULTI-geometry</dd>
+        <dd>Simplify geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_quadkey.html">ddbs_quadkey()</a></code>
+
+        </dt>
+        <dd>Convert geometries to QuadKey tiles</dd>
       </dl><dl><dt>
 
           <code><a href="ddbs_union.html">ddbs_union()</a></code>
@@ -369,6 +375,12 @@
 
       <dl><dt>
 
+          <code><a href="ddbs_flip.html">ddbs_flip()</a></code>
+
+        </dt>
+        <dd>Flip geometries horizontally or vertically</dd>
+      </dl><dl><dt>
+
           <code><a href="ddbs_rotate.html">ddbs_rotate()</a></code>
 
         </dt>
@@ -387,22 +399,16 @@
         <dd>Scale geometries by X and Y factors</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_shift.html">ddbs_shift()</a></code>
-
-        </dt>
-        <dd>Shift geometries by X and Y offsets</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_flip.html">ddbs_flip()</a></code>
-
-        </dt>
-        <dd>Flip geometries horizontally or vertically</dd>
-      </dl><dl><dt>
-
           <code><a href="ddbs_shear.html">ddbs_shear()</a></code>
 
         </dt>
         <dd>Shear geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_shift.html">ddbs_shift()</a></code>
+
+        </dt>
+        <dd>Shift geometries by X and Y offsets</dd>
       </dl></div><div class="section level2">
       <h2 id="measurements">Measurements<a class="anchor" aria-label="anchor" href="#measurements"></a></h2>
 
@@ -451,18 +457,6 @@
         <dd>Check and create schema</dd>
       </dl><dl><dt>
 
-          <code><a href="ddbs_list_tables.html">ddbs_list_tables()</a></code>
-
-        </dt>
-        <dd>Check tables and schemas inside a database</dd>
-      </dl><dl><dt>
-
-          <code><a href="ddbs_glimpse.html">ddbs_glimpse()</a></code>
-
-        </dt>
-        <dd>Check first rows of the data</dd>
-      </dl><dl><dt>
-
           <code><a href="ddbs_crs.html">ddbs_crs()</a></code>
 
         </dt>
@@ -473,6 +467,18 @@
 
         </dt>
         <dd>Get list of GDAL drivers and file formats</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_glimpse.html">ddbs_glimpse()</a></code>
+
+        </dt>
+        <dd>Check first rows of the data</dd>
+      </dl><dl><dt>
+
+          <code><a href="ddbs_list_tables.html">ddbs_list_tables()</a></code>
+
+        </dt>
+        <dd>Check tables and schemas inside a database</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

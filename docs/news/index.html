@@ -48,6 +48,7 @@
 <li><p><code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>: uses <code>intersects</code> for <code>ST_Intersects</code> instead of <code>intersection</code>.</p></li>
 <li><p>Allow the use of either <code>sf</code> object or a DuckDB table as input/output in every operation.</p></li>
 <li><p>Functions that use <code>x</code> and <code>y</code> arguments, can indistinctively use <code>sf</code>, DuckDB table name, or mixed.</p></li>
+<li><p><a href="https://github.com/Cidree/duckspatial/issues/15" class="external-link">#15</a> Significant improvement of the speed of <code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code>, and internal transformation of <code>data.frame</code> to <code>sf</code>, through optimizations with <code>wkb</code>.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-0-2-0999">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-2-0999"></a></h3>
@@ -67,6 +68,7 @@
 <li><p><code><a href="../reference/ddbs_simplify.html">ddbs_simplify()</a></code>: makes the geometries simple</p></li>
 <li><p><code><a href="../reference/ddbs_bbox.html">ddbs_bbox()</a></code>: calculates the bounding box</p></li>
 <li><p><code><a href="../reference/ddbs_union.html">ddbs_union()</a></code>: union of geometries</p></li>
+<li><p><code><a href="../reference/ddbs_quadkey.html">ddbs_quadkey()</a></code>: calculates quadkey tiles from point geometries</p></li>
 <li><p><strong>Spatial predicates</strong>: spatial predicates are all included in a function called <code><a href="../reference/ddbs_predicate.html">ddbs_predicate()</a></code>, where the user can specify the spatial predicate. Another option, it’s to use the spatial predicate function, such as <code><a href="../reference/ddbs_intersects.html">ddbs_intersects()</a></code>, <code><a href="../reference/ddbs_crosses.html">ddbs_crosses()</a></code>, <code><a href="../reference/ddbs_touches.html">ddbs_touches()</a></code>, etc.</p></li>
 </ul></div>
 <div class="section level3">

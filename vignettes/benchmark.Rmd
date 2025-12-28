@@ -123,7 +123,7 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_join <- lapply(
-    X = c(10e4, 10e5),
+    X = c(10e4, 10e5, 10e6),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
@@ -196,7 +196,7 @@ run_benchmark <- function(n){
 
 # From 100K points to 1 million and 10 million points
 df_bench_filter <- lapply(
-    X = c(10e4, 10e5),
+    X = c(10e4, 10e5, 10e6),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
