@@ -250,9 +250,10 @@ run_benchmark <- function(n){
         check = FALSE, 
         duckspatial = duckspatial::ddbs_distance(
             x = points_sf, 
-            y = points_sf),
+            y = points_sf, 
+            dist_type = "planar"),
         
-        sf = sf::st_filter(
+        sf = sf::st_distance(
             x = points_sf, 
             y = points_sf)
         )
