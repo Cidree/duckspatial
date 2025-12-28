@@ -118,31 +118,6 @@ ddbs_join <- function(
     ## error if crs_column not found
     assert_crs_column(crs_column, x_rest)
 
-    # ## Create an rtree index on the x and y tables
-    # # https://duckdb.org/docs/stable/core_extensions/spatial/r-tree_indexes
-    # x_has_rtree <- has_rtree_index(conn, tbl_name = x_list$query_name)
-    # index_name <- paste0("idx_", x_list$query_name)
-    #
-    # if (isFALSE(x_has_rtree)) {
-    #     DBI::dbExecute(
-    #         conn,
-    #         glue::glue(
-    #             "CREATE INDEX {index_name} ON {x_list$query_name} USING RTREE ({x_geom});"
-    #             )
-    #         )
-    #     }
-    #
-    # y_has_rtree <- has_rtree_index(conn, y_list$query_name)
-    #
-    # if(isFALSE(y_has_rtree)){
-    #     DBI::dbExecute(
-    #         conn,
-    #         glue::glue(
-    #             "CREATE INDEX my_idy ON {y_list$query_name} USING RTREE ({y_geom});"
-    #         )
-    #     )
-    # }
-
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -158,16 +133,18 @@ ddbs_join <- function(
             tmp.query <- glue::glue("
             SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
                    tbl_x.{x_geom} AS {x_geom}
-            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            FROM {x_list$query_name} tbl_x
+            JOIN {y_list$query_name} tbl_y
+            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
             ")
         } else {
             tmp.query <- glue::glue("
             SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
                    {paste0('tbl_y.', y_rest, collapse = ', ')},
                    tbl_x.{x_geom} AS {x_geom}
-            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            FROM {x_list$query_name} tbl_x
+            JOIN {y_list$query_name} tbl_y
+            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
 
         ")
         }
@@ -183,8 +160,9 @@ ddbs_join <- function(
         tmp.query <- glue::glue("
             SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
                    ST_AsText(tbl_x.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            FROM {x_list$query_name} tbl_x
+            JOIN {y_list$query_name} tbl_y
+            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
         ")
 
     } else {
@@ -192,8 +170,9 @@ ddbs_join <- function(
             SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
                    {paste0('tbl_y.', y_rest, collapse = ', ')},
                    ST_AsText(tbl_x.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} tbl_x, {y_list$query_name} tbl_y
-            WHERE {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
+            FROM {x_list$query_name} tbl_x
+            JOIN {y_list$query_name} tbl_y
+            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
         ")
 
     }
