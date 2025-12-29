@@ -5,8 +5,8 @@
 - **[Adrián Cidre González](https://adrian-cidre.com/)**. Author,
   maintainer.
 
-- **Rafael H. M. Pereira**. Author.
-  [](https://orcid.org/0000-0003-2125-7465)
+- **[Rafael H. M. Pereira](https://www.urbandemographics.org/about/)**.
+  Author. [](https://orcid.org/0000-0003-2125-7465)
 
 - **[Egor Kotov](https://www.ekotov.pro/)**. Author.
   [](https://orcid.org/0000-0001-6690-5345)

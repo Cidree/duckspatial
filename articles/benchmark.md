@@ -6,6 +6,14 @@ time and memory use when performing different spatial operations with
 increasingly large data sets. We plan to extend this vignette in the
 future to benchmark other types of spatial operations.
 
+### TL;DR
+
+- {duckspatial} is substantially faster and uses way less memory than
+  {sf} in pretty much all cases, particularly when working with large
+  data sets
+
+### Prepare data for benchmark
+
 This chunk of code below loads a few libraries and create a few sample
 data sets used in this benchmark.
 
@@ -63,17 +71,6 @@ points_sf_10mi <- data.frame(
 
 ## Spatial Join
 
-Here we analyze how {duckspatial} and {sf} compare when performing a
-spatial join between points and polygons with increasingly large numbers
-of points.
-
-### TL;DR
-
-- {sf} is faster for small data sets, when the time and memory
-  differences really don’t matter that much. However, for large data
-  sets (e.g. above 100K points), {duckspatial} is much faster and uses
-  way less memory.
-
 ``` r
 run_benchmark <- function(points_sf){
     
@@ -101,7 +98,7 @@ run_benchmark <- function(points_sf){
             join = sf::st_within)
         )
     
-    temp_bench$n <- n
+    temp_bench$n <- nrow(points_sf)
     temp_bench$pkg <- c("duckspatial", "sf")
     
     return(temp_bench)
@@ -124,16 +121,11 @@ temp <- df_bench_join |>
     filter(n == 10e5)
 
 memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
-time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),1))*100
+time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-Now let’s have a look at the results.
-
-As one would expect, {sf} is faster for small data sets, when the time
-difference is less than a couple seconds. For larger data sets, though,
-{duckspatial} gets much more efficient. In this example working with 10
-million points, {duckspatial} was NA% faster and used NA times less
-memory than {sf}. Not bad.
+In this example working with 1 million points, {duckspatial} was 96%
+faster and used 4.3 times less memory than {sf}. Not bad.
 
 ``` r
 ggplot(data = df_bench_join) +
@@ -165,7 +157,7 @@ run_benchmark <- function(points_sf){
             y = countries_sf)
         )
     
-    temp_bench$n <- n
+    temp_bench$n <- nrow(points_sf)
     temp_bench$pkg <- c("duckspatial", "sf")
     
     return(temp_bench)
@@ -191,8 +183,11 @@ temp <- df_bench_filter |>
     filter(n == 10e5)
 
 memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
-time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),1))*100
+time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
+
+In this example working with 1 million points, {duckspatial} was 55%
+faster and used 2 times less memory than {sf}. Not bad.
 
 plot
 
@@ -237,7 +232,7 @@ run_benchmark <- function(n){
             y = points_sf)
         )
     
-    temp_bench$n <- n
+    temp_bench$n <- nrow(points_sf)
     temp_bench$pkg <- c("duckspatial", "sf")
     
     return(temp_bench)
@@ -256,11 +251,15 @@ df_bench_distance <- lapply(
 
 # calculate difference in performance
 temp <- df_bench_distance |> 
-    filter(n == 1000)
+    filter(n == 10000)
 
 memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
-time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),1))*100
+time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
+
+In this example calculating the distance between 10K points,
+{duckspatial} was 97% faster and used 1.5 times less memory than {sf}.
+Not bad.
 
 plot
 
