@@ -409,6 +409,7 @@ ddbs_combine <- function(
 
         ## create the query
         tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
             SELECT
                 ST_Collect(LIST({x_geom})) as {x_geom},
                 FIRST({crs_column}) as {crs_column}
@@ -417,9 +418,10 @@ ddbs_combine <- function(
         ")
 
         ## execute the query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
+    
     }
 
     ## 4. if name is NULL (sf returned)

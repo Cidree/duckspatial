@@ -111,7 +111,7 @@ ddbs_quadkey <- function(
   ## 2. get name of geometry column
   ## 2.1. get column names
   x_geom <- get_geom_name(conn, x_list$query_name)
-  x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE)
+  x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
   assert_geometry_column(x_geom, x_list)
   ## 2.2. check CRS (we need EPSG:4326 for quadkeys)
   data_crs <- ddbs_crs(conn, x_list$query_name, crs_column)
@@ -137,32 +137,25 @@ ddbs_quadkey <- function(
       overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
       ## create query (no st_as_text)
-      if (length(x_rest) == 0) {
-          tmp.query <- glue::glue("
-          SELECT ST_QuadKey({x_geom}, {level}) as quadkey FROM {x_list$query_name};
+      tmp.query <- glue::glue("
+        CREATE TABLE {name_list$query_name} AS
+        SELECT {x_rest}
+        ST_QuadKey({x_geom}, {level}) as quadkey 
+        FROM {x_list$query_name};
       ")
-      } else {
-          tmp.query <- glue::glue("
-          SELECT {paste0(x_rest, collapse = ', ')}, ST_QuadKey({x_geom}, {level}) as quadkey FROM {x_list$query_name};
-      ")
-      }
       ## execute intersection query
-      DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+      DBI::dbExecute(conn, tmp.query)
       feedback_query(quiet)
       return(invisible(TRUE))
   }
 
   # 4. Get data frame
   ## 4.1. create query
-  if (length(x_rest) == 0) {
-      tmp.query <- glue::glue("
-          SELECT ST_QuadKey({x_geom}, {level}) as quadkey FROM {x_list$query_name};
-      ")
-  } else {
-      tmp.query <- glue::glue("
-          SELECT {paste0(x_rest, collapse = ', ')}, ST_QuadKey({x_geom}, {level}) as quadkey FROM {x_list$query_name};
-      ")
-  }
+  tmp.query <- glue::glue("
+    SELECT {x_rest}
+    ST_QuadKey({x_geom}, {level}) as quadkey 
+    FROM {x_list$query_name};
+  ")
   ## 4.2. retrieve results from the query
   data_tbl <- DBI::dbGetQuery(conn, tmp.query)
   data_tbl <- dplyr::select(data_tbl, -dplyr::all_of(crs_column))
@@ -211,7 +204,6 @@ ddbs_quadkey <- function(
 
   }
   
-
   feedback_query(quiet)
   return(prep_data)
 

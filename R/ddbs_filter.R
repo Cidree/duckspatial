@@ -82,14 +82,12 @@ ddbs_filter <- function(
     sel_pred <- get_st_predicate(predicate)
     ## 2.2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
     y_geom <- get_geom_name(conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
     ## error if crs_column not found
     assert_crs_column(crs_column, x_rest)
-    ## get rest of columns to paste into query
-    rest_query <- if (length(x_rest) > 0) paste0('v1.', x_rest, ",", collapse = ' ') else ""
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -110,20 +108,29 @@ ddbs_filter <- function(
 
             tmp.query <- glue::glue("
                 CREATE TABLE {name_list$query_name} AS
-                SELECT DISTINCT {rest_query} v1.{x_geom} AS {x_geom}
-                FROM {x_list$query_name} v1, {y_list$query_name} v2
-                WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
+                SELECT DISTINCT 
+                    {x_rest} 
+                    v1.{x_geom} AS {x_geom}
+                FROM 
+                    {x_list$query_name} v1, 
+                    {y_list$query_name} v2
+                WHERE 
+                    {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
             ")
 
         } else {
             tmp.query <- glue::glue("
                 CREATE TABLE {name_list$query_name} AS
-                SELECT DISTINCT {rest_query} v1.{x_geom} AS {x_geom}
-                FROM {x_list$query_name} v1, {y_list$query_name} v2
-                WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
+                SELECT DISTINCT 
+                    {x_rest} 
+                    v1.{x_geom} AS {x_geom}
+                FROM 
+                    {x_list$query_name} v1, 
+                    {y_list$query_name} v2
+                WHERE 
+                    {sel_pred}(v2.{y_geom}, v1.{x_geom})
             ")
         }
-
 
         ## execute filter query
         DBI::dbExecute(conn, tmp.query)
@@ -142,18 +149,28 @@ ddbs_filter <- function(
 
         data_tbl <- DBI::dbGetQuery(
             conn, glue::glue("
-                SELECT DISTINCT {rest_query} ST_AsWKB(v1.{x_geom}) AS {x_geom}
-                FROM {x_list$query_name} v1, {y_list$query_name} v2
-                WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
+                SELECT DISTINCT 
+                    {x_rest} 
+                    ST_AsWKB(v1.{x_geom}) AS {x_geom}
+                FROM 
+                    {x_list$query_name} v1, 
+                    {y_list$query_name} v2
+                WHERE 
+                    {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
             ")
         )
 
     } else {
         data_tbl <- DBI::dbGetQuery(
             conn, glue::glue("
-                SELECT DISTINCT {rest_query} ST_AsWKB(v1.{x_geom}) AS {x_geom}
-                FROM {x_list$query_name} v1, {y_list$query_name} v2
-                WHERE {sel_pred}(v2.{y_geom}, v1.{x_geom})
+                SELECT DISTINCT 
+                    {x_rest} 
+                    ST_AsWKB(v1.{x_geom}) AS {x_geom}
+                FROM 
+                    {x_list$query_name} v1, 
+                    {y_list$query_name} v2
+                WHERE 
+                    {sel_pred}(v2.{y_geom}, v1.{x_geom})
             ")
         )
     }

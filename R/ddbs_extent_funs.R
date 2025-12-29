@@ -72,32 +72,25 @@ ddbs_boundary <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT ST_Boundary({x_geom}}) as {x_geom} FROM {x_list$query_name};
+        ## create query 
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            ST_Boundary({x_geom}) as {x_geom} 
+            FROM {x_list$query_name};
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_Boundary({x_geom}) as {x_geom} FROM {x_list$query_name};
-        ")
-        }
         ## execute intersection query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     ## 4. create the base query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB(ST_Boundary({x_geom})) as {x_geom} FROM {x_list$query_name};
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsWKB(ST_Boundary({x_geom})) as {x_geom} FROM {x_list$query_name};
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_AsWKB(ST_Boundary({x_geom})) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -221,25 +214,19 @@ ddbs_envelope <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
+        ## create query 
         if (isTRUE(by_feature)) {
-            if (length(x_rest) == 0) {
-                tmp.query <- glue::glue("
-                SELECT {st_envelope_clause} as {x_geom}
+            tmp.query <- glue::glue("
+                SELECT {x_rest}
+                {st_envelope_clause} as {x_geom}
                 FROM {x_list$query_name};
             ")
-            } else {
-                tmp.query <- glue::glue("
-                SELECT {x_rest}, {st_envelope_clause} as {x_geom}
-                FROM {x_list$query_name};
-            ")
-            }
         } else {
             tmp.query <- glue::glue("
-            SELECT {st_envelope_clause} as {x_geom},
-            FIRST({crs_column}) as {crs_column}
-            FROM {x_list$query_name};
-        ")
+                SELECT {st_envelope_clause} as {x_geom},
+                FIRST({crs_column}) as {crs_column}
+                FROM {x_list$query_name};
+            ")
         }
 
         ## execute query
@@ -250,18 +237,11 @@ ddbs_envelope <- function(
 
     ## 5. create the base query
     if (isTRUE(by_feature)) {
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-                SELECT ST_AsWKB({st_envelope_clause}) as {x_geom}
-                FROM {x_list$query_name};
-            ")
-        } else {
-            tmp.query <- glue::glue("
-                SELECT {x_rest},
-                ST_AsWKB({st_envelope_clause}) as {x_geom}
-                FROM {x_list$query_name};
-            ")
-        }
+        tmp.query <- glue::glue("
+            SELECT {x_rest}
+            ST_AsWKB({st_envelope_clause}) as {x_geom}
+            FROM {x_list$query_name};
+        ")
     } else {
         tmp.query <- glue::glue("
             SELECT ST_AsWKB({st_envelope_clause}) as {x_geom},

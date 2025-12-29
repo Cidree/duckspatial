@@ -35,6 +35,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_drivers.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_envelope.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_equals.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_filter.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_flip.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_glimpse.html</loc></url>
@@ -50,6 +51,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_length.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_list_tables.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_load.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_valid.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_overlaps.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_predicate.html</loc></url>

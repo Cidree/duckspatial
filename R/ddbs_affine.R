@@ -161,33 +161,26 @@ ddbs_rotate <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT {rotation_expr} as {x_geom} FROM {x_list$query_name};
+        ## create query
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest} 
+            {rotation_expr} as {x_geom} 
+            FROM {x_list$query_name};
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {x_rest}, {rotation_expr} as {x_geom} FROM {x_list$query_name};
-        ")
-        }
         ## execute rotation query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data frame
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB({rotation_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsWKB({rotation_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_AsWKB({rotation_expr}) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -310,33 +303,26 @@ ddbs_rotate_3d <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT {rotation_expr} as {x_geom} FROM {x_list$query_name};
+        ## create query 
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            {rotation_expr} as {x_geom} 
+            FROM {x_list$query_name};
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {x_rest}, {rotation_expr} as {x_geom} FROM {x_list$query_name};
-        ")
-        }
         ## execute rotation query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data frame
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB({rotation_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsWKB({rotation_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_AsWKB({rotation_expr}) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -444,33 +430,26 @@ ddbs_shift <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT {shift_expr} as {x_geom} FROM {x_list$query_name};
+        ## create query 
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            {shift_expr} as {x_geom} 
+            FROM {x_list$query_name};
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {x_rest}, {shift_expr} as {x_geom} FROM {x_list$query_name};
-        ")
-        }
         ## execute shift query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data frame
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB({shift_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsWKB({shift_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_AsWKB({shift_expr}) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -630,33 +609,26 @@ ddbs_flip <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT {flip_expr} as {x_geom} FROM {x_list$query_name};
+        ## create query 
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            {flip_expr} as {x_geom} 
+            FROM {x_list$query_name};
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {x_rest}, {flip_expr} as {x_geom} FROM {x_list$query_name};
-        ")
-        }
         ## execute flip query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data frame
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB({flip_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsWKB({flip_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_AsWKB({flip_expr}) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -798,33 +770,26 @@ ddbs_scale <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT {scale_expr} as {x_geom} FROM {x_list$query_name};
+        ## create query 
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            {scale_expr} as {x_geom} 
+            FROM {x_list$query_name};
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {x_rest}, {scale_expr} as {x_geom} FROM {x_list$query_name};
-        ")
-        }
         ## execute scale query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data frame
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB({scale_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsWKB({scale_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_AsWKB({scale_expr}) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -964,33 +929,26 @@ ddbs_shear <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT {shear_expr} as {x_geom} FROM {x_list$query_name};
+        ## create query 
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            {shear_expr} as {x_geom} 
+            FROM {x_list$query_name};
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {x_rest}, {shear_expr} as {x_geom} FROM {x_list$query_name};
-        ")
-        }
         ## execute shear query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data frame
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB({shear_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {x_rest}, ST_AsWKB({shear_expr}) as {x_geom} FROM {x_list$query_name};
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_AsWKB({shear_expr}) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 

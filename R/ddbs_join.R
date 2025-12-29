@@ -104,20 +104,21 @@ ddbs_join <- function(
     y_list <- get_query_list(y, conn)
     assert_crs(conn, x_list$query_name, y_list$query_name)
 
-
     # 2. Prepare params for query
     ## 2.1. select predicate
     sel_pred <- get_st_predicate(join)
     ## 2.2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "tbl_x")
     y_geom <- get_geom_name(conn, y_list$query_name)
     y_rest <- get_geom_name(conn, y_list$query_name, rest = TRUE, collapse = FALSE)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
     ## error if crs_column not found
     assert_crs_column(crs_column, x_rest)
-
+    ## remove CRS column from y_rest
+    y_rest <- y_rest[-grep(crs_column, y_rest)]
+    y_rest <- if (length(y_rest) > 0) paste0('tbl_y."', y_rest, '",', collapse = ' ') else ""
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -128,54 +129,41 @@ ddbs_join <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   tbl_x.{x_geom} AS {x_geom}
-            FROM {x_list$query_name} tbl_x
-            JOIN {y_list$query_name} tbl_y
-            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
-            ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
-                   {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   tbl_x.{x_geom} AS {x_geom}
-            FROM {x_list$query_name} tbl_x
-            JOIN {y_list$query_name} tbl_y
-            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
+        ## create query
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT 
+                {x_rest}
+                {y_rest}
+                tbl_x.{x_geom} AS {x_geom}
+            FROM 
+                {x_list$query_name} tbl_x
+            JOIN 
+                {y_list$query_name} tbl_y
+            ON 
+                {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
 
         ")
-        }
 
         ## execute intersection query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     ## 4. create the base query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   ST_AsWKB(tbl_x.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} tbl_x
-            JOIN {y_list$query_name} tbl_y
-            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
-        ")
-
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {paste0('tbl_x.', x_rest, collapse = ', ')},
-                   {paste0('tbl_y.', y_rest, collapse = ', ')},
-                   ST_AsWKB(tbl_x.{x_geom}) AS {x_geom}
-            FROM {x_list$query_name} tbl_x
-            JOIN {y_list$query_name} tbl_y
-            ON {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
-        ")
-
-    }
+    tmp.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            {y_rest}
+            ST_AsWKB(tbl_x.{x_geom}) AS {x_geom}
+        FROM 
+            {x_list$query_name} tbl_x
+        JOIN 
+            {y_list$query_name} tbl_y
+        ON 
+            {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
+    ")
 
     ## send the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)

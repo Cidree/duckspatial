@@ -121,7 +121,8 @@ ddbs_read_vector <- function(
             cli::cli_abort("Geometry column wasn't found in Arrow view <{name_list$query_name}>.")
         }
 
-        no_geom_cols <- setdiff(all_cols, geom_name) |> paste(collapse = ", ")
+        no_geom_cols <- setdiff(all_cols, geom_name) 
+        no_geom_cols <-  if (length(no_geom_cols) > 0) paste0('"', no_geom_cols, '",', collapse = ' ') else ""
 
         # For Arrow views: Try ST_AsWKB directly first (geoarrow may already be recognized as GEOMETRY)
         # If that fails, ST_GeomFromWKB will be needed, but geoarrow registration makes it GEOMETRY type
@@ -140,7 +141,7 @@ ddbs_read_vector <- function(
     ## Retrieve data as data frame
     tmp.query <- glue::glue(
             "SELECT
-            {no_geom_cols},
+            {no_geom_cols}
             {select_geom_sql}
             FROM {name_list$query_name}"
     )

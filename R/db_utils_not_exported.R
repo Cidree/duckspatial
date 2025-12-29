@@ -26,7 +26,7 @@ dbConnCheck <- function(conn) {  # nocov start
 #'
 #' @keywords internal
 #' @returns name of the geometry column of a table
-get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE) {  # nocov start
+get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NULL) {  # nocov start
 
     # check if the table exists
     if (isFALSE(DBI::dbExistsTable(conn, x))) {
@@ -43,7 +43,12 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE) {  # nocov st
 
     # collapse columns with quoted names
     if (isTRUE(collapse)) {
-        other_cols <- glue::glue_collapse(glue::glue('"{other_cols}"'), sep = ", ")
+      if (is.null(table_id)) {
+        other_cols <- if (length(other_cols) > 0) paste0('"', other_cols, '",', collapse = ' ') else ""
+      } else {
+        other_cols <- if (length(other_cols) > 0) paste0(table_id, '."', other_cols, '",', collapse = ' ') else ""
+      }
+        
     }
 
     return(other_cols)

@@ -70,7 +70,7 @@ ddbs_intersection <- function(
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
     y_geom <- get_geom_name(conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
@@ -84,41 +84,37 @@ ddbs_intersection <- function(
         ## handle overwrite
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
-        ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT ST_Intersection(v1.{x_geom}, v2.{y_geom}) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
+        ## create query
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS 
+            SELECT 
+                {x_rest}
+                ST_Intersection(v1.{x_geom}, 
+                v2.{y_geom}) AS {x_geom}
+            FROM 
+                {x_list$query_name} v1,
+                {y_list$query_name} v2
+            WHERE 
+                ST_Intersects(v2.{y_geom}, v1.{x_geom})
         ")
-        } else {
-            tmp.query <- glue::glue("
-            SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_Intersection(v1.{x_geom}, v2.{y_geom}) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
-        ")
-        }
         ## execute intersection query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data fram
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsWKB(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-            WHERE ST_Intersects(v2.{y_geom}, v1.{x_geom})
-        ")
-    }
+    tmp.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            ST_AsWKB(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
+        FROM 
+            {x_list$query_name} v1, 
+            {y_list$query_name} v2
+        WHERE 
+            ST_Intersects(v2.{y_geom}, v1.{x_geom})
+    ")
     ## 4.2. retrieve results of the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -209,7 +205,7 @@ ddbs_difference <- function(x,
 
     # 2. Prepare params for query
     x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
     y_geom <- get_geom_name(conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
@@ -224,28 +220,22 @@ ddbs_difference <- function(x,
         overwrite_table(name_list$query_name, conn, quiet, overwrite)
 
         ## create query (no st_as_text)
-        if (length(x_rest) == 0) {
-            tmp.query <- glue::glue("
-            SELECT ST_Difference(
-                ST_MakeValid(v1.{x_geom}),
-                ST_MakeValid(v2.{y_geom}))
-            AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT 
+                {x_rest}
+                ST_Difference(
+                    ST_MakeValid(v1.{x_geom}),
+                    ST_MakeValid(v2.{y_geom})
+                ) AS {x_geom}
+                FROM 
+                    {x_list$query_name} v1, 
+                    {y_list$query_name} v2;
         ")
-        } else {
-            tmp.query <- glue::glue("
-                SELECT {paste0('v1.', x_rest, collapse = ', ')},
-                       ST_Difference(
-                         ST_MakeValid(v1.{x_geom}),
-                         ST_MakeValid(v2.{y_geom})
-                       ) AS {x_geom}
-                FROM {x_list$query_name} v1, {y_list$query_name} v2
-        ")
-        }
         ## execute intersection query
-        DBI::dbExecute(conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(conn, tmp.query)
 
-        ## elminate empty
+        ## eliminate empty geometries
         DBI::dbExecute(conn, glue::glue("
           DELETE FROM {name_list$query_name}
           WHERE ST_IsEmpty({x_geom})
@@ -257,23 +247,17 @@ ddbs_difference <- function(x,
 
     # 4. Get data frame
     ## 4.1. create query
-    if (length(x_rest) == 0) {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB(ST_Difference(
+    tmp.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            ST_AsWKB(ST_Difference(
                 ST_MakeValid(v1.{x_geom}),
-                ST_MakeValid(v2.{y_geom})))
-            AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-        ")
-    } else {
-        tmp.query <- glue::glue("
-            SELECT {paste0('v1.', x_rest, collapse = ', ')}, ST_AsWKB(ST_Difference(
-                ST_MakeValid(v1.{x_geom}),
-                ST_MakeValid(v2.{y_geom})))
-            AS {x_geom}
-            FROM {x_list$query_name} v1, {y_list$query_name} v2
-        ")
-    }
+                ST_MakeValid(v2.{y_geom})
+            )) AS {x_geom}
+        FROM 
+            {x_list$query_name} v1, 
+            {y_list$query_name} v2;
+    ")
     ## 4.2. retrieve results from the query
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
 
@@ -291,6 +275,5 @@ ddbs_difference <- function(x,
     ## return result
     feedback_query(quiet)
     return(data_sf)
-
 
 }
