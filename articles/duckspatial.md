@@ -94,18 +94,18 @@ result_sf <- ddbs_join(
 )
 
 head(result_sf)
-#> Simple feature collection with 6 features and 8 fields
+#> Simple feature collection with 6 features and 7 fields
 #> Geometry type: POINT
 #> Dimension:     XY
 #> Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591
 #> Geodetic CRS:  WGS 84
-#>     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date crs_duckspatial
-#> 1  708      AR Argentina       ARG Argentina  AR 2021-01-01       EPSG:4326
-#> 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01       EPSG:4326
-#> 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01       EPSG:4326
-#> 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01       EPSG:4326
-#> 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01       EPSG:4326
-#> 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01       EPSG:4326
+#>     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date
+#> 1  708      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01
 #>                      geometry
 #> 1 POINT (-72.75607 -50.15994)
 #> 2 POINT (-68.77194 -48.12303)
@@ -164,18 +164,18 @@ tbl <- ddbs_read_vector(
     )
 
 head(tbl)
-#> Simple feature collection with 6 features and 8 fields
+#> Simple feature collection with 6 features and 7 fields
 #> Geometry type: POINT
 #> Dimension:     XY
 #> Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591
 #> Geodetic CRS:  WGS 84
-#>     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date crs_duckspatial_1
-#> 1  708      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326
-#> 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326
-#> 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326
-#> 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326
-#> 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326
-#> 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01         EPSG:4326
+#>     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date
+#> 1  708      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01
+#> 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01
 #>                      geometry
 #> 1 POINT (-72.75607 -50.15994)
 #> 2 POINT (-68.77194 -48.12303)
