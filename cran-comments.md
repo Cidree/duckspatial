@@ -12,7 +12,7 @@
 * local Windows 11 Pro 22H2: 
 
 ```
-Duration: 27.5s
+Duration: 1m 52.5s
 
 0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 ```
