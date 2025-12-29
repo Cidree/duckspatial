@@ -74,6 +74,8 @@ reference:
   - ddbs_combine
   - ddbs_concave_hull
   - ddbs_convex_hull
+  - ddbs_exterior_ring
+  - ddbs_make_polygon
   - ddbs_make_valid
   - ddbs_simplify
   - ddbs_quadkey
