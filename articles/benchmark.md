@@ -172,10 +172,6 @@ df_bench_filter <- lapply(
     dplyr::bind_rows()
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 
 
 # calculate difference in performance
@@ -186,7 +182,7 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 55%
+In this example working with 1 million points, {duckspatial} was 61%
 faster and used 2 times less memory than {sf}. Not bad.
 
 plot

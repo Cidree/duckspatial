@@ -88,6 +88,10 @@ Modify and process individual geometries
   : Returns the concave hull enclosing the geometry
 - [`ddbs_convex_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_convex_hull.md)
   : Returns the convex hull enclosing the geometry
+- [`ddbs_exterior_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.md)
+  : Extracts the exterior ring of polygon geometries
+- [`ddbs_make_polygon()`](https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.md)
+  : Creates polygons from linestring geometries
 - [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md)
   : Make invalid geometries valid
 - [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md)

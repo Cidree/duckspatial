@@ -83,6 +83,12 @@
 - [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md):
   calculates quadkey tiles from point geometries
 
+- [`ddbs_exterior_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.md):
+  returns the exterior ring (shell) of a polygon geometry
+
+- [`ddbs_make_polygon()`](https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.md):
+  create a POLYGON from a LINESTRING shell
+
 - **Spatial predicates**: spatial predicates are all included in a
   function called
   [`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
