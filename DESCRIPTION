@@ -1,7 +1,7 @@
 Type: Package
 Package: duckspatial
 Title: R Interface to 'DuckDB' Database with Spatial Extension
-Version: 1.0.0
+Version: 0.2.0.999
 Authors@R: c(
     person("Adrián", "Cidre González", email = "adrian.cidre@gmail.com", role = c("aut", "cre")),
     person("Rafael H. M.", "Pereira", , "rafa.pereira.br@gmail.com", role = "aut",
