@@ -184,7 +184,7 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 62%
+In this example working with 1 million points, {duckspatial} was 64%
 faster and used 2 times less memory than {sf}. Not bad.
 
 plot

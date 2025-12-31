@@ -166,6 +166,17 @@ Check geometry validity
 - [`ddbs_is_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_is_valid.md)
   : Check if geometries are valid
 
+## Format Conversion
+
+Convert geometries to standard spatial formats
+
+- [`ddbs_as_text()`](https://cidree.github.io/duckspatial/reference/ddbs_as_text.md)
+  : Convert geometries to Well-Known Text (WKT) format
+- [`ddbs_as_wkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_wkb.md)
+  : Convert geometries to Well-Known Binary (WKB) format
+- [`ddbs_as_hexwkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_hexwkb.md)
+  : Convert geometries to hexadecimal Well-Known Binary (HEXWKB) format
+
 ## Spatial Extent and Boundaries
 
 Extract geometry bounds and envelopes

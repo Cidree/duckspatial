@@ -9,9 +9,9 @@ object or creates a new table in the database.
 ``` r
 ddbs_simplify(
   x,
+  tolerance,
   conn = NULL,
   name = NULL,
-  tolerance,
   crs = NULL,
   crs_column = "crs_duckspatial",
   overwrite = FALSE,
@@ -27,6 +27,11 @@ ddbs_simplify(
   name of a table with geometry column within the DuckDB database
   `conn`. Data is returned from this object.
 
+- tolerance:
+
+  Tolerance distance for simplification. Larger values result in more
+  simplified geometries.
+
 - conn:
 
   A connection object to a DuckDB database. If `NULL`, the function runs
@@ -38,11 +43,6 @@ ddbs_simplify(
   a character string of length two specifying the schema and table
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
-
-- tolerance:
-
-  Tolerance distance for simplification. Larger values result in more
-  simplified geometries.
 
 - crs:
 
@@ -89,7 +89,7 @@ countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duck
 ddbs_write_vector(conn, countries_sf, "countries")
 
 ## simplify with tolerance of 0.01
-ddbs_simplify("countries", conn, tolerance = 0.01)
+ddbs_simplify("countries", tolerance = 0.01, conn)
 
 ## simplify without using a connection
 ddbs_simplify(countries_sf, tolerance = 0.01)

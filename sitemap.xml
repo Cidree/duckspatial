@@ -13,6 +13,9 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf_wkb.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_area.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_hexwkb.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_text.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_wkb.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_bbox.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_boundary.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_buffer.html</loc></url>

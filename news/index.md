@@ -89,6 +89,12 @@
 - [`ddbs_make_polygon()`](https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.md):
   create a POLYGON from a LINESTRING shell
 
+- Conversion of geometries to standard spatial formats:
+  [`ddbs_as_text()`](https://cidree.github.io/duckspatial/reference/ddbs_as_text.md),
+  [`ddbs_as_wkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_wkb.md)
+  and
+  [`ddbs_as_hexwkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_hexwkb.md).
+
 - **Spatial predicates**: spatial predicates are all included in a
   function called
   [`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
