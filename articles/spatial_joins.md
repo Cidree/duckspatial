@@ -16,6 +16,8 @@ sample data:
 
 ``` r
 library(duckspatial)
+#> Important: 'crs_column' and 'crs' arguments are deprecated and will be removed in the next version.
+#> If possible, use the default values of these arguments to avoid future issues.
 # library(mapview)
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE

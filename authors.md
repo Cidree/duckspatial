@@ -3,7 +3,7 @@
 ## Authors
 
 - **[Adrián Cidre González](https://adrian-cidre.com/)**. Author,
-  maintainer.
+  maintainer. [](https://orcid.org/0000-0002-3310-3052)
 
 - **[Rafael H. M. Pereira](https://www.urbandemographics.org/about/)**.
   Author. [](https://orcid.org/0000-0003-2125-7465)
