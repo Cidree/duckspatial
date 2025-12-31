@@ -87,6 +87,13 @@ reference:
   - ddbs_is_simple
   - ddbs_is_valid
 
+- title: Format Conversion
+  desc: Convert geometries to standard spatial formats
+  contents:
+  - ddbs_as_text
+  - ddbs_as_wkb
+  - ddbs_as_hexwkb
+
 - title: Spatial Extent and Boundaries
   desc: Extract geometry bounds and envelopes
   contents:

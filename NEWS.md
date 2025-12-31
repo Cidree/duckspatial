@@ -52,6 +52,8 @@
 
 * `ddbs_make_polygon()`: create a POLYGON from a LINESTRING shell
 
+* Conversion of geometries to standard spatial formats: `ddbs_as_text()`, `ddbs_as_wkb()` and `ddbs_as_hexwkb()`.
+
 * **Spatial predicates**: spatial predicates are all included in a function called `ddbs_predicate()`, where the user can specify the spatial predicate. Another option, it's to use the spatial predicate function, such as `ddbs_intersects()`, `ddbs_crosses()`, `ddbs_touches()`, etc.
 
 ## MINOR CHANGES
