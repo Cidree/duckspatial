@@ -6,9 +6,9 @@
 \usage{
 ddbs_simplify(
   x,
+  tolerance,
   conn = NULL,
   name = NULL,
-  tolerance,
   crs = NULL,
   crs_column = "crs_duckspatial",
   overwrite = FALSE,
@@ -20,6 +20,8 @@ ddbs_simplify(
 name of a table with geometry column within the DuckDB database \code{conn}.
 Data is returned from this object.}
 
+\item{tolerance}{Tolerance distance for simplification. Larger values result in more simplified geometries.}
+
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
@@ -27,8 +29,6 @@ runs on a temporary DuckDB database.}
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{tolerance}{Tolerance distance for simplification. Larger values result in more simplified geometries.}
 
 \item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
@@ -66,7 +66,7 @@ countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duck
 ddbs_write_vector(conn, countries_sf, "countries")
 
 ## simplify with tolerance of 0.01
-ddbs_simplify("countries", conn, tolerance = 0.01)
+ddbs_simplify("countries", tolerance = 0.01, conn)
 
 ## simplify without using a connection
 ddbs_simplify(countries_sf, tolerance = 0.01)

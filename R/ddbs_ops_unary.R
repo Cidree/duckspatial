@@ -656,16 +656,16 @@ ddbs_is_simple <- function(
 #' ddbs_write_vector(conn, countries_sf, "countries")
 #'
 #' ## simplify with tolerance of 0.01
-#' ddbs_simplify("countries", conn, tolerance = 0.01)
+#' ddbs_simplify("countries", tolerance = 0.01, conn)
 #'
 #' ## simplify without using a connection
 #' ddbs_simplify(countries_sf, tolerance = 0.01)
 #' }
 ddbs_simplify <- function(
     x,
+    tolerance,
     conn = NULL,
     name = NULL,
-    tolerance,
     crs = NULL,
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
@@ -679,9 +679,7 @@ ddbs_simplify <- function(
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x)
-    if (missing(tolerance)) {
-        cli::cli_abort("tolerance parameter is required")
-    }
+    if (missing(tolerance)) cli::cli_abort("tolerance parameter is required")
 
     # 1. Manage connection to DB
         ## 1.1. check if connection is provided, otherwise create a temporary connection
