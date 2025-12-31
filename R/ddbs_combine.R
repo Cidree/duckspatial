@@ -62,6 +62,8 @@ ddbs_union <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -374,6 +376,8 @@ ddbs_combine <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")

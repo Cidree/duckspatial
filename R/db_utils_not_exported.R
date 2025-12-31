@@ -403,3 +403,28 @@ crs_to_sql <- function(x) {  # nocov start
 
   return("NULL")
 } # nocov end
+
+
+
+deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
+
+  caller <- deparse(sys.call(-1)[[1]])
+  
+  if (crs_column != "crs_duckspatial") {
+    lifecycle::deprecate_warn(
+      when    = "0.9.0",
+      what    = paste0(caller, "(crs_column)"),
+      details = "Support for CRS will change in the next version and the argument won't be necessary in any function of `duckspatial`.",
+      id      = "crs_column"
+    )
+  }
+  
+  if (!is.null(crs)) {
+    lifecycle::deprecate_warn(
+      when    = "0.9.0",
+      what    = paste0(caller, "(crs)"),
+      details = "Support for CRS will change in the next version and the argument won't be necessary in any function of `duckspatial`.",
+      id      = "crs"
+    )
+  }
+}

@@ -76,6 +76,8 @@ ddbs_quadkey <- function(
   overwrite = FALSE,
   quiet = FALSE
 ) {
+
+  deprecate_crs(crs_column, crs)
   
   ## 0. Handle errors
   assert_xy(x, "x")

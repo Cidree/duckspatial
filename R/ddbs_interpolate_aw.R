@@ -155,6 +155,8 @@ ddbs_interpolate_aw <- function(
     quiet = FALSE
 ) {
 
+  deprecate_crs(crs_column, crs)
+
   # 0. Handle inputs and errors
   assert_xy(target, "target")
   assert_xy(source, "source")

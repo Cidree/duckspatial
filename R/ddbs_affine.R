@@ -62,6 +62,8 @@ ddbs_rotate <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -260,6 +262,8 @@ ddbs_rotate_3d <- function(
     overwrite = FALSE,
     quiet = FALSE) {
 
+    deprecate_crs(crs_column, crs)
+
     ## 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
@@ -392,6 +396,8 @@ ddbs_shift <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -523,6 +529,8 @@ ddbs_flip <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -706,6 +714,8 @@ ddbs_scale <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -869,6 +879,8 @@ ddbs_shear <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")

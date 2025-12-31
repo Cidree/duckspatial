@@ -56,6 +56,8 @@ ddbs_filter <- function(
     distance = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")

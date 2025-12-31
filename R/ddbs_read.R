@@ -51,6 +51,8 @@ ddbs_read_vector <- function(
     crs_column = "crs_duckspatial",
     clauses = NULL,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     # 1. Checks
     ## Check if connection is correct

@@ -48,6 +48,8 @@ ddbs_buffer <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -155,13 +157,16 @@ ddbs_buffer <- function(
 #' ## centroid without using a connection
 #' ddbs_centroid(argentina_sf)
 #' }
-ddbs_centroid <- function(x,
-                        conn = NULL,
-                        name = NULL,
-                        crs = NULL,
-                        crs_column = "crs_duckspatial",
-                        overwrite = FALSE,
-                        quiet     = FALSE) {
+ddbs_centroid <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet     = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -281,6 +286,8 @@ ddbs_is_valid <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -410,6 +417,8 @@ ddbs_make_valid <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -528,6 +537,8 @@ ddbs_is_simple <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -659,6 +670,8 @@ ddbs_simplify <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -782,6 +795,8 @@ ddbs_exterior_ring <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -900,6 +915,8 @@ ddbs_make_polygon <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -1044,6 +1061,8 @@ ddbs_concave_hull <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -1173,6 +1192,8 @@ ddbs_convex_hull <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")

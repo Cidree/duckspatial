@@ -40,6 +40,8 @@ ddbs_boundary <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -173,6 +175,8 @@ ddbs_envelope <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -314,14 +318,17 @@ ddbs_envelope <- function(
 #'
 #' DBI::dbReadTable(conn, "argentina_bbox")
 #'
-ddbs_bbox <- function(x,
-                      by_feature = FALSE,
-                      conn = NULL,
-                      name = NULL,
-                      crs = NULL,
-                      crs_column = "crs_duckspatial",
-                      overwrite = FALSE,
-                      quiet = FALSE) {
+ddbs_bbox <- function(
+    x,
+    by_feature = FALSE,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")

@@ -53,6 +53,8 @@ ddbs_area <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -190,6 +192,8 @@ ddbs_length <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+  
+    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")

@@ -47,6 +47,8 @@ ddbs_intersection <- function(
     crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -174,14 +176,17 @@ ddbs_intersection <- function(
 #' ## difference without a connection
 #' ddbs_difference(countries_sf, argentina_sf)
 #' }
-ddbs_difference <- function(x,
-                            y,
-                            conn = NULL,
-                            name = NULL,
-                            crs = NULL,
-                            crs_column = "crs_duckspatial",
-                            overwrite = FALSE,
-                            quiet = FALSE) {
+ddbs_difference <- function(
+    x,
+    y,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")
