@@ -1,0 +1,114 @@
+#' sf methods for duckspatial_df
+#'
+#' These methods provide sf compatibility for duckspatial_df objects,
+#' allowing them to work with sf functions like st_crs(), st_geometry(), etc.
+#'
+#' @name duckspatial_df_sf
+#' @keywords internal
+NULL
+
+#' @export
+#' @importFrom sf st_crs
+st_crs.duckspatial_df <- function(x, ...) {
+  attr(x, "crs") %||% sf::st_crs(NA)
+}
+
+#' @export
+#' @importFrom sf st_geometry
+st_geometry.duckspatial_df <- function(x, ...) {
+  geom_col <- attr(x, "sf_column") %||% "geometry"
+  
+  # Access the geometry column - this triggers ALTREP materialization
+  geom_data <- x[[geom_col]]
+  
+  if (is.null(geom_data)) {
+    cli::cli_abort("Geometry column {.field {geom_col}} not found in data.")
+  }
+  
+  # Convert WKB to sfc using the helper from db_utils_not_exported.R
+  convert_wkb_to_sfc(geom_data, st_crs(x))
+}
+
+#' Convert WKB data to sfc
+#' @keywords internal
+convert_wkb_to_sfc <- function(geom_data, crs) {
+  if (inherits(geom_data, "sfc")) return(geom_data)
+  
+  # Use wk for fast conversion if possible
+  tryCatch({
+    attributes(geom_data) <- NULL
+    wkb_obj <- wk::new_wk_wkb(geom_data)
+    sf::st_as_sfc(wkb_obj, crs = crs)
+  }, error = function(e) {
+    # Fallback to slow path
+    sf::st_as_sfc(structure(geom_data, class = "WKB"), crs = crs)
+  })
+}
+
+#' @export
+#' @importFrom sf st_bbox
+st_bbox.duckspatial_df <- function(obj, ...) {
+  geom_col <- attr(obj, "sf_column") %||% "geometry"
+  crs <- st_crs(obj)
+  
+
+  # Try to use DuckDB's ST_Extent for efficiency
+  tryCatch({
+    # Get the duckplyr relation and execute extent query
+    # For now, fall back to materializing geometry
+    geom <- sf::st_geometry(obj)
+    sf::st_bbox(geom)
+  }, error = function(e) {
+    # If anything fails, return NA bbox
+    sf::st_bbox(c(xmin = NA_real_, ymin = NA_real_, 
+                  xmax = NA_real_, ymax = NA_real_), 
+                crs = crs)
+  })
+}
+
+#' @export
+#' @importFrom sf st_as_sf
+st_as_sf.duckspatial_df <- function(x, ...) {
+  ddbs_collect(x, ...)
+}
+
+#' @export
+print.duckspatial_df <- function(x, ..., n = 10) {
+  geom_col <- attr(x, "sf_column") %||% "geometry"
+  crs <- st_crs(x)
+  
+  cat("# A duckspatial lazy spatial table\n")
+  cat("# CRS:", format(crs$input), "\n")
+  cat("# Geometry column:", geom_col, "\n")
+  cat("#\n")
+  cat("# Data backed by duckplyr (ALTREP lazy evaluation)\n")
+  cat("# Use ddbs_collect() or st_as_sf() to materialize to sf.\n")
+  cat("#\n")
+  
+  # Print a preview using duckplyr's print
+  # We need to call the parent class print
+  tryCatch({
+    # Get preview without triggering full materialization
+    # duckplyr handles this well
+    class(x) <- setdiff(class(x), "duckspatial_df")
+    print(x, n = n)
+  }, error = function(e) {
+    cat("# (Preview unavailable)\n")
+  })
+  
+  invisible(x)
+}
+
+#' Get the geometry column name
+#' @param x A duckspatial_df object
+#' @return Character string with geometry column name
+#' @export
+ddbs_geom_col <- function(x) {
+  if (!is_duckspatial_df(x)) {
+    if (inherits(x, "sf")) {
+      return(attr(x, "sf_column"))
+    }
+    cli::cli_abort("{.arg x} must be a duckspatial_df or sf object.")
+  }
+  attr(x, "sf_column") %||% "geometry"
+}
