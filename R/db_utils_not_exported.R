@@ -43,12 +43,13 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NU
 
     # collapse columns with quoted names
     if (isTRUE(collapse)) {
-      if (is.null(table_id)) {
-        other_cols <- if (length(other_cols) > 0) paste0('"', other_cols, '",', collapse = ' ') else ""
+      if (length(other_cols) > 0) {
+        prefix <- if (is.null(table_id)) "" else paste0(table_id, ".")
+        other_cols <- paste0(prefix, '"', other_cols, '"', collapse = ', ')
+        other_cols <- paste0(other_cols, ", ") # trailing comma for SELECT {rest} something
       } else {
-        other_cols <- if (length(other_cols) > 0) paste0(table_id, '."', other_cols, '",', collapse = ' ') else ""
+        other_cols <- ""
       }
-        
     }
 
     return(other_cols)
