@@ -189,7 +189,20 @@ ddbs_crs.character <- function(x, conn, crs_column = "crs_duckspatial", ...) {
         query_name <- name
     }
     ## Check if table name exists in Tables OR Arrow Views
-    table_exists <- table_name %in% DBI::dbListTables(conn)
+    # Use SQL check to catch temporary views which might not show up in dbListTables
+    check_query <- glue::glue("
+      SELECT 1 FROM information_schema.tables 
+      WHERE table_name = '{table_name}' 
+      UNION 
+      SELECT 1 FROM duckdb_views() 
+      WHERE view_name = '{table_name}'
+      LIMIT 1
+    ")
+    
+    table_exists <- tryCatch({
+      nrow(DBI::dbGetQuery(conn, check_query)) > 0
+    }, error = function(e) FALSE)
+    
     arrow_exists <- FALSE
 
     if (!table_exists) {
