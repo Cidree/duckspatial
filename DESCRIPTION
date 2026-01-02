@@ -11,7 +11,7 @@ Authors@R: c(
            comment = c(ORCID = "0000-0001-6690-5345"))
   )
 Description: Fast & memory-efficient functions to analyze and manipulate
-    large spatial data data sets. It leverages the fast analytical
+    large spatial data sets. It leverages the fast analytical
     capabilities of DuckDB and its spatial extension (see
     https://duckdb.org/docs/stable/core_extensions/spatial/overview) while
     maintaining compatibility with R’s spatial data ecosystem to work with
