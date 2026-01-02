@@ -23,7 +23,7 @@
 #'
 #' # disconnect from db
 #' duckdb::dbDisconnect(conn)
-ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
+ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial") {
 
     # 1. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
@@ -31,25 +31,25 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
     # 2. Checks
     ## 2.1. Check connection
     dbConnCheck(conn)
-    ## 2.2. Check if spatial extension is available
-    if (!("spatial" %in% ext$extension_name))
-        cli::cli_abort("spatial extension is not available")
+    ## 2.2. Check if extension is available
+    if (!(extension %in% ext$extension_name))
+        cli::cli_abort("{extension} extension is not available")
     ## 2.3. Check if it's installed
-    spatial_ext <- ext[ext$extension_name == "spatial", ]
-    if (spatial_ext$installed && !upgrade) {
+    target_ext <- ext[ext$extension_name == extension, ]
+    if (target_ext$installed && !upgrade) {
 
         if (isFALSE(quiet)) {
-            cli::cli_alert_info("spatial extension version <{spatial_ext$extension_version}> is already installed in this database")
+            cli::cli_alert_info("{extension} extension version <{target_ext$extension_version}> is already installed in this database")
         }
 
         return(invisible(TRUE))
     }
 
     # 3. Install extension
-    suppressMessages(DBI::dbExecute(conn, "INSTALL spatial;"))
+    suppressMessages(DBI::dbExecute(conn, glue::glue("INSTALL {extension};")))
 
     if (isFALSE(quiet)) {
-        cli::cli_alert_success("Spatial extension installed")
+        cli::cli_alert_success("{extension} extension installed")
     }
 
     return(invisible(TRUE))
@@ -64,6 +64,7 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 #'
 #' @template conn
 #' @template quiet
+#' @param extension name of the extension to load, default is "spatial"
 #'
 #' @returns TRUE (invisibly) for successful installation
 #' @export
@@ -82,7 +83,7 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE) {
 #'
 #' ## disconnect from db
 #' duckdb::dbDisconnect(conn)
-ddbs_load <- function(conn, quiet = FALSE) {
+ddbs_load <- function(conn, quiet = FALSE, extension = "spatial") {
 
     # 1. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
@@ -90,17 +91,17 @@ ddbs_load <- function(conn, quiet = FALSE) {
     # 2. Checks
     ## 2.1. Check connection
     dbConnCheck(conn)
-    ## 2.2. Check if spatial extension is installed
-    spatial_ext <- ext[ext$extension_name == "spatial", ]
-    if (!spatial_ext$installed)
-        cli::cli_abort("spatial extension is not installed, please use `ddbs_install()`")
+    ## 2.2. Check if extension is installed
+    target_ext <- ext[ext$extension_name == extension, ]
+    if (!target_ext$installed)
+        cli::cli_abort("{extension} extension is not installed, please use `ddbs_install(extension = '{extension}')`")
 
-    # 3. Load spatial extension
-    if (isFALSE(spatial_ext$loaded)) suppressMessages(DBI::dbExecute(conn, "LOAD spatial;"))
+    # 3. Load extension
+    if (isFALSE(target_ext$loaded)) suppressMessages(DBI::dbExecute(conn, glue::glue("LOAD {extension};")))
 
 
     if (isFALSE(quiet)) {
-        cli::cli_alert_success("Spatial extension loaded")
+        cli::cli_alert_success("{extension} extension loaded")
     }
 
 }

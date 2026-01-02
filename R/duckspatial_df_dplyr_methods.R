@@ -110,12 +110,44 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
       # Let's use dbplyr's translation if available, or raw sql.
       # ST_AsWKB is standard.
       
-      # NOTE: We use dplyr::mutate to overwrite the geometry column with its WKB representation
+      # Check column type in the lazy table
+      # dbplyr doesn't easily expose types of lazy query columns without fetch.
+      # But we can check via dbGetQuery limit 0 or DESCRIBE.
       conn <- dbplyr::remote_con(x_lazy)
-      x_lazy <- dplyr::mutate(
-          x_lazy, 
-           !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB(CAST({DBI::dbQuoteIdentifier(conn, geom_col)} AS GEOMETRY))"))
-      )
+      
+      # We construct the query for this table
+      # dbplyr::sql_render might be expensive, but safe.
+      query_sql <- dbplyr::sql_render(x_lazy)
+      
+      # Using tryCatch to be safe
+      is_compatible <- tryCatch({
+          # Check type of geom_col
+          # DESCRIBE (query) is standard DuckDB
+          desc <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_sql}"))
+          # Match geom_col
+          col_info <- desc[desc$column_name == geom_col, ]
+          if (nrow(col_info) == 0) FALSE # Should not happen if col exists
+          else {
+              ctype <- if ("column_type" %in% names(col_info)) col_info$column_type else col_info$data_type
+              # We only wrap ST_AsWKB if it is GEOMETRY or BLOB/WKB_BLOB
+              grepl("GEOMETRY|BLOB", ctype, ignore.case = TRUE)
+          }
+      }, error = function(e) {
+          # If describe fails, assume safe to wrap? Or unsafe?
+          # Default to TRUE (wrap) was old behavior, but better to be safe now.
+          # If we can't describe, maybe just wrap and let it fail?
+          # Actually, wrapping caused the crash. So maybe default FALSE?
+          # But standard use case is GEOMETRY.
+          # Let's verify if we can check existence of ST_AsWKB support?
+          TRUE 
+      })
+
+      if (is_compatible) {
+           x_lazy <- dplyr::mutate(
+               x_lazy, 
+                !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB({DBI::dbQuoteIdentifier(conn, geom_col)})"))
+           )
+      }
   }
   
   # Collect with dbplyr

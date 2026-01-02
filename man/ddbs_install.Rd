@@ -4,7 +4,7 @@
 \alias{ddbs_install}
 \title{Checks and installs the Spatial extension}
 \usage{
-ddbs_install(conn, upgrade = FALSE, quiet = FALSE)
+ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 }
 \arguments{
 \item{conn}{A connection object to a DuckDB database}

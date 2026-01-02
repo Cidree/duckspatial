@@ -8,66 +8,75 @@ ddbs_open_dataset(
   path,
   crs = NULL,
   layer = NULL,
-  geom_col = "geom",
+  geom_col = NULL,
   conn = NULL,
-  spatial_filter = NULL,
-  spatial_filter_box = NULL
+  parquet_binary_as_string = NULL,
+  parquet_file_row_number = NULL,
+  parquet_filename = NULL,
+  parquet_hive_partitioning = NULL,
+  parquet_union_by_name = NULL,
+  parquet_encryption_config = NULL,
+  read_shp_mode = c("ST_ReadSHP", "GDAL"),
+  read_osm_mode = c("GDAL", "ST_ReadOSM"),
+  shp_encoding = NULL,
+  gdal_spatial_filter = NULL,
+  gdal_spatial_filter_box = NULL,
+  gdal_keep_wkb = NULL,
+  gdal_max_batch_size = NULL,
+  gdal_sequential_layer_scan = NULL,
+  gdal_sibling_files = NULL,
+  gdal_allowed_drivers = NULL,
+  gdal_open_options = NULL
 )
 }
 \arguments{
-\item{path}{Path to spatial file. Supports GeoJSON, GeoPackage, Shapefile,
-FlatGeoBuf, and other GDAL-supported formats.}
+\item{path}{Path to spatial file. Supports Parquet (\code{.parquet}, with optional GeoParquet metadata),
+GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, and other GDAL-supported formats.}
 
 \item{crs}{Coordinate reference system. Can be an EPSG code (e.g., 4326),
 a CRS string, or an \code{sf} crs object. If \code{NULL} (default),
-attempts to auto-detect from the file using DuckDB's ST_Read_Meta.}
+attempts to auto-detect from the file.}
 
-\item{layer}{Layer name or index to read. Default is NULL (first layer).}
+\item{layer}{Layer name or index to read (ST_Read only). Default is NULL (first layer).}
 
-\item{geom_col}{Name of the geometry column. Default is \code{"geom"} which
-is what DuckDB's ST_Read returns.}
+\item{geom_col}{Name of the geometry column. Default is \code{NULL}, which attempts
+auto-detection.}
 
 \item{conn}{DuckDB connection to use. If NULL, uses the default connection.}
 
-\item{spatial_filter}{Optional WKB geometry to filter spatially.}
+\item{parquet_binary_as_string}{Logical. (Parquet) If TRUE, load binary columns as strings.}
 
-\item{spatial_filter_box}{Optional bounding box (as BOX_2D) to filter spatially.}
+\item{parquet_file_row_number}{Logical. (Parquet) If TRUE, include a \code{file_row_number} column.}
+
+\item{parquet_filename}{Logical. (Parquet) If TRUE, include a \code{filename} column.}
+
+\item{parquet_hive_partitioning}{Logical. (Parquet) If TRUE, interpret path as Hive partitioned.}
+
+\item{parquet_union_by_name}{Logical. (Parquet) If TRUE, unify columns by name.}
+
+\item{parquet_encryption_config}{List/Struct. (Parquet) Encryption configuration (advanced).}
+
+\item{gdal_spatial_filter}{Optional WKB geometry (as raw vector or hex string) to filter spatially (ST_Read only).}
+
+\item{gdal_spatial_filter_box}{Optional bounding box (as numeric vector \code{c(minx, miny, maxx, maxy)})
+(ST_Read only).}
+
+\item{gdal_keep_wkb}{Logical. If TRUE, return WKB blobs instead of GEOMETRY type (ST_Read only).}
+
+\item{gdal_max_batch_size}{Integer. Maximum batch size for reading (ST_Read only).}
+
+\item{gdal_sequential_layer_scan}{Logical. If TRUE, scan layers sequentially (ST_Read only).}
+
+\item{gdal_sibling_files}{Character vector. List of sibling files (ST_Read only).}
+
+\item{gdal_allowed_drivers}{Character vector. List of allowed GDAL drivers (ST_Read only).}
+
+\item{gdal_open_options}{Character vector. Driver-specific open options (ST_Read only).}
 }
 \value{
-A \code{duckspatial_df} object - a lazy spatial data frame backed
-by DuckDB via dbplyr.
+A \code{duckspatial_df} object.
 }
 \description{
-Reads spatial data directly from disk using DuckDB's spatial extension
-and returns a \code{duckspatial_df} object for lazy processing.
-}
-\details{
-This function uses DuckDB's native \code{ST_Read} function to read spatial
-data directly, bypassing the need for the sf package to load data. CRS is
-automatically detected from the file metadata using \code{ST_Read_Meta}.
-
-Supported formats include: ESRI Shapefile (.shp), GeoPackage (.gpkg),
-GeoJSON (.json, .geojson), FlatGeoBuf (.fgb), and others supported by GDAL.
-}
-\examples{
-\dontrun{
-library(duckspatial)
-
-# Read shapefile - CRS auto-detected
-nc <- ddbs_open_dataset(system.file("shape/nc.shp", package = "sf"))
-print(nc)
-
-# Read GeoJSON
-countries <- ddbs_open_dataset(
-  system.file("spatial/countries.geojson", package = "duckspatial")
-)
-
-# Use with duckspatial functions
-result <- countries |>
-  ddbs_buffer(distance = 0.1) |>
-  ddbs_collect()
-}
-}
-\seealso{
-\code{\link{as_duckspatial_df}}, \code{\link{ddbs_collect}}
+Reads spatial data directly from disk using DuckDB's spatial extension or
+native Parquet reader, returning a \code{duckspatial_df} object for lazy processing.
 }

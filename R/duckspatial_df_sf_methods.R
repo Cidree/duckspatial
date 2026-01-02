@@ -128,7 +128,7 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   crs <- st_crs(x)
   
   cat("# A duckspatial lazy spatial table\n")
-  cat("# CRS:", format(crs$input), "\n")
+  cat("# CRS:", ddbs_format_crs(crs), "\n")
   cat("# Geometry column:", geom_col, "\n")
   cat("#\n")
   cat("# Data backed by DuckDB (dbplyr lazy evaluation)\n")
@@ -147,6 +147,47 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   })
   
   invisible(x)
+}
+
+#' Format a CRS object compactly for printing
+#' @param crs An sf crs object
+#' @return A character string
+#' @keywords internal
+ddbs_format_crs <- function(crs) {
+  if (is.na(crs)) return("NA")
+  
+  # 1. If EPSG code is available, use it (shortest, most recognizable)
+  if (!is.null(crs$epsg) && !is.na(crs$epsg)) {
+    return(paste0("EPSG:", crs$epsg))
+  }
+  
+  # 2. Try to extract ID["Authority", "Code"] from WKT if EPSG is missing
+  # This often covers well-known CRSs that aren't fully resolved in the object
+  wkt <- crs$wkt
+  if (!is.null(wkt)) {
+    # Match ID at the end of the WKT block, e.g. ID["OGC","CRS84"]]
+    id_match <- regmatches(wkt, regexec('ID\\["([A-Za-z0-9_]+)",\\s*"?([A-Za-z0-9_]+)"?\\]\\]$', wkt))
+    if (length(id_match[[1]]) == 3) {
+      return(paste0(id_match[[1]][2], ":", id_match[[1]][3]))
+    }
+  }
+
+  # 3. Check for OGC:CRS84 specifically if it wasn't caught
+  if (!is.null(crs$input) && crs$input == "OGC:CRS84") return("OGC:CRS84")
+
+  # 4. If input is short and not JSON, use it
+  input <- crs$input
+  if (!is.null(input) && nchar(input) > 0 && nchar(input) < 50 && !grepl("^\\{", input)) {
+    return(input)
+  }
+  
+  # 5. Fallback to Name if available
+  if (!is.null(crs$Name) && nchar(crs$Name) > 0) return(crs$Name)
+  
+  # 6. Absolute fallback: truncated input or just 'custom'
+  if (is.null(input)) return("unknown")
+  if (nchar(input) > 50) return(paste0(substr(input, 1, 47), "..."))
+  input
 }
 
 #' Get the geometry column name
