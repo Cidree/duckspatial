@@ -15,18 +15,18 @@ st_crs.duckspatial_df <- function(x, ...) {
 
 #' @export
 #' @importFrom sf st_geometry
-st_geometry.duckspatial_df <- function(x, ...) {
-  geom_col <- attr(x, "sf_column") %||% "geometry"
+st_geometry.duckspatial_df <- function(obj, ...) {
+  geom_col <- attr(obj, "sf_column") %||% "geometry"
   
-  # Access the geometry column - this triggers ALTREP materialization
-  geom_data <- x[[geom_col]]
+  # Access the geometry column by materializing it from DuckDB
+  geom_data <- dplyr::pull(obj, geom_col)
   
   if (is.null(geom_data)) {
     cli::cli_abort("Geometry column {.field {geom_col}} not found in data.")
   }
   
   # Convert WKB to sfc using the helper from db_utils_not_exported.R
-  convert_wkb_to_sfc(geom_data, st_crs(x))
+  convert_wkb_to_sfc(geom_data, st_crs(obj))
 }
 
 #' Convert WKB data to sfc

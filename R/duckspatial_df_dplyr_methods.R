@@ -54,6 +54,7 @@ dplyr_reconstruct.duckspatial_df <- function(data, template) {
 #' @return Collected data in the specified format
 #' @export
 #' @importFrom dplyr collect
+#' @importFrom rlang :=
 collect.duckspatial_df <- function(x, ..., as = c("sf", "tibble", "raw", "geoarrow")) {
   as <- match.arg(as)
   geom_col <- attr(x, "sf_column") %||% "geom"
@@ -106,7 +107,7 @@ collect.duckspatial_df <- function(x, ..., as = c("sf", "tibble", "raw", "geoarr
       conn <- dbplyr::remote_con(x_lazy)
       x_lazy <- dplyr::mutate(
           x_lazy, 
-           !!rlang::sym(geom_col) := sql(glue::glue("ST_AsWKB(CAST({DBI::dbQuoteIdentifier(conn, geom_col)} AS GEOMETRY))"))
+           !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB(CAST({DBI::dbQuoteIdentifier(conn, geom_col)} AS GEOMETRY))"))
       )
   }
   

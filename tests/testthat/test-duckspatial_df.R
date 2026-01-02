@@ -302,3 +302,64 @@ test_that("inner_join.duckspatial_df preserves spatial attributes", {
   expect_equal(attr(result, "crs"), attr(nc_lazy, "crs"))
   expect_equal(attr(result, "sf_column"), attr(nc_lazy, "sf_column"))
 })
+
+test_that("st_geometry.duckspatial_df works correctly", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+  
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn))
+  
+  nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  
+  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  
+  # Access geometry
+  geom <- sf::st_geometry(nc_lazy)
+  
+  expect_s3_class(geom, "sfc")
+  expect_equal(length(geom), nrow(nc_sf))
+  expect_equal(sf::st_crs(geom), sf::st_crs(nc_sf))
+})
+
+test_that("st_bbox.duckspatial_df works correctly", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+  
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn))
+  
+  nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  
+  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  
+  bbox <- sf::st_bbox(nc_lazy)
+  expect_s3_class(bbox, "bbox")
+  # Compare with original bbox
+  bbox_orig <- sf::st_bbox(nc_sf)
+  expect_equal(as.numeric(bbox), as.numeric(bbox_orig))
+})
+
+test_that("st_as_sf.duckspatial_df works correctly", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+  
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn))
+  
+  nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  
+  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  
+  result_sf <- sf::st_as_sf(nc_lazy)
+  
+  expect_s3_class(result_sf, "sf")
+  expect_s3_class(result_sf, "data.frame")
+  expect_equal(nrow(result_sf), nrow(nc_sf))
+})
