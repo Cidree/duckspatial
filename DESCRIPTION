@@ -34,6 +34,7 @@ Imports:
     lifecycle,
     rlang,
     sf,
+    tibble,
     uuid,
     wk
 Suggests:
