@@ -85,6 +85,20 @@ ddbs_filter <- function(
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x, y)
 
+    # Pre-extract CRS (before y might be converted to character)
+    crs_x <- attr(x, "crs")
+    crs_y <- attr(y, "crs")
+    
+    # Try auto-detection for tbl_duckdb_connection if CRS is NULL
+    if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
+       crs_x <- suppressWarnings(ddbs_crs(x))
+       if (is.na(crs_x)) crs_x <- NULL
+    }
+    if (is.null(crs_y) && inherits(y, "tbl_duckdb_connection")) {
+       crs_y <- suppressWarnings(ddbs_crs(y))
+       if (is.na(crs_y)) crs_y <- NULL
+    }
+
     #1. Manage connection to DB
     ## 1.1. Extract connections from inputs
     conn_x <- get_conn_from_input(x)
@@ -138,19 +152,7 @@ ddbs_filter <- function(
     x_list <- get_query_list(x, target_conn)
     y_list <- get_query_list(y, target_conn)
     
-    # Check CRS from attributes if available (avoids DB lookup for lazy views)
-    crs_x <- attr(x, "crs")
-    crs_y <- attr(y, "crs")
-    
-    # Try auto-detection for tbl_duckdb_connection if CRS is NULL
-    if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
-      crs_x <- suppressWarnings(ddbs_crs(x))
-      if (is.na(crs_x)) crs_x <- NULL
-    }
-    if (is.null(crs_y) && inherits(y, "tbl_duckdb_connection")) {
-      crs_y <- suppressWarnings(ddbs_crs(y))
-      if (is.na(crs_y)) crs_y <- NULL
-    }
+    # CRS already extracted at start of function
     
     if (!is.null(crs_x) && !is.null(crs_y)) {
        if (!crs_equal(crs_x, crs_y)) {

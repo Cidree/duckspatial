@@ -95,4 +95,11 @@ test_that("ddbs_join works with mixed inputs and cross-connection", {
   # Collect to verify
   res_df <- collect(res)
   expect_s3_class(res_df, "sf")
+  
+  # Test with function predicate (Regression check)
+   expect_warning(
+    res_func <- ddbs_join(p_lazy1, c_lazy2, join = sf::st_intersects),
+    "different DuckDB connections"
+  )
+  expect_s3_class(res_func, "duckspatial_df")
 })
