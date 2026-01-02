@@ -12,13 +12,19 @@ ddbs_join(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
 }
 \arguments{
-\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
+\item{x}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}
 Data is returned from this object.}
 
 \item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
@@ -42,6 +48,16 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
+\item{output}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+\item \code{"tibble"}: Eagerly collected tibble without geometry
+}
+Can be set globally via \code{options(duckspatial.output_type = "...")} or
+per-function via this argument. Per-function overrides global setting.
+See \code{\link{ddbs_options}} for details.}
+
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
@@ -49,7 +65,13 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-an sf object or TRUE (invisibly) for table creation
+Depends on the \code{output} argument:
+\itemize{
+\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected \code{sf} object in R memory.
+\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
+}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Performs spatial joins of two geometries, and returns a \code{sf} object
@@ -78,52 +100,56 @@ most commonly used ones, taking two geometries a and b:
 }
 \examples{
 \dontrun{
-# load packages
+# RECOMMENDED: Efficient lazy workflow using ddbs_open_dataset
 library(duckspatial)
-library(sf)
 
-# read polygons data
-countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+# Load data directly as lazy spatial data frames (CRS auto-detected)
+countries <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", package = "duckspatial")
+)
 
-# create points data
+# Create random points
 n <- 100
-points_sf <- data.frame(
+points <- data.frame(
     id = 1:n,
     x = runif(n, min = -180, max = 180),
     y = runif(n, min = -90, max = 90)
-) |>
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+) |> 
+  sf::st_as_sf(coords = c("x", "y"), crs = 4326) |>
+  as_duckspatial_df()
+
+# Lazy join - computation stays in DuckDB
+result <- ddbs_join(points, countries, join = "within")
+
+# Collect to sf when needed
+result_sf <- dplyr::collect(result) |> sf::st_as_sf()
+plot(result_sf["CNTR_NAME"])
 
 
+# Alternative: using sf objects directly (legacy compatibility)
+library(sf)
 
-# option 1: passing sf objects
-output1 <- duckspatial::ddbs_join(
-    x = points_sf,
+countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+
+output <- duckspatial::ddbs_join(
+    x = points,
     y = countries_sf,
     join = "within"
 )
 
-plot(output1["CNTR_NAME"])
 
-
-## option 2: passing the names of tables in a duckdb db
-
-# creates a duckdb
+# Alternative: using table names in a duckdb connection
 conn <- duckspatial::ddbs_create_conn()
 
-# write sf to duckdb
-ddbs_write_vector(conn, points_sf, "points", overwrite = TRUE)
+ddbs_write_vector(conn, points, "points", overwrite = TRUE)
 ddbs_write_vector(conn, countries_sf, "countries", overwrite = TRUE)
 
-# spatial join
 output2 <- ddbs_join(
     conn = conn,
     x = "points",
     y = "countries",
     join = "within"
 )
-
-plot(output2["CNTR_NAME"])
 
 }
 }

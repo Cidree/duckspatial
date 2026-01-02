@@ -17,18 +17,20 @@ tester <- function(x = points_sf,
                    name = NULL,
                    crs = NULL,
                    crs_column = "crs_duckspatial",
+                   output = "sf",
                    overwrite = FALSE,
                    quiet = FALSE) {
     ddbs_join(
-        x,
-        y,
-        join,
-        conn,
-        name,
-        crs,
-        crs_column,
-        overwrite,
-        quiet
+        x = x,
+        y = y,
+        join = join,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet
     )
 }
 

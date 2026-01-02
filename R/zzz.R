@@ -24,7 +24,7 @@
   # Notify about default output change
   if (identical(getOption("duckspatial.output_type"), "duckspatial_df")) {
     packageStartupMessage(
-      "\nNotice: duckspatial functions now return lazy 'duckspatial_df' (ALTREP) objects by default instead of standard 'sf' objects.",
+      "\nNotice: duckspatial functions now return lazy 'duckspatial_df' (dbplyr) objects by default instead of standard 'sf' objects.",
       "\nTo restore previous behavior, set: options(duckspatial.output_type = 'sf')"
     )
   }

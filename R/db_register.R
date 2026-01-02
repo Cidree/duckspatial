@@ -118,7 +118,14 @@ ddbs_register_vector <- function(
     }
     df$crs_duckspatial <- crs_value
 
-    arrow_table <- arrow::Table$create(df)
+    arrow_table <- tryCatch({
+       arrow::Table$create(df)
+    }, error = function(e) {
+       # Fallback to standard WKB (binary) if geoarrow fails
+       # (e.g. "NotImplemented: MakeBuilder: cannot construct builder for type geoarrow.wkb")
+       df[[geom_col_name]] <- wkb
+       arrow::Table$create(df)
+    })
 
     duckdb::duckdb_register_arrow(conn, view_name, arrow_table)
 

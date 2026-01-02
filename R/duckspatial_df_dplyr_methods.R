@@ -1,265 +1,165 @@
-#' dplyr methods for duckspatial_df with geometry protection
+#' dplyr methods for duckspatial_df
 #'
-#' These methods intercept dplyr verbs to:
-#' 1. Prevent accidental modification of geometry columns
-#' 2. Preserve spatial metadata (CRS, geometry column name) through operations
-#' 3. Warn when geometry is dropped
+#' These methods use dplyr's extension mechanism (dplyr_reconstruct) to
+#' properly preserve spatial metadata through operations.
 #'
 #' @name duckspatial_df_dplyr
 #' @keywords internal
 NULL
 
-#' Restore duckspatial_df class after dplyr operation
-#' @keywords internal
-restore_duckspatial_df <- function(out, template) {
-  # Prepend our class
-  class(out) <- c("duckspatial_df", class(out))
-  
-  # Restore spatial metadata
-  attr(out, "sf_column") <- attr(template, "sf_column")
-  attr(out, "crs") <- attr(template, "crs")
-  
-  out
-}
+# =============================================================================
+# Core Extension: dplyr_reconstruct
+# =============================================================================
 
 #' @export
-#' @importFrom dplyr mutate
-mutate.duckspatial_df <- function(.data, ...) {
-  geom_col <- attr(.data, "sf_column") %||% "geometry"
-  dots <- rlang::enquos(...)
+#' @importFrom dplyr dplyr_reconstruct
+dplyr_reconstruct.duckspatial_df <- function(data, template) {
+  # Get the base classes from data
+  base_classes <- class(data)
   
-  # Check if any expression modifies geometry column
-  modified_cols <- names(dots)
-  if (geom_col %in% modified_cols) {
-    cli::cli_abort(c(
-      "Cannot modify geometry column {.field {geom_col}} with {.fn mutate}.",
-      "i" = "Use spatial functions like {.fn ddbs_buffer} or {.fn ddbs_centroid} to transform geometries.",
-      "i" = "To rename geometry column, use {.fn ddbs_rename_geometry}."
-    ))
-  }
+  # Reconstruct proper class hierarchy based on template
+  # Template has: duckspatial_df, tbl_duckdb_connection, tbl_dbi, tbl_sql, tbl_lazy, tbl
+  template_classes <- class(template)
   
-  # Remove our class temporarily to dispatch to duckplyr
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's mutate
-  out <- dplyr::mutate(.data, ...)
-  
-  # Restore our class
-  restore_duckspatial_df(out, .data)
-}
-
-#' @export
-#' @importFrom dplyr select
-select.duckspatial_df <- function(.data, ...) {
-  geom_col <- attr(.data, "sf_column") %||% "geometry"
-  crs <- attr(.data, "crs")
-  
-  # Remove our class temporarily to dispatch to duckplyr
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's select
-  out <- dplyr::select(.data, ...)
-  
-  # Check if geometry column was dropped
-  if (!geom_col %in% names(out)) {
-    cli::cli_warn(c(
-      "Geometry column {.field {geom_col}} was dropped.",
-      "i" = "Result is no longer a spatial object.",
-      "i" = "Use {.code select(..., {geom_col})} to keep geometry."
-    ))
-    # Return as plain duckplyr_df without spatial class
-    return(out)
-  }
-  
-  # Restore our class
-  restore_duckspatial_df(out, .data)
-}
-
-#' @export
-#' @importFrom dplyr filter
-filter.duckspatial_df <- function(.data, ..., .by = NULL, .preserve = FALSE) {
-  geom_col <- attr(.data, "sf_column")
-  crs <- attr(.data, "crs")
-  
-  # Remove our class temporarily to dispatch to duckplyr
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's filter
-  out <- dplyr::filter(.data, ..., .by = .by, .preserve = .preserve)
-  
-  # Restore our class
-  restore_duckspatial_df(out, .data)
-}
-
-#' @export
-#' @importFrom dplyr arrange
-arrange.duckspatial_df <- function(.data, ..., .by_group = FALSE) {
-  geom_col <- attr(.data, "sf_column")
-  crs <- attr(.data, "crs")
-  
-  # Remove our class temporarily to dispatch to duckplyr
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's arrange
-  out <- dplyr::arrange(.data, ..., .by_group = .by_group)
-  
-  # Restore our class
-  restore_duckspatial_df(out, .data)
-}
-
-#' @export
-#' @importFrom dplyr rename
-rename.duckspatial_df <- function(.data, ...) {
-  geom_col <- attr(.data, "sf_column") %||% "geometry"
-  crs <- attr(.data, "crs")
-  
-  # Capture rename mappings
-  dots <- rlang::enquos(...)
-  
-  # Remove our class temporarily
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's rename
-  out <- dplyr::rename(.data, ...)
-  
-  # Check if geometry column was renamed
-  # dots format: new_name = old_name, so we need to find if geom_col was an old_name
-  # This is tricky because quosure evaluation...
-  # For now, just check if geom_col is still in names
-  if (!geom_col %in% names(out)) {
-    # Find the new name
-    for (i in seq_along(dots)) {
-      old_name <- rlang::as_name(rlang::quo_get_expr(dots[[i]]))
-      if (old_name == geom_col) {
-        geom_col <- names(dots)[i]
-        break
-      }
+  # Use template classes but only if data is likely a lazy table
+  # (dplyr verbs on tbl_lazy usually return tbl_lazy)
+  if (inherits(data, "tbl_sql")) {
+    # Set class to match template structure
+    # Ensure duckspatial_df is at the top
+    if (!"duckspatial_df" %in% template_classes) {
+        # Should not happen if template is duckspatial_df, but safe guard
+        template_classes <- c("duckspatial_df", template_classes)
     }
+    class(data) <- template_classes
   }
   
-  # Restore our class with potentially updated geom_col
-  class(out) <- c("duckspatial_df", class(out))
-  attr(out, "sf_column") <- geom_col
-  attr(out, "crs") <- crs
+  # Restore spatial attributes from template
+  attr(data, "sf_column") <- attr(template, "sf_column")
+  attr(data, "crs") <- attr(template, "crs")
+  attr(data, "source_table") <- attr(template, "source_table")
   
-  out
+  data
 }
 
-#' @export
-#' @importFrom dplyr summarise
-summarise.duckspatial_df <- function(.data, ..., .by = NULL, .groups = NULL) {
-  geom_col <- attr(.data, "sf_column") %||% "geometry"
-  
-  cli::cli_warn(c(
-    "{.fn summarise} on spatial data drops geometry.",
-    "i" = "Use {.fn ddbs_union} or {.fn ddbs_combine} for spatial aggregation."
-  ))
-  
-  # Remove our class - result won't be spatial
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's summarise
-  dplyr::summarise(.data, ..., .by = {{ .by }}, .groups = .groups)
-}
+# =============================================================================
+# collect - Special handling for geometry conversion
+# =============================================================================
 
-#' @export
-#' @importFrom dplyr summarize
-summarize.duckspatial_df <- summarise.duckspatial_df
-
-#' @export
-#' @importFrom dplyr group_by
-group_by.duckspatial_df <- function(.data, ..., .add = FALSE, .drop = TRUE) {
-  geom_col <- attr(.data, "sf_column")
-  crs <- attr(.data, "crs")
-  
-  # Remove our class temporarily
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's group_by
-  out <- dplyr::group_by(.data, ..., .add = .add, .drop = .drop)
-  
-  # Restore our class
-  restore_duckspatial_df(out, .data)
-}
-
-#' @export
-#' @importFrom dplyr ungroup
-ungroup.duckspatial_df <- function(x, ...) {
-  geom_col <- attr(x, "sf_column")
-  crs <- attr(x, "crs")
-  
-  # Remove our class temporarily
-  class(x) <- setdiff(class(x), "duckspatial_df")
-  
-  # Call duckplyr's ungroup
-  out <- dplyr::ungroup(x, ...)
-  
-  # Restore our class
-  class(out) <- c("duckspatial_df", class(out))
-  attr(out, "sf_column") <- geom_col
-  attr(out, "crs") <- crs
-  
-  out
-}
-
-#' @export
-#' @importFrom dplyr distinct
-distinct.duckspatial_df <- function(.data, ..., .keep_all = FALSE) {
-  geom_col <- attr(.data, "sf_column")
-  crs <- attr(.data, "crs")
-  
-  # Remove our class temporarily
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Call duckplyr's distinct
-  out <- dplyr::distinct(.data, ..., .keep_all = .keep_all)
-  
-  # Check if geometry is still there
-  if (!geom_col %in% names(out)) {
-    cli::cli_warn("Geometry column {.field {geom_col}} was dropped by {.fn distinct}.")
-    return(out)
-  }
-  
-  # Restore our class
-  restore_duckspatial_df(out, .data)
-}
-
-#' @export
-#' @importFrom dplyr slice_head
-slice_head.duckspatial_df <- function(.data, ..., n, prop, by = NULL) {
-  geom_col <- attr(.data, "sf_column")
-  crs <- attr(.data, "crs")
-  
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  out <- dplyr::slice_head(.data, n = n, prop = prop, by = {{ by }})
-  restore_duckspatial_df(out, .data)
-}
-
-#' @export
-#' @importFrom dplyr slice_tail
-slice_tail.duckspatial_df <- function(.data, ..., n, prop, by = NULL) {
-  geom_col <- attr(.data, "sf_column")
-  crs <- attr(.data, "crs")
-  
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  out <- dplyr::slice_tail(.data, n = n, prop = prop, by = {{ by }})
-  restore_duckspatial_df(out, .data)
-}
-
+#' Collect a duckspatial_df with flexible output formats
+#'
+#' @param x A duckspatial_df object
+#' @param ... Additional arguments passed to dplyr::collect
+#' @param as Output format: "sf" (default), "tibble" (no geometry), 
+#'   "raw" (WKB bytes), or "geoarrow" (geoarrow_vctr)
+#' @return Collected data in the specified format
 #' @export
 #' @importFrom dplyr collect
-collect.duckspatial_df <- function(x, ...) {
-  ddbs_collect(x, ...)
+collect.duckspatial_df <- function(x, ..., as = c("sf", "tibble", "raw", "geoarrow")) {
+  as <- match.arg(as)
+  geom_col <- attr(x, "sf_column") %||% "geom"
+  crs_obj <- attr(x, "crs")
+  
+  # Strip class to treat as standard lazy table for further manipulation
+  x_lazy <- x
+  class(x_lazy) <- setdiff(class(x_lazy), "duckspatial_df")
+  
+  # --- Handle tibble case: just drop geometry and collect ---
+  if (as == "tibble") {
+    # If the user requested tibble, they likely don't want the geometry column
+    # or don't care about its format. 
+    # But if we just collect, it might fail if geom is effectively 'GEOMETRY' type?
+    # DuckDB returns native blobs for GEOMETRY type. R handles them as list(raw).
+    # So strictly speaking, simple collect works.
+    
+    # We drop geometry to be safe/consistent with expectation of "non-spatial tibble"
+    if (geom_col %in% colnames(x_lazy)) {
+       x_lazy <- dplyr::select(x_lazy, -dplyr::all_of(geom_col))
+    }
+    return(dplyr::collect(x_lazy, ...))
+  }
+  
+  # --- For sf/raw/geoarrow: we need Valid WKB data ---
+  # Native DuckDB geometry blobs are NOT standard WKB.
+  # We MUST inject ST_AsWKB() execution into the query.
+  
+  # Check if geometry column exists in the output
+  if (geom_col %in% colnames(x_lazy)) {
+      # Inject ST_AsWKB(geom) conversion
+      # We use dbplyr::sql to pass the raw SQL function
+      # We assume the column name is safe or quoted by dbplyr if we used sym?
+      # But inside sql() we must quote manually if needed. 
+      # dbplyr::ident handles quoting.
+      
+      # Safer: use dplyr::mutate with sql snippet
+      # We need to construct the SQL "ST_AsWKB("colname")" safely.
+      # rlang::sym(geom_col) allows dbplyr to quote the column name in the generated SQL.
+      # But we need to wrap it in function.
+      
+      # Method: use explicit SQL string construction
+      # x_lazy |> mutate(geom = sql("ST_AsWKB(geom)"))
+      # But quoting: ST_AsWKB("geom")
+      
+      # Let's use dbplyr's translation if available, or raw sql.
+      # ST_AsWKB is standard.
+      
+      # NOTE: We use dplyr::mutate to overwrite the geometry column with its WKB representation
+      conn <- dbplyr::remote_con(x_lazy)
+      x_lazy <- dplyr::mutate(
+          x_lazy, 
+           !!rlang::sym(geom_col) := sql(glue::glue("ST_AsWKB(CAST({DBI::dbQuoteIdentifier(conn, geom_col)} AS GEOMETRY))"))
+      )
+  }
+  
+  # Collect with dbplyr
+  collected <- dplyr::collect(x_lazy, ...)
+  
+  # --- Convert based on output format ---
+  if (!geom_col %in% names(collected)) {
+    # No geometry column found (maybe user selected it out), return as tibble
+    return(tibble::as_tibble(collected))
+  }
+  
+  if (as == "raw") {
+    # Return tibble with raw WKB bytes (no conversion)
+    return(tibble::as_tibble(collected))
+  }
+  
+  if (as == "geoarrow") {
+    # Convert WKB to geoarrow_vctr
+    geom_data <- collected[[geom_col]]
+    if (!inherits(geom_data, "geoarrow_vctr")) {
+      # Strip blob attributes if present (DuckDB blobs sometimes have extra attrs)
+      attributes(geom_data) <- NULL
+      col_converted <- tryCatch({
+         geoarrow::as_geoarrow_vctr(
+            wk::new_wk_wkb(geom_data),
+            schema = geoarrow::geoarrow_wkb()
+         )
+      }, error = function(e) {
+         cli::cli_warn("Failed to convert to geoarrow: {conditionMessage(e)}")
+         geom_data
+      })
+      collected[[geom_col]] <- col_converted
+    }
+    return(tibble::as_tibble(collected))
+  }
+  
+  # as == "sf" (default)
+  convert_to_sf_wkb(
+    data = collected,
+    crs = crs_obj,
+    crs_column = NULL,
+    x_geom = geom_col
+  )
 }
 
-#' @export
-#' @importFrom dplyr pull
-pull.duckspatial_df <- function(.data, var = -1, name = NULL, ...) {
-  # Remove our class - pull returns a vector, not spatial
-
-  class(.data) <- setdiff(class(.data), "duckspatial_df")
-  dplyr::pull(.data, var = {{ var }}, name = {{ name }}, ...)
-}
+# =============================================================================
+# Join methods - preserve spatial class from left side
+# =============================================================================
+# Note: dbplyr join methods typically return tbl_lazy.
+# Our dplyr_reconstruct should handle class restoration if dbplyr calls it.
+# But often generic joins dispatch to dbplyr methods directly.
+# Let's enable generic join methods just in case to verify attributes.
 
 #' @export
 #' @importFrom dplyr left_join
@@ -267,19 +167,19 @@ left_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE,
                                       suffix = c(".x", ".y"), ...,
                                       keep = NULL, na_matches = c("na", "never"),
                                       relationship = NULL) {
-  geom_col <- attr(x, "sf_column")
-  crs <- attr(x, "crs")
+  # Strip class to avoid infinite recursion if NextMethod doesn't strip it?
+  # Actually NextMethod works fine.
+  out <- NextMethod()
   
-  class(x) <- setdiff(class(x), "duckspatial_df")
-  out <- dplyr::left_join(x, y, by = by, copy = copy, suffix = suffix, ...,
-                          keep = keep, na_matches = na_matches, 
-                          relationship = relationship)
-  
-  if (geom_col %in% names(out)) {
-    restore_duckspatial_df(out, x)
-  } else {
-    out
+  # If out lost the class (common with dbplyr), restore it
+  if (!inherits(out, "duckspatial_df")) {
+      # Re-wrap
+      class(out) <- c("duckspatial_df", class(out))
+      attr(out, "sf_column") <- attr(x, "sf_column")
+      attr(out, "crs") <- attr(x, "crs")
   }
+  
+  out
 }
 
 #' @export
@@ -288,17 +188,11 @@ inner_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE,
                                        suffix = c(".x", ".y"), ...,
                                        keep = NULL, na_matches = c("na", "never"),
                                        relationship = NULL) {
-  geom_col <- attr(x, "sf_column")
-  crs <- attr(x, "crs")
-  
-  class(x) <- setdiff(class(x), "duckspatial_df")
-  out <- dplyr::inner_join(x, y, by = by, copy = copy, suffix = suffix, ...,
-                           keep = keep, na_matches = na_matches, 
-                           relationship = relationship)
-  
-  if (geom_col %in% names(out)) {
-    restore_duckspatial_df(out, x)
-  } else {
-    out
+  out <- NextMethod()
+  if (!inherits(out, "duckspatial_df")) {
+      class(out) <- c("duckspatial_df", class(out))
+      attr(out, "sf_column") <- attr(x, "sf_column")
+      attr(out, "crs") <- attr(x, "crs")
   }
+  out
 }

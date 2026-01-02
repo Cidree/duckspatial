@@ -3,50 +3,42 @@ Package: duckspatial
 Title: R Interface to 'DuckDB' Database with Spatial Extension
 Version: 0.2.0.999
 Authors@R: c(
-    person(
-        "Adrián", "Cidre González", 
-        email = "adrian.cidre@gmail.com", 
-        role = c("aut", "cre"),
-        comment = c(ORCID = "0000-0002-3310-3052")
-    ),
-    person(
-        "Rafael H. M.", "Pereira", , 
-        "rafa.pereira.br@gmail.com", 
-        role = "aut",
-        comment = c(ORCID = "0000-0003-2125-7465")
-    ),
-    person(
-        "Egor", "Kotov", , 
-        "kotov.egor@gmail.com", 
-        role = "aut",
-        comment = c(ORCID = "0000-0001-6690-5345")
-    ))
-Description: Fast & memory-efficient functions to analyze and manipulate large 
-             spatial data data sets. It leverages the fast analytical 
-             capabilities of DuckDB and its spatial extension (see https://duckdb.org/docs/stable/core_extensions/spatial/overview) 
-             while maintaining compatibility with R’s spatial data ecosystem to 
-             work with spatial vector data.
-URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
-BugReports: https://github.com/Cidree/duckspatial/issues
+    person("Adrián", "Cidre González", , "adrian.cidre@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3310-3052")),
+    person("Rafael H. M.", "Pereira", , "rafa.pereira.br@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0003-2125-7465")),
+    person("Egor", "Kotov", , "kotov.egor@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0001-6690-5345"))
+  )
+Description: Fast & memory-efficient functions to analyze and manipulate
+    large spatial data data sets. It leverages the fast analytical
+    capabilities of DuckDB and its spatial extension (see
+    https://duckdb.org/docs/stable/core_extensions/spatial/overview) while
+    maintaining compatibility with R’s spatial data ecosystem to work with
+    spatial vector data.
 License: GPL (>= 3)
+URL: https://cidree.github.io/duckspatial/,
+    https://github.com/Cidree/duckspatial
+BugReports: https://github.com/Cidree/duckspatial/issues
 Depends:
     R (>= 4.1.0)
 Imports: 
     arrow,
     cli,
+    DBI,
+    dbplyr (>= 2.0.0),
+    dplyr,
     duckdb,
     geoarrow,
-    DBI,
     glue,
-    sf,
-    wk,
-    uuid,
+    lifecycle,
     rlang,
-    lifecycle
+    sf,
+    uuid,
+    wk
 Suggests:
     areal,
     bench,
-    dplyr,
     ggplot2 (>= 3.3.1),
     knitr,
     lwgeom,
@@ -56,8 +48,8 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
-RoxygenNote: 7.3.3
-Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3

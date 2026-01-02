@@ -12,9 +12,15 @@ assert_logic <- function(arg, ref = "quiet") { # nocov start
 
 assert_xy <- function(xy, ref = "x") { # nocov start
 
-    if (!(inherits(xy, "sf") || is.character(xy))) {
+    valid_types <- inherits(xy, "sf") || 
+                   inherits(xy, "duckspatial_df") ||
+                   inherits(xy, "tbl_sql") ||
+                   inherits(xy, "tbl_lazy") ||
+                   is.character(xy)
+    
+    if (!valid_types) {
         cli::cli_abort(
-            "{.arg {ref}} must be either an sf object or a string.",
+            "{.arg {ref}} must be an sf object, duckspatial_df, tbl_lazy, or a table name string.",
             .frame = parent.frame()
         )
     }
@@ -99,12 +105,14 @@ assert_predicate_id <- function(id, conn, lst) { # nocov start
 ## assert if the CRS of `x` and `y` is the same
 assert_crs <- function(conn, x, y) { # nocov start
 
-  ## get CRS
-  crs_x <- duckspatial::ddbs_crs(conn, x)
-  crs_y <- duckspatial::ddbs_crs(conn, y)
+  ## get CRS using character method
+  crs_x <- duckspatial::ddbs_crs(x, conn = conn)
+  crs_y <- duckspatial::ddbs_crs(y, conn = conn)
 
-  ## abort if CRS is different
-  if (crs_x != crs_y) cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
+  ## abort if CRS is different (use crs_equal for proper comparison)
+  if (!crs_equal(crs_x, crs_y)) {
+    cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
+  }
 
 } # nocov end
 
