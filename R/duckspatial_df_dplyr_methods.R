@@ -55,8 +55,15 @@ dplyr_reconstruct.duckspatial_df <- function(data, template) {
 #' @export
 #' @importFrom dplyr collect
 #' @importFrom rlang :=
-collect.duckspatial_df <- function(x, ..., as = c("sf", "tibble", "raw", "geoarrow")) {
-  as <- match.arg(as)
+collect.duckspatial_df <- function(x, ..., as = NULL) {
+  # Resolve output type: parameter > global option > default "sf"
+  # Note: if global option is "duckspatial_df" (lazy), collect defaults to "sf" (eager)
+  if (is.null(as)) {
+    as <- getOption("duckspatial.output_type", "sf")
+    if (as == "duckspatial_df") as <- "sf"
+  }
+  
+  as <- match.arg(as, c("sf", "tibble", "raw", "geoarrow"))
   geom_col <- attr(x, "sf_column") %||% "geom"
   crs_obj <- attr(x, "crs")
   

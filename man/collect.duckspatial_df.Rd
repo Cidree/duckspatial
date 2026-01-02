@@ -4,7 +4,7 @@
 \alias{collect.duckspatial_df}
 \title{Collect a duckspatial_df with flexible output formats}
 \usage{
-\method{collect}{duckspatial_df}(x, ..., as = c("sf", "tibble", "raw", "geoarrow"))
+\method{collect}{duckspatial_df}(x, ..., as = NULL)
 }
 \arguments{
 \item{x}{A duckspatial_df object}

@@ -678,7 +678,7 @@ ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL,
   }
   
   # Validate output type
-  valid_outputs <- c("duckspatial_df", "sf", "tibble")
+  valid_outputs <- c("duckspatial_df", "sf", "tibble", "raw", "geoarrow")
   if (!output %in% valid_outputs) {
     cli::cli_abort(
       "{.arg output} must be one of {.val {valid_outputs}}, not {.val {output}}."
@@ -694,6 +694,35 @@ ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL,
     }
     return(tibble::as_tibble(data))
     
+  } else if (output == "raw") {
+    # Return directly (geometry is already WKB via collect)
+    return(tibble::as_tibble(data))
+      
+  } else if (output == "geoarrow") {
+    # Convert WKB to geoarrow_vctr
+    geom_data <- data[[x_geom]]
+    
+    # Needs geoarrow package
+    if (!requireNamespace("geoarrow", quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg geoarrow} needed for output type 'geoarrow'.")
+    }
+    
+    if (!inherits(geom_data, "geoarrow_vctr")) {
+      # Strip blob attributes if present (DuckDB blobs sometimes have extra attrs)
+      attributes(geom_data) <- NULL
+      col_converted <- tryCatch({
+         geoarrow::as_geoarrow_vctr(
+            wk::new_wk_wkb(geom_data),
+            schema = geoarrow::geoarrow_wkb()
+         )
+      }, error = function(e) {
+         cli::cli_warn("Failed to convert to geoarrow: {conditionMessage(e)}")
+         geom_data
+      })
+      data[[x_geom]] <- col_converted
+    }
+    return(tibble::as_tibble(data))
+
   } else if (output == "sf") {
     # Convert to sf object
     data_sf <- convert_to_sf_wkb(
