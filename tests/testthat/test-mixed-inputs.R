@@ -71,11 +71,13 @@ test_that("ddbs_join works with mixed inputs and cross-connection", {
   
   # Setup: p_lazy in conn1
   ddbs_write_vector(conn1, p_sf, "points_c1")
-  p_lazy1 <- dplyr::tbl(conn1, "points_c1") |> as_duckspatial_df(geom_col="geometry", crs=sf::st_crs(4326))
+  p_lazy1 <- dplyr::tbl(conn1, "points_c1") |>
+    as_duckspatial_df(geom_col="geometry", crs=sf::st_crs(4326))
   
   # Setup: c_lazy in conn2
   ddbs_write_vector(conn2, c_sf, "countries_c2")
-  c_lazy2 <- dplyr::tbl(conn2, "countries_c2") |> as_duckspatial_df(geom_col="geometry", crs=sf::st_crs(4326))
+  c_lazy2 <- dplyr::tbl(conn2, "countries_c2") |>
+    as_duckspatial_df(geom_col="geometry", crs=sf::st_crs(4326))
   
   # Cross-connection join: p_lazy1 (conn1) LEFT JOIN c_lazy2 (conn2)
   # Should import c_lazy2 into conn1
@@ -98,7 +100,7 @@ test_that("ddbs_join works with mixed inputs and cross-connection", {
   
   # Test with function predicate (Regression check)
    expect_warning(
-    res_func <- ddbs_join(p_lazy1, c_lazy2, join = sf::st_intersects),
+    res_func <- ddbs_join(p_lazy1, c_lazy2, join = "intersects"),
     "different DuckDB connections"
   )
   expect_s3_class(res_func, "duckspatial_df")
