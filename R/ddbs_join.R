@@ -247,7 +247,7 @@ ddbs_join <- function(
         data       = data_tbl,
         conn       = target_conn,
         output     = output,
-        crs        = crs,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )

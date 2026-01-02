@@ -116,7 +116,7 @@ ddbs_register_vector <- function(
     } else {
         data_crs$Wkt
     }
-    df$crs_duckspatial <- crs_value
+    df$crs_duckspatial <- rep(crs_value, nrow(df))
 
     arrow_table <- tryCatch({
        arrow::Table$create(df)
