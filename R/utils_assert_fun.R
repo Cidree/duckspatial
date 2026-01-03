@@ -84,12 +84,15 @@ assert_geometry_column <- function(geom, name_list) { # nocov start
 
 
 
-## assert crs_column (needed for ddbs_filter)
+## assert crs_column (needed for ddbs_filter and ddbs_join)
+## cols can be a character vector or a collapsed string
 assert_crs_column <- function(crs_column, cols) { # nocov start
-    if (!is.null(crs_column))
-        if (!crs_column %in% cols & !grepl(crs_column, cols))
+    if (!is.null(crs_column)) {
+        # Handle both vector and string inputs
+        found <- crs_column %in% cols | any(grepl(crs_column, cols, fixed = TRUE))
+        if (!found)
             cli::cli_abort("CRS column <{crs_column}> do not found in the table. If the data do not have CRS column, set the argument `crs_column = NULL`")
-
+    }
 } # nocov end
 
 
