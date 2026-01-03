@@ -57,6 +57,16 @@ ddbs_write_vector <- function(
         return(ddbs_register_vector(conn, data, name, overwrite, quiet))
     }
 
+    # Handle duckspatial_df/tbl_lazy by collecting to sf first
+    if (inherits(data, "duckspatial_df") || inherits(data, "tbl_lazy")) {
+        # Check if we can use ddbs_collect (only for duckspatial_df)
+        if (inherits(data, "duckspatial_df")) {
+             data <- ddbs_collect(data, as = "sf")
+        } else {
+             data <- dplyr::collect(data) |> sf::st_as_sf()
+        }
+    }
+
     ## convenient names of table and/or schema.table
     name_list <- get_query_name(name)
     ## get schema.table available in the database
@@ -72,6 +82,11 @@ ddbs_write_vector <- function(
 
     ## 3. insert data
     if (inherits(data, "sf")) {
+        # Remove existing crs_duckspatial column if present (e.g. from previous read)
+        if ("crs_duckspatial" %in% names(data)) {
+            data <- dplyr::select(data, -dplyr::any_of("crs_duckspatial"))
+        }
+
         # 3. Handle unsupported geometries (TOO SLOW)
         # unsupported_types <- c("GEOMETRYCOLLECTION")
         # geom_types <- unique(sf::st_geometry_type(data))
@@ -115,6 +130,8 @@ ddbs_write_vector <- function(
         "))
         }
 
+    } else if (!is.character(data) || length(data) != 1) {
+        cli::cli_abort("{.arg data} must be an {.cls sf} object, a {.cls duckspatial_df}, or a file path string.")
     } else {
         ## check file extension
         # file_ext <- sub(".*\\.", "", data)

@@ -128,3 +128,59 @@ test_that("ddbs_write_vector respects temp_view = TRUE", {
 
 # Disconnect
 duckdb::dbDisconnect(conn_test, shutdown = TRUE)
+
+# 4. New functionality: duckspatial_df and existing CRS columns ----
+test_that("ddbs_write_vector can write a duckspatial_df object", {
+  conn_new <- ddbs_create_conn()
+  
+  # Create a duckspatial_df
+  ddbs_write_vector(conn_new, points_sf, "points_source", overwrite = TRUE)
+  df_lazy <- ddbs_read_vector(conn_new, "points_source", crs = 4326) |>
+    as_duckspatial_df()
+  
+  table_name <- "points_from_lazy"
+  
+  # This should now work (previously failed with "Expected string vector of length 1")
+  expect_true(ddbs_write_vector(conn_new, df_lazy, table_name, overwrite = TRUE))
+  
+  # Verify result
+  result <- ddbs_read_vector(conn_new, table_name, crs = 4326)
+  expect_equal(nrow(result), nrow(points_sf))
+  expect_equal(sf::st_crs(result), sf::st_crs(points_sf))
+  
+  duckdb::dbDisconnect(conn_new, shutdown = TRUE)
+})
+
+test_that("ddbs_write_vector handles sf objects with existing crs_duckspatial column", {
+  conn_new <- ddbs_create_conn()
+  
+  # Create an sf object that already has crs_duckspatial
+  points_with_crs_col <- points_sf
+  points_with_crs_col$crs_duckspatial <- "EPSG:4326"
+  
+  table_name <- "points_duplicate_col"
+  
+  # This should now work (previously failed with "Column with name crs_duckspatial already exists")
+  expect_true(ddbs_write_vector(conn_new, points_with_crs_col, table_name, overwrite = TRUE))
+  
+  # Verify result
+  result <- ddbs_read_vector(conn_new, table_name, crs = 4326)
+  expect_equal(nrow(result), nrow(points_sf))
+  
+  # Check we didn't end up with two crs columns or errors
+  fields <- DBI::dbListFields(conn_new, table_name)
+  expect_equal(sum(fields == "crs_duckspatial"), 1)
+  
+  duckdb::dbDisconnect(conn_new, shutdown = TRUE)
+})
+
+test_that("ddbs_write_vector throws error for unsupported input", {
+  conn_new <- ddbs_create_conn()
+  
+  expect_error(
+    ddbs_write_vector(conn_new, list(a = 1), "bad_input"),
+    "must be an .*sf.* object"
+  )
+  
+  duckdb::dbDisconnect(conn_new, shutdown = TRUE)
+})
