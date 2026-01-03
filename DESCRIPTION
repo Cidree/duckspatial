@@ -41,6 +41,7 @@ Imports:
 Suggests:
     areal,
     bench,
+    duckdbfs,
     ggplot2 (>= 3.3.1),
     knitr,
     lwgeom,
