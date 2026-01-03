@@ -36,7 +36,8 @@ Imports:
     sf,
     tibble,
     uuid,
-    wk
+    wk,
+    withr
 Suggests:
     areal,
     bench,

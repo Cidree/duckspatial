@@ -13,6 +13,8 @@ ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
+
+\item{extension}{name of the extension to install, default is "spatial"}
 }
 \value{
 TRUE (invisibly) for successful installation

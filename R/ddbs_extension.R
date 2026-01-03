@@ -6,6 +6,7 @@
 #' @template conn
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #' @template quiet
+#' @param extension name of the extension to install, default is "spatial"
 #'
 #' @returns TRUE (invisibly) for successful installation
 #' @export

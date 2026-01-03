@@ -56,6 +56,12 @@ auto-detection.}
 
 \item{parquet_encryption_config}{List/Struct. (Parquet) Encryption configuration (advanced).}
 
+\item{read_shp_mode}{Mode for reading Shapefiles. "ST_ReadSHP" (default, fast native reader) or "GDAL" (ST_Read).}
+
+\item{read_osm_mode}{Mode for reading OSM PBF files. "GDAL" (default, ST_Read) or "ST_ReadOSM" (fast native reader, no geometry).}
+
+\item{shp_encoding}{Encoding for Shapefiles when using "ST_ReadSHP" (e.g., "UTF-8", "ISO-8859-1").}
+
 \item{gdal_spatial_filter}{Optional WKB geometry (as raw vector or hex string) to filter spatially (ST_Read only).}
 
 \item{gdal_spatial_filter_box}{Optional bounding box (as numeric vector \code{c(minx, miny, maxx, maxy)})
