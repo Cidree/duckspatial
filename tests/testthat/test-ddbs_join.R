@@ -148,8 +148,8 @@ testthat::test_that("ddbs_join works with raw duckdbfs tbl_duckdb_connection", {
   
   # Both from duckdbfs - different connections but same CRS
   # Using open_dataset directly (no head) preserves source table for CRS detection
-  conn1 <- ddbs_tmp_conn()
-  conn2 <- ddbs_tmp_conn()
+  conn1 <- ddbs_temp_conn()
+  conn2 <- ddbs_temp_conn()
   
   countries1 <- duckdbfs::open_dataset(
     countries_path, format = "sf", conn = conn1

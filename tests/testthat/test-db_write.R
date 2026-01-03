@@ -4,10 +4,10 @@ testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 skip_if_not_installed("sf")
 
-# 0. Test ddbs_tmp_conn helper ----
-test_that("ddbs_tmp_conn creates valid auto-closing connection", {
+# 0. Test ddbs_temp_conn helper ----
+test_that("ddbs_temp_conn creates valid auto-closing connection", {
   # Test that connection is valid
-  conn <- ddbs_tmp_conn()
+  conn <- ddbs_temp_conn()
   expect_true(DBI::dbIsValid(conn))
   
   # Test that connection works
@@ -15,10 +15,10 @@ test_that("ddbs_tmp_conn creates valid auto-closing connection", {
   expect_equal(result$test, 1)
 })
 
-test_that("ddbs_tmp_conn auto-closes on function exit", {
-  # Create a helper function that uses ddbs_tmp_conn
+test_that("ddbs_temp_conn auto-closes on function exit", {
+  # Create a helper function that uses ddbs_temp_conn
   get_conn_status <- function() {
-    conn <- ddbs_tmp_conn()
+    conn <- ddbs_temp_conn()
     # Return the connection object so we can check it after func exits
     conn
   }
@@ -157,7 +157,7 @@ duckdb::dbDisconnect(conn_test)
 
 # 4. New functionality: duckspatial_df and existing CRS columns ----
 test_that("ddbs_write_vector can write a duckspatial_df object", {
-  conn_new <- ddbs_tmp_conn()
+  conn_new <- ddbs_temp_conn()
   
   # Create a duckspatial_df
   ddbs_write_vector(conn_new, points_sf, "points_source", overwrite = TRUE)
@@ -176,7 +176,7 @@ test_that("ddbs_write_vector can write a duckspatial_df object", {
 })
 
 test_that("ddbs_write_vector handles sf objects with existing crs_duckspatial column", {
-  conn_new <- ddbs_tmp_conn()
+  conn_new <- ddbs_temp_conn()
   
   # Create an sf object that already has crs_duckspatial
   points_with_crs_col <- points_sf
@@ -197,7 +197,7 @@ test_that("ddbs_write_vector handles sf objects with existing crs_duckspatial co
 })
 
 test_that("ddbs_write_vector throws error for unsupported input", {
-  conn_new <- ddbs_tmp_conn()
+  conn_new <- ddbs_temp_conn()
   
   expect_error(
     ddbs_write_vector(conn_new, list(a = 1), "bad_input"),
@@ -206,7 +206,7 @@ test_that("ddbs_write_vector throws error for unsupported input", {
 })
 
 test_that("ddbs_write_vector with temp_view=TRUE works for duckspatial_df", {
-  conn_new <- ddbs_tmp_conn()
+  conn_new <- ddbs_temp_conn()
   
   # Create a duckspatial_df first
   ddbs_write_vector(conn_new, points_sf, "points_src", overwrite = TRUE)
@@ -228,7 +228,7 @@ test_that("ddbs_write_vector with temp_view=TRUE works for duckspatial_df", {
 })
 
 test_that("ddbs_write_vector with temp_view=TRUE handles existing crs_duckspatial", {
-  conn_new <- ddbs_tmp_conn()
+  conn_new <- ddbs_temp_conn()
   
   # Create sf with existing crs_duckspatial
   points_with_crs <- points_sf

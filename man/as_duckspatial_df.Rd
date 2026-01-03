@@ -2,9 +2,27 @@
 % Please edit documentation in R/duckspatial_df.R
 \name{as_duckspatial_df}
 \alias{as_duckspatial_df}
+\alias{as_duckspatial_df.duckspatial_df}
+\alias{as_duckspatial_df.sf}
+\alias{as_duckspatial_df.tbl_duckdb_connection}
+\alias{as_duckspatial_df.tbl_lazy}
+\alias{as_duckspatial_df.character}
+\alias{as_duckspatial_df.data.frame}
 \title{Convert objects to duckspatial_df}
 \usage{
 as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+
+\method{as_duckspatial_df}{duckspatial_df}(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
+
+\method{as_duckspatial_df}{sf}(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
+
+\method{as_duckspatial_df}{tbl_duckdb_connection}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+
+\method{as_duckspatial_df}{tbl_lazy}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+
+\method{as_duckspatial_df}{character}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+
+\method{as_duckspatial_df}{data.frame}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
 }
 \arguments{
 \item{x}{Object to convert (sf, tbl_lazy, data.frame, or table name)}

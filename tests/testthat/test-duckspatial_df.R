@@ -2,8 +2,7 @@ test_that("new_duckspatial_df creates valid duckspatial_df objects", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   # Create a simple sf object
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
@@ -36,8 +35,7 @@ test_that("new_duckspatial_df avoids double wrapping", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -51,12 +49,32 @@ test_that("new_duckspatial_df avoids double wrapping", {
   expect_identical(result1, result2)
 })
 
+test_that("as_duckspatial_df.duckspatial_df can update metadata", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+  
+  conn <- ddbs_temp_conn()
+  
+  nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  ds <- as_duckspatial_df(nc_sf, conn = conn)
+  
+  # Update CRS
+  ds_new <- as_duckspatial_df(ds, crs = "EPSG:3857")
+  expect_equal(sf::st_crs(ds_new), sf::st_crs("EPSG:3857"))
+  
+  # Update geom_col
+  ds_new2 <- as_duckspatial_df(ds, geom_col = "new_geom")
+  expect_equal(attr(ds_new2, "sf_column"), "new_geom")
+  
+  # Return same if no updates
+  expect_identical(ds, as_duckspatial_df(ds))
+})
+
 test_that("as_duckspatial_df.sf works correctly", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   
@@ -73,8 +91,7 @@ test_that("as_duckspatial_df.tbl_duckdb_connection works correctly", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -88,12 +105,29 @@ test_that("as_duckspatial_df.tbl_duckdb_connection works correctly", {
   expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
 })
 
+test_that("as_duckspatial_df.tbl_lazy works correctly", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+  
+  conn <- ddbs_temp_conn()
+  
+  nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  
+  # Use dbplyr to create a lazy table (which is tbl_lazy)
+  lazy_tbl <- dplyr::tbl(conn, "nc_test") |> dplyr::filter(AREA > 0)
+  
+  result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  
+  expect_s3_class(result, "duckspatial_df")
+  expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
+})
+
 test_that("as_duckspatial_df.character works correctly", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -114,12 +148,44 @@ test_that("as_duckspatial_df.character requires connection", {
   )
 })
 
+test_that("as_duckspatial_df.data.frame works with sfc columns", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+  
+  conn <- ddbs_temp_conn()
+  
+  # Create a data frame with an sfc column (but not sf class yet)
+  df <- data.frame(id = 1, val = "a")
+  df$geom <- sf::st_sfc(sf::st_point(c(0, 0)), crs = 4326)
+  
+  result <- as_duckspatial_df(df, conn = conn)
+  
+  expect_s3_class(result, "duckspatial_df")
+  expect_equal(sf::st_crs(result), sf::st_crs(4326))
+  expect_equal(attr(result, "sf_column"), "geom")
+  
+  # Test with explicit geom_col
+  result2 <- as_duckspatial_df(df, conn = conn, geom_col = "geom")
+  expect_equal(attr(result2, "sf_column"), "geom")
+  
+  # Should error if no sfc column
+  df_no_geom <- data.frame(id = 1)
+  expect_error(as_duckspatial_df(df_no_geom, conn = conn), "sfc")
+  
+  # Should error if specified geom_col is not sfc (but there are other sfc columns)
+  df_wrong_geom_multi <- data.frame(id = 1, not_geom = 2)
+  df_wrong_geom_multi$real_geom <- sf::st_sfc(sf::st_point(c(0, 0)))
+  expect_error(
+    as_duckspatial_df(df_wrong_geom_multi, conn = conn, geom_col = "not_geom"), 
+    "sfc"
+  )
+})
+
 test_that("is_duckspatial_df works correctly", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -137,8 +203,7 @@ test_that("dplyr verbs preserve duckspatial_df class", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -171,8 +236,7 @@ test_that("ddbs_collect works with duckspatial_df", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -193,8 +257,7 @@ test_that("st_crs.duckspatial_df returns correct CRS", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -211,8 +274,7 @@ test_that("print.duckspatial_df shows informative output", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -232,8 +294,7 @@ test_that("ddbs_geom_col returns correct geometry column name", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -249,8 +310,7 @@ test_that("left_join.duckspatial_df preserves spatial attributes", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -278,8 +338,7 @@ test_that("inner_join.duckspatial_df preserves spatial attributes", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -307,8 +366,7 @@ test_that("st_geometry.duckspatial_df works correctly", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -328,8 +386,7 @@ test_that("st_bbox.duckspatial_df works correctly", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
@@ -348,8 +405,7 @@ test_that("st_as_sf.duckspatial_df works correctly", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")
   
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn))
+  conn <- ddbs_temp_conn()
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)

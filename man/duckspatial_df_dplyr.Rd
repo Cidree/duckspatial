@@ -2,7 +2,37 @@
 % Please edit documentation in R/duckspatial_df_dplyr_methods.R
 \name{duckspatial_df_dplyr}
 \alias{duckspatial_df_dplyr}
+\alias{dplyr_reconstruct.duckspatial_df}
+\alias{left_join.duckspatial_df}
+\alias{inner_join.duckspatial_df}
 \title{dplyr methods for duckspatial_df}
+\usage{
+\method{dplyr_reconstruct}{duckspatial_df}(data, template)
+
+\method{left_join}{duckspatial_df}(
+  x,
+  y,
+  by = NULL,
+  copy = FALSE,
+  suffix = c(".x", ".y"),
+  ...,
+  keep = NULL,
+  na_matches = c("na", "never"),
+  relationship = NULL
+)
+
+\method{inner_join}{duckspatial_df}(
+  x,
+  y,
+  by = NULL,
+  copy = FALSE,
+  suffix = c(".x", ".y"),
+  ...,
+  keep = NULL,
+  na_matches = c("na", "never"),
+  relationship = NULL
+)
+}
 \description{
 These methods use dplyr's extension mechanism (dplyr_reconstruct) to
 properly preserve spatial metadata through operations.

@@ -11,6 +11,7 @@ NULL
 # Core Extension: dplyr_reconstruct
 # =============================================================================
 
+#' @rdname duckspatial_df_dplyr
 #' @export
 #' @importFrom dplyr dplyr_reconstruct
 dplyr_reconstruct.duckspatial_df <- function(data, template) {
@@ -52,6 +53,7 @@ dplyr_reconstruct.duckspatial_df <- function(data, template) {
 #' @param as Output format: "sf" (default), "tibble" (no geometry), 
 #'   "raw" (WKB bytes), or "geoarrow" (geoarrow_vctr)
 #' @return Collected data in the specified format
+#' @rdname ddbs_collect
 #' @export
 #' @importFrom dplyr collect
 #' @importFrom rlang :=
@@ -92,7 +94,14 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
   
   # Check if geometry column exists in the output
   if (geom_col %in% colnames(x_lazy)) {
-      # Inject ST_AsWKB(geom) conversion
+      conn <- dbplyr::remote_con(x_lazy)
+      query_sql <- dbplyr::sql_render(x_lazy)
+      
+      # Check column type in the lazy table
+      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
+      cached_type <- attr(x, "geom_type")
+      
+      # Inject ST_AsWKB() conversion
       # We use dbplyr::sql to pass the raw SQL function
       # We assume the column name is safe or quoted by dbplyr if we used sym?
       # But inside sql() we must quote manually if needed. 
@@ -111,36 +120,29 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
       # ST_AsWKB is standard.
       
       # Check column type in the lazy table
-      # dbplyr doesn't easily expose types of lazy query columns without fetch.
-      # But we can check via dbGetQuery limit 0 or DESCRIBE.
-      conn <- dbplyr::remote_con(x_lazy)
+      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
+      cached_type <- attr(x, "geom_type")
       
-      # We construct the query for this table
-      # dbplyr::sql_render might be expensive, but safe.
-      query_sql <- dbplyr::sql_render(x_lazy)
-      
-      # Using tryCatch to be safe
-      is_compatible <- tryCatch({
-          # Check type of geom_col
-          # DESCRIBE (query) is standard DuckDB
-          desc <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_sql}"))
-          # Match geom_col
-          col_info <- desc[desc$column_name == geom_col, ]
-          if (nrow(col_info) == 0) FALSE # Should not happen if col exists
-          else {
-              ctype <- if ("column_type" %in% names(col_info)) col_info$column_type else col_info$data_type
-              # We only wrap ST_AsWKB if it is GEOMETRY or BLOB/WKB_BLOB
-              grepl("GEOMETRY|BLOB", ctype, ignore.case = TRUE)
-          }
-      }, error = function(e) {
-          # If describe fails, assume safe to wrap? Or unsafe?
-          # Default to TRUE (wrap) was old behavior, but better to be safe now.
-          # If we can't describe, maybe just wrap and let it fail?
-          # Actually, wrapping caused the crash. So maybe default FALSE?
-          # But standard use case is GEOMETRY.
-          # Let's verify if we can check existence of ST_AsWKB support?
-          TRUE 
-      })
+      is_compatible <- if (!is.null(cached_type)) {
+          grepl("GEOMETRY|BLOB", cached_type, ignore.case = TRUE)
+      } else {
+          tryCatch({
+              # Check type of geom_col
+              # DESCRIBE (query) is standard DuckDB
+              desc <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_sql}"))
+              # Match geom_col
+              col_info <- desc[desc$column_name == geom_col, ]
+              if (nrow(col_info) == 0) FALSE # Should not happen if col exists
+              else {
+                  ctype <- if ("column_type" %in% names(col_info)) col_info$column_type else col_info$data_type
+                  # We only wrap ST_AsWKB if it is GEOMETRY or BLOB/WKB_BLOB
+                  grepl("GEOMETRY|BLOB", ctype, ignore.case = TRUE)
+              }
+          }, error = function(e) {
+              # Fallback: safer to wrap than to get raw DuckDB internal blobs
+              TRUE 
+          })
+      }
 
       if (is_compatible) {
            x_lazy <- dplyr::mutate(
@@ -201,6 +203,7 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
 # But often generic joins dispatch to dbplyr methods directly.
 # Let's enable generic join methods just in case to verify attributes.
 
+#' @rdname duckspatial_df_dplyr
 #' @export
 #' @importFrom dplyr left_join
 left_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE, 
@@ -222,6 +225,7 @@ left_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE,
   out
 }
 
+#' @rdname duckspatial_df_dplyr
 #' @export
 #' @importFrom dplyr inner_join
 inner_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE, 

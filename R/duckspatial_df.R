@@ -7,19 +7,12 @@
 #' @param geom_col Name of geometry column (default: "geom")
 #' @param source_table Name of the source table if applicable
 #' @return A duckspatial_df object
-#' @export
 new_duckspatial_df <- function(x, crs = NULL, geom_col = "geom", source_table = NULL) {
   # Avoid double wrapping
-  if (inherits(x, "duckspatial_df")) return(x)
+  if (is_duckspatial_df(x)) return(x)
   
   if (!inherits(x, "tbl_sql")) {
-     # If purely data frame, we warn or error? 
-     # Ideally duckspatial_df should be backed by DuckDB.
-     # But we can allow wrapping local DF for consistency, though verb overrides won't work well without dbplyr.
-     # Let's enforce tbl_sql/tbl_lazy for now or allow it but warn.
-     if (!is.data.frame(x)) {
-       cli::cli_abort("x must be a tbl_sql or data.frame")
-     }
+    cli::cli_abort("{.arg x} must be a {.cls tbl_sql} (lazy DuckDB table). Use {.fn as_duckspatial_df} for other objects.")
   }
   
   # Prepend our class
@@ -53,12 +46,20 @@ as_duckspatial_df <- function(x, conn = NULL, crs = NULL, geom_col = "geom", ...
   UseMethod("as_duckspatial_df")
 }
 
+#' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.duckspatial_df <- function(x, conn = NULL, crs = NULL, 
                                               geom_col = NULL, ...) {
+  if (is.null(crs) && is.null(geom_col)) return(x)
+  
+  # Update metadata if requested
+  if (!is.null(crs)) attr(x, "crs") <- sf::st_crs(crs)
+  if (!is.null(geom_col)) attr(x, "sf_column") <- geom_col
+  
   x
 }
 
+#' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.sf <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ...) {
   # Get CRS and geom column from sf object
@@ -85,6 +86,7 @@ as_duckspatial_df.sf <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ..
   new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
 }
 
+#' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.tbl_duckdb_connection <- function(x, conn = NULL, crs = NULL, 
                                                      geom_col = "geom", ...) {
@@ -99,9 +101,18 @@ as_duckspatial_df.tbl_duckdb_connection <- function(x, conn = NULL, crs = NULL,
     error = function(e) NULL
   )
   
-  new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
+  # Auto-detect geometry type for collect optimization
+  geom_type <- tryCatch({
+    desc <- DBI::dbGetQuery(dbplyr::remote_con(x), glue::glue("DESCRIBE {dbplyr::sql_render(x)}"))
+    desc$column_type[desc$column_name == geom_col]
+  }, error = function(e) NULL)
+  
+  res <- new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
+  if (!is.null(geom_type)) attr(res, "geom_type") <- geom_type
+  res
 }
 
+#' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.tbl_lazy <- function(x, conn = NULL, crs = NULL, 
                                         geom_col = "geom", ...) {
@@ -119,6 +130,7 @@ as_duckspatial_df.tbl_lazy <- function(x, conn = NULL, crs = NULL,
   new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
 }
 
+#' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.character <- function(x, conn = NULL, crs = NULL, 
                                          geom_col = "geom", ...) {
@@ -133,9 +145,44 @@ as_duckspatial_df.character <- function(x, conn = NULL, crs = NULL,
   new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = x)
 }
 
+#' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.data.frame <- function(x, conn = NULL, crs = NULL, 
                                           geom_col = "geom", ...) {
+   # Detect if we have an sfc column that matches geom_col or any sfc column
+   is_sfc <- vapply(x, inherits, logical(1), "sfc")
+   
+   if (any(is_sfc)) {
+     # If user provided geom_col, check if it's one of the sfc columns
+     if (!is.null(geom_col) && geom_col %in% names(x)) {
+        if (!inherits(x[[geom_col]], "sfc")) {
+           cli::cli_abort("Column {.val {geom_col}} is not an {.cls sfc} column.")
+        }
+        # Delegate to sf handler
+        return(as_duckspatial_df(sf::st_as_sf(x, sf_column_name = geom_col), conn = conn, crs = crs, ...))
+     } else if (inherits(x, "sf")) {
+        # Already sf, delegate
+        return(as_duckspatial_df.sf(x, conn = conn, crs = crs, geom_col = geom_col, ...))
+     } else {
+        # Pick the first sfc column as geometry
+        first_sfc <- names(x)[which(is_sfc)[1]]
+        cli::cli_inform("Detected {.cls sfc} column {.val {first_sfc}}, converting to {.cls sf} first.")
+        return(as_duckspatial_df(sf::st_as_sf(x, sf_column_name = first_sfc), conn = conn, crs = crs, ...))
+     }
+   }
+   
+   # Non-spatial data frame path (only if we can't find sfc)
+   # NOTE: Usually we want to error here if it's not spatial, 
+   # but maybe someone wants to upload a table and then set_geometry later?
+   # For now, let's enforce that it must have at least one sfc or we error.
+   if (!any(is_sfc)) {
+     if (!is.null(geom_col) && geom_col %in% names(x)) {
+        cli::cli_warn("Column {.val {geom_col}} exists but is not {.cls sfc}. Attempting raw upload.")
+     } else {
+        cli::cli_abort("No {.cls sfc} geometry column found in data frame. Use {.fn st_as_sf} first or provide valid spatial data.")
+     }
+   }
+
    # Upload to DuckDB
    if (is.null(conn)) conn <- ddbs_default_conn()
    

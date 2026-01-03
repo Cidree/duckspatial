@@ -5,7 +5,7 @@ test_that("Strategy 1: SQL recreation works for same DB (direct view)", {
   skip_if_not_installed("duckdb")
   
   # File-based DB required for testing same-file connections
-  conn1 <- ddbs_tmp_conn(file = TRUE)
+  conn1 <- ddbs_temp_conn(file = TRUE)
   db_file <- attr(conn1, "db_file")
   
   DBI::dbExecute(conn1, "CREATE TABLE data (id INTEGER, val DOUBLE)")
@@ -32,7 +32,7 @@ test_that("Strategy 2: SQL render works for same DB (lazy query)", {
   skip_if_not_installed("duckdb")
   
   # File-based DB required for testing same-file connections
-  conn1 <- ddbs_tmp_conn(file = TRUE)
+  conn1 <- ddbs_temp_conn(file = TRUE)
   db_file <- attr(conn1, "db_file")
   
   DBI::dbExecute(conn1, "CREATE TABLE data (id INTEGER, val DOUBLE)")
@@ -67,11 +67,11 @@ test_that("Strategy 3: ATTACH works for file-based cross-connection", {
   DBI::dbDisconnect(source_conn)
   
   # Re-connect as read-only using helper
-  source_conn <- ddbs_tmp_conn(file = source_file, read_only = TRUE)
+  source_conn <- ddbs_temp_conn(file = source_file, read_only = TRUE)
   tbl_ref <- dplyr::tbl(source_conn, "test_data")
   
   # Target: memory DB
-  target_conn <- ddbs_tmp_conn()
+  target_conn <- ddbs_temp_conn()
   
   # Since dbGetInfo may return NULL for read-only, ATTACH might not trigger
   res <- import_view_to_connection(target_conn, source_conn, tbl_ref, "attached_view")
@@ -84,8 +84,8 @@ test_that("Strategy 4: Nanoarrow streaming works for cross-memory-DB", {
   skip_if_not_installed("duckdb")
   skip_if_not_installed("nanoarrow")
   
-  conn1 <- ddbs_tmp_conn()
-  conn2 <- ddbs_tmp_conn()
+  conn1 <- ddbs_temp_conn()
+  conn2 <- ddbs_temp_conn()
   
   DBI::dbExecute(conn1, "CREATE TABLE data (id INTEGER, val TEXT)")
   DBI::dbExecute(conn1, "INSERT INTO data VALUES (1, 'a'), (2, 'b')")
@@ -101,8 +101,8 @@ test_that("Strategy 5: Collect+sf works for duckspatial_df", {
   skip_if_not_installed("duckdb")
   skip_if_not_installed("sf")
   
-  conn1 <- ddbs_tmp_conn()
-  conn2 <- ddbs_tmp_conn()
+  conn1 <- ddbs_temp_conn()
+  conn2 <- ddbs_temp_conn()
   
   pts <- sf::st_sfc(sf::st_point(c(0, 0)), sf::st_point(c(1, 1)), crs = 4326)
   sf_data <- sf::st_sf(id = 1:2, geometry = pts)
@@ -117,7 +117,7 @@ test_that("Strategy 5: Collect+sf works for duckspatial_df", {
 test_that("Quoted identifiers work correctly", {
   skip_if_not_installed("duckdb")
   
-  conn1 <- ddbs_tmp_conn(file = TRUE)
+  conn1 <- ddbs_temp_conn(file = TRUE)
   db_file <- attr(conn1, "db_file")
   
   DBI::dbExecute(conn1, "CREATE TABLE \"quoted table\" (id INTEGER)")

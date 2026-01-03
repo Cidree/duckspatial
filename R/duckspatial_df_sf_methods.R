@@ -7,26 +7,21 @@
 #' @keywords internal
 NULL
 
+#' @rdname duckspatial_df_sf
 #' @export
 #' @importFrom sf st_crs
 st_crs.duckspatial_df <- function(x, ...) {
   attr(x, "crs") %||% sf::st_crs(NA)
 }
 
+#' @rdname duckspatial_df_sf
 #' @export
 #' @importFrom sf st_geometry
 st_geometry.duckspatial_df <- function(obj, ...) {
-  geom_col <- attr(obj, "sf_column") %||% "geometry"
-  
-  # Access the geometry column by materializing it from DuckDB
-  geom_data <- dplyr::pull(obj, geom_col)
-  
-  if (is.null(geom_data)) {
-    cli::cli_abort("Geometry column {.field {geom_col}} not found in data.")
-  }
-  
-  # Convert WKB to sfc using the helper from db_utils_not_exported.R
-  convert_wkb_to_sfc(geom_data, st_crs(obj))
+  # For duckspatial_df, st_geometry is a materialization point.
+  # We delegate to st_as_sf to ensure we use the robust collect() path
+  # which handles ST_AsWKB conversion correctly.
+  sf::st_geometry(sf::st_as_sf(obj, ...))
 }
 
 #' Convert WKB data to sfc
@@ -45,24 +40,50 @@ convert_wkb_to_sfc <- function(geom_data, crs) {
   })
 }
 
+#' @rdname duckspatial_df_sf
 #' @export
 #' @importFrom sf st_bbox
 st_bbox.duckspatial_df <- function(obj, ...) {
-  geom_col <- attr(obj, "sf_column") %||% "geometry"
-  crs <- st_crs(obj)
+  geom_col <- attr(obj, "sf_column") %||% "geom"
+  crs_obj <- st_crs(obj)
   
-
   # Try to use DuckDB's ST_Extent for efficiency
+  # We use the lazy table directly
   tryCatch({
-    # Get the DuckDB relation and execute extent query
-    # For now, fall back to materializing geometry
-    geom <- sf::st_geometry(obj)
-    sf::st_bbox(geom)
+    conn <- dbplyr::remote_con(obj)
+    query_sql <- dbplyr::sql_render(obj)
+    
+    # We construct the extent query
+    # ST_Extent returns the MBR of all geometries in the table/query
+    extent_query <- glue::glue(
+      "SELECT 
+        ST_XMin(ext) as xmin, 
+        ST_YMin(ext) as ymin, 
+        ST_XMax(ext) as xmax, 
+        ST_YMax(ext) as ymax 
+       FROM (SELECT ST_Extent(ST_Collect(LIST({DBI::dbQuoteIdentifier(conn, geom_col)}))) as ext FROM ({query_sql}))"
+    )
+    
+    res <- DBI::dbGetQuery(conn, extent_query)
+    
+    if (nrow(res) > 0 && !is.na(res$xmin[1])) {
+      return(sf::st_bbox(c(
+        xmin = res$xmin[1], 
+        ymin = res$ymin[1], 
+        xmax = res$xmax[1], 
+        ymax = res$ymax[1]
+      ), crs = crs_obj))
+    }
+    
+    # Empty result or all NAs
+    sf::st_bbox(c(xmin = NA_real_, ymin = NA_real_, 
+                  xmax = NA_real_, ymax = NA_real_), 
+                crs = crs_obj)
   }, error = function(e) {
     # If anything fails, return NA bbox
     sf::st_bbox(c(xmin = NA_real_, ymin = NA_real_, 
                   xmax = NA_real_, ymax = NA_real_), 
-                crs = crs)
+                crs = crs_obj)
   })
 }
 
@@ -115,6 +136,7 @@ ddbs_collect <- function(x, ..., as = c("sf", "tibble", "raw", "geoarrow")) {
   dplyr::collect(x, ..., as = as)
 }
 
+#' @rdname duckspatial_df_sf
 #' @export
 #' @importFrom sf st_as_sf
 st_as_sf.duckspatial_df <- function(x, ...) {
@@ -122,9 +144,10 @@ st_as_sf.duckspatial_df <- function(x, ...) {
   dplyr::collect(x, ..., as = "sf")
 }
 
+#' @rdname duckspatial_df_sf
 #' @export
 print.duckspatial_df <- function(x, ..., n = 10) {
-  geom_col <- attr(x, "sf_column") %||% "geometry"
+  geom_col <- attr(x, "sf_column") %||% "geom"
   crs <- st_crs(x)
   
   cat("# A duckspatial lazy spatial table\n")
@@ -201,5 +224,5 @@ ddbs_geom_col <- function(x) {
     }
     cli::cli_abort("{.arg x} must be a duckspatial_df or sf object.")
   }
-  attr(x, "sf_column") %||% "geometry"
+  attr(x, "sf_column") %||% "geom"
 }

@@ -30,10 +30,13 @@ reference:
   - ddbs_stop_conn
   - ddbs_install
   - ddbs_load
+  - ddbs_options
+  - ddbs_sitrep
 
 - title: Data Import/Export
   desc: Read and write spatial data
   contents:
+  - ddbs_open_dataset
   - ddbs_read_vector
   - ddbs_write_vector
   - ddbs_register_vector
@@ -126,6 +129,16 @@ reference:
   - ddbs_drivers
   - ddbs_glimpse
   - ddbs_list_tables
+
+- title: Lazy Spatial Data Frames
+  desc: Create and work with lazy duckspatial_df objects
+  contents:
+  - as_duckspatial_df
+  - is_duckspatial_df
+  - ddbs_collect
+  - ddbs_geom_col
+  - duckspatial_df_sf
+  - duckspatial_df_dplyr
 
 navbar:
   title: duckspatial

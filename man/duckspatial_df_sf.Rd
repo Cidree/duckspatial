@@ -2,7 +2,23 @@
 % Please edit documentation in R/duckspatial_df_sf_methods.R
 \name{duckspatial_df_sf}
 \alias{duckspatial_df_sf}
+\alias{st_crs.duckspatial_df}
+\alias{st_geometry.duckspatial_df}
+\alias{st_bbox.duckspatial_df}
+\alias{st_as_sf.duckspatial_df}
+\alias{print.duckspatial_df}
 \title{sf methods for duckspatial_df}
+\usage{
+\method{st_crs}{duckspatial_df}(x, ...)
+
+\method{st_geometry}{duckspatial_df}(obj, ...)
+
+\method{st_bbox}{duckspatial_df}(obj, ...)
+
+\method{st_as_sf}{duckspatial_df}(x, ...)
+
+\method{print}{duckspatial_df}(x, ..., n = 10)
+}
 \description{
 These methods provide sf compatibility for duckspatial_df objects,
 allowing them to work with sf functions like st_crs(), st_geometry(), etc.

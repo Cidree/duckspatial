@@ -971,7 +971,7 @@ ddbs_temp_view_name <- function() {
 #'   `db_file`.
 #' @noRd
 #' @keywords internal
-ddbs_tmp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envir = parent.frame()) {
+ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envir = parent.frame()) {
   if (isTRUE(file) || is.character(file)) {
     # File-based connection
     if (is.character(file)) {

@@ -5,7 +5,7 @@ test_that("prepare_spatial_input works for sf objects", {
 })
 
 test_that("prepare_spatial_input works for duckspatial_df objects", {
-  conn <- duckspatial:::ddbs_tmp_conn()
+  conn <- duckspatial:::ddbs_temp_conn()
   
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
   duckspatial::ddbs_write_vector(conn, sf_obj, "test_table")
@@ -15,7 +15,7 @@ test_that("prepare_spatial_input works for duckspatial_df objects", {
 })
 
 test_that("prepare_spatial_input works for tbl_duckdb_connection objects", {
-  conn <- duckspatial:::ddbs_tmp_conn()
+  conn <- duckspatial:::ddbs_temp_conn()
   
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
   duckspatial::ddbs_write_vector(conn, sf_obj, "test_table")
@@ -28,7 +28,7 @@ test_that("prepare_spatial_input works for tbl_duckdb_connection objects", {
 })
 
 test_that("prepare_spatial_input works for character inputs", {
-  conn <- duckspatial:::ddbs_tmp_conn()
+  conn <- duckspatial:::ddbs_temp_conn()
   
   DBI::dbExecute(conn, "CREATE TABLE test_table (a INTEGER)")
   
@@ -51,7 +51,7 @@ test_that("prepare_spatial_input works for duckdbfs::open_dataset inputs", {
   skip_if_not_installed("duckdbfs")
   
   # Create a temporary parquet file
-  conn <- duckspatial:::ddbs_tmp_conn()
+  conn <- duckspatial:::ddbs_temp_conn()
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
   duckspatial::ddbs_write_vector(conn, sf_obj, "test_table")
   
@@ -74,7 +74,7 @@ test_that("prepare_spatial_input works for duckdbfs::open_dataset inputs", {
 
 test_that("prepare_spatial_input works for duckspatial::ddbs_open_dataset inputs", {
   # Create a distinct temporary parquet file
-  conn <- duckspatial:::ddbs_tmp_conn()
+  conn <- duckspatial:::ddbs_temp_conn()
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(1, 1))), b = 2) # Different data
   duckspatial::ddbs_write_vector(conn, sf_obj, "test_table_2")
   
