@@ -830,3 +830,21 @@ ddbs_default_conn <- function(create = TRUE) {
 ddbs_temp_view_name <- function() {
   paste0("temp_view_", gsub("-", "_", uuid::UUIDgenerate()))
 }
+
+#' Create an ephemeral DuckDB connection
+#'
+#' Creates a DuckDB connection that is automatically closed when the calling
+#' function exits (either normally or due to an error). This is useful for
+#' tests and one-off operations that need a temporary connection.
+#'
+#' @param envir The environment in which to schedule cleanup. Default is the
+#'   parent frame (the caller's environment).
+#'
+#' @returns A `duckdb_connection` that will be automatically closed on exit.
+#'
+#' @keywords internal
+ddbs_tmp_conn <- function(envir = parent.frame()) {
+  conn <- ddbs_create_conn(dbdir = "memory")
+  withr::defer(duckdb::dbDisconnect(conn), envir = envir)
+  conn
+}

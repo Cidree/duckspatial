@@ -35,14 +35,24 @@ ddbs_register_vector <- function(
     name_list <- get_query_name(name)
     view_name <- name_list$query_name
 
-    data_sf <- if (inherits(data, "sf")) {
+    # Handle duckspatial_df/tbl_lazy by collecting to sf first
+    data_sf <- if (inherits(data, "duckspatial_df")) {
+        ddbs_collect(data, as = "sf")
+    } else if (inherits(data, "tbl_lazy")) {
+        dplyr::collect(data) |> sf::st_as_sf()
+    } else if (inherits(data, "sf")) {
         data
     } else if (is.character(data) && length(data) == 1) {
         sf::st_read(data, quiet = TRUE)
     } else {
         cli::cli_abort(
-            "{.arg data} must be an {.cls sf} object or a readable file path."
+            "{.arg data} must be an {.cls sf} object, {.cls duckspatial_df}, or a readable file path."
         )
+    }
+    
+    # Remove existing crs_duckspatial column if present
+    if ("crs_duckspatial" %in% names(data_sf)) {
+        data_sf <- dplyr::select(data_sf, -dplyr::any_of("crs_duckspatial"))
     }
 
     tables_df <- ddbs_list_tables(conn)
