@@ -351,8 +351,20 @@ get_query_name <- function(name) {  # nocov start
 #' @keywords internal
 #' @noRd
 #' @returns list with fixed names
+# IMPORTANT: This function returns a cleanup function instead of using on.exit() internally.
+# 
+# Why? R's on.exit() runs when the function containing it exits, NOT when the caller exits.
+# If we used on.exit() here, the temporary views would be dropped as soon as get_query_list()
+# returns, BEFORE the caller can execute their SQL query that references the view.
+#
+# The caller MUST register the cleanup function with on.exit() in their own scope:
+#   result <- get_query_list(x, conn)
+#   on.exit(result$cleanup(), add = TRUE)
+#   # ... use result$query_name ...
 get_query_list <- function(x, conn) { # nocov start
 
+  cleanup <- function() NULL  # default no-op
+  
   if (inherits(x, "sf")) {
 
     ## generate a unique temporary view name
@@ -370,11 +382,12 @@ get_query_list <- function(x, conn) { # nocov start
       temp_view = TRUE
     )
 
-    ## ensure cleanup on exit
-    on.exit(
-      DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-      add = TRUE
-    )
+    cleanup <- function() {
+      tryCatch(
+        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+    }
 
     x_list <- get_query_name(temp_view_name)
 
@@ -383,7 +396,9 @@ get_query_list <- function(x, conn) { # nocov start
     # 1. OPTIMIZATION: Check if we have a direct source table/view
     source_table <- attr(x, "source_table")
     if (!is.null(source_table)) {
-      return(get_query_name(source_table))
+      result <- get_query_name(source_table)
+      result$cleanup <- function() NULL
+      return(result)
     }
     
     # 2. Fallback: Collect to sf and write back
@@ -425,10 +440,12 @@ get_query_list <- function(x, conn) { # nocov start
       temp_view = TRUE
     )
     
-    on.exit(
-      DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-      add = TRUE
-    )
+    cleanup <- function() {
+      tryCatch(
+        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+    }
     
     x_list <- get_query_name(temp_view_name)
 
@@ -450,10 +467,12 @@ get_query_list <- function(x, conn) { # nocov start
     ")
     DBI::dbExecute(conn, view_query)
     
-    on.exit(
-      DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-      add = TRUE
-    )
+    cleanup <- function() {
+      tryCatch(
+        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+    }
     
     x_list <- get_query_name(temp_view_name)
 
@@ -461,6 +480,8 @@ get_query_list <- function(x, conn) { # nocov start
     x_list <- get_query_name(x)
   }
 
+  # Add cleanup function to result
+  x_list$cleanup <- cleanup
   return(x_list)
 
 } # nocov end

@@ -81,6 +81,7 @@ ddbs_union <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
+    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -95,6 +96,7 @@ ddbs_union <- function(
 
         ## Get y query list
         y_list <- get_query_list(y, conn)
+        on.exit(y_list$cleanup(), add = TRUE)
 
         ## Get y geometry column
         y_geom <- get_geom_name(conn, y_list$query_name)
@@ -395,6 +397,7 @@ ddbs_combine <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
+    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -453,6 +456,3 @@ ddbs_combine <- function(
     feedback_query(quiet)
     return(data_sf)
 }
-
-
-

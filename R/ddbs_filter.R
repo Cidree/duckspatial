@@ -150,7 +150,9 @@ ddbs_filter <- function(
     
     ## 1.3. Get query list of table names
     x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
     y_list <- get_query_list(y, target_conn)
+    on.exit(y_list$cleanup(), add = TRUE)
     
     # CRS already extracted at start of function
     
