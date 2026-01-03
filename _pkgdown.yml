@@ -78,6 +78,7 @@ reference:
   - ddbs_make_polygon
   - ddbs_make_valid
   - ddbs_simplify
+  - ddbs_transform
   - ddbs_quadkey
   - ddbs_union
 
