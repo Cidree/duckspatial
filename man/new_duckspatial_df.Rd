@@ -21,3 +21,4 @@ A duckspatial_df object
 \description{
 Extends tbl_duckdb_connection with spatial metadata (CRS, geometry column).
 }
+\keyword{internal}

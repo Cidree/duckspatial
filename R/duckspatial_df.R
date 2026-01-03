@@ -7,6 +7,7 @@
 #' @param geom_col Name of geometry column (default: "geom")
 #' @param source_table Name of the source table if applicable
 #' @return A duckspatial_df object
+#' @keywords internal
 new_duckspatial_df <- function(x, crs = NULL, geom_col = "geom", source_table = NULL) {
   # Avoid double wrapping
   if (is_duckspatial_df(x)) return(x)

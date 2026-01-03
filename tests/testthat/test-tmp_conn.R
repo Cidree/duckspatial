@@ -41,11 +41,16 @@ test_that("ddbs_temp_conn: custom file path", {
   expect_true(file.exists(custom_path))
   
   # Manual cleanup trigger (by exiting scope)
+  # Use a separate path to avoid locking issues on Windows with the still-open 'conn'
+  custom_path_cleanup <- tempfile(fileext = ".myduck_cleanup")
   test_custom_cleanup <- function(path) {
     c <- ddbs_temp_conn(file = path)
   }
-  test_custom_cleanup(custom_path)
-  expect_false(file.exists(custom_path))
+  test_custom_cleanup(custom_path_cleanup)
+  expect_false(file.exists(custom_path_cleanup))
+  
+  # Ensure we close the original connection too, safely
+  if (DBI::dbIsValid(conn)) DBI::dbDisconnect(conn, shutdown = TRUE)
 })
 
 test_that("ddbs_temp_conn: custom path with cleanup = FALSE", {

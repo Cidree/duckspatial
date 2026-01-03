@@ -985,7 +985,9 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envi
     
     # Cleanup: disconnect and optionally delete file
     withr::defer({
-      tryCatch(DBI::dbDisconnect(conn, shutdown = TRUE), error = function(e) NULL)
+      if (DBI::dbIsValid(conn)) {
+        tryCatch(suppressWarnings(DBI::dbDisconnect(conn, shutdown = TRUE)), error = function(e) NULL)
+      }
       if (isTRUE(cleanup) && file.exists(db_file)) unlink(db_file)
     }, envir = envir)
   } else {
