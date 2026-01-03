@@ -5,8 +5,7 @@
   op <- options()
   op_duckspatial <- list(
     duckspatial.output_type = "duckspatial_df",
-    duckspatial.max_rows = 1e6,
-    duckspatial.fallback_info = FALSE
+    duckspatial.max_rows = 1e6
   )
   toset <- !(names(op_duckspatial) %in% names(op))
   if (any(toset)) options(op_duckspatial[toset])

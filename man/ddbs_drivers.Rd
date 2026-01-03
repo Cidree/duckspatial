@@ -7,7 +7,7 @@
 ddbs_drivers(conn)
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database}
 }
 \value{
 \code{data.frame}

@@ -156,7 +156,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
         tryCatch({
           DBI::dbExecute(target_conn, new_sql)
           cli::cli_inform("Imported view using SQL recreation (zero overhead)")
-          return(list(name = target_name, method = "sql_recreation"))
+          return(list(name = target_name, method = "sql_recreation", cleanup = function() NULL))
         }, error = function(e) {
           cli::cli_alert_info("Strategy 1 (SQL recreation) failed: {conditionMessage(e)}")
         })
@@ -176,7 +176,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
       tryCatch({
         DBI::dbExecute(target_conn, view_query)
         cli::cli_inform("Imported view using SQL query (zero overhead)")
-        return(list(name = target_name, method = "sql_render"))
+        return(list(name = target_name, method = "sql_render", cleanup = function() NULL))
       }, error = function(e) {
         cli::cli_alert_info("Strategy 2 (SQL render) failed: {conditionMessage(e)}")
       })
@@ -255,7 +255,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
         tryCatch(duckdb::duckdb_unregister_arrow(target_conn, temp_arrow_name), error = function(e) NULL)
         
         cli::cli_inform("Imported via nanoarrow streaming (zero R materialization)")
-        return(list(name = target_name, method = "nanoarrow"))
+        return(list(name = target_name, method = "nanoarrow", cleanup = function() NULL))
       }, error = function(e) {
         cli::cli_alert_info("Strategy 4 (nanoarrow) failed: {conditionMessage(e)}")
       })
@@ -268,12 +268,12 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
   if (inherits(df, "sf")) {
     duckspatial::ddbs_write_vector(target_conn, df, target_name, temp_view = TRUE)
     cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
-    return(list(name = target_name, method = "collect_and_write", data = df))
+    return(list(name = target_name, method = "collect_and_write", data = df, cleanup = function() NULL))
   } else if (is.data.frame(df)) {
     # For non-spatial data, use duckdb_register (zero-copy from R)
     duckdb::duckdb_register(target_conn, target_name, df)
     cli::cli_warn("Imported via duckdb_register (collected to R, zero-copy to target)")
-    return(list(name = target_name, method = "duckdb_register", data = df))
+    return(list(name = target_name, method = "duckdb_register", data = df, cleanup = function() NULL))
   } else {
     cli::cli_abort("Import failed: Cannot import object of class {.cls {class(df)}}.")
   }
@@ -531,7 +531,6 @@ get_st_predicate <- function(predicate) { # nocov start
       "overlaps"              = "ST_Overlaps",
       "crosses"               = "ST_Crosses",
       "covered_by"            = "ST_CoveredBy",
-      "intersects_extent"     = "ST_Intersects_Extent",
       "dwithin"               = "ST_DWithin",
       cli::cli_abort(
           "Predicate should be one of <intersects>, <intersects_extent>, <covers>, <touches>,
@@ -997,4 +996,130 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envi
   }
   
   conn
+}
+
+#' Resolve connections and handle cross-connection imports
+#'
+#' @param x Input x (sf, duckspatial_df, tbl, character, etc.)
+#' @param y Input y
+#' @param conn Explicit target connection (optional)
+#' @param conn_x Connection for x (optional, resolved if NULL)
+#' @param conn_y Connection for y (optional, resolved if NULL)
+#' 
+#' @return List containing:
+#'   - conn: The target connection to use
+#'   - x: Updated x (may be new view name if imported)
+#'   - y: Updated y (may be new view name if imported)
+#'   - cleanup: A function to call on exit to drop temporary views
+#' @keywords internal
+#' @noRd
+resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y = NULL) {
+    
+    cleanup_funs <- list()
+    add_cleanup <- function(fn) {
+        cleanup_funs <<- c(cleanup_funs, list(fn))
+    }
+    
+    # 1. Resolve source connections
+    # If not provided, try to extract from objects
+    # Note: Character inputs will return NULL from get_conn_from_input
+    source_conn_x <- conn_x %||% get_conn_from_input(x)
+    source_conn_y <- conn_y %||% get_conn_from_input(y)
+    
+    # 2. Determine target connection
+    # Priority: explicit conn > conn_x > conn_y > default
+    target_conn <- if (!is.null(conn)) {
+        conn
+    } else if (!is.null(source_conn_x)) {
+        source_conn_x
+    } else if (!is.null(source_conn_y)) {
+        source_conn_y
+    } else {
+        ddbs_default_conn()
+    }
+    
+    # 2.1 Validate target connection
+    if (!DBI::dbIsValid(target_conn)) {
+        cli::cli_abort("Target connection is not valid. Please provide a valid DuckDB connection.")
+    }
+    
+    # 2.2 Warn if conn_x and conn_y differ but no explicit conn was provided
+    if (is.null(conn) && 
+        !is.null(source_conn_x) && 
+        !is.null(source_conn_y) && 
+        !identical(source_conn_x, source_conn_y)) {
+        cli::cli_warn(c(
+            "{.arg x} and {.arg y} come from different DuckDB connections.",
+            "i" = "Using {.arg x}'s connection as the target. Provide {.arg conn} to override."
+        ))
+    }
+    
+    # 3. Handle imports if source connections differ from target
+    
+    # Check x
+    # We only import x if it HAS a source connection that is different from target
+    if (!is.null(source_conn_x) && !identical(target_conn, source_conn_x)) {
+         # Need to import x
+         cli::cli_warn(c(
+            "{.arg x} and the target connection are different.",
+            "i" = "Importing {.arg x} to the target connection.",
+            "i" = "This may require materializing data."
+         ))
+         
+         x_to_import <- x
+         if (is.character(x)) {
+             x_to_import <- tryCatch({
+                 tbl_obj <- dplyr::tbl(source_conn_x, x)
+                 suppressWarnings(as_duckspatial_df(tbl_obj))
+             }, error = function(e) {
+                 tryCatch(dplyr::tbl(source_conn_x, x), error = function(ex) x)
+             })
+         }
+         
+         res <- import_view_to_connection(target_conn, source_conn_x, x_to_import)
+         x <- res$name
+         
+         add_cleanup(function() {
+             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res$name}")), error = function(e) NULL)
+             if (is.function(res$cleanup)) tryCatch(res$cleanup(), error = function(e) NULL)
+         })
+    }
+    
+    # Check y
+    # We only import y if it HAS a source connection that is different from target
+    if (!is.null(source_conn_y) && !identical(target_conn, source_conn_y)) {
+         # Need to import y
+         cli::cli_warn(c(
+            "{.arg y} and the target connection are different.",
+            "i" = "Importing {.arg y} to the target connection.",
+            "i" = "This may require materializing data."
+         ))
+         
+         y_to_import <- y
+         if (is.character(y)) {
+             y_to_import <- tryCatch({
+                 tbl_obj <- dplyr::tbl(source_conn_y, y)
+                 suppressWarnings(as_duckspatial_df(tbl_obj))
+             }, error = function(e) {
+                 tryCatch(dplyr::tbl(source_conn_y, y), error = function(ex) y)
+             })
+         }
+         
+         res <- import_view_to_connection(target_conn, source_conn_y, y_to_import)
+         y <- res$name
+         
+         add_cleanup(function() {
+             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res$name}")), error = function(e) NULL)
+             if (is.function(res$cleanup)) tryCatch(res$cleanup(), error = function(e) NULL)
+         })
+    }
+    
+    list(
+        conn = target_conn,
+        x = x,
+        y = y,
+        cleanup = function() {
+            for (fn in cleanup_funs) fn()
+        }
+    )
 }

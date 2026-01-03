@@ -36,10 +36,10 @@ names. If \code{NULL} (the default), the function returns the result as an
 \item{new_column}{Name of the new column to create on the input data. If NULL,
 the function will return a vector with the result}
 
-\item{crs}{The coordinates reference system of the data. Specify if the data
+\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{a character string of length one specifying the column
+\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 

@@ -7,7 +7,7 @@
 ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database}
 
 \item{upgrade}{if TRUE, it upgrades the DuckDB extension to the latest version}
 

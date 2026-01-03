@@ -81,10 +81,10 @@ test_that("ddbs_join works with mixed inputs and cross-connection", {
   
   # Cross-connection join: p_lazy1 (conn1) LEFT JOIN c_lazy2 (conn2)
   # Should import c_lazy2 into conn1
-  expect_warning(
+  suppressWarnings(expect_warning(
     res <- ddbs_join(p_lazy1, c_lazy2, join = "intersects"),
-    "different DuckDB connections"
-  )
+    "connection are different"
+  ))
   
   # Result should be lazy table in conn1
   expect_true(inherits(res, "duckspatial_df"))
@@ -99,9 +99,9 @@ test_that("ddbs_join works with mixed inputs and cross-connection", {
   expect_s3_class(res_df, "sf")
   
   # Test with function predicate (Regression check)
-   expect_warning(
+   suppressWarnings(expect_warning(
     res_func <- ddbs_join(p_lazy1, c_lazy2, join = "intersects"),
-    "different DuckDB connections"
-  )
+    "connection are different"
+  ))
   expect_s3_class(res_func, "duckspatial_df")
 })

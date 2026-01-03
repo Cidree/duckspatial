@@ -9,6 +9,8 @@ ddbs_join(
   y,
   join = "intersects",
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
@@ -36,15 +38,21 @@ the details for other options.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
+
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
 names. If it's \code{NULL} (the default), it will return the result as an
 \code{sf} object.}
 
-\item{crs}{The coordinates reference system of the data. Specify if the data
+\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{a character string of length one specifying the column
+\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 

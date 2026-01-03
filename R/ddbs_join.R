@@ -9,6 +9,8 @@
 #' @param join A geometry predicate function. Defaults to `"intersects"`. See
 #'        the details for other options.
 #' @template conn_null
+#' @template conn_x_conn_y
+#'
 #' @param name A character string of length one specifying the name of the table,
 #'        or a character string of length two specifying the schema and table
 #'        names. If it's `NULL` (the default), it will return the result as an
@@ -83,6 +85,8 @@ ddbs_join <- function(
     y,
     join = "intersects",
     conn = NULL,
+    conn_x = NULL,
+    conn_y = NULL,
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
@@ -92,23 +96,20 @@ ddbs_join <- function(
 
     deprecate_crs(crs_column, crs)
     
-    # 0. Handle errors
+    # 1. Validate inputs
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x, y)
     
-    # 0.5. Normalize inputs (coerce tbl_duckdb_connection, validate character)
-    x <- prepare_spatial_input(x, conn)
-    y <- prepare_spatial_input(y, conn)
+    # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
     
-    # Pre-extract CRS (before y might be converted to character)
+    # Pre-extract CRS (before prepare_spatial_input converts types)
     crs_x <- attr(x, "crs")
     crs_y <- attr(y, "crs")
     
-    # Try auto-detection for tbl_duckdb_connection if CRS is NULL
+    # Try auto-detection for tbl_duckdb_connection before conversion to duckspatial_df
     if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
        crs_x <- suppressWarnings(ddbs_crs(x))
        if (is.na(crs_x)) crs_x <- NULL
@@ -118,56 +119,28 @@ ddbs_join <- function(
        if (is.na(crs_y)) crs_y <- NULL
     }
 
-     # 1. Manage connection to DB
-    ## 1.1. Extract connections from inputs
-    conn_x <- get_conn_from_input(x)
-    conn_y <- get_conn_from_input(y)
+    # Resolve conn_x/conn_y defaults from 'conn' for character inputs
+    # (Only if conn was provided and we need a connection for a character input)
+    if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+    if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+    x <- prepare_spatial_input(x, conn_x)
+    y <- prepare_spatial_input(y, conn_y)
     
-    ## 1.2. Resolve which connection to use
-    if (!is.null(conn)) {
-      # User explicitly provided connection - use it
-      target_conn <- conn
-    } else if (!is.null(conn_x) && !is.null(conn_y)) {
-      # Both inputs have connections  
-      if (identical(conn_x, conn_y)) {
-        # Same connection - great!
-        target_conn <- conn_x
-      } else {
-        # Different connections - import y into x's connection
-        cli::cli_warn(c(
-          "{.arg x} and {.arg y} come from different DuckDB connections.",
-          "i" = "Using connection from {.arg x}. Importing {.arg y} to this connection.",
-          "i" = "This may require materializing data."
-        ))
-        target_conn <- conn_x
-        
-        # Import y from conn_y to conn_x
-        import_result <- import_view_to_connection(
-          target_conn = conn_x,
-          source_conn = conn_y,
-          source_object = y
-        )
-        
-        # Replace y with imported view name as character (for get_query_list)
-        y <- import_result$name
-        
-        # Register cleanup to drop imported view on exit
-        on.exit(
-          tryCatch({
-            DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {import_result$name}"))
-          }, error = function(e) NULL),
-          add = TRUE
-        )
-      }
-    } else if (!is.null(conn_x)) {
-      target_conn <- conn_x
-    } else if (!is.null(conn_y)) {
-      target_conn <- conn_y
-    } else {
-      target_conn <- ddbs_default_conn()
-    }
+     # 3. Manage connection to DB
+    ## 3.1. Resolve connections and handle imports
+    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
     
-    ## 1.3. Get query list of table names
+    target_conn <- resolve_res$conn
+    x <- resolve_res$x
+    y <- resolve_res$y
+    
+    # Register cleanup
+    on.exit(resolve_res$cleanup(), add = TRUE)
+
+
+    
+    ## 3.3. Get query list of table names
     x_list <- get_query_list(x, target_conn)
     y_list <- get_query_list(y, target_conn)
     
@@ -182,10 +155,10 @@ ddbs_join <- function(
        assert_crs(target_conn, x_list$query_name, y_list$query_name)
     }
 
-    # 2. Prepare params for query
-    ## 2.1. select predicate
+    # 4. Prepare parameters for query
+    ## 4.1. select predicate
     sel_pred <- get_st_predicate(join)
-    ## 2.2. get name of geometry column
+    ## 4.2. get name of geometry column
     x_geom <- attr(x, "sf_column") %||% get_geom_name(target_conn, x_list$query_name)
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "tbl_x")
     y_geom <- attr(y, "sf_column") %||% get_geom_name(target_conn, y_list$query_name)
@@ -198,10 +171,12 @@ ddbs_join <- function(
        assert_crs_column(crs_column, x_rest)
     }
     ## remove CRS column from y_rest
-    y_rest <- y_rest[-grep(crs_column, y_rest)]
+    crs_idx <- grep(crs_column, y_rest, fixed = TRUE)
+    if (length(crs_idx) > 0) y_rest <- y_rest[-crs_idx]
+    
     y_rest <- if (length(y_rest) > 0) paste0('tbl_y."', y_rest, '",', collapse = ' ') else ""
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+    ## 5. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
@@ -232,7 +207,7 @@ ddbs_join <- function(
         return(invisible(TRUE))
     }
 
-    ## 4. create the base query
+    ## 6. create the base query
     tmp.query <- glue::glue("
         SELECT 
             {x_rest}
@@ -249,7 +224,7 @@ ddbs_join <- function(
     ## send the query
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. Handle output based on output parameter
+    ## 7. Handle output based on output parameter
     result <- ddbs_handle_output(
         data       = data_tbl,
         conn       = target_conn,
