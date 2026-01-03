@@ -553,11 +553,10 @@ get_st_predicate <- function(predicate) { # nocov start
       "crosses"               = "ST_Crosses",
       "covered_by"            = "ST_CoveredBy",
       "dwithin"               = "ST_DWithin",
-      cli::cli_abort(
-          "Predicate should be one of <intersects>, <intersects_extent>, <covers>, <touches>,
-          <contains>, <contains_properly>, <within>, <within_properly>, <dwithin> <disjoint>, <equals>,
-          <overlaps>, <crosses>, <covered_by>, or <intersects_extent>."
-        )
+      cli::cli_abort(c(
+          "Invalid spatial predicate: {.val {predicate}}",
+          "i" = "Valid options: {.val {c('intersects', 'intersects_extent', 'covers', 'touches', 'contains', 'contains_properly', 'within', 'within_properly', 'dwithin', 'disjoint', 'equals', 'overlaps', 'crosses', 'covered_by')}}"
+        ))
       )
 } # nocov end
 

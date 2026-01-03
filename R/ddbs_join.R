@@ -103,11 +103,16 @@ ddbs_join <- function(
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     
+    # Validate join predicate early (reuses get_st_predicate which aborts on invalid)
+    sel_pred <- get_st_predicate(join)
+    
     # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
     
-    # Pre-extract CRS (before prepare_spatial_input converts types)
+    # Pre-extract CRS and sf_column (before prepare_spatial_input converts types)
     crs_x <- attr(x, "crs")
     crs_y <- attr(y, "crs")
+    sf_col_x <- attr(x, "sf_column")
+    sf_col_y <- attr(y, "sf_column")
     
     # Try auto-detection for tbl_duckdb_connection before conversion to duckspatial_df
     if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
@@ -158,18 +163,17 @@ ddbs_join <- function(
     }
 
     # 4. Prepare parameters for query
-    ## 4.1. select predicate
-    sel_pred <- get_st_predicate(join)
-    ## 4.2. get name of geometry column
-    x_geom <- attr(x, "sf_column") %||% get_geom_name(target_conn, x_list$query_name)
+    ## 4.1. predicate already validated early (sel_pred above)
+    ## 4.2. get name of geometry column (use saved sf_col_x/y from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "tbl_x")
-    y_geom <- attr(y, "sf_column") %||% get_geom_name(target_conn, y_list$query_name)
+    y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
     y_rest <- get_geom_name(target_conn, y_list$query_name, rest = TRUE, collapse = FALSE)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
     ## error if crs_column not found
-    ## error if crs_column not found (conditional on attribute)
-    if (is.null(attr(x, "crs"))) {
+    ## error if crs_column not found (conditional on saved crs_x)
+    if (is.null(crs_x)) {
        assert_crs_column(crs_column, x_rest)
     }
     ## remove CRS column from y_rest
