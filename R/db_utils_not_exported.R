@@ -78,88 +78,166 @@ crs_equal <- function(crs1, crs2) {  # nocov start
 #' @param target_name Name for view in target connection (auto-generated if NULL)
 #' @return List with imported view name and cleanup function
 #' @keywords internal
-import_view_to_connection <- function(target_conn, source_conn, source_object, target_name = NULL) {  # nocov start
+import_view_to_connection <- function(target_conn, source_conn, source_object, target_name = NULL) {
   
   if (is.null(target_name)) {
-    # Generate unique name
     target_name <- paste0("imported_", gsub("-", "_", uuid::UUIDgenerate()))
   }
   
-  # STRATEGY 1: Try to extract and recreate view SQL (best performance)
-  # Only applies if object is a direct reference to a table/view (not a query)
+  # Track cleanup actions
+  cleanup_actions <- list()
+  
+  # STRATEGY 1: SQL recreation (same DB, direct view reference)
   if (inherits(source_object, c("duckspatial_df", "tbl_duckdb_connection", "tbl_lazy"))) {
-    
-    # Check if it's a direct table reference
     source_table <- dbplyr::remote_name(source_object)
     
     if (!is.null(source_table) && !inherits(source_table, "sql")) {
-      # Try to get view SQL from source connection
+      source_table_clean <- gsub('^"|"$', "", as.character(source_table))
+      
       view_sql <- tryCatch({
-        result <- DBI::dbGetQuery(source_conn, glue::glue(
-          "SELECT sql FROM duckdb_views() WHERE view_name = '{source_table}'"
-        ))
+        q_sql <- glue::glue(
+          "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
+        )
+        result <- DBI::dbGetQuery(source_conn, q_sql)
         if (nrow(result) > 0) result$sql else NULL
       }, error = function(e) NULL)
       
       if (!is.null(view_sql) && length(view_sql) > 0) {
-        # Recreate view in target, replacing the view name
-        new_sql <- gsub(
-          paste0("VIEW ", source_table),
-          paste0("VIEW ", target_name),
-          view_sql
-        )
-        # Make it temporary and allow replacement
-        new_sql <- sub("CREATE VIEW", "CREATE OR REPLACE TEMPORARY VIEW", new_sql)
+        source_pat_clean <- paste0("VIEW\\s+\"", source_table_clean, "\"")
+        source_pat <- paste0("VIEW\\s+", source_table)
+        
+        if (grepl(source_pat_clean, view_sql, ignore.case = TRUE)) {
+          new_sql <- sub(source_pat_clean, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
+        } else {
+          new_sql <- sub(source_pat, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
+        }
+        new_sql <- sub("CREATE VIEW", "CREATE OR REPLACE TEMPORARY VIEW", new_sql, ignore.case = TRUE)
         
         tryCatch({
           DBI::dbExecute(target_conn, new_sql)
           cli::cli_inform("Imported view using SQL recreation (zero overhead)")
           return(list(name = target_name, method = "sql_recreation"))
         }, error = function(e) {
-          # Falls through to STRATEGY 2
+          cli::cli_alert_info("Strategy 1 (SQL recreation) failed: {conditionMessage(e)}")
         })
       }
     }
   }
   
-  # STRATEGY 2: Use dbplyr::sql_render for transformed lazy tables
+  # STRATEGY 2: SQL render (same DB, lazy query)
   if (inherits(source_object, c("tbl_lazy", "tbl_duckdb_connection"))) {
     query_sql <- tryCatch({
       as.character(dbplyr::sql_render(source_object, con = source_conn))
     }, error = function(e) NULL)
     
     if (!is.null(query_sql)) {
-      view_query <- glue::glue("
-        CREATE OR REPLACE TEMPORARY VIEW {target_name} AS
-        {query_sql}
-      ")
+      view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {target_name} AS {query_sql}")
       
       tryCatch({
         DBI::dbExecute(target_conn, view_query)
         cli::cli_inform("Imported view using SQL query (zero overhead)")
         return(list(name = target_name, method = "sql_render"))
       }, error = function(e) {
-        # Falls through to STRATEGY 3
+        cli::cli_alert_info("Strategy 2 (SQL render) failed: {conditionMessage(e)}")
       })
     }
   }
   
-  # STRATEGY 3: Fallback - Collect and Register
-  # We use ddbs_write_vector to ensure CRS metadata is preserved
+  # STRATEGY 3: ATTACH file-based source DB (READ_ONLY)
+  # Try multiple ways to get dbdir since dbGetInfo may return NULL
+  source_dbdir <- tryCatch({
+    info <- DBI::dbGetInfo(source_conn)
+    dbdir <- info$dbdir
+    if (is.null(dbdir) || length(dbdir) == 0) {
+      # Fallback: try to query from DuckDB itself
+      res <- DBI::dbGetQuery(source_conn, "SELECT current_database()")
+      NULL # Still can't get file path from this
+    }
+    dbdir
+  }, error = function(e) NULL)
+  
+  if (!is.null(source_dbdir) && source_dbdir != ":memory:" && file.exists(source_dbdir)) {
+    source_table <- tryCatch(dbplyr::remote_name(source_object), error = function(e) NULL)
+    
+    if (!is.null(source_table) && !inherits(source_table, "sql")) {
+      attach_alias <- paste0("src_", gsub("-", "_", uuid::UUIDgenerate()))
+      source_table_clean <- gsub('^"|"$', "", as.character(source_table))
+      
+      tryCatch({
+        DBI::dbExecute(target_conn, glue::glue("ATTACH '{source_dbdir}' AS {attach_alias} (READ_ONLY)"))
+        
+        view_query <- glue::glue("
+          CREATE OR REPLACE TEMPORARY VIEW {target_name} AS
+          SELECT * FROM {attach_alias}.{source_table_clean}
+        ")
+        DBI::dbExecute(target_conn, view_query)
+        
+        cli::cli_inform("Imported view using ATTACH (zero-copy, READ_ONLY)")
+        return(list(
+          name = target_name, 
+          method = "attach",
+          cleanup = function() {
+            tryCatch(DBI::dbExecute(target_conn, glue::glue("DETACH {attach_alias}")), error = function(e) NULL)
+          }
+        ))
+      }, error = function(e) {
+        cli::cli_alert_info("Strategy 3 (ATTACH) failed: {conditionMessage(e)}")
+        tryCatch(DBI::dbExecute(target_conn, glue::glue("DETACH IF EXISTS {attach_alias}")), error = function(e) NULL)
+      })
+    }
+  }
+  
+  # STRATEGY 4: Nanoarrow streaming (cross-DB)
+  # Materialize into target to avoid Arrow lifecycle issues
+  if (inherits(source_object, c("tbl_lazy", "tbl_duckdb_connection", "duckspatial_df"))) {
+    query_sql <- tryCatch({
+      as.character(dbplyr::sql_render(source_object, con = source_conn))
+    }, error = function(e) NULL)
+    
+    if (!is.null(query_sql)) {
+      tryCatch({
+        res <- DBI::dbSendQuery(source_conn, query_sql, arrow = TRUE)
+        
+        reader <- duckdb::duckdb_fetch_arrow(res)
+        stream <- nanoarrow::as_nanoarrow_array_stream(reader)
+        
+        # Register temporarily, then materialize into a view
+        temp_arrow_name <- paste0("temp_arrow_", gsub("-", "_", uuid::UUIDgenerate()))
+        duckdb::duckdb_register_arrow(target_conn, temp_arrow_name, stream)
+        
+        # Create permanent view from Arrow data (materializes)
+        DBI::dbExecute(target_conn, glue::glue(
+          "CREATE OR REPLACE TEMPORARY VIEW {target_name} AS SELECT * FROM {temp_arrow_name}"
+        ))
+        
+        # Cleanup Arrow registration
+        DBI::dbClearResult(res)
+        tryCatch(duckdb::duckdb_unregister_arrow(target_conn, temp_arrow_name), error = function(e) NULL)
+        
+        cli::cli_inform("Imported via nanoarrow streaming (zero R materialization)")
+        return(list(name = target_name, method = "nanoarrow"))
+      }, error = function(e) {
+        cli::cli_alert_info("Strategy 4 (nanoarrow) failed: {conditionMessage(e)}")
+      })
+    }
+  }
+  
+  # STRATEGY 5: Collect + register (last resort)
   df <- dplyr::collect(source_object)
   
-  # If it's an sf object or data frame, use ddbs_write_vector
-  if (inherits(df, "sf") || is.data.frame(df)) {
-     duckspatial::ddbs_write_vector(target_conn, df, target_name, temp_view = TRUE)
-     cli::cli_warn("Imported via collection (materialized to R, then uploaded to target)")
-     return(list(name = target_name, method = "collect_and_write", data = df))
+  if (inherits(df, "sf")) {
+    duckspatial::ddbs_write_vector(target_conn, df, target_name, temp_view = TRUE)
+    cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
+    return(list(name = target_name, method = "collect_and_write", data = df))
+  } else if (is.data.frame(df)) {
+    # For non-spatial data, use duckdb_register (zero-copy from R)
+    duckdb::duckdb_register(target_conn, target_name, df)
+    cli::cli_warn("Imported via duckdb_register (collected to R, zero-copy to target)")
+    return(list(name = target_name, method = "duckdb_register", data = df))
   } else {
-     # Fallback for other types (e.g. Arrow Table if we supported it)
-     duckdb::duckdb_register(target_conn, target_name, df)
-     cli::cli_warn("Imported via duckdb_register (zero-copy)")
-     return(list(name = target_name, method = "duckdb_register", data = df))
+    cli::cli_abort("Import failed: Cannot import object of class {.cls {class(df)}}.")
   }
-}  # nocov end
+}
 
 #' Get column names in a DuckDB database
 #'
@@ -834,17 +912,47 @@ ddbs_temp_view_name <- function() {
 #' Create an ephemeral DuckDB connection
 #'
 #' Creates a DuckDB connection that is automatically closed when the calling
-#' function exits (either normally or due to an error). This is useful for
-#' tests and one-off operations that need a temporary connection.
+#' function exits (either normally or due to an error). For file-based 
+#' connections, the database file can also be automatically deleted on cleanup.
 #'
+#' @param file If TRUE, creates a file-based temporary database instead of 
+#'   in-memory. If a character string, uses that as the database file path.
+#'   Default is FALSE (in-memory).
+#' @param read_only If TRUE and file is provided, opens the connection as 
+#'   read-only. Has no effect on in-memory connections. Default is FALSE.
+#' @param cleanup If TRUE (default), the connection will be closed (with 
+#'   shutdown = TRUE for file-based) and for file-based connections, the 
+#'   database file will be deleted.
 #' @param envir The environment in which to schedule cleanup. Default is the
 #'   parent frame (the caller's environment).
 #'
 #' @returns A `duckdb_connection` that will be automatically closed on exit.
-#'
+#'   For file-based connections, also returns the file path as an attribute 
+#'   `db_file`.
+#' @noRd
 #' @keywords internal
-ddbs_tmp_conn <- function(envir = parent.frame()) {
-  conn <- ddbs_create_conn(dbdir = "memory")
-  withr::defer(duckdb::dbDisconnect(conn), envir = envir)
+ddbs_tmp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envir = parent.frame()) {
+  if (isTRUE(file) || is.character(file)) {
+    # File-based connection
+    if (is.character(file)) {
+      db_file <- file
+    } else {
+      db_file <- tempfile(fileext = ".duckdb")
+    }
+    
+    conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = read_only)
+    attr(conn, "db_file") <- db_file
+    
+    # Cleanup: disconnect and optionally delete file
+    withr::defer({
+      tryCatch(DBI::dbDisconnect(conn, shutdown = TRUE), error = function(e) NULL)
+      if (isTRUE(cleanup) && file.exists(db_file)) unlink(db_file)
+    }, envir = envir)
+  } else {
+    # In-memory connection
+    conn <- ddbs_create_conn(dbdir = "memory")
+    withr::defer(duckdb::dbDisconnect(conn), envir = envir)
+  }
+  
   conn
 }
