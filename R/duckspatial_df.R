@@ -93,8 +93,13 @@ as_duckspatial_df.tbl_duckdb_connection <- function(x, conn = NULL, crs = NULL,
     crs <- ddbs_crs(x)
   }
   
-  # Already lazy, just wrap
-  new_duckspatial_df(x, crs = crs, geom_col = geom_col)
+  # Extract source table for efficient get_query_list path
+  source_table <- tryCatch(
+    as.character(dbplyr::remote_name(x)),
+    error = function(e) NULL
+  )
+  
+  new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
 }
 
 #' @export
@@ -105,8 +110,13 @@ as_duckspatial_df.tbl_lazy <- function(x, conn = NULL, crs = NULL,
     crs <- ddbs_crs(x)
   }
   
-  # Already lazy, just wrap
-  new_duckspatial_df(x, crs = crs, geom_col = geom_col)
+  # Extract source table for efficient get_query_list path
+  source_table <- tryCatch(
+    as.character(dbplyr::remote_name(x)),
+    error = function(e) NULL
+  )
+  
+  new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
 }
 
 #' @export

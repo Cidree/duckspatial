@@ -100,6 +100,10 @@ ddbs_join <- function(
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x, y)
     
+    # 0.5. Normalize inputs (coerce tbl_duckdb_connection, validate character)
+    x <- prepare_spatial_input(x, conn)
+    y <- prepare_spatial_input(y, conn)
+    
     # Pre-extract CRS (before y might be converted to character)
     crs_x <- attr(x, "crs")
     crs_y <- attr(y, "crs")

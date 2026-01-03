@@ -18,6 +18,46 @@ dbConnCheck <- function(conn) {  # nocov start
     }
 }  # nocov end
 
+#' Normalize spatial input for processing
+#'
+#' Standardizes all input types before spatial operations:
+#' - sf objects: passed through unchanged
+#' - duckspatial_df: passed through unchanged
+#' - tbl_duckdb_connection: coerced to duckspatial_df (with source_table)
+#' - character: verified to exist in connection
+#'
+#' @param x Spatial input (sf, duckspatial_df, tbl_duckdb_connection, or character)
+#' @param conn DuckDB connection (required for character table names)
+#' @return Normalized input ready for get_query_list()
+#' @keywords internal
+#' @noRd
+prepare_spatial_input <- function(x, conn = NULL) {
+  # 1. sf: pass through
+  if (inherits(x, "sf")) return(x)
+  
+  # 2. duckspatial_df: already normalized
+  if (inherits(x, "duckspatial_df")) return(x)
+  
+  # 3. tbl_duckdb_connection: coerce to duckspatial_df
+  if (inherits(x, "tbl_duckdb_connection")) {
+    return(as_duckspatial_df(x))
+  }
+  
+  # 4. character: verify table/view exists
+  if (is.character(x)) {
+    if (is.null(conn)) {
+      cli::cli_abort("{.arg conn} required when using character table names.")
+    }
+    if (!DBI::dbExistsTable(conn, x)) {
+      cli::cli_abort("Table or view {.val {x}} does not exist in connection.")
+    }
+    return(x)
+  }
+  
+  # Unsupported type - let downstream handle/error
+  x
+}
+
 #' Get DuckDB connection from an object
 #'
 #' Extracts the connection from duckspatial_df, tbl_lazy, or validates a direct connection.

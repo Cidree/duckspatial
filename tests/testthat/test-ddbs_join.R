@@ -138,3 +138,33 @@ testthat::test_that("errors with incorrect input", {
 
 
     })
+
+# duckdbfs interoperability ---------------------------------------------------
+
+testthat::test_that("ddbs_join works with raw duckdbfs tbl_duckdb_connection", {
+  skip_if_not_installed("duckdbfs")
+  
+  countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")
+  
+  # Both from duckdbfs - different connections but same CRS
+  # Using open_dataset directly (no head) preserves source table for CRS detection
+  conn1 <- ddbs_tmp_conn()
+  conn2 <- ddbs_tmp_conn()
+  
+  countries1 <- duckdbfs::open_dataset(
+    countries_path, format = "sf", conn = conn1
+  )
+  countries2 <- duckdbfs::open_dataset(
+    countries_path, format = "sf", conn = conn2
+  )
+  
+  # Cross-connection join should work with warning about different connections
+  testthat::expect_warning(
+    result <- ddbs_join(countries1, countries2, join = "intersects"),
+    "different DuckDB connections"
+  )
+  
+  testthat::expect_true(
+    inherits(result, "duckspatial_df") || inherits(result, "sf")
+  )
+})
