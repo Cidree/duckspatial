@@ -26,9 +26,6 @@ library(lwgeom)
 library(ggplot2)
 options(scipen = 999)
 
-# Turn off S2 (Spherical geometry) for planar processing
-sf::sf_use_s2(FALSE)
-
 # read polygons data
 countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 #> Reading layer `countries' from data source 
@@ -74,16 +71,6 @@ points_sf_10mi <- data.frame(
 ``` r
 run_benchmark <- function(points_sf){
     
-    # set.seed(42)
-    # 
-    # ## create points data
-    # points_sf <- data.frame(
-    #     id = 1:n,
-    #     x = runif(n, min = -180, max = 180),  
-    #     y = runif(n, min = -90, max = 90)
-    #     ) |> 
-    #     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
-    
     temp_bench <- bench::mark(
         iterations = 1, 
         check = FALSE, 
@@ -124,8 +111,8 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 96%
-faster and used 4.4 times less memory than {sf}. Not bad.
+In this example working with 1 million points, {duckspatial} was 59%
+faster and used 5.4 times less memory than {sf}. Not bad.
 
 ``` r
 ggplot(data = df_bench_join) +
@@ -184,8 +171,8 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 64%
-faster and used 2 times less memory than {sf}. Not bad.
+In this example working with 1 million points, {duckspatial} was 73%
+faster and used 2.7 times less memory than {sf}.
 
 plot
 
@@ -205,6 +192,9 @@ ggplot(data = df_bench_filter) +
 ## Spatial distances
 
 ``` r
+# Turn on S2 (Spherical geometry)
+sf::sf_use_s2(TRUE)
+
 run_benchmark <- function(n){
     
     set.seed(42)
@@ -223,11 +213,12 @@ run_benchmark <- function(n){
         duckspatial = duckspatial::ddbs_distance(
             x = points_sf, 
             y = points_sf, 
-            dist_type = "planar"),
+            dist_type = "haversine"),
         
         sf = sf::st_distance(
             x = points_sf, 
-            y = points_sf)
+            y = points_sf, 
+            which = "Great Circle")
         )
     
     temp_bench$n <- nrow(points_sf)
@@ -251,13 +242,14 @@ df_bench_distance <- lapply(
 temp <- df_bench_distance |> 
     filter(n == 10000)
 
-memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
+memo_diff <- round(as.numeric(temp$mem_alloc[1]) / as.numeric(temp$mem_alloc[2]) ,1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
 In this example calculating the distance between 10K points,
-{duckspatial} was 97% faster and used 1.5 times less memory than {sf}.
-Not bad.
+{duckspatial} was 87% faster, but used 2 times more memory than {sf}.
+Mind you that {sf} is still more efficient when calculating Euclidean
+distances.
 
 plot
 
