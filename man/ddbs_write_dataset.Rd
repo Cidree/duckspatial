@@ -26,7 +26,15 @@ ddbs_write_dataset(
 \item{path}{Path to output file.}
 
 \item{format}{Output format. If \code{NULL} (default), inferred from file extension.
-Supported values include "parquet", "csv", "geojson", "gpkg", "shp", "fgb", etc.}
+Common writable formats include:
+\itemize{
+\item Native: "parquet", "csv"
+\item GDAL Spatial: "ESRI Shapefile" (or "shp"), "GPKG" (or "gpkg"), "GeoJSON" (or "geojson"),
+"FlatGeoBuf" (or "fgb"), "KML", "GPX", "GML", "SQLite"
+}
+
+Run \code{ddbs_drivers()} to see all GDAL drivers available on your system (check \code{can_create} column
+for writable formats). The exact set of available drivers may vary by DuckDB installation.}
 
 \item{conn}{DuckDB connection. If \code{NULL}, attempts to infer from \code{data} or uses default connection.}
 
@@ -86,4 +94,7 @@ This function is inspired by and builds upon the logic found in the
 particularly its \code{write_dataset} and \code{write_geo} functions.
 For advanced features like cloud storage (S3) support, the
 \code{duckdbfs} package is highly recommended.
+}
+\seealso{
+\code{\link[=ddbs_drivers]{ddbs_drivers()}} to list all available GDAL drivers and formats on your system.
 }

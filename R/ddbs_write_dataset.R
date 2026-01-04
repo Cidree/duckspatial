@@ -7,7 +7,13 @@
 #' @param data A `duckspatial_df`, `tbl_lazy` (DuckDB), `sf` object, or `data.frame`.
 #' @param path Path to output file.
 #' @param format Output format. If `NULL` (default), inferred from file extension.
-#'   Supported values include "parquet", "csv", "geojson", "gpkg", "shp", "fgb", etc.
+#'   Common writable formats include:
+#'   - Native: "parquet", "csv"
+#'   - GDAL Spatial: "ESRI Shapefile" (or "shp"), "GPKG" (or "gpkg"), "GeoJSON" (or "geojson"), 
+#'     "FlatGeoBuf" (or "fgb"), "KML", "GPX", "GML", "SQLite"
+#'   
+#'   Run `ddbs_drivers()` to see all GDAL drivers available on your system (check `can_create` column 
+#'   for writable formats). The exact set of available drivers may vary by DuckDB installation.
 #' @param conn DuckDB connection. If `NULL`, attempts to infer from `data` or uses default connection.
 #' @param overwrite Logical. If `TRUE`, overwrites existing file.
 #'   For Parquet/CSV, this uses DuckDB's `OVERWRITE_OR_IGNORE` flag.
@@ -24,6 +30,8 @@
 #' @param quiet Logical. if `TRUE`, suppresses success message.
 #'
 #' @return The `path` invisibly.
+#' 
+#' @seealso [ddbs_drivers()] to list all available GDAL drivers and formats on your system.
 #' 
 #' @references 
 #' This function is inspired by and builds upon the logic found in the 
@@ -105,6 +113,38 @@ ddbs_write_dataset <- function(
      if (is.null(driver_name)) {
          cli::cli_abort("Could not determine GDAL driver for format {.val {format}} or extension {.val {ext}}. Please specify format/driver explicitly.")
      }
+  }
+  
+  # Validate GDAL driver availability and writability
+  if (!is_native && !is.null(driver_name)) {
+      available_drivers <- tryCatch({
+          ddbs_drivers(conn)
+      }, error = function(e) {
+          # If we can't get drivers, continue without validation (legacy behavior)
+          NULL
+      })
+      
+      if (!is.null(available_drivers)) {
+          # Check if driver exists
+          driver_info <- available_drivers[available_drivers$short_name == driver_name | 
+                                            available_drivers$long_name == driver_name, ]
+          
+          if (nrow(driver_info) == 0) {
+              # Driver not found - list available writable drivers
+              writable_drivers <- available_drivers[available_drivers$can_create == TRUE, ]
+              cli::cli_abort(c(
+                  "GDAL driver {.val {driver_name}} is not available on this system.",
+                  "i" = "Run {.code ddbs_drivers()} to see all available drivers.",
+                  "i" = "Available writable drivers include: {.val {head(writable_drivers$short_name, 10)}}"
+              ))
+          } else if (!driver_info$can_create[1]) {
+              # Driver exists but is read-only
+              cli::cli_abort(c(
+                  "GDAL driver {.val {driver_name}} is read-only and cannot be used for writing.",
+                  "i" = "Run {.code ddbs_drivers()} and check the {.field can_create} column for writable formats."
+              ))
+          }
+      }
   }
   
   # 4. Check for existing file
