@@ -7,7 +7,7 @@
 ddbs_write_dataset(
   data,
   path,
-  format = NULL,
+  gdal_driver = NULL,
   conn = NULL,
   overwrite = FALSE,
   crs = NULL,
@@ -21,51 +21,62 @@ ddbs_write_dataset(
 )
 }
 \arguments{
-\item{data}{A \code{duckspatial_df}, \code{tbl_lazy} (DuckDB), \code{sf} object, or \code{data.frame}.}
+\item{data}{A \code{duckspatial_df}, \code{tbl_lazy} (DuckDB), or \code{sf} object.}
 
 \item{path}{Path to output file.}
 
-\item{format}{Output format. If \code{NULL} (default), inferred from file extension.
-Common writable formats include:
+\item{gdal_driver}{GDAL driver name for writing spatial formats. If \code{NULL} (default),
+the driver is auto-detected from the file extension for common formats:
 \itemize{
-\item Native: "parquet", "csv"
-\item GDAL Spatial: "ESRI Shapefile" (or "shp"), "GPKG" (or "gpkg"), "GeoJSON" (or "geojson"),
-"FlatGeoBuf" (or "fgb"), "KML", "GPX", "GML", "SQLite"
+\item \code{.geojson}, \code{.json} → "GeoJSON"
+\item \code{.shp} → "ESRI Shapefile"
+\item \code{.gpkg} → "GPKG"
+\item \code{.fgb} → "FlatGeobuf"
+\item \code{.kml} → "KML"
+\item \code{.gpx} → "GPX"
+\item \code{.gml} → "GML"
+\item \code{.sqlite} → "SQLite"
 }
 
-Run \code{ddbs_drivers()} to see all GDAL drivers available on your system (check \code{can_create} column
-for writable formats). The exact set of available drivers may vary by DuckDB installation.}
+For \strong{non-standard file extensions} (e.g., \code{.dat}, \code{.xyz}) or to \strong{explicitly override}
+auto-detection, specify the exact driver name as it appears in \code{ddbs_drivers()$short_name}.
+Examples: \code{gdal_driver = "GeoJSON"}, \code{gdal_driver = "ESRI Shapefile"}.
 
-\item{conn}{DuckDB connection. If \code{NULL}, attempts to infer from \code{data} or uses default connection.}
+\strong{Note}: If you specify a driver that doesn't match the file extension (e.g.,
+\code{path = "output.shp"} with \code{gdal_driver = "GeoJSON"}), a warning will be issued but
+your explicit driver choice will be honored (creating a GeoJSON file with \code{.shp} extension).
 
-\item{overwrite}{Logical. If \code{TRUE}, overwrites existing file.
-For Parquet/CSV, this uses DuckDB's \code{OVERWRITE_OR_IGNORE} flag.
-For GDAL formats, the file is explicitly deleted before writing to ensure consistent behavior.}
+The function validates that the specified driver is available and writable on your
+system. Note: \code{.parquet} and \code{.csv} files use native DuckDB writers and do not
+require a GDAL driver.}
 
-\item{crs}{Output Coordinate Reference System (e.g., "EPSG:4326").
-If provided, passed to GDAL as \code{SRS} option (overrides data CRS).
-Ignored for Parquet.}
+\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
+runs on a temporary DuckDB database.}
+
+\item{overwrite}{Logical. If \code{TRUE}, overwrites existing file.}
+
+\item{crs}{Output CRS (e.g., "EPSG:4326"). Passed to GDAL as \code{SRS} option. Ignored for Parquet.}
 
 \item{options}{Named list of additional options passed to \code{COPY}.}
 
-\item{partitioning}{Character vector of column names to partition by (Parquet/CSV only).
-If \code{NULL} (default), uses \code{dplyr::group_vars(data)} if available.}
+\item{partitioning}{Character vector of columns to partition by (Parquet/CSV only).}
 
-\item{parquet_compression}{Compression codec for Parquet (e.g., "ZSTD", "SNAPPY", "GZIP", "UNCOMPRESSED").}
+\item{parquet_compression}{Compression codec for Parquet.}
 
-\item{parquet_row_group_size}{Row group size for Parquet (integer).}
+\item{parquet_row_group_size}{Row group size for Parquet.}
 
-\item{layer_creation_options}{GDAL layer creation options (e.g., "WRITE_BBOX=YES").}
+\item{layer_creation_options}{GDAL layer creation options.}
 
-\item{quiet}{Logical. if \code{TRUE}, suppresses success message.}
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 The \code{path} invisibly.
 }
 \description{
-Writes a \code{duckspatial_df}, \code{tbl_lazy} (DuckDB), or \code{sf} object to a file
-using DuckDB's \code{COPY} command. Supports Parquet (native) and various spatial
-formats via GDAL (GeoJSON, GeoPackage, etc.).
+Writes spatial data to disk using DuckDB's \code{COPY} command. Supports Parquet (native)
+and various GDAL spatial formats. Format is auto-detected from file extension for
+common formats, or can be specified explicitly via \code{gdal_driver}.
 }
 \examples{
 \dontrun{
@@ -75,17 +86,24 @@ library(duckspatial)
 path <- system.file("spatial/countries.geojson", package = "duckspatial")
 ds <- ddbs_open_dataset(path)
 
-# Write to Parquet
-tmp_parquet <- tempfile(fileext = ".parquet")
-ddbs_write_dataset(ds, tmp_parquet)
+# Auto-detect format from extension
+ddbs_write_dataset(ds, "output.geojson")
+ddbs_write_dataset(ds, "output.gpkg")
+ddbs_write_dataset(ds, "output.parquet")
 
-# Write to GeoJSON with CRS override
-tmp_json <- tempfile(fileext = ".geojson")
-ddbs_write_dataset(ds, tmp_json, crs = "EPSG:3857")
+# Explicit GDAL driver for non-standard extension
+ddbs_write_dataset(ds, "mydata.dat", gdal_driver = "GeoJSON")
 
-# Write to GeoPackage with overwrite
-tmp_gpkg <- tempfile(fileext = ".gpkg")
-ddbs_write_dataset(ds, tmp_gpkg, overwrite = TRUE)
+# See available drivers on your system
+drivers <- ddbs_drivers()
+writable <- drivers[drivers$can_create == TRUE, ]
+head(writable)
+
+# CRS override
+ddbs_write_dataset(ds, "output_3857.geojson", crs = "EPSG:3857")
+
+# Overwrite existing file
+ddbs_write_dataset(ds, "output.gpkg", overwrite = TRUE)
 }
 }
 \references{
@@ -96,5 +114,5 @@ For advanced features like cloud storage (S3) support, the
 \code{duckdbfs} package is highly recommended.
 }
 \seealso{
-\code{\link[=ddbs_drivers]{ddbs_drivers()}} to list all available GDAL drivers and formats on your system.
+\code{\link[=ddbs_drivers]{ddbs_drivers()}} to list all available GDAL drivers and formats.
 }

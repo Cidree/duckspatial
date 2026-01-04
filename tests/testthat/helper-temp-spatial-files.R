@@ -6,8 +6,8 @@
 #' that create multiple associated files.
 #'
 #' @param data A `duckspatial_df`, `tbl_lazy`, or `sf` object to write
-#' @param format Output format (e.g., "geojson", "gpkg", "shp", "fgb").
-#'   Defaults to "geojson".
+#' @param ext File extension (e.g., "geojson", "shp", "parquet"). Defaults to "geojson".
+#' @param gdal_driver Optional explicit GDAL driver (overrides extension detection)
 #' @param conn DuckDB connection. If NULL, attempts to infer from data.
 #' @param envir Environment for cleanup context. Defaults to parent.frame()
 #'   to ensure cleanup happens in the test context.
@@ -22,14 +22,15 @@
 #'   ds <- ddbs_open_dataset(system.file("spatial/countries.geojson", package = "duckspatial"))
 #'   
 #'   # Create temp file - automatically cleaned up after test
-#'   temp_file <- ddbs_create_temp_spatial_file(ds, format = "shp", conn = conn)
+#'   temp_file <- ddbs_create_temp_spatial_file(ds, ext = "shp", conn = conn)
 #'   expect_true(file.exists(temp_file))
 #' })
 #' }
 #' @noRd
 ddbs_create_temp_spatial_file <- function(
   data,
-  format = "geojson",
+  ext = "geojson",
+  gdal_driver = NULL,
   conn = NULL,
   envir = parent.frame(),
   ...
@@ -37,34 +38,14 @@ ddbs_create_temp_spatial_file <- function(
   # Create isolated temporary directory with automatic cleanup
   temp_dir <- withr::local_tempdir(.local_envir = envir)
   
-  # Determine file extension from format
-  ext <- if (format %in% c("parquet", "csv")) {
-    format
-  } else {
-    # For GDAL formats, use common extension mappings
-    switch(tolower(format),
-      "geojson" = "geojson",
-      "gpkg" = "gpkg",
-      "shp" = "shp",
-      "esri shapefile" = "shp",
-      "fgb" = "fgb",
-      "flatgeobuf" = "fgb",
-      "kml" = "kml",
-      "gpx" = "gpx",
-      "gml" = "gml",
-      "sqlite" = "sqlite",
-      tolower(format) # fallback to format as-is
-    )
-  }
-  
   # Generate file path
   file_path <- file.path(temp_dir, paste0("test_data.", ext))
   
-  # Write the dataset
+  # Write the dataset using new API (auto-detects from extension)
   ddbs_write_dataset(
     data = data,
     path = file_path,
-    format = format,
+    gdal_driver = gdal_driver,
     conn = conn,
     quiet = TRUE,
     ...

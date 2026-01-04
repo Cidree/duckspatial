@@ -34,11 +34,12 @@ test_that("ddbs_open_dataset works with GeoJSON", {
 test_that("ddbs_open_dataset works with GeoPackage", {
   conn <- ddbs_temp_conn()
 
-  # Create temp GPKG from internal data - drop FID to avoid GDAL conflict
-  tmp_gpkg <- tempfile(fileext = ".gpkg")
-  test_data <- countries_sf[, !names(countries_sf) %in% "FID"]
-  sf::st_write(test_data, tmp_gpkg, layer = "countries", quiet = TRUE)
-  on.exit(unlink(tmp_gpkg), add = TRUE)
+  # Create temp GeoPackage
+  tmp_gpkg <- ddbs_create_temp_spatial_file(
+    countries_sf,
+    ext = "gpkg",
+    conn = conn
+  )
 
   ds <- ddbs_open_dataset(tmp_gpkg, conn = conn)
 
@@ -59,10 +60,8 @@ test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
 
   conn <- ddbs_temp_conn()
 
-  # Create temp Parquet from internal data
-  tmp_parquet <- tempfile(fileext = ".parquet")
-  arrow::write_parquet(tibble::as_tibble(countries_sf), tmp_parquet)
-  on.exit(unlink(tmp_parquet), add = TRUE)
+  # Create temp Parquet from internal data using helper
+  tmp_parquet <- ddbs_create_temp_spatial_file(countries_sf, ext = "parquet", conn = conn)
 
   ds <- ddbs_open_dataset(tmp_parquet, conn = conn)
 
@@ -80,12 +79,9 @@ test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
 test_that("ddbs_open_dataset works with Shapefile", {
   conn <- ddbs_temp_conn()
 
-  # Create temp shapefile from internal data
-  tmp_dir <- tempdir()
-  tmp_shp <- file.path(tmp_dir, "test_rivers.shp")
-  suppressWarnings(sf::st_write(rivers_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE))
+  # Create temp shapefile from internal data using helper
+  tmp_shp <- ddbs_create_temp_spatial_file(rivers_sf, ext = "shp", conn = conn)
   expect_true(file.exists(tmp_shp))
-  on.exit(unlink(list.files(tmp_dir, pattern = "test_rivers", full.names = TRUE)), add = TRUE)
 
   ds <- ddbs_open_dataset(tmp_shp, conn = conn)
 
@@ -116,12 +112,9 @@ test_that("ddbs_open_dataset works with Shapefile", {
 test_that("ddbs_open_dataset dispatches to ST_ReadSHP vs GDAL correctly", {
   conn <- ddbs_temp_conn()
 
-  # Create temp shapefile
-  tmp_dir <- tempdir()
-  tmp_shp <- file.path(tmp_dir, "test_dispatch.shp")
-  suppressWarnings(sf::st_write(argentina_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE))
+  # Create temp shapefile using helper
+  tmp_shp <- ddbs_create_temp_spatial_file(argentina_sf, ext = "shp", conn = conn)
   expect_true(file.exists(tmp_shp))
-  on.exit(unlink(list.files(tmp_dir, pattern = "test_dispatch", full.names = TRUE)), add = TRUE)
 
   # Default mode: ST_ReadSHP
   ds_shp <- ddbs_open_dataset(tmp_shp, conn = conn)
@@ -154,12 +147,9 @@ test_that("ddbs_open_dataset dispatches to ST_ReadSHP vs GDAL correctly", {
 test_that("ddbs_open_dataset handles shp_encoding argument", {
   conn <- ddbs_temp_conn()
 
-  # Create temp shapefile
-  tmp_dir <- tempdir()
-  tmp_shp <- file.path(tmp_dir, "test_encoding.shp")
-  suppressWarnings(sf::st_write(argentina_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE))
+  # Create temp shapefile using helper
+  tmp_shp <- ddbs_create_temp_spatial_file(argentina_sf, ext = "shp", conn = conn)
   expect_true(file.exists(tmp_shp))
-  on.exit(unlink(list.files(tmp_dir, pattern = "test_encoding", full.names = TRUE)), add = TRUE)
 
   ds_enc <- ddbs_open_dataset(tmp_shp, conn = conn, shp_encoding = "UTF-8")
 

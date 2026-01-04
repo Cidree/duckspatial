@@ -1,37 +1,46 @@
 #' Write spatial dataset to disk
 #'
-#' Writes a `duckspatial_df`, `tbl_lazy` (DuckDB), or `sf` object to a file 
-#' using DuckDB's `COPY` command. Supports Parquet (native) and various spatial 
-#' formats via GDAL (GeoJSON, GeoPackage, etc.).
+#' Writes spatial data to disk using DuckDB's `COPY` command. Supports Parquet (native) 
+#' and various GDAL spatial formats. Format is auto-detected from file extension for 
+#' common formats, or can be specified explicitly via `gdal_driver`.
 #'
-#' @param data A `duckspatial_df`, `tbl_lazy` (DuckDB), `sf` object, or `data.frame`.
+#' @param data A `duckspatial_df`, `tbl_lazy` (DuckDB), or `sf` object.
 #' @param path Path to output file.
-#' @param format Output format. If `NULL` (default), inferred from file extension.
-#'   Common writable formats include:
-#'   - Native: "parquet", "csv"
-#'   - GDAL Spatial: "ESRI Shapefile" (or "shp"), "GPKG" (or "gpkg"), "GeoJSON" (or "geojson"), 
-#'     "FlatGeoBuf" (or "fgb"), "KML", "GPX", "GML", "SQLite"
+#' @param gdal_driver GDAL driver name for writing spatial formats. If `NULL` (default),
+#'   the driver is auto-detected from the file extension for common formats:
+#'   - `.geojson`, `.json` → "GeoJSON"
+#'   - `.shp` → "ESRI Shapefile"  
+#'   - `.gpkg` → "GPKG"
+#'   - `.fgb` → "FlatGeobuf"
+#'   - `.kml` → "KML"
+#'   - `.gpx` → "GPX"
+#'   - `.gml` → "GML"
+#'   - `.sqlite` → "SQLite"
 #'   
-#'   Run `ddbs_drivers()` to see all GDAL drivers available on your system (check `can_create` column 
-#'   for writable formats). The exact set of available drivers may vary by DuckDB installation.
-#' @param conn DuckDB connection. If `NULL`, attempts to infer from `data` or uses default connection.
+#'   For **non-standard file extensions** (e.g., `.dat`, `.xyz`) or to **explicitly override** 
+#'   auto-detection, specify the exact driver name as it appears in `ddbs_drivers()$short_name`. 
+#'   Examples: `gdal_driver = "GeoJSON"`, `gdal_driver = "ESRI Shapefile"`.
+#'   
+#'   **Note**: If you specify a driver that doesn't match the file extension (e.g., 
+#'   `path = "output.shp"` with `gdal_driver = "GeoJSON"`), a warning will be issued but 
+#'   your explicit driver choice will be honored (creating a GeoJSON file with `.shp` extension).
+#'   
+#'   The function validates that the specified driver is available and writable on your 
+#'   system. Note: `.parquet` and `.csv` files use native DuckDB writers and do not 
+#'   require a GDAL driver.
+#' @template conn_null
 #' @param overwrite Logical. If `TRUE`, overwrites existing file.
-#'   For Parquet/CSV, this uses DuckDB's `OVERWRITE_OR_IGNORE` flag.
-#'   For GDAL formats, the file is explicitly deleted before writing to ensure consistent behavior.
-#' @param crs Output Coordinate Reference System (e.g., "EPSG:4326"). 
-#'   If provided, passed to GDAL as `SRS` option (overrides data CRS). 
-#'   Ignored for Parquet.
+#' @param crs Output CRS (e.g., "EPSG:4326"). Passed to GDAL as `SRS` option. Ignored for Parquet.
 #' @param options Named list of additional options passed to `COPY`.
-#' @param partitioning Character vector of column names to partition by (Parquet/CSV only).
-#'   If `NULL` (default), uses `dplyr::group_vars(data)` if available.
-#' @param parquet_compression Compression codec for Parquet (e.g., "ZSTD", "SNAPPY", "GZIP", "UNCOMPRESSED").
-#' @param parquet_row_group_size Row group size for Parquet (integer).
-#' @param layer_creation_options GDAL layer creation options (e.g., "WRITE_BBOX=YES").
-#' @param quiet Logical. if `TRUE`, suppresses success message.
+#' @param partitioning Character vector of columns to partition by (Parquet/CSV only).
+#' @param parquet_compression Compression codec for Parquet.
+#' @param parquet_row_group_size Row group size for Parquet.
+#' @param layer_creation_options GDAL layer creation options.
+#' @template quiet
 #'
 #' @return The `path` invisibly.
 #' 
-#' @seealso [ddbs_drivers()] to list all available GDAL drivers and formats on your system.
+#' @seealso [ddbs_drivers()] to list all available GDAL drivers and formats.
 #' 
 #' @references 
 #' This function is inspired by and builds upon the logic found in the 
@@ -50,22 +59,29 @@
 #' path <- system.file("spatial/countries.geojson", package = "duckspatial")
 #' ds <- ddbs_open_dataset(path)
 #' 
-#' # Write to Parquet
-#' tmp_parquet <- tempfile(fileext = ".parquet")
-#' ddbs_write_dataset(ds, tmp_parquet)
+#' # Auto-detect format from extension
+#' ddbs_write_dataset(ds, "output.geojson")
+#' ddbs_write_dataset(ds, "output.gpkg")
+#' ddbs_write_dataset(ds, "output.parquet")
 #' 
-#' # Write to GeoJSON with CRS override
-#' tmp_json <- tempfile(fileext = ".geojson")
-#' ddbs_write_dataset(ds, tmp_json, crs = "EPSG:3857")
+#' # Explicit GDAL driver for non-standard extension
+#' ddbs_write_dataset(ds, "mydata.dat", gdal_driver = "GeoJSON")
 #' 
-#' # Write to GeoPackage with overwrite
-#' tmp_gpkg <- tempfile(fileext = ".gpkg")
-#' ddbs_write_dataset(ds, tmp_gpkg, overwrite = TRUE)
+#' # See available drivers on your system
+#' drivers <- ddbs_drivers()
+#' writable <- drivers[drivers$can_create == TRUE, ]
+#' head(writable)
+#' 
+#' # CRS override
+#' ddbs_write_dataset(ds, "output_3857.geojson", crs = "EPSG:3857")
+#' 
+#' # Overwrite existing file
+#' ddbs_write_dataset(ds, "output.gpkg", overwrite = TRUE)
 #' }
 ddbs_write_dataset <- function(
     data,
     path,
-    format = NULL,
+    gdal_driver = NULL,
     conn = NULL,
     overwrite = FALSE,
     crs = NULL,
@@ -87,64 +103,81 @@ ddbs_write_dataset <- function(
   ddbs_install(conn, quiet = TRUE)
   ddbs_load(conn, quiet = TRUE)
   
-  # 3. Format detection
-  if (is.null(format)) {
-    # Use extension directly for writing to preserve format details
-    format <- tolower(tools::file_ext(path))
-  }
-  format <- tolower(format)
+  # 3. Format detection and driver resolution
+  ext <- tolower(tools::file_ext(path))
   
-  # If generic "sf" given, revert to extension
-  if (format == "sf") {
-      format <- tolower(tools::file_ext(path))
-  }
+  # Determine if native format
+  is_parquet <- ext == "parquet"
+  is_csv <- ext == "csv"
+  is_native <- is_parquet || is_csv
   
-  # Resolve driver for GDAL formats
-  driver_name <- get_driver_name(format)
-  is_parquet  <- format == "parquet"
-  is_csv      <- format == "csv"
-  is_native   <- is_parquet || is_csv
-  
-  if (!is_native && is.null(driver_name)) {
-     # Try to guess driver from extension if format didn't match
-     ext <- tolower(tools::file_ext(path))
-     driver_name <- get_driver_name(ext)
-     
-     if (is.null(driver_name)) {
-         cli::cli_abort("Could not determine GDAL driver for format {.val {format}} or extension {.val {ext}}. Please specify format/driver explicitly.")
-     }
-  }
-  
-  # Validate GDAL driver availability and writability
-  if (!is_native && !is.null(driver_name)) {
-      available_drivers <- tryCatch({
-          ddbs_drivers(conn)
-      }, error = function(e) {
-          # If we can't get drivers, continue without validation (legacy behavior)
-          NULL
-      })
+  # For GDAL formats, resolve driver
+  driver_name <- NULL
+  if (!is_native) {
+    # Step 1: Try auto-detection from extension
+    driver_from_ext <- get_driver_from_extension(ext)
+    
+    # Step 2: Use explicit driver if provided
+    if (!is.null(gdal_driver)) {
+      driver_name <- gdal_driver
       
-      if (!is.null(available_drivers)) {
-          # Check if driver exists
-          driver_info <- available_drivers[available_drivers$short_name == driver_name | 
-                                            available_drivers$long_name == driver_name, ]
-          
-          if (nrow(driver_info) == 0) {
-              # Driver not found - list available writable drivers
-              writable_drivers <- available_drivers[available_drivers$can_create == TRUE, ]
-              cli::cli_abort(c(
-                  "GDAL driver {.val {driver_name}} is not available on this system.",
-                  "i" = "Run {.code ddbs_drivers()} to see all available drivers.",
-                  "i" = "Available writable drivers include: {.val {head(writable_drivers$short_name, 10)}}"
-              ))
-          } else if (!driver_info$can_create[1]) {
-              # Driver exists but is read-only
-              cli::cli_abort(c(
-                  "GDAL driver {.val {driver_name}} is read-only and cannot be used for writing.",
-                  "i" = "Run {.code ddbs_drivers()} and check the {.field can_create} column for writable formats."
-              ))
-          }
+      # Warn if driver and extension mismatch
+      if (!is.null(driver_from_ext) && driver_from_ext != driver_name) {
+        expected_ext <- get_extension_for_driver(driver_name)
+        if (!is.null(expected_ext)) {
+          cli::cli_warn(c(
+            "Extension/driver mismatch detected.",
+            "i" = "File extension {.val .{ext}} typically maps to driver {.val {driver_from_ext}}.",
+            "i" = "You specified driver {.val {driver_name}}, which typically uses {.val .{expected_ext}}.",
+            "i" = "Proceeding with your explicit driver choice."
+          ))
+        }
       }
+    } else if (!is.null(driver_from_ext)) {
+      # Use auto-detected driver
+      driver_name <- driver_from_ext
+    } else {
+      # Unknown extension, no driver provided
+      cli::cli_abort(c(
+        "Cannot determine GDAL driver for extension {.val .{ext}}.",
+        "i" = "Please specify the driver explicitly using {.arg gdal_driver}:",
+        " " = "  ddbs_write_dataset(data, path, gdal_driver = \"GeoJSON\")",
+        "i" = "Run {.code ddbs_drivers()} to see all available drivers."
+      ))
+    }
+    
+    # Step 3: Validate driver exists and is writable
+    available_drivers <- tryCatch({
+      ddbs_drivers(conn)
+    }, error = function(e) {
+      cli::cli_warn("Could not query available GDAL drivers. Proceeding without validation.")
+      NULL
+    })
+    
+    if (!is.null(available_drivers)) {
+      # Check if driver exists
+      driver_info <- available_drivers[available_drivers$short_name == driver_name, ]
+      
+      if (nrow(driver_info) == 0) {
+        # Driver not found - provide helpful error
+        writable_drivers <- available_drivers[available_drivers$can_create == TRUE, ]
+        cli::cli_abort(c(
+          "GDAL driver {.val {driver_name}} is not available on this system.",
+          "i" = "Run {.code ddbs_drivers()} to see all available drivers.",
+          "i" = "Available writable drivers include:",
+          " " = paste("  -", head(writable_drivers$short_name, 10), collapse = "\n")
+        ))
+      } else if (!driver_info$can_create[1]) {
+        # Driver exists but is read-only
+        writable_drivers <- available_drivers[available_drivers$can_create == TRUE, ]
+        cli::cli_abort(c(
+          "GDAL driver {.val {driver_name}} is read-only and cannot be used for writing.",
+          "i" = "Run {.code ddbs_drivers()} and check the {.field can_create} column.",
+          "i" = "Available writable drivers include:",
+          " " = paste("  -", head(writable_drivers$short_name, 10), collapse = "\n")
+        ))
+      }
+    }
   }
   
   # 4. Check for existing file
@@ -211,10 +244,26 @@ ddbs_write_dataset <- function(
         has_geometry_type <- any(dtypes$column_type == "GEOMETRY")
     }
     
+    
     if (!has_geometry_type) {
          # Double check if maybe it's named 'geometry' but not typed yet (rare in valid spatial tables)
          # Using DuckDB spatial, it should be GEOMETRY.
          cli::cli_abort("Input DuckDB table/query does not contain a spatial column of type 'GEOMETRY'.")
+    }
+
+    # Sanitize column names for specific drivers (e.g. FID in GeoPackage)
+    if (!is.null(driver_name) && driver_name == "GPKG" && !is.null(dtypes)) {
+         cols_in_table <- dtypes$column_name
+         if (any(toupper(cols_in_table) == "FID")) {
+             q_cols_list <- lapply(cols_in_table, function(col) {
+                 q <- DBI::dbQuoteIdentifier(conn, col)
+                 if (toupper(col) == "FID") return(paste0(q, " AS FID_original"))
+                 return(q)
+             })
+             cols_sql <- paste(unlist(q_cols_list), collapse = ", ")
+             sql_source <- glue::glue("(SELECT {cols_sql} FROM {sql_source})")
+             cli::cli_alert_warning("Column 'FID' renamed to 'FID_original' to avoid conflict with GeoPackage primary key.")
+         }
     }
     
   } else if (inherits(data, c("sf", "data.frame"))) {
@@ -247,8 +296,20 @@ ddbs_write_dataset <- function(
            q_gcol <- DBI::dbQuoteIdentifier(conn, gcol)
            
            if (length(col_names) > 0) {
-              q_cols <- DBI::dbQuoteIdentifier(conn, col_names)
-              cols_sql <- paste(q_cols, collapse = ", ")
+               # Check for potentially conflicting columns (e.g. FID in GeoPackage)
+               if (!is.null(driver_name) && driver_name == "GPKG" && any(toupper(col_names) == "FID")) {
+                   # Rename conflicting FID column
+                   q_cols_list <- lapply(col_names, function(col) {
+                       q <- DBI::dbQuoteIdentifier(conn, col)
+                       if (toupper(col) == "FID") return(paste0(q, " AS FID_original"))
+                       return(q)
+                   })
+                   cols_sql <- paste(unlist(q_cols_list), collapse = ", ")
+                   cli::cli_alert_warning("Column 'FID' renamed to 'FID_original' to avoid conflict with GeoPackage primary key.")
+               } else {
+                   q_cols <- DBI::dbQuoteIdentifier(conn, col_names)
+                   cols_sql <- paste(q_cols, collapse = ", ")
+               }
               subquery <- glue::glue("SELECT {cols_sql}, ST_GeomFromWKB({q_gcol}) AS {q_gcol} FROM {view_name}")
            } else {
               subquery <- glue::glue("SELECT ST_GeomFromWKB({q_gcol}) AS {q_gcol} FROM {view_name}")
@@ -378,4 +439,40 @@ extract_connection <- function(x) {
         if (inherits(con, "duckdb_connection")) return(con)
     }
     NULL
+}
+
+#' Map file extension to GDAL driver name
+#' @noRd
+get_driver_from_extension <- function(ext) {
+  ext_map <- list(
+    "geojson" = "GeoJSON",
+    "json" = "GeoJSON",
+    "shp" = "ESRI Shapefile",
+    "gpkg" = "GPKG",
+    "fgb" = "FlatGeobuf",
+    "kml" = "KML",
+    "gpx" = "GPX",
+    "gml" = "GML",
+    "sqlite" = "SQLite",
+    "tab" = "MapInfo File",
+    "mif" = "MapInfo File"
+  )
+  ext_map[[tolower(ext)]]
+}
+
+#' Get extension for a driver (inverse mapping)
+#' @noRd
+get_extension_for_driver <- function(driver) {
+  driver_to_ext <- list(
+    "GeoJSON" = "geojson",
+    "ESRI Shapefile" = "shp",
+    "GPKG" = "gpkg",
+    "FlatGeobuf" = "fgb",
+    "KML" = "kml",
+    "GPX" = "gpx",
+    "GML" = "gml",
+    "SQLite" = "sqlite",
+    "MapInfo File" = "tab"
+  )
+  driver_to_ext[[driver]]
 }
