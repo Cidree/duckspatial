@@ -914,7 +914,7 @@ get_file_crs <- function(path, conn) {
 
 
 
-#' Get or create default DuckDB connection
+#' Get or create default DuckDB connection with spatial extension installed and loaded
 #'
 #'
 #' @param create Logical. If TRUE and no connection exists, create one.
