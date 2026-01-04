@@ -2,7 +2,7 @@
 % Please edit documentation in R/db_utils_not_exported.R
 \name{ddbs_default_conn}
 \alias{ddbs_default_conn}
-\title{Get or create default DuckDB connection}
+\title{Get or create default DuckDB connection with spatial extension installed and loaded}
 \usage{
 ddbs_default_conn(create = TRUE)
 }
@@ -15,6 +15,6 @@ A \code{duckdb_connection} or NULL if no connection exists and
 create = FALSE
 }
 \description{
-Get or create default DuckDB connection
+Get or create default DuckDB connection with spatial extension installed and loaded
 }
 \keyword{internal}

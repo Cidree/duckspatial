@@ -424,8 +424,8 @@ ddbs_create_conn <- function(dbdir = "memory"){
     }
 
     # Checks and installs the Spatial extension
-    duckspatial::ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
-    duckspatial::ddbs_load(conn, quiet = TRUE)
+    ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
+    ddbs_load(conn, quiet = TRUE)
 
 
         # # Set Number of cores for parallel operation
@@ -452,7 +452,7 @@ ddbs_create_conn <- function(dbdir = "memory"){
 
 #' Get list of GDAL drivers and file formats
 #'
-#' @template conn
+#' @template conn_default
 #'
 #' @returns `data.frame`
 #' @export
@@ -469,7 +469,14 @@ ddbs_create_conn <- function(dbdir = "memory"){
 #'
 #' ## check drivers
 #' ddbs_drivers(conn)
-ddbs_drivers <- function(conn) {
+ddbs_drivers <- function(conn = NULL) {
+  if (is.null(conn)) {
+    conn <- ddbs_default_conn()
+    if (is.null(conn)) {
+       conn <- ddbs_create_conn(dbdir = "memory")
+       on.exit(ddbs_stop_conn(conn), add = TRUE)
+    }
+  }
   DBI::dbGetQuery(conn, "
       SELECT * FROM ST_Drivers()
     ")

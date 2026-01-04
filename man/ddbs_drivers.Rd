@@ -4,10 +4,11 @@
 \alias{ddbs_drivers}
 \title{Get list of GDAL drivers and file formats}
 \usage{
-ddbs_drivers(conn)
+ddbs_drivers(conn = NULL)
 }
 \arguments{
-\item{conn}{A \code{DBIConnection} object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database.
+If not specified (\code{conn = NULL}), uses the default connection created with \code{ddbs_default_conn()} (or a temporary one).}
 }
 \value{
 \code{data.frame}
