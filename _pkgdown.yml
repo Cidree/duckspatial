@@ -38,6 +38,7 @@ reference:
   contents:
   - ddbs_open_dataset
   - ddbs_read_vector
+  - ddbs_write_dataset
   - ddbs_write_vector
   - ddbs_register_vector
 
