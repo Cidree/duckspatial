@@ -6,8 +6,7 @@
 # =============================================================================
 
 test_that("ddbs_open_dataset works with GeoJSON", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")
   ds <- ddbs_open_dataset(countries_path, conn = conn)
@@ -33,8 +32,7 @@ test_that("ddbs_open_dataset works with GeoJSON", {
 })
 
 test_that("ddbs_open_dataset works with GeoPackage", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   # Create temp GPKG from internal data - drop FID to avoid GDAL conflict
   tmp_gpkg <- tempfile(fileext = ".gpkg")
@@ -59,8 +57,7 @@ test_that("ddbs_open_dataset works with GeoPackage", {
 test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
   skip_if_not_installed("arrow")
 
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   # Create temp Parquet from internal data
   tmp_parquet <- tempfile(fileext = ".parquet")
@@ -81,13 +78,13 @@ test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
 })
 
 test_that("ddbs_open_dataset works with Shapefile", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   # Create temp shapefile from internal data
   tmp_dir <- tempdir()
   tmp_shp <- file.path(tmp_dir, "test_rivers.shp")
-  sf::st_write(rivers_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE)
+  suppressWarnings(sf::st_write(rivers_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE))
+  expect_true(file.exists(tmp_shp))
   on.exit(unlink(list.files(tmp_dir, pattern = "test_rivers", full.names = TRUE)), add = TRUE)
 
   ds <- ddbs_open_dataset(tmp_shp, conn = conn)
@@ -117,13 +114,13 @@ test_that("ddbs_open_dataset works with Shapefile", {
 # =============================================================================
 
 test_that("ddbs_open_dataset dispatches to ST_ReadSHP vs GDAL correctly", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   # Create temp shapefile
   tmp_dir <- tempdir()
   tmp_shp <- file.path(tmp_dir, "test_dispatch.shp")
-  sf::st_write(argentina_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE)
+  suppressWarnings(sf::st_write(argentina_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE))
+  expect_true(file.exists(tmp_shp))
   on.exit(unlink(list.files(tmp_dir, pattern = "test_dispatch", full.names = TRUE)), add = TRUE)
 
   # Default mode: ST_ReadSHP
@@ -155,13 +152,13 @@ test_that("ddbs_open_dataset dispatches to ST_ReadSHP vs GDAL correctly", {
 })
 
 test_that("ddbs_open_dataset handles shp_encoding argument", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   # Create temp shapefile
   tmp_dir <- tempdir()
   tmp_shp <- file.path(tmp_dir, "test_encoding.shp")
-  sf::st_write(argentina_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE)
+  suppressWarnings(sf::st_write(argentina_sf, tmp_shp, quiet = TRUE, delete_dsn = TRUE))
+  expect_true(file.exists(tmp_shp))
   on.exit(unlink(list.files(tmp_dir, pattern = "test_encoding", full.names = TRUE)), add = TRUE)
 
   ds_enc <- ddbs_open_dataset(tmp_shp, conn = conn, shp_encoding = "UTF-8")
@@ -176,18 +173,18 @@ test_that("ddbs_open_dataset handles shp_encoding argument", {
 })
 
 test_that("ddbs_open_dataset OSM mode dispatch", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
-  # GDAL mode (default) - uses dummy file that doesn't exist, just testing SQL generation
-  ds_osm_gdal <- ddbs_open_dataset("dummy.osm.pbf", conn = conn, read_osm_mode = "GDAL")
-  view_sql_osm_gdal <- DBI::dbGetQuery(
-    conn,
-    glue::glue("SELECT sql FROM duckdb_views() WHERE view_name = '{attr(ds_osm_gdal, 'source_table')}'")
-  )$sql
-  expect_true(grepl("st_read", view_sql_osm_gdal, ignore.case = TRUE))
+  # GDAL mode (default) - uses dummy file that doesn't exist.
+  # Since our logic now correctly dispatches to ST_Read (GDAL), and we have strict error handling,
+  # this should error "Unable to open file" because ST_Read validates existence.
+  expect_error(
+    ddbs_open_dataset("dummy.osm.pbf", conn = conn, read_osm_mode = "GDAL"),
+    "Unable to open file"
+  )
 
   # ST_ReadOSM mode
+  # This path is lazy/permissive and might not error on open, allowing us to inspect SQL.
   ds_osm_read <- ddbs_open_dataset("dummy.osm.pbf", conn = conn, read_osm_mode = "ST_ReadOSM")
   view_sql_osm_read <- DBI::dbGetQuery(
     conn,
@@ -203,8 +200,7 @@ test_that("ddbs_open_dataset OSM mode dispatch", {
 test_that("ddbs_open_dataset warns when ST_Read args are passed to Parquet", {
   skip_if_not_installed("arrow")
 
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   tmp_parquet <- tempfile(fileext = ".parquet")
   arrow::write_parquet(data.frame(x = 1, y = 2), tmp_parquet)
@@ -217,8 +213,7 @@ test_that("ddbs_open_dataset warns when ST_Read args are passed to Parquet", {
 })
 
 test_that("ddbs_open_dataset detects format correctly with GDAL options", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")
 
@@ -233,28 +228,13 @@ test_that("ddbs_open_dataset detects format correctly with GDAL options", {
   expect_true(nrow(res) > 0)
 })
 
-test_that("validate_driver_availability works", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
-
-  # Valid driver (Shapefile)
-  expect_no_error(
-    duckspatial:::validate_driver_availability("test.shp", conn)
-  )
-
-  # Unknown extension (should pass)
-  expect_no_error(
-    duckspatial:::validate_driver_availability("test.xyz", conn)
-  )
-})
 
 # =============================================================================
 # CRS and geometry handling
 # =============================================================================
 
 test_that("ddbs_open_dataset handles explicit CRS override", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")
 
@@ -269,8 +249,7 @@ test_that("ddbs_open_dataset handles explicit CRS override", {
 })
 
 test_that("ddbs_open_dataset with custom geom_col", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")
 
@@ -285,10 +264,11 @@ test_that("ddbs_open_dataset with custom geom_col", {
 # =============================================================================
 
 test_that("ddbs_open_dataset handles missing file gracefully", {
-  conn <- ddbs_create_conn()
-  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  conn <- ddbs_temp_conn()
 
   expect_error(
-    ddbs_open_dataset("/path/to/nonexistent/file.geojson", conn = conn)
+    ddbs_open_dataset("/path/to/nonexistent/file.geojson", conn = conn),
+    regexp = "Unable to open file",
+    ignore.case = TRUE
   )
 })

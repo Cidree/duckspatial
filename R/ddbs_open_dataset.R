@@ -35,7 +35,11 @@
 #' @param gdal_open_options Character vector. Driver-specific open options (ST_Read only).
 #'
 #' @returns A \code{duckspatial_df} object.
-#'
+#' 
+#' @references 
+#' This function is inspired by the dataset opening logic in the 
+#' \code{duckdbfs} package (\url{https://github.com/cboettig/duckdbfs}).
+#' 
 #' @export
 ddbs_open_dataset <- function(path, 
                                    # Common
@@ -67,6 +71,9 @@ ddbs_open_dataset <- function(path,
                                    gdal_allowed_drivers = NULL,
                                    gdal_open_options = NULL) {
   
+  # Capture the call for error reporting
+  fn_call <- rlang::current_call()
+  
   # Get or create connection
   if (is.null(conn)) {
     conn <- ddbs_default_conn()
@@ -85,19 +92,27 @@ ddbs_open_dataset <- function(path,
   
   # Check for dedicated readers dispatch
   is_dedicated_shp <- (fmt == "shp" && read_shp_mode == "ST_ReadSHP")
-  is_dedicated_osm <- (fmt == "osm.pbf" || (grepl("\\.osm\\.pbf$", path) && read_osm_mode == "ST_ReadOSM"))
-  
-  # Validate driver availability ONLY if NOT using a dedicated reader (and not Parquet)
-  if (fmt != "parquet" && !is_dedicated_shp && !is_dedicated_osm) {
-    validate_driver_availability(path, conn)
-  }
+  is_dedicated_osm <- (fmt == "osm.pbf" || grepl("\\.osm\\.pbf$", path)) && read_osm_mode == "ST_ReadOSM"
   
   # -- CRS DETECTION --
+  # Suppress CRS warnings for all formats since:
+  # 1. File-not-found errors will be caught later when executing the view
+  # 2. Invalid format errors will be caught later
+  # 3. CRS warnings before the main error just confuse users
+  
   if (is.null(crs)) {
     if (fmt == "parquet") {
-        crs <- get_parquet_crs(path, conn) 
+        crs <- suppressWarnings(tryCatch(get_parquet_crs(path, conn), error = function(e) NULL))
     } else {
-        crs <- get_file_crs(path, conn)
+        # Spatial formats: selectively suppress file/format warnings, preserve CRS warnings
+        crs <- withCallingHandlers(
+          tryCatch(get_file_crs(path, conn), error = function(e) NULL),
+          warning = function(w) {
+            if (grepl("Cannot open|No such file|not recognized|missing value where", w$message, ignore.case = TRUE)) {
+              invokeRestart("muffleWarning")
+            }
+          }
+        )
     }
   } else if (!inherits(crs, "crs")) {
       crs <- sf::st_crs(crs)
@@ -123,8 +138,31 @@ ddbs_open_dataset <- function(path,
      paste0("[", items, "]")
   }
   
-  if (fmt == "parquet") {
-      # WARN on mismatched arguments
+  # Strategy for "unknown" format (auto-detection):
+  # 1. Attempt Native Parquet first (efficient, but extension-less parquet fails ST_Read)
+  # 2. Fallback to ST_Read (generic GDAL)
+  
+  force_parquet <- (fmt == "parquet")
+  is_likely_parquet <- force_parquet
+  
+  if (fmt == "unknown") {
+      # Probing: check if it's parquet
+      # We check by trying to read the first row with read_parquet
+      # We use tryCatch to detect failure (bad magic bytes)
+      is_parquet_check <- tryCatch({
+          DBI::dbGetQuery(conn, glue::glue("SELECT 1 FROM read_parquet('{path}') LIMIT 1"))
+          TRUE
+      }, error = function(e) FALSE)
+      
+      if (is_parquet_check) {
+          is_likely_parquet <- TRUE
+          # If we successfully probed likely Parquet, we might want to try to get CRS now if still NULL
+          if (is.null(crs)) crs <- get_parquet_crs(path, conn)
+      }
+  }
+
+  if (is_likely_parquet) {
+      # WARN on mismatched arguments if user provided GDAL specifics
       if (!is.null(layer) || !is.null(gdal_spatial_filter) || !is.null(gdal_spatial_filter_box) ||
           !is.null(gdal_max_batch_size) || !is.null(gdal_sequential_layer_scan) || 
           !is.null(gdal_sibling_files) || !is.null(gdal_allowed_drivers) || !is.null(gdal_open_options)) {
@@ -138,8 +176,6 @@ ddbs_open_dataset <- function(path,
       if (!is.null(parquet_filename)) p_args <- c(p_args, glue::glue("filename := {fmt_arg(parquet_filename)}"))
       if (!is.null(parquet_hive_partitioning)) p_args <- c(p_args, glue::glue("hive_partitioning := {fmt_arg(parquet_hive_partitioning)}"))
       if (!is.null(parquet_union_by_name)) p_args <- c(p_args, glue::glue("union_by_name := {fmt_arg(parquet_union_by_name)}"))
-      
-      # Todo: encryption_config defaults? Using NULL for now. 
       
       p_args_str <- ""
       if (length(p_args) > 0) {
@@ -168,7 +204,6 @@ ddbs_open_dataset <- function(path,
   } else if (is_dedicated_shp) {
       # Dedicated ST_ReadSHP path
       if (!is.null(shp_encoding)) {
-          # ST_ReadSHP('file', encoding := 'encoding')
           view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM ST_ReadSHP('{path}', encoding := '{shp_encoding}')")
       } else {
           view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM ST_ReadSHP('{path}')")
@@ -177,7 +212,6 @@ ddbs_open_dataset <- function(path,
 
   } else if (is_dedicated_osm) {
        # Dedicated ST_ReadOSM path
-       # Returns raw data, NO geometry column usually
        view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM ST_ReadOSM('{path}')")
        geom_col <- NA_character_ # Signal no geometry
 
@@ -190,7 +224,6 @@ ddbs_open_dataset <- function(path,
           cli::cli_warn("Arguments specific to Parquet (parquet_*) are ignored for this format.")
       }
       
-      # Warn if shp_encoding is passed but we are not in ST_ReadSHP mode
       if (!is.null(shp_encoding)) {
           cli::cli_warn("Argument `shp_encoding` is ignored when `read_shp_mode` is not 'ST_ReadSHP'.")
       }
@@ -237,11 +270,37 @@ ddbs_open_dataset <- function(path,
          geom_col <- "geom" 
          try_cols <- tryCatch({
              DBI::dbGetQuery(conn, glue::glue("DESCRIBE SELECT * FROM {query_str}"))
-         }, error = function(e) NULL)
+         }, error = function(e) {
+             # Catch ST_Read errors gracefully and provide user-friendly message
+             msg <- e$message
+             
+             # Check if it's a format recognition error
+             if (grepl("not recognized as a supported file format", msg, ignore.case = TRUE) || 
+                 grepl("No extension found", msg, ignore.case = TRUE)) {
+                 
+                 # Extract the GDAL error message if present
+                 gdal_match <- regexpr("GDAL Error \\([0-9]+\\): .*", msg)
+                 gdal_msg <- if (gdal_match > 0) {
+                     regmatches(msg, gdal_match)
+                 } else {
+                     "File format not recognized"
+                 }
+                 
+                 # Clean, user-friendly error with technical details preserved
+                 cli::cli_abort(c(
+                     "Unable to open file {.path {basename(path)}}",
+                     "x" = "The file format could not be detected or is not supported.",
+                     "i" = "Supported formats include: Parquet, GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, and other GDAL formats.",
+                     "i" = "GDAL error: {gdal_msg}"
+                 ), call = fn_call)
+             }
+             
+             # For other errors, just return NULL to continue
+             NULL
+         })
          
          if (!is.null(try_cols)) {
              ctype <- if("column_type" %in% names(try_cols)) try_cols$column_type else try_cols$data_type
-             # Look for standard geometry types
              geom_cols <- try_cols$column_name[grepl("GEOMETRY|WKB_BLOB", ctype, ignore.case = TRUE)]
              if (length(geom_cols) > 0) geom_col <- geom_cols[1]
          }
@@ -250,8 +309,45 @@ ddbs_open_dataset <- function(path,
       view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM {query_str}")
   }
 
-  DBI::dbExecute(conn, view_query)
+  # -- EXECUTE VIEW CREATION --
+  tryCatch({
+    # We use dbExecute here to ensure the view is created successfully.
+    # This is where most file-opening and format errors will surface.
+    DBI::dbExecute(conn, view_query)
+  }, error = function(e) {
+    msg <- e$message
+    
+    # 1. Format recognition error (DuckDB or GDAL)
+    if (grepl("not recognized as a supported file format|No extension found", msg, ignore.case = TRUE)) {
+        # Extract the GDAL error message if present
+        gdal_match <- regexpr("GDAL Error \\([0-9]+\\): .*", msg)
+        gdal_msg <- if (gdal_match > 0) regmatches(msg, gdal_match) else "File format not recognized"
+        
+        cli::cli_abort(c(
+            "Unable to open file {.path {basename(path)}}",
+            "x" = "The file format could not be detected or is not supported.",
+            "i" = "Supported formats include: Parquet, GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, and other GDAL formats.",
+            "i" = "GDAL error: {gdal_msg}"
+        ), call = fn_call)
+    }
+    
+    # 2. File not found error (IO Error)
+    if (grepl("Cannot open file|No such file|IO Error.*No such file", msg, ignore.case = TRUE)) {
+        cli::cli_abort(c(
+            "Unable to open file {.path {basename(path)}}",
+            "x" = "The file does not exist or cannot be accessed.",
+            "i" = "Please check if the file path is correct and the file is not moved or deleted."
+        ), call = fn_call)
+    }
+    
+    # 3. Generic error fallback
+    cli::cli_abort(c(
+        "Failed to open dataset at {.path {path}}",
+        "x" = msg
+    ), call = fn_call)
+  })
   
+  # Return a lazy duckspatial_df object
   duck_tbl <- dplyr::tbl(conn, view_name)
   new_duckspatial_df(duck_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
 }

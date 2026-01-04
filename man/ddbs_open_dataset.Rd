@@ -86,3 +86,7 @@ A \code{duckspatial_df} object.
 Reads spatial data directly from disk using DuckDB's spatial extension or
 native Parquet reader, returning a \code{duckspatial_df} object for lazy processing.
 }
+\references{
+This function is inspired by the dataset opening logic in the
+\code{duckdbfs} package (\url{https://github.com/cboettig/duckdbfs}).
+}

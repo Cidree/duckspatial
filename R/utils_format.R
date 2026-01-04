@@ -35,8 +35,8 @@ get_file_format <- function(path) {
   
   # 5. Default fallback
   if (ext == "") {
-    # If no extension, default to parquet as it's the primary analytical format
-    return("parquet")
+    # If no extension, we return "unknown" to trigger auto-detection logic
+    return("unknown")
   }
   
   # Return the extension purely for information/fallback usage
@@ -93,6 +93,11 @@ get_parquet_crs <- function(path, conn) {
 #' @noRd
 get_driver_map <- function() {
   list(
+    # Native / Common
+    parquet = "parquet",
+    csv = "CSV",
+    
+    # GDAL Spatial
     shp = "ESRI Shapefile",
     gpkg = "GPKG",
     fgb = "FlatGeoBuf",
@@ -102,71 +107,43 @@ get_driver_map <- function() {
     gml = "GML",
     gpx = "GPX",
     sqlite = "SQLite",
-    csv = "CSV",
     tab = "MapInfo File",
     mif = "MapInfo File",
     geojsonl = "GeoJSON",
     mvt = "MVT",
     dgn = "DGN",
-    gdb = "OpenFileGDB", # or "FileGDB" depending on build, OpenFileGDB is standard in GDAL now
+    gdb = "OpenFileGDB", 
     gxt = "Geoconcept",
-    xml = "GML" # generic
+    xml = "GML"
   )
 }
 
-#' Validate extension support against ST_Drivers
+#' Get driver name from format/extension
 #' @noRd
-validate_driver_availability <- function(path, conn) {
-  # 1. Get extension
-  ext <- tolower(tools::file_ext(path))
-  if (ext == "" || ext == "parquet") return(TRUE) # Parquet is native
-  
-  # 2. Map to driver(s)
-  driver_map <- get_driver_map()
-  expected_driver <- driver_map[[ext]]
-  
-  if (is.null(expected_driver)) {
-     # Unknown extension: we don't block it, just warn or pass?
-     # User asked to "stop if format does not work".
-     # If we don't know the extension, we can't check support.
-     # GDAL might still open it. Let's pass.
-     return(TRUE)
+get_driver_name <- function(fmt) {
+  map <- get_driver_map()
+  if (fmt %in% names(map)) {
+    return(map[[fmt]])
   }
+  return(NULL)
+}
+
+#' Check if format implies spatial data
+#' @noRd
+is_spatial_format <- function(fmt) {
+  # GDAL formats usually imply spatial data.
+  spatial_formats <- c("shp", "gpkg", "fgb", "json", "geojson", "kml", "gpx")
   
-  # 3. Check against ST_Drivers
-  # Cache this? For now, fetch is fast enough (in-memory table usually)
-  available_drivers <- tryCatch({
-       DBI::dbGetQuery(conn, "SELECT short_name, long_name, can_open FROM ST_Drivers()")
-  }, error = function(e) return(NULL))
+  # Check if extension is one of these
+  if (fmt %in% spatial_formats) return(TRUE)
   
-  if (is.null(available_drivers)) return(TRUE)
+  # Check driver map (excluding native formats which we handle separately or aren't strictly spatial)
+  map <- get_driver_map()
+  map$parquet <- NULL
+  map$csv <- NULL
   
-  # Match short_name or long_name
-  # expected_driver is "ESRI Shapefile" etc.
+  driver <- get_driver_name(fmt)
+  if (!is.null(driver) && driver %in% unlist(map)) return(TRUE)
   
-  # Check if our expected driver is in the list AND can_open is TRUE
-  # Using partial matching or exact? short_name is usually exact ID.
-  
-  # Special fix: "GeoJSON" might appear as "GeoJSON" short name.
-  
-  match_idx <- which(
-    trimws(tolower(available_drivers$short_name)) == tolower(expected_driver) | 
-    trimws(tolower(available_drivers$long_name)) == tolower(expected_driver)
-  )
-  
-  if (length(match_idx) == 0) {
-      cli::cli_abort(c(
-          "Format {.val {ext}} requires driver {.val {expected_driver}}, but it is not available in the loaded DuckDB spatial extension.",
-          "i" = "Run {.code ddbs_drivers(conn)} to see available drivers."
-      ))
-  }
-  
-  if (!available_drivers$can_open[match_idx[1]]) {
-       cli::cli_abort(c(
-          "Driver {.val {expected_driver}} is present but does not support opening files.",
-           "i" = "Format: {.val {ext}}"
-      ))
-  }
-  
-  return(TRUE)
+  return(FALSE)
 }
