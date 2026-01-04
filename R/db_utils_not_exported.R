@@ -361,7 +361,8 @@ get_query_name <- function(name) {  # nocov start
 #   result <- get_query_list(x, conn)
 #   on.exit(result$cleanup(), add = TRUE)
 #   # ... use result$query_name ...
-get_query_list <- function(x, conn) { # nocov start
+#   # ... use result$query_name ...
+get_query_list <- function(x, conn) {
 
   cleanup <- function() NULL  # default no-op
   
@@ -383,8 +384,14 @@ get_query_list <- function(x, conn) { # nocov start
     )
 
     cleanup <- function() {
+      # Try DROP VIEW first
       tryCatch(
         DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+      # Also try unregistering arrow (needed for temp_view=TRUE from ddbs_write_vector)
+      tryCatch(
+        duckdb::duckdb_unregister_arrow(conn, temp_view_name),
         error = function(e) NULL
       )
     }
@@ -401,44 +408,22 @@ get_query_list <- function(x, conn) { # nocov start
       return(result)
     }
     
-    # 2. Fallback: Collect to sf and write back
-    # This is needed because some duckspatial_dfs might not support sql_render directly if modified locally?
-    # But now they are lazy tables, so they should.
-    # However, keep fallback logic just in case attributes imply special handling.
-    geom_col <- attr(x, "sf_column") %||% "geom"
-    crs_obj <- attr(x, "crs")
-    
-    # Collect to data.frame, then convert geometry to sf
-    # Note: collect here will handle WKB conversion if needed
-    collected <- dplyr::collect(x)
-    
-    # Convert to sf if geometry column exists
-    if (geom_col %in% names(collected)) {
-      # First ensure we have sfc object (handled by collect or manual conversion)
-      if (!inherits(collected[[geom_col]], "sfc")) {
-          # Try to convert if it is raw WKB
-           collected[[geom_col]] <- sf::st_as_sfc(collected[[geom_col]], crs = crs_obj)
-      }
-      x_sf <- sf::st_as_sf(collected, sf_column_name = geom_col)
-      if (!is.null(crs_obj)) sf::st_crs(x_sf) <- crs_obj
-    } else {
-       cli::cli_abort("Geometry column not found in collected data")
-    }
-
-    
-    # Now use the sf path
+    # 2. SQL render (efficient lazy evaluation)
+    # NOTE: Replaced inefficient collect-and-upload fallback with SQL render.
+    # Regression test: tests/testthat/test-regression-inefficient-fallback.R
+    # duckspatial_df inherits from tbl_lazy, so sql_render always works
     temp_view_name <- paste0(
       "temp_view_",
       gsub("-", "_", uuid::UUIDgenerate())
     )
     
-    duckspatial::ddbs_write_vector(
-      conn      = conn,
-      data      = x_sf,
-      name      = temp_view_name,
-      quiet     = TRUE,
-      temp_view = TRUE
-    )
+    query_sql <- dbplyr::sql_render(x, con = conn)
+    
+    view_query <- glue::glue("
+      CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
+      {query_sql}
+    ")
+    DBI::dbExecute(conn, view_query)
     
     cleanup <- function() {
       tryCatch(
@@ -448,6 +433,8 @@ get_query_list <- function(x, conn) { # nocov start
     }
     
     x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- cleanup
+    return(x_list)
 
   } else if (inherits(x, "tbl_lazy")) {
     
@@ -484,7 +471,7 @@ get_query_list <- function(x, conn) { # nocov start
   x_list$cleanup <- cleanup
   return(x_list)
 
-} # nocov end
+}
 
 
 
