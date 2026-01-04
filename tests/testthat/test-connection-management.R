@@ -1,9 +1,9 @@
 
-# Auto-generated tests for connection management
+# Tests for connection management
+
 test_that("cross-connection filtering works with proper fallback strategies", {
-  skip_if_not_installed("duckdbfs")
   skip_if_not_installed("sf")
-  
+
   # Setup: Two distinct connections
   conn1 <- ddbs_create_conn()
   conn2 <- ddbs_create_conn()
@@ -11,12 +11,12 @@ test_that("cross-connection filtering works with proper fallback strategies", {
     ddbs_stop_conn(conn1)
     ddbs_stop_conn(conn2)
   })
-  
-  # Load data
-  nc_path <- system.file("shape/nc.shp", package = "sf")
-  ds1 <- ddbs_open_dataset(nc_path, conn = conn1)
-  ds2 <- ddbs_open_dataset(nc_path, conn = conn2)
-  
+
+  # Load data using internal package data
+  countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")
+  ds1 <- ddbs_open_dataset(countries_path, conn = conn1)
+  ds2 <- ddbs_open_dataset(countries_path, conn = conn2)
+
   # CASE 1: Direct View Import (Strategy 1)
   # This should trigger zero-copy view recreation
   expect_no_error({
@@ -24,22 +24,23 @@ test_that("cross-connection filtering works with proper fallback strategies", {
   })
   res_df1 <- collect(res1)
   expect_true(nrow(res_df1) > 0)
-  
+
   # CASE 2: Transformed Query Import (Strategy 3 via Collect)
   # Filter ds2 so it becomes a query, not a direct view
   # This forces fallback to Strategy 3 because dbplyr queries can't be SQL-recreated across conns easily
-  ds2_mod <- ds2 |> dplyr::filter(NAME == "Durham")
-  
+  ds2_mod <- ds2 |> dplyr::filter(CNTR_ID == "AR")
+
   expect_warning(
     res2 <- ddbs_filter(ds1, ds2_mod),
     "Imported via collection"
   )
-  
+
   res_df2 <- collect(res2)
-  # Durham + neighbors should be returned
+  # Argentina + neighbors should be returned
   expect_true(nrow(res_df2) >= 1)
-  expect_true(nrow(res_df2) < 100) # Should be a subset
+  expect_true(nrow(res_df2) < 257) # Should be a subset
 })
+
 
 test_that("ddbs_crs works on character tables without CRS column using view analysis", {
   conn <- ddbs_create_conn()
