@@ -10,6 +10,7 @@
 #' @param y Y table with geometry column within the DuckDB database
 #' @template predicate
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template name
 #' @template crs
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
@@ -67,6 +68,8 @@ ddbs_filter <- function(
     y,
     predicate = "intersects",
     conn = NULL,
+    conn_x = NULL,
+    conn_y = NULL,
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
@@ -77,17 +80,23 @@ ddbs_filter <- function(
     
     deprecate_crs(crs_column, crs)
 
-    # 0. Handle errors
+    # 1. Validate inputs
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x, y)
+    
+    # Validate predicate early (it aborts on invalid)
+    sel_pred <- get_st_predicate(predicate)
 
-    # Pre-extract CRS (before y might be converted to character)
+    # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
+    
+    # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
     crs_x <- attr(x, "crs")
     crs_y <- attr(y, "crs")
+    sf_col_x <- attr(x, "sf_column")
+    sf_col_y <- attr(y, "sf_column")
     
     # Try auto-detection for tbl_duckdb_connection if CRS is NULL
     if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
@@ -99,54 +108,29 @@ ddbs_filter <- function(
        if (is.na(crs_y)) crs_y <- NULL
     }
 
-    #1. Manage connection to DB
-    ## 1.1. Extract connections from inputs
-    conn_x <- get_conn_from_input(x)
-    conn_y <- get_conn_from_input(y)
+    # Resolve conn_x/conn_y defaults from 'conn' for character inputs
+    if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+    if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+    # Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, validate character table names
+    x <- normalize_spatial_input(x, conn_x)
+    y <- normalize_spatial_input(y, conn_y)
     
-    ## 1.2. Resolve which connection to use
-    if (!is.null(conn)) {
-      # User explicitly provided connection - use it
-      target_conn <- conn
-    } else if (!is.null(conn_x) && !is.null(conn_y)) {
-      # Both inputs have connections  
-      if (identical(conn_x, conn_y)) {
-        # Same connection - great!
-        target_conn <- conn_x
-      } else {
-        # Different connections - import y into x's connection
-        cli::cli_warn(c(
-          "{.arg x} and {.arg y} come from different DuckDB connections.",
-          "i" = "Using connection from {.arg x}. Importing {.arg y} to this connection.",
-          "i" = "This may require materializing data."
-        ))
-        target_conn <- conn_x
-        
-        # Import y from conn_y to conn_x
-        import_result <- import_view_to_connection(
-          target_conn = conn_x,
-          source_conn = conn_y,
-          source_object = y
-        )
-        
-        # Replace y with imported view name as character (for get_query_list)
-        y <- import_result$name
-        
-        # Register cleanup to drop imported view on exit
-        on.exit(
-          tryCatch({
-            DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {import_result$name}"))
-          }, error = function(e) NULL),
-          add = TRUE
-        )
-      }
-    } else if (!is.null(conn_x)) {
-      target_conn <- conn_x
-    } else if (!is.null(conn_y)) {
-      target_conn <- conn_y
-    } else {
-      target_conn <- ddbs_default_conn()
-    }
+    # 3. Manage connection to DB
+    ## 3.1. Resolve connections and handle imports
+    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    
+    # NOTE: Inline connection resolution logic was replaced by resolve_spatial_connections()
+    # helper (defined in db_utils_not_exported.R) to maintain consistency with ddbs_join
+    # and other two-input spatial functions. See tests/testthat/test-resolve_connections.R
+    # for regression tests covering cross-connection scenarios.
+    
+    target_conn <- resolve_res$conn
+    x <- resolve_res$x
+    y <- resolve_res$y
+    
+    # Register cleanup
+    on.exit(resolve_res$cleanup(), add = TRUE)
     
     ## 1.3. Get query list of table names
     x_list <- get_query_list(x, target_conn)
@@ -164,21 +148,24 @@ ddbs_filter <- function(
        assert_crs(target_conn, x_list$query_name, y_list$query_name)
     }
 
-    # 2. Prepare params for query
-    ## 2.1. select predicate
-    sel_pred <- get_st_predicate(predicate)
-    ## 2.3. get geometry columns
-    x_geom <- attr(x, "sf_column") %||% get_geom_name(target_conn, x_list$query_name)
-    y_geom <- attr(y, "sf_column") %||% get_geom_name(target_conn, y_list$query_name)
-    
-    ## 2.4. get columns to return
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
+    # 4. Prepare parameters for query
+    ## 4.1. predicate already validated early (sel_pred above)
+    ## 4.2. get names of geometry columns (use saved sf_col_x/y from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+    y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
-    ## error if crs_column not found (only if we don't have it in attributes)
-    if (is.null(attr(x, "crs"))) {
-        assert_crs_column(crs_column, x_rest)
+    
+    ## 4.3. get columns to return from x
+    x_rest_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    
+    ## error if crs_column not found (conditional on saved crs_x)
+    if (is.null(crs_x)) {
+        assert_crs_column(crs_column, x_rest_cols)
     }
+
+    ## 4.4. Format column lists for SQL
+    x_rest <- if (length(x_rest_cols) > 0) paste0('v1."', x_rest_cols, '", ', collapse = '') else ""
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -206,7 +193,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
             ")
 
         } else {
@@ -219,7 +206,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom})
             ")
         }
 
@@ -247,7 +234,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
             ")
         )
 
@@ -261,7 +248,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom})
             ")
         )
     }

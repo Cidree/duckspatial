@@ -9,6 +9,8 @@ ddbs_filter(
   y,
   predicate = "intersects",
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
@@ -35,6 +37,12 @@ a wrapper of \code{ST_Intersects}. See details for other options.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
+
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
