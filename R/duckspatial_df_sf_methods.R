@@ -136,6 +136,59 @@ ddbs_collect <- function(x, ..., as = c("sf", "tibble", "raw", "geoarrow")) {
   dplyr::collect(x, ..., as = as)
 }
 
+#' Force computation of a lazy duckspatial_df
+#'
+#' Executes the accumulated query and stores the result in a DuckDB temporary
+#' table. The result remains lazy (a \code{duckspatial_df}) but points to the
+#' materialized data, avoiding repeated computation of complex query plans.
+#'
+#' This is useful when you want to:
+#' \itemize{
+#'   \item Cache intermediate results for reuse across multiple subsequent operations
+#'   \item Simplify complex query plans before heavy operations like spatial joins
+#'   \item Force execution at a specific point without pulling data into R memory
+#' }
+#'
+#' @param x A \code{duckspatial_df} object
+#' @param ... Additional arguments passed to \code{dplyr::compute}
+#' @param name Optional name for the result table. If NULL, a unique temporary
+#'   name is generated.
+#' @param temporary If TRUE (default), creates a temporary table that is
+#'   automatically cleaned up when the connection closes.
+#'
+#' @returns A new \code{duckspatial_df} pointing to the materialized table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(duckspatial)
+#' library(dplyr)
+#'
+#' # Load lazy spatial data
+#' countries <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", package = "duckspatial")
+#' )
+#'
+#' # Complex pipeline - ddbs_compute() caches intermediate result
+#' cached <- countries |>
+#'   filter(CNTR_ID %in% c("DE", "FR", "IT")) |>
+#'   ddbs_compute()  # Execute and store in temp table
+#'
+#' # Check query plan - should reference temp table
+#' show_query(cached)
+#'
+#' # Further operations continue from cached result
+#' result <- cached |>
+#'   ddbs_filter(other_layer, predicate = "intersects") |>
+#'   st_as_sf()
+#' }
+ddbs_compute <- function(x, ..., name = NULL, temporary = TRUE) {
+  if (!inherits(x, "duckspatial_df")) {
+    cli::cli_abort("{.arg x} must be a {.cls duckspatial_df} object.")
+  }
+  dplyr::compute(x, name = name, temporary = temporary, ...)
+}
+
 #' @rdname duckspatial_df_sf
 #' @export
 #' @importFrom sf st_as_sf

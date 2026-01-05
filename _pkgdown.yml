@@ -137,9 +137,11 @@ reference:
   - as_duckspatial_df
   - is_duckspatial_df
   - ddbs_collect
+  - ddbs_compute
   - ddbs_geom_col
   - duckspatial_df_sf
   - duckspatial_df_dplyr
+
 
 navbar:
   title: duckspatial

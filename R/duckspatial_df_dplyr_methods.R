@@ -240,3 +240,88 @@ inner_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE,
   }
   out
 }
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+head.duckspatial_df <- function(x, n = 6L, ...) {
+  # Preserve spatial metadata through head()
+  crs <- attr(x, "crs")
+  geom_col <- attr(x, "sf_column")
+  source_table <- attr(x, "source_table")
+  
+  # Strip class to delegate to dbplyr's head.tbl_lazy
+  class(x) <- setdiff(class(x), "duckspatial_df")
+  
+  # Execute via base/dbplyr
+  result <- head(x, n = n, ...)
+  
+  # Re-wrap as duckspatial_df
+  class(result) <- c("duckspatial_df", class(result))
+  attr(result, "sf_column") <- geom_col
+  attr(result, "crs") <- crs
+  attr(result, "source_table") <- source_table
+  
+  result
+}
+
+# =============================================================================
+# compute - Force execution while staying lazy
+# =============================================================================
+
+#' Force computation of a duckspatial_df
+#'
+#' Executes the accumulated query and stores the result in a DuckDB temporary
+#' table. The result remains lazy (a `duckspatial_df`) but points to the
+#' materialized data, avoiding repeated computation of complex query plans.
+#'
+#' This is useful when you want to:
+#' - Cache intermediate results for reuse across multiple subsequent operations
+#' - Simplify complex query plans before heavy operations like spatial joins
+#' - Force execution at a specific point without pulling data into R memory
+#'
+#' @param x A `duckspatial_df` object
+#' @param name Optional name for the result table. If NULL, a unique temporary
+#'   name is generated.
+#' @param temporary If TRUE (default), creates a temporary table that is
+#'   automatically cleaned up when the connection closes.
+#' @param ... Additional arguments passed to [dplyr::compute()]
+#' @return A new `duckspatial_df` pointing to the materialized table, with
+#'   spatial metadata (CRS, geometry column) preserved.
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr compute
+#' @examples
+#' \dontrun{
+#' library(dplyr)
+#'
+#' # Complex pipeline - compute() caches intermediate result
+#' result <- countries |>
+#'   filter(POP_EST > 50000000) |>
+#'   ddbs_filter(argentina, predicate = "touches") |>
+#'   compute() |>  # Execute and cache here
+#'   select(NAME_ENGL, POP_EST) |>
+#'   ddbs_join(rivers, join = "intersects")
+#'
+#' # Check query plan - should reference the cached table
+#' show_query(result)
+#' }
+compute.duckspatial_df <- function(x, name = NULL, temporary = TRUE, ...) {
+  # Extract spatial metadata before compute
+  crs <- attr(x, "crs")
+  geom_col <- attr(x, "sf_column")
+  
+  # Strip our class to delegate to dbplyr's compute.tbl_sql
+  class(x) <- setdiff(class(x), "duckspatial_df")
+  
+  # Execute via dbplyr
+  result <- dplyr::compute(x, name = name, temporary = temporary, ...)
+  
+  # Get the new table name
+  new_source <- tryCatch(
+    as.character(dbplyr::remote_name(result)),
+    error = function(e) NULL
+  )
+  
+  # Re-wrap as duckspatial_df with preserved metadata
+  new_duckspatial_df(result, crs = crs, geom_col = geom_col, source_table = new_source)
+}
