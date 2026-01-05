@@ -108,7 +108,7 @@ ddbs_join <- function(
     
     # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
     
-    # Pre-extract CRS and sf_column (before prepare_spatial_input converts types)
+    # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
     crs_x <- attr(x, "crs")
     crs_y <- attr(y, "crs")
     sf_col_x <- attr(x, "sf_column")
@@ -129,8 +129,9 @@ ddbs_join <- function(
     if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
     if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
 
-    x <- prepare_spatial_input(x, conn_x)
-    y <- prepare_spatial_input(y, conn_y)
+    # Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, validate character table names
+    x <- normalize_spatial_input(x, conn_x)
+    y <- normalize_spatial_input(y, conn_y)
     
      # 3. Manage connection to DB
     ## 3.1. Resolve connections and handle imports

@@ -20,7 +20,3 @@ points_sf <- data.frame(
     y = runif(n, min = -90, max = 90)
 ) |>
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
-
-# Suppress lifecycle deprecation warnings during testing
-options(lifecycle_verbosity = NULL)
-Sys.setenv(LIFECYCLE_VERBOSITY = "quiet")

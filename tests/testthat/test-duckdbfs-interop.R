@@ -2,17 +2,17 @@
 # All tests involving duckdbfs::open_dataset integration with duckspatial
 
 # =============================================================================
-# prepare_spatial_input with duckdbfs
+# normalize_spatial_input with duckdbfs
 # =============================================================================
 
-test_that("prepare_spatial_input works for duckdbfs::open_dataset inputs", {
+test_that("normalize_spatial_input works for duckdbfs::open_dataset inputs", {
   skip_if_not_installed("duckdbfs")
 
   # Create a temporary parquet file
 
-  conn <- duckspatial:::ddbs_temp_conn()
+  conn <- ddbs_temp_conn()
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
-  duckspatial::ddbs_write_vector(conn, sf_obj, "test_table")
+  ddbs_write_vector(conn, sf_obj, "test_table")
 
   tmp_file <- tempfile(fileext = ".parquet")
   DBI::dbExecute(conn, glue::glue("COPY test_table TO '{tmp_file}' (FORMAT PARQUET)"))
@@ -21,7 +21,7 @@ test_that("prepare_spatial_input works for duckdbfs::open_dataset inputs", {
   ds <- duckdbfs::open_dataset(tmp_file)
 
   # Should be converted to duckspatial_df
-  result <- duckspatial:::prepare_spatial_input(ds)
+  result <- normalize_spatial_input(ds)
   expect_s3_class(result, "duckspatial_df")
   expect_s3_class(result, "tbl_duckdb_connection")
 

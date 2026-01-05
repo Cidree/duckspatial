@@ -18,10 +18,14 @@ test_that("cross-connection filtering works with proper fallback strategies", {
   ds2 <- ddbs_open_dataset(countries_path, conn = conn2)
 
   # CASE 1: Direct View Import (Strategy 1)
-  # This should trigger zero-copy view recreation
-  expect_no_error({
-    res1 <- ddbs_filter(ds1, ds2)
-  })
+  # This should trigger warnings about cross-connection imports
+  expect_warning(
+    expect_warning(
+      res1 <- ddbs_filter(ds1, ds2),
+      "come from different DuckDB connections"
+    ),
+    "Importing.*to the target connection"
+  )
   res_df1 <- collect(res1)
   expect_true(nrow(res_df1) > 0)
 
@@ -31,7 +35,13 @@ test_that("cross-connection filtering works with proper fallback strategies", {
   ds2_mod <- ds2 |> dplyr::filter(CNTR_ID == "AR")
 
   expect_warning(
-    res2 <- ddbs_filter(ds1, ds2_mod),
+    expect_warning(
+      expect_warning(
+        res2 <- ddbs_filter(ds1, ds2_mod),
+        "come from different DuckDB connections"
+      ),
+      "Importing.*to the target connection"
+    ),
     "Imported via collection"
   )
 

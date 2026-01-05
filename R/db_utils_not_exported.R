@@ -23,15 +23,18 @@ dbConnCheck <- function(conn) {  # nocov start
 #' Standardizes all input types before spatial operations:
 #' - sf objects: passed through unchanged
 #' - duckspatial_df: passed through unchanged
-#' - tbl_duckdb_connection: coerced to duckspatial_df (with source_table)
+#' - tbl_duckdb_connection: coerced to duckspatial_df (with CRS/source_table attributes)
 #' - character: verified to exist in connection
+#'
+#' This normalization enables downstream functions to work with a consistent set of types
+#' (sf, duckspatial_df, or character) rather than handling all possible input variations.
 #'
 #' @param x Spatial input (sf, duckspatial_df, tbl_duckdb_connection, or character)
 #' @param conn DuckDB connection (required for character table names)
 #' @return Normalized input ready for get_query_list()
 #' @keywords internal
 #' @noRd
-prepare_spatial_input <- function(x, conn = NULL) {
+normalize_spatial_input <- function(x, conn = NULL) {
   # 1. sf: pass through
   if (inherits(x, "sf")) return(x)
   
@@ -158,7 +161,9 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
           cli::cli_inform("Imported view using SQL recreation (zero overhead)")
           return(list(name = target_name, method = "sql_recreation", cleanup = function() NULL))
         }, error = function(e) {
-          cli::cli_alert_info("Strategy 1 (SQL recreation) failed: {conditionMessage(e)}")
+          if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+            cli::cli_alert_info("Strategy 1 (SQL recreation) failed: {conditionMessage(e)}")
+          }
         })
       }
     }
@@ -178,7 +183,9 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
         cli::cli_inform("Imported view using SQL query (zero overhead)")
         return(list(name = target_name, method = "sql_render", cleanup = function() NULL))
       }, error = function(e) {
-        cli::cli_alert_info("Strategy 2 (SQL render) failed: {conditionMessage(e)}")
+        if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+          cli::cli_alert_info("Strategy 2 (SQL render) failed: {conditionMessage(e)}")
+        }
       })
     }
   }
@@ -188,6 +195,10 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
   source_dbdir <- tryCatch({
     info <- DBI::dbGetInfo(source_conn)
     dbdir <- info$dbdir
+    if (is.null(dbdir) || length(dbdir) == 0) {
+       dbdir <- info$dbname
+    }
+    
     if (is.null(dbdir) || length(dbdir) == 0) {
       # Fallback: try to query from DuckDB itself
       res <- DBI::dbGetQuery(source_conn, "SELECT current_database()")
@@ -221,7 +232,9 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
           }
         ))
       }, error = function(e) {
-        cli::cli_alert_info("Strategy 3 (ATTACH) failed: {conditionMessage(e)}")
+        if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+          cli::cli_alert_info("Strategy 3 (ATTACH) failed: {conditionMessage(e)}")
+        }
         tryCatch(DBI::dbExecute(target_conn, glue::glue("DETACH IF EXISTS {attach_alias}")), error = function(e) NULL)
       })
     }
@@ -257,7 +270,9 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
         cli::cli_inform("Imported via nanoarrow streaming (zero R materialization)")
         return(list(name = target_name, method = "nanoarrow", cleanup = function() NULL))
       }, error = function(e) {
-        cli::cli_alert_info("Strategy 4 (nanoarrow) failed: {conditionMessage(e)}")
+        if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+          cli::cli_alert_info("Strategy 4 (nanoarrow) failed: {conditionMessage(e)}")
+        }
       })
     }
   }
