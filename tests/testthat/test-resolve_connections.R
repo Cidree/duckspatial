@@ -29,10 +29,13 @@ test_that("resolve_spatial_connections handles cross-connection correctly", {
   
   # t2 (foreign) should be imported to conn1 (target)
   # Case: conn explicit
-  suppressWarnings(expect_warning(
-    res <- resolve_spatial_connections("t1", "t2", conn = conn1, conn_x = conn1, conn_y = conn2),
-    "target connection are different"
-  ))
+  expect_warning(
+    expect_warning(
+      res <- resolve_spatial_connections("t1", "t2", conn = conn1, conn_x = conn1, conn_y = conn2),
+      "target connection are different"
+    ),
+    "Imported via collection"
+  )
   
   expect_identical(res$conn, conn1)
   expect_equal(res$x, "t1")
@@ -52,10 +55,13 @@ test_that("resolve_spatial_connections imports x when explicit conn differs", {
   
   ddbs_write_vector(conn_source, sf::st_sf(geom=sf::st_sfc(sf::st_point(c(0,0))), crs=4326), "t1")
   
-  suppressWarnings(expect_warning(
-    res <- resolve_spatial_connections("t1", "t2", conn = conn_target, conn_x = conn_source),
-    "Importing `x` to the target connection"
-  ))
+  expect_warning(
+    expect_warning(
+      res <- resolve_spatial_connections("t1", "t2", conn = conn_target, conn_x = conn_source),
+      "Importing `x` to the target connection"
+    ),
+    "Imported via collection"
+  )
   
   expect_identical(res$conn, conn_target)
   # x should be imported (new name), y should be "t2" (assuming strict mode off or character pass-through)
@@ -84,10 +90,16 @@ test_that("resolve_spatial_connections warns when conn_x != conn_y without expli
   t2_df <- dplyr::tbl(conn2, "t2")
   
   # Should warn about different connections when no explicit conn provided
-  suppressWarnings(expect_warning(
-    res <- resolve_spatial_connections(t1_df, t2_df),
-    "different DuckDB connections"
-  ))
+  expect_warning(
+    expect_warning(
+      expect_warning(
+        res <- resolve_spatial_connections(t1_df, t2_df),
+        "different DuckDB connections"
+      ),
+      "target connection are different"
+    ),
+    "Imported via duckdb_register"
+  )
   
   # Should use x's connection as target
   expect_identical(res$conn, conn1)

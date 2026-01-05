@@ -92,7 +92,10 @@ test_that("Strategy 4: Nanoarrow streaming works for cross-memory-DB", {
   
   tbl_ref <- dplyr::tbl(conn1, "data")
   
-  res <- import_view_to_connection(conn2, conn1, tbl_ref, "arrow_imported")
+  expect_warning(
+    res <- import_view_to_connection(conn2, conn1, tbl_ref, "arrow_imported"),
+    "Imported via"
+  )
   
   expect_true(res$method %in% c("nanoarrow", "duckdb_register"))
 })
@@ -109,7 +112,10 @@ test_that("Strategy 5: Collect+sf works for duckspatial_df", {
   
   dsdf <- as_duckspatial_df(sf_data, conn = conn1)
   
-  res <- import_view_to_connection(conn2, conn1, dsdf, "sf_imported")
+  expect_warning(
+    res <- import_view_to_connection(conn2, conn1, dsdf, "sf_imported"),
+    "Imported via collection"
+  )
   
   expect_true(res$method %in% c("nanoarrow", "collect_and_write"))
 })
