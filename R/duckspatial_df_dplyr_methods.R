@@ -243,6 +243,7 @@ inner_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE,
 
 #' @rdname duckspatial_df_dplyr
 #' @export
+#' @importFrom utils head
 head.duckspatial_df <- function(x, n = 6L, ...) {
   # Preserve spatial metadata through head()
   crs <- attr(x, "crs")
