@@ -132,7 +132,7 @@ ddbs_filter <- function(
     # Register cleanup
     on.exit(resolve_res$cleanup(), add = TRUE)
     
-    ## 1.3. Get query list of table names
+    ## 3.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
     y_list <- get_query_list(y, target_conn)
@@ -167,7 +167,7 @@ ddbs_filter <- function(
     ## 4.4. Format column lists for SQL
     x_rest <- if (length(x_rest_cols) > 0) paste0('v1."', x_rest_cols, '", ', collapse = '') else ""
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+    ## 5. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
@@ -216,7 +216,7 @@ ddbs_filter <- function(
         return(invisible(TRUE))
     }
 
-    ## 4. Get data frame
+    ## 6. Get data frame
     if (sel_pred == "ST_DWithin") {
 
         ## if distance is not specified, it will use ST_Within
@@ -253,7 +253,7 @@ ddbs_filter <- function(
         )
     }
 
-    ## 5. Handle output based on output parameter
+    ## 7. Handle output based on output parameter
     result <- ddbs_handle_output(
         data       = data_tbl,
         conn       = target_conn,
