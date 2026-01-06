@@ -2,8 +2,7 @@ test_that("Compatibility: Arrow Views behave like Persistent Tables", {
     skip_if_not_installed("duckdb")
 
     # Setup
-    conn <- ddbs_create_conn("memory")
-    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    conn <- ddbs_temp_conn()
 
     # Create test data with a NON-STANDARD geometry column name
     # This tests if register/read respects column naming
@@ -25,7 +24,7 @@ test_that("Compatibility: Arrow Views behave like Persistent Tables", {
 
     # 3. Test ddbs_read_vector on View
     # Should handle WKB conversion automatically and preserve "my_custom_geom"
-    read_view <- ddbs_read_vector(conn, "view_test", crs = 4326)
+    read_view <- ddbs_read_vector(conn, "view_test")
 
     expect_s3_class(read_view, "sf")
     # expect_equal(attr(read_view, "sf_column"), "my_custom_geom")
@@ -33,7 +32,7 @@ test_that("Compatibility: Arrow Views behave like Persistent Tables", {
 
     # 4. Verify Data Integrity vs Persistent Table
     ddbs_write_vector(conn, data_sf, "table_test", overwrite = TRUE)
-    read_table <- ddbs_read_vector(conn, "table_test", crs = 4326)
+    read_table <- ddbs_read_vector(conn, "table_test")
 
     # Compare View result vs Table result
     # (Ignore attribute order if necessary, but data should match)
@@ -44,8 +43,7 @@ test_that("Compatibility: Arrow Views behave like Persistent Tables", {
 
 test_that("Round trip: write -> read for various geometry types", {
     skip_if_not_installed("duckdb")
-    conn <- ddbs_create_conn("memory")
-    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    conn <- ddbs_temp_conn()
 
     # Test data
     line <- sf::st_as_sfc("LINESTRING(0 0, 1 1)") |> sf::st_sf(id = 1, geom = _, crs = 4326)
@@ -73,8 +71,7 @@ test_that("Round trip: write -> read for various geometry types", {
 
 test_that("Round trip: register -> read for various geometry types", {
     skip_if_not_installed("duckdb")
-    conn <- ddbs_create_conn("memory")
-    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    conn <- ddbs_temp_conn()
 
     # Test data
     line <- sf::st_as_sfc("LINESTRING(0 0, 1 1)") |> sf::st_sf(id = 1, geom = _, crs = 4326)
@@ -101,8 +98,7 @@ test_that("Round trip: register -> read for various geometry types", {
 
 test_that("Compatibility: Writing from file path and reading back", {
     skip_if_not_installed("duckdb")
-    conn <- ddbs_create_conn("memory")
-    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    conn <- ddbs_temp_conn()
 
     file_path <- system.file("spatial/countries.geojson", package = "duckspatial")
     table_name <- "countries_from_file_compat"

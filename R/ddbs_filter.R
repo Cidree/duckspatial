@@ -1,6 +1,7 @@
 
 
 
+
 #' Performs spatial filter of two geometries
 #'
 #' Filters data spatially based on a spatial predicate
@@ -9,14 +10,16 @@
 #' @param y Y table with geometry column within the DuckDB database
 #' @template predicate
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template name
 #' @template crs
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns An sf object or TRUE (invisibly) for table creation
+#' @template returns_output
 #'
 #' @template spatial_join_predicates
 #'
@@ -24,81 +27,154 @@
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' # RECOMMENDED: Efficient lazy workflow using ddbs_open_dataset
 #' library(duckspatial)
+#'
+#' # Load data directly as lazy spatial data frames (CRS auto-detected)
+#' countries <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", package = "duckspatial")
+#' )
+#'
+#' argentina <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", package = "duckspatial")
+#' )
+#'
+#' # Lazy filter - computation stays in DuckDB
+#' neighbors <- ddbs_filter(countries, argentina, predicate = "touches")
+#'
+#' # Collect to sf when needed
+#' neighbors_sf <- dplyr::collect(neighbors) |> sf::st_as_sf()
+#'
+#'
+#' # Alternative: using sf objects directly (legacy compatibility)
 #' library(sf)
 #'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
-#'
-#' ## read data
 #' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 #' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
 #'
-#' ## store in duckdb
+#' result <- ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
+#'
+#'
+#' # Alternative: using table names in a duckdb connection
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
 #' ddbs_write_vector(conn, countries_sf, "countries")
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
-#' ## filter countries touching argentina
 #' ddbs_filter(conn = conn, "countries", "argentina", predicate = "touches")
-#'
-#' ## filter without using a connection
-#' ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
 #' }
 ddbs_filter <- function(
     x,
     y,
     predicate = "intersects",
     conn = NULL,
+    conn_x = NULL,
+    conn_y = NULL,
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
     distance = NULL,
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
     deprecate_crs(crs_column, crs)
 
-    # 0. Handle errors
+    # 1. Validate inputs
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x, y)
-
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-    y_list <- get_query_list(y, conn)
-    assert_crs(conn, x_list$query_name, y_list$query_name)
-
-    # 2. Prepare params for query
-    ## 2.1. select predicate
+    
+    # Validate predicate early (it aborts on invalid)
     sel_pred <- get_st_predicate(predicate)
-    ## 2.2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
-    y_geom <- get_geom_name(conn, y_list$query_name)
+
+    # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
+    
+    # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
+    crs_x <- attr(x, "crs")
+    crs_y <- attr(y, "crs")
+    sf_col_x <- attr(x, "sf_column")
+    sf_col_y <- attr(y, "sf_column")
+    
+    # Try auto-detection for tbl_duckdb_connection if CRS is NULL
+    if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
+       crs_x <- suppressWarnings(ddbs_crs(x))
+       if (is.na(crs_x)) crs_x <- NULL
+    }
+    if (is.null(crs_y) && inherits(y, "tbl_duckdb_connection")) {
+       crs_y <- suppressWarnings(ddbs_crs(y))
+       if (is.na(crs_y)) crs_y <- NULL
+    }
+
+    # Resolve conn_x/conn_y defaults from 'conn' for character inputs
+    if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+    if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+    # Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, validate character table names
+    x <- normalize_spatial_input(x, conn_x)
+    y <- normalize_spatial_input(y, conn_y)
+    
+    # 3. Manage connection to DB
+    ## 3.1. Resolve connections and handle imports
+    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    
+    # NOTE: Inline connection resolution logic was replaced by resolve_spatial_connections()
+    # helper (defined in db_utils_not_exported.R) to maintain consistency with ddbs_join
+    # and other two-input spatial functions. See tests/testthat/test-resolve_connections.R
+    # for regression tests covering cross-connection scenarios.
+    
+    target_conn <- resolve_res$conn
+    x <- resolve_res$x
+    y <- resolve_res$y
+    
+    # Register cleanup
+    on.exit(resolve_res$cleanup(), add = TRUE)
+    
+    ## 3.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+    y_list <- get_query_list(y, target_conn)
+    on.exit(y_list$cleanup(), add = TRUE)
+    
+    # CRS already extracted at start of function
+    
+    if (!is.null(crs_x) && !is.null(crs_y)) {
+       if (!crs_equal(crs_x, crs_y)) {
+         cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
+       }
+    } else {
+       assert_crs(target_conn, x_list$query_name, y_list$query_name)
+    }
+
+    # 4. Prepare parameters for query
+    ## 4.1. predicate already validated early (sel_pred above)
+    ## 4.2. get names of geometry columns (use saved sf_col_x/y from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+    y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
-    ## error if crs_column not found
-    assert_crs_column(crs_column, x_rest)
+    
+    ## 4.3. get columns to return from x
+    x_rest_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    
+    ## error if crs_column not found (conditional on saved crs_x)
+    if (is.null(crs_x)) {
+        assert_crs_column(crs_column, x_rest_cols)
+    }
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+    ## 4.4. Format column lists for SQL
+    x_rest <- if (length(x_rest_cols) > 0) paste0('v1."', x_rest_cols, '", ', collapse = '') else ""
+
+    ## 5. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## if distance is not specified, it will use ST_Within
         if (sel_pred == "ST_DWithin") {
@@ -117,7 +193,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
             ")
 
         } else {
@@ -130,17 +206,17 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom})
             ")
         }
 
         ## execute filter query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    ## 4. Get data frame
+    ## 6. Get data frame
     if (sel_pred == "ST_DWithin") {
 
         ## if distance is not specified, it will use ST_Within
@@ -150,7 +226,7 @@ ddbs_filter <- function(
         }
 
         data_tbl <- DBI::dbGetQuery(
-            conn, glue::glue("
+            target_conn, glue::glue("
                 SELECT DISTINCT 
                     {x_rest} 
                     ST_AsWKB(v1.{x_geom}) AS {x_geom}
@@ -158,13 +234,13 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom}, {distance})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
             ")
         )
 
     } else {
         data_tbl <- DBI::dbGetQuery(
-            conn, glue::glue("
+            target_conn, glue::glue("
                 SELECT DISTINCT 
                     {x_rest} 
                     ST_AsWKB(v1.{x_geom}) AS {x_geom}
@@ -172,24 +248,22 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v2.{y_geom}, v1.{x_geom})
+                    {sel_pred}(v1.{x_geom}, v2.{y_geom})
             ")
         )
     }
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+    ## 7. Handle output based on output parameter
+    result <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
     feedback_query(quiet)
-    return(data_sf)
+    return(result)
 
 }
-
-
-
-

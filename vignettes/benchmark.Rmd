@@ -16,7 +16,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = identical(tolower(Sys.getenv("NOT_CRAN")), "true"),
+#   eval = identical(tolower(Sys.getenv("NOT_CRAN")), "true"),
+  eval = FALSE,
   out.width = "100%"
 )
 
@@ -55,6 +56,14 @@ options(scipen = 999)
 
 # read polygons data
 countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+#> Reading layer `countries' from data source 
+#>   `/home/runner/work/_temp/Library/duckspatial/spatial/countries.geojson' 
+#>   using driver `GeoJSON'
+#> Simple feature collection with 257 features and 6 fields
+#> Geometry type: POLYGON
+#> Dimension:     XY
+#> Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187
+#> Geodetic CRS:  WGS 84
 
 # generate random points
 set.seed(42)
@@ -85,6 +94,7 @@ points_sf_10mi <- data.frame(
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 
 ```
+
 # Spatial Join
 
 ```{r, message = FALSE}
@@ -143,6 +153,7 @@ ggplot(data = df_bench_join) +
 
 ```
 
+![](../man/figures/bench/spatial-join-bench.png)
 
 # Spatial filter
 
@@ -186,7 +197,6 @@ time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 In this example working with 1 million points, {duckspatial} was `r time_diff`% 
 faster and used `r memo_diff` times less memory than {sf}. 
 
-plot
 
 ```{r, warning=FALSE}
 ggplot(data = df_bench_filter) +
@@ -202,6 +212,7 @@ ggplot(data = df_bench_filter) +
 ```
 
 
+![](../man/figures/bench/spatial-filter-bench.png)
 
 
 # Spatial distances
@@ -263,7 +274,6 @@ In this example calculating the distance between 10K points, {duckspatial} was `
 faster, but used `r memo_diff` times more memory than {sf}. Mind you that {sf} is 
 still more efficient when calculating Euclidean distances.
 
-plot
 
 ```{r, warning=FALSE}
 ggplot(data = df_bench_distance) +
@@ -277,3 +287,5 @@ ggplot(data = df_bench_distance) +
 
 
 ```
+
+![](../man/figures/bench/spatial-distance-bench.png)

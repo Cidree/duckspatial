@@ -18,6 +18,282 @@ dbConnCheck <- function(conn) {  # nocov start
     }
 }  # nocov end
 
+#' Normalize spatial input for processing
+#'
+#' Standardizes all input types before spatial operations:
+#' - sf objects: passed through unchanged
+#' - duckspatial_df: passed through unchanged
+#' - tbl_duckdb_connection: coerced to duckspatial_df (with CRS/source_table attributes)
+#' - character: verified to exist in connection
+#'
+#' This normalization enables downstream functions to work with a consistent set of types
+#' (sf, duckspatial_df, or character) rather than handling all possible input variations.
+#'
+#' @param x Spatial input (sf, duckspatial_df, tbl_duckdb_connection, or character)
+#' @param conn DuckDB connection (required for character table names)
+#' @return Normalized input ready for get_query_list()
+#' @keywords internal
+#' @noRd
+normalize_spatial_input <- function(x, conn = NULL) {
+  # 1. sf: pass through
+  if (inherits(x, "sf")) return(x)
+  
+  # 2. duckspatial_df: already normalized
+  if (inherits(x, "duckspatial_df")) return(x)
+  
+  # 3. tbl_duckdb_connection: coerce to duckspatial_df
+  if (inherits(x, "tbl_duckdb_connection")) {
+    return(as_duckspatial_df(x))
+  }
+  
+  # 4. character: verify table/view exists
+  if (is.character(x)) {
+    if (is.null(conn)) {
+      cli::cli_abort("{.arg conn} required when using character table names.")
+    }
+    if (!DBI::dbExistsTable(conn, x)) {
+      cli::cli_abort("Table or view {.val {x}} does not exist in connection.")
+    }
+    return(x)
+  }
+  
+  # Unsupported type - let downstream handle/error
+  x
+}
+
+#' Get DuckDB connection from an object
+#'
+#' Extracts the connection from duckspatial_df, tbl_lazy, or validates a direct connection.
+#'
+#' @param x A duckspatial_df, tbl_lazy, duckdb_connection, or NULL
+#' @return A duckdb_connection or NULL
+#' @keywords internal
+get_conn_from_input <- function(x) {  # nocov start
+  if (is.null(x)) return(NULL)
+  
+  if (inherits(x, "duckdb_connection")) return(x)
+  
+  if (inherits(x, c("duckspatial_df", "tbl_lazy"))) {
+    return(dbplyr::remote_con(x))
+  }
+  
+  NULL
+}  # nocov end
+
+#' Compare two CRS objects for equality
+#'
+#' Properly compares CRS objects, handling different representations of the same CRS.
+#'
+#' @param crs1 First CRS object
+#' @param crs2 Second CRS object
+#' @return Logical indicating if CRS are equal
+#' @keywords internal
+crs_equal <- function(crs1, crs2) {  # nocov start
+  # If either is NULL, skip check
+  if (is.null(crs1) || is.null(crs2)) return(TRUE)
+  
+  # Normalize to sf crs objects
+  crs1 <- sf::st_crs(crs1)
+  crs2 <- sf::st_crs(crs2)
+  
+  # If both are NA, they're equal
+  if (is.na(crs1) && is.na(crs2)) return(TRUE)
+  
+  # If one is NA and other isn't, they're different
+  if (is.na(crs1) || is.na(crs2)) return(FALSE)
+  
+  # Compare EPSG codes if both have them
+  if (!is.na(crs1$epsg) && !is.na(crs2$epsg)) {
+    return(crs1$epsg == crs2$epsg)
+  }
+  
+  # Fallback to WKT comparison
+  identical(crs1$wkt, crs2$wkt)
+}  # nocov end
+
+#' Import a view/table from one connection to another
+#'
+#' Enables cross-connection operations by importing views using one of three strategies.
+#'
+#' @param target_conn Target DuckDB connection
+#' @param source_conn Source DuckDB connection  
+#' @param source_object duckspatial_df, tbl_lazy, or tbl_duckdb_connection from source_conn
+#' @param target_name Name for view in target connection (auto-generated if NULL)
+#' @return List with imported view name and cleanup function
+#' @keywords internal
+import_view_to_connection <- function(target_conn, source_conn, source_object, target_name = NULL) {
+  
+  if (is.null(target_name)) {
+    target_name <- paste0("imported_", gsub("-", "_", uuid::UUIDgenerate()))
+  }
+  
+  # Track cleanup actions
+  cleanup_actions <- list()
+  
+  # STRATEGY 1: SQL recreation (same DB, direct view reference)
+  if (inherits(source_object, c("duckspatial_df", "tbl_duckdb_connection", "tbl_lazy"))) {
+    source_table <- dbplyr::remote_name(source_object)
+    
+    if (!is.null(source_table) && !inherits(source_table, "sql")) {
+      source_table_clean <- gsub('^"|"$', "", as.character(source_table))
+      
+      view_sql <- tryCatch({
+        q_sql <- glue::glue(
+          "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
+        )
+        result <- DBI::dbGetQuery(source_conn, q_sql)
+        if (nrow(result) > 0) result$sql else NULL
+      }, error = function(e) NULL)
+      
+      if (!is.null(view_sql) && length(view_sql) > 0) {
+        source_pat_clean <- paste0("VIEW\\s+\"", source_table_clean, "\"")
+        source_pat <- paste0("VIEW\\s+", source_table)
+        
+        if (grepl(source_pat_clean, view_sql, ignore.case = TRUE)) {
+          new_sql <- sub(source_pat_clean, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
+        } else {
+          new_sql <- sub(source_pat, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
+        }
+        new_sql <- sub("CREATE VIEW", "CREATE OR REPLACE TEMPORARY VIEW", new_sql, ignore.case = TRUE)
+        
+        tryCatch({
+          DBI::dbExecute(target_conn, new_sql)
+          cli::cli_inform("Imported view using SQL recreation (zero overhead)")
+          return(list(name = target_name, method = "sql_recreation", cleanup = function() NULL))
+        }, error = function(e) {
+          if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+            cli::cli_alert_info("Strategy 1 (SQL recreation) failed: {conditionMessage(e)}")
+          }
+        })
+      }
+    }
+  }
+  
+  # STRATEGY 2: SQL render (same DB, lazy query)
+  if (inherits(source_object, c("tbl_lazy", "tbl_duckdb_connection"))) {
+    query_sql <- tryCatch({
+      as.character(dbplyr::sql_render(source_object, con = source_conn))
+    }, error = function(e) NULL)
+    
+    if (!is.null(query_sql)) {
+      view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {target_name} AS {query_sql}")
+      
+      tryCatch({
+        DBI::dbExecute(target_conn, view_query)
+        cli::cli_inform("Imported view using SQL query (zero overhead)")
+        return(list(name = target_name, method = "sql_render", cleanup = function() NULL))
+      }, error = function(e) {
+        if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+          cli::cli_alert_info("Strategy 2 (SQL render) failed: {conditionMessage(e)}")
+        }
+      })
+    }
+  }
+  
+  # STRATEGY 3: ATTACH file-based source DB (READ_ONLY)
+  # Try multiple ways to get dbdir since dbGetInfo may return NULL
+  source_dbdir <- tryCatch({
+    info <- DBI::dbGetInfo(source_conn)
+    dbdir <- info$dbdir
+    if (is.null(dbdir) || length(dbdir) == 0) {
+       dbdir <- info$dbname
+    }
+    
+    if (is.null(dbdir) || length(dbdir) == 0) {
+      # Fallback: try to query from DuckDB itself
+      res <- DBI::dbGetQuery(source_conn, "SELECT current_database()")
+      NULL # Still can't get file path from this
+    }
+    dbdir
+  }, error = function(e) NULL)
+  
+  if (!is.null(source_dbdir) && source_dbdir != ":memory:" && file.exists(source_dbdir)) {
+    source_table <- tryCatch(dbplyr::remote_name(source_object), error = function(e) NULL)
+    
+    if (!is.null(source_table) && !inherits(source_table, "sql")) {
+      attach_alias <- paste0("src_", gsub("-", "_", uuid::UUIDgenerate()))
+      source_table_clean <- gsub('^"|"$', "", as.character(source_table))
+      
+      tryCatch({
+        DBI::dbExecute(target_conn, glue::glue("ATTACH '{source_dbdir}' AS {attach_alias} (READ_ONLY)"))
+        
+        view_query <- glue::glue("
+          CREATE OR REPLACE TEMPORARY VIEW {target_name} AS
+          SELECT * FROM {attach_alias}.{source_table_clean}
+        ")
+        DBI::dbExecute(target_conn, view_query)
+        
+        cli::cli_inform("Imported view using ATTACH (zero-copy, READ_ONLY)")
+        return(list(
+          name = target_name, 
+          method = "attach",
+          cleanup = function() {
+            tryCatch(DBI::dbExecute(target_conn, glue::glue("DETACH {attach_alias}")), error = function(e) NULL)
+          }
+        ))
+      }, error = function(e) {
+        if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+          cli::cli_alert_info("Strategy 3 (ATTACH) failed: {conditionMessage(e)}")
+        }
+        tryCatch(DBI::dbExecute(target_conn, glue::glue("DETACH IF EXISTS {attach_alias}")), error = function(e) NULL)
+      })
+    }
+  }
+  
+  # STRATEGY 4: Nanoarrow streaming (cross-DB)
+  # Materialize into target to avoid Arrow lifecycle issues
+  if (inherits(source_object, c("tbl_lazy", "tbl_duckdb_connection", "duckspatial_df"))) {
+    query_sql <- tryCatch({
+      as.character(dbplyr::sql_render(source_object, con = source_conn))
+    }, error = function(e) NULL)
+    
+    if (!is.null(query_sql)) {
+      tryCatch({
+        res <- DBI::dbSendQuery(source_conn, query_sql, arrow = TRUE)
+        
+        reader <- duckdb::duckdb_fetch_arrow(res)
+        stream <- nanoarrow::as_nanoarrow_array_stream(reader)
+        
+        # Register temporarily, then materialize into a view
+        temp_arrow_name <- paste0("temp_arrow_", gsub("-", "_", uuid::UUIDgenerate()))
+        duckdb::duckdb_register_arrow(target_conn, temp_arrow_name, stream)
+        
+        # Create permanent view from Arrow data (materializes)
+        DBI::dbExecute(target_conn, glue::glue(
+          "CREATE OR REPLACE TEMPORARY VIEW {target_name} AS SELECT * FROM {temp_arrow_name}"
+        ))
+        
+        # Cleanup Arrow registration
+        DBI::dbClearResult(res)
+        tryCatch(duckdb::duckdb_unregister_arrow(target_conn, temp_arrow_name), error = function(e) NULL)
+        
+        cli::cli_inform("Imported via nanoarrow streaming (zero R materialization)")
+        return(list(name = target_name, method = "nanoarrow", cleanup = function() NULL))
+      }, error = function(e) {
+        if (isTRUE(getOption("duckspatial.debug", FALSE))) {
+          cli::cli_alert_info("Strategy 4 (nanoarrow) failed: {conditionMessage(e)}")
+        }
+      })
+    }
+  }
+  
+  # STRATEGY 5: Collect + register (last resort)
+  df <- dplyr::collect(source_object)
+  
+  if (inherits(df, "sf")) {
+    duckspatial::ddbs_write_vector(target_conn, df, target_name, temp_view = TRUE)
+    cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
+    return(list(name = target_name, method = "collect_and_write", data = df, cleanup = function() NULL))
+  } else if (is.data.frame(df)) {
+    # For non-spatial data, use duckdb_register (zero-copy from R)
+    duckdb::duckdb_register(target_conn, target_name, df)
+    cli::cli_warn("Imported via duckdb_register (collected to R, zero-copy to target)")
+    return(list(name = target_name, method = "duckdb_register", data = df, cleanup = function() NULL))
+  } else {
+    cli::cli_abort("Import failed: Cannot import object of class {.cls {class(df)}}.")
+  }
+}
+
 #' Get column names in a DuckDB database
 #'
 #' @template conn
@@ -28,13 +304,12 @@ dbConnCheck <- function(conn) {  # nocov start
 #' @returns name of the geometry column of a table
 get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NULL) {  # nocov start
 
-    # check if the table exists
-    if (isFALSE(DBI::dbExistsTable(conn, x))) {
+    # check if the table exists (via DESCRIBE which works for temp views too)
+    info_tbl <- try(DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};")), silent = TRUE)
+    
+    if (inherits(info_tbl, "try-error")) {
         cli::cli_abort("The table <{x}> does not exist.")
     }
-
-    # get column names
-    info_tbl <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};"))
     other_cols <- if (rest) {
         info_tbl[!info_tbl$column_type == "GEOMETRY", "column_name"]
     } else {
@@ -43,12 +318,13 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NU
 
     # collapse columns with quoted names
     if (isTRUE(collapse)) {
-      if (is.null(table_id)) {
-        other_cols <- if (length(other_cols) > 0) paste0('"', other_cols, '",', collapse = ' ') else ""
+      if (length(other_cols) > 0) {
+        prefix <- if (is.null(table_id)) "" else paste0(table_id, ".")
+        other_cols <- paste0(prefix, '"', other_cols, '"', collapse = ', ')
+        other_cols <- paste0(other_cols, ", ") # trailing comma for SELECT {rest} something
       } else {
-        other_cols <- if (length(other_cols) > 0) paste0(table_id, '."', other_cols, '",', collapse = ' ') else ""
+        other_cols <- ""
       }
-        
     }
 
     return(other_cols)
@@ -84,14 +360,27 @@ get_query_name <- function(name) {  # nocov start
 
 #' Get names for the query
 #'
-#' @param x sf or character
+#' @param x sf, duckspatial_df, tbl_lazy, or character
 #' @template conn_null
 #'
 #' @keywords internal
 #' @noRd
 #' @returns list with fixed names
-get_query_list <- function(x, conn) { # nocov start
+# IMPORTANT: This function returns a cleanup function instead of using on.exit() internally.
+# 
+# Why? R's on.exit() runs when the function containing it exits, NOT when the caller exits.
+# If we used on.exit() here, the temporary views would be dropped as soon as get_query_list()
+# returns, BEFORE the caller can execute their SQL query that references the view.
+#
+# The caller MUST register the cleanup function with on.exit() in their own scope:
+#   result <- get_query_list(x, conn)
+#   on.exit(result$cleanup(), add = TRUE)
+#   # ... use result$query_name ...
+#   # ... use result$query_name ...
+get_query_list <- function(x, conn) {
 
+  cleanup <- function() NULL  # default no-op
+  
   if (inherits(x, "sf")) {
 
     ## generate a unique temporary view name
@@ -109,21 +398,111 @@ get_query_list <- function(x, conn) { # nocov start
       temp_view = TRUE
     )
 
-    ## ensure cleanup on exit
-    on.exit(
-      DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-      add = TRUE
-    )
+    cleanup <- function() {
+      # Try DROP VIEW first
+      tryCatch(
+        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+      # Also try unregistering arrow (needed for temp_view=TRUE from ddbs_write_vector)
+      tryCatch(
+        duckdb::duckdb_unregister_arrow(conn, temp_view_name),
+        error = function(e) NULL
+      )
+    }
 
     x_list <- get_query_name(temp_view_name)
 
-} else {
+  } else if (inherits(x, "duckspatial_df")) {
+    
+    # 1. OPTIMIZATION: Check if we have an unmodified direct source table/view
+    # This optimization is ONLY valid when the lazy query hasn't been modified.
+    #
+    # When dplyr verbs (filter, select, mutate, etc.) are applied, the lazy query
+    # changes but source_table attribute may still point to original table.
+    # We detect modification by comparing source_table with dbplyr::remote_name():
+    # - If remote_name returns the same table name, query is unmodified
+    # - If remote_name returns sql() or NULL, query has been modified via dplyr verbs
+    source_table <- attr(x, "source_table")
+    if (!is.null(source_table)) {
+      remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
+      
+      # Only use optimization if remote_name matches source_table exactly
+      # (i.e., the query hasn't been modified by dplyr verbs)
+      if (!is.null(remote_name_result) && 
+          !inherits(remote_name_result, "sql") &&
+          as.character(remote_name_result) == source_table) {
+        result <- get_query_name(source_table)
+        result$cleanup <- function() NULL
+        return(result)
+      }
+      # Otherwise, fall through to SQL render path below
+    }
+    
+    # 2. SQL render (efficient lazy evaluation)
+    # NOTE: Replaced inefficient collect-and-upload fallback with SQL render.
+    # Regression test: tests/testthat/test-regression-inefficient-fallback.R
+    # duckspatial_df inherits from tbl_lazy, so sql_render always works
+    temp_view_name <- paste0(
+      "temp_view_",
+      gsub("-", "_", uuid::UUIDgenerate())
+    )
+    
+    query_sql <- dbplyr::sql_render(x, con = conn)
+    
+    view_query <- glue::glue("
+      CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
+      {query_sql}
+    ")
+    DBI::dbExecute(conn, view_query)
+    
+    cleanup <- function() {
+      tryCatch(
+        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+    }
+    
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- cleanup
+    return(x_list)
+
+  } else if (inherits(x, "tbl_lazy")) {
+    
+    ## For dbplyr tbl_lazy, we can use sql_render
+    temp_view_name <- paste0(
+      "temp_view_",
+      gsub("-", "_", uuid::UUIDgenerate())
+    )
+    
+    # Get the SQL query from the lazy table
+    query_sql <- dbplyr::sql_render(x)
+    
+    # Create temp view from the query
+    view_query <- glue::glue("
+      CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
+      {query_sql}
+    ")
+    DBI::dbExecute(conn, view_query)
+    
+    cleanup <- function() {
+      tryCatch(
+        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+    }
+    
+    x_list <- get_query_name(temp_view_name)
+
+  } else {
     x_list <- get_query_name(x)
   }
 
+  # Add cleanup function to result
+  x_list$cleanup <- cleanup
   return(x_list)
 
-} # nocov end
+}
 
 
 
@@ -191,13 +570,11 @@ get_st_predicate <- function(predicate) { # nocov start
       "overlaps"              = "ST_Overlaps",
       "crosses"               = "ST_Crosses",
       "covered_by"            = "ST_CoveredBy",
-      "intersects_extent"     = "ST_Intersects_Extent",
       "dwithin"               = "ST_DWithin",
-      cli::cli_abort(
-          "Predicate should be one of <intersects>, <intersects_extent>, <covers>, <touches>,
-          <contains>, <contains_properly>, <within>, <within_properly>, <dwithin> <disjoint>, <equals>,
-          <overlaps>, <crosses>, <covered_by>, or <intersects_extent>."
-        )
+      cli::cli_abort(c(
+          "Invalid spatial predicate: {.val {predicate}}",
+          "i" = "Valid options: {.val {c('intersects', 'intersects_extent', 'covers', 'touches', 'contains', 'contains_properly', 'within', 'within_properly', 'dwithin', 'disjoint', 'equals', 'overlaps', 'crosses', 'covered_by')}}"
+        ))
       )
 } # nocov end
 
@@ -427,4 +804,360 @@ deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
       id      = "crs"
     )
   }
+}
+
+
+#' Handle output type for duckspatial functions
+#'
+#' Converts a data frame/tibble result to the appropriate output type
+#' based on the `output` parameter or global options.
+#'
+#' @param data A data frame/tibble with a WKB geometry column
+#' @param conn DuckDB connection
+#' @param output Character specifying output type: "duckspatial_df", "sf", or "tibble"
+#' @param crs CRS for the output (used for sf conversion)
+#' @param crs_column Column name containing CRS info (deprecated)
+#' @param x_geom Name of the geometry column
+#'
+#' @keywords internal
+#' @noRd
+#' @returns Object of the specified output type
+ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL, 
+                                crs_column = "crs_duckspatial", x_geom = "geometry") {
+  # nocov start
+  
+  # Resolve output type: parameter > global option > default
+
+  if (is.null(output)) {
+    output <- getOption("duckspatial.output_type", "duckspatial_df")
+  }
+  
+  # Validate output type
+  valid_outputs <- c("duckspatial_df", "sf", "tibble", "raw", "geoarrow")
+  if (!output %in% valid_outputs) {
+    cli::cli_abort(
+      "{.arg output} must be one of {.val {valid_outputs}}, not {.val {output}}."
+    )
+  }
+  
+  # Handle based on output type
+  if (output == "tibble") {
+    # Remove geometry column and CRS column, return tibble
+    data[[x_geom]] <- NULL
+    if (crs_column %in% names(data)) {
+      data[[crs_column]] <- NULL
+    }
+    return(tibble::as_tibble(data))
+    
+  } else if (output == "raw") {
+    # Return directly (geometry is already WKB via collect)
+    return(tibble::as_tibble(data))
+      
+  } else if (output == "geoarrow") {
+    # Convert WKB to geoarrow_vctr
+    geom_data <- data[[x_geom]]
+    
+    # Needs geoarrow package
+    if (!requireNamespace("geoarrow", quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg geoarrow} needed for output type 'geoarrow'.")
+    }
+    
+    if (!inherits(geom_data, "geoarrow_vctr")) {
+      # Strip blob attributes if present (DuckDB blobs sometimes have extra attrs)
+      attributes(geom_data) <- NULL
+      col_converted <- tryCatch({
+         geoarrow::as_geoarrow_vctr(
+            wk::new_wk_wkb(geom_data),
+            schema = geoarrow::geoarrow_wkb()
+         )
+      }, error = function(e) {
+         cli::cli_warn("Failed to convert to geoarrow: {conditionMessage(e)}")
+         geom_data
+      })
+      data[[x_geom]] <- col_converted
+    }
+    return(tibble::as_tibble(data))
+
+  } else if (output == "sf") {
+    # Convert to sf object
+    data_sf <- convert_to_sf_wkb(
+      data       = data,
+      crs        = crs,
+      crs_column = crs_column,
+      x_geom     = x_geom
+    )
+    return(data_sf)
+    
+  } else {
+    # output == "duckspatial_df"
+    # Convert to sf first, then wrap as duckspatial_df
+    data_sf <- convert_to_sf_wkb(
+      data       = data,
+      crs        = crs,
+      crs_column = crs_column,
+      x_geom     = x_geom
+    )
+    
+    # Get CRS from the sf object
+    crs_obj <- sf::st_crs(data_sf)
+    
+    # Convert sf to duckspatial_df
+    result <- as_duckspatial_df(
+      x        = data_sf,
+      conn     = conn,
+      crs      = crs_obj,
+      geom_col = x_geom
+    )
+    
+    return(result)
+  }
+  # nocov end
+}
+
+#' Get CRS from a spatial file
+#'
+#' @param path Path to the file
+#' @param conn DuckDB connection
+#' @return crs object or NULL
+#' @keywords internal
+#' @noRd
+get_file_crs <- function(path, conn) {
+    tryCatch({
+      meta_query <- glue::glue("
+        SELECT 
+          layers[1].geometry_fields[1].crs.auth_name as auth_name,
+          layers[1].geometry_fields[1].crs.auth_code as auth_code
+        FROM st_read_meta('{path}')
+      ")
+      meta <- DBI::dbGetQuery(conn, meta_query)
+      
+      if (!is.na(meta$auth_code) && !is.na(meta$auth_name)) {
+        crs_string <- paste0(meta$auth_name, ":", meta$auth_code)
+        sf::st_crs(crs_string)
+      } else {
+        NULL
+      }
+    }, error = function(e) {
+      cli::cli_warn("Could not auto-detect CRS from file: {e$message}")
+      NULL
+    })
+}
+
+
+
+#' Get or create default DuckDB connection with spatial extension installed and loaded
+#'
+#'
+#' @param create Logical. If TRUE and no connection exists, create one.
+#'   Default is TRUE.
+#'
+#' @returns A `duckdb_connection` or NULL if no connection exists and
+#'   create = FALSE
+#'
+#' @keywords internal
+ddbs_default_conn <- function(create = TRUE) {
+  conn <- getOption("duckspatial_conn", NULL)
+
+  # Check if existing connection is still valid
+
+  if (!is.null(conn)) {
+    if (!DBI::dbIsValid(conn)) {
+      options(duckspatial_conn = NULL)
+      conn <- NULL
+    }
+  }
+
+  # Create new connection if needed
+  if (is.null(conn) && create) {
+    conn <- ddbs_create_conn(dbdir = "memory")
+    options(duckspatial_conn = conn)
+  }
+
+  conn
+}
+
+#' Generate unique temporary view name
+#'
+#' Creates a unique name for temporary views to avoid collisions.
+#'
+#' @returns Character string with unique view name
+#' @keywords internal
+ddbs_temp_view_name <- function() {
+  paste0("temp_view_", gsub("-", "_", uuid::UUIDgenerate()))
+}
+
+#' Create an ephemeral DuckDB connection
+#'
+#' Creates a DuckDB connection that is automatically closed when the calling
+#' function exits (either normally or due to an error). For file-based 
+#' connections, the database file can also be automatically deleted on cleanup.
+#'
+#' @param file If TRUE, creates a file-based temporary database instead of 
+#'   in-memory. If a character string, uses that as the database file path.
+#'   Default is FALSE (in-memory).
+#' @param read_only If TRUE and file is provided, opens the connection as 
+#'   read-only. Has no effect on in-memory connections. Default is FALSE.
+#' @param cleanup If TRUE (default), the connection will be closed (with 
+#'   shutdown = TRUE for file-based) and for file-based connections, the 
+#'   database file will be deleted.
+#' @param envir The environment in which to schedule cleanup. Default is the
+#'   parent frame (the caller's environment).
+#'
+#' @returns A `duckdb_connection` that will be automatically closed on exit.
+#'   For file-based connections, also returns the file path as an attribute 
+#'   `db_file`.
+#' @noRd
+#' @keywords internal
+ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envir = parent.frame()) {
+  if (isTRUE(file) || is.character(file)) {
+    # File-based connection
+    if (is.character(file)) {
+      db_file <- file
+    } else {
+      db_file <- tempfile(fileext = ".duckdb")
+    }
+    
+    conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = read_only)
+    attr(conn, "db_file") <- db_file
+    
+    # Cleanup: disconnect and optionally delete file
+    withr::defer({
+      if (DBI::dbIsValid(conn)) {
+        tryCatch(suppressWarnings(DBI::dbDisconnect(conn, shutdown = TRUE)), error = function(e) NULL)
+      }
+      if (isTRUE(cleanup) && file.exists(db_file)) unlink(db_file)
+    }, envir = envir)
+  } else {
+    # In-memory connection
+    conn <- ddbs_create_conn(dbdir = "memory")
+    withr::defer(duckdb::dbDisconnect(conn), envir = envir)
+  }
+  
+  conn
+}
+
+#' Resolve connections and handle cross-connection imports
+#'
+#' @param x Input x (sf, duckspatial_df, tbl, character, etc.)
+#' @param y Input y
+#' @param conn Explicit target connection (optional)
+#' @param conn_x Connection for x (optional, resolved if NULL)
+#' @param conn_y Connection for y (optional, resolved if NULL)
+#' 
+#' @return List containing:
+#'   - conn: The target connection to use
+#'   - x: Updated x (may be new view name if imported)
+#'   - y: Updated y (may be new view name if imported)
+#'   - cleanup: A function to call on exit to drop temporary views
+#' @keywords internal
+#' @noRd
+resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y = NULL) {
+    
+    cleanup_funs <- list()
+    add_cleanup <- function(fn) {
+        cleanup_funs <<- c(cleanup_funs, list(fn))
+    }
+    
+    # 1. Resolve source connections
+    # If not provided, try to extract from objects
+    # Note: Character inputs will return NULL from get_conn_from_input
+    source_conn_x <- conn_x %||% get_conn_from_input(x)
+    source_conn_y <- conn_y %||% get_conn_from_input(y)
+    
+    # 2. Determine target connection
+    # Priority: explicit conn > conn_x > conn_y > default
+    target_conn <- if (!is.null(conn)) {
+        conn
+    } else if (!is.null(source_conn_x)) {
+        source_conn_x
+    } else if (!is.null(source_conn_y)) {
+        source_conn_y
+    } else {
+        ddbs_default_conn()
+    }
+    
+    # 2.1 Validate target connection
+    if (!DBI::dbIsValid(target_conn)) {
+        cli::cli_abort("Target connection is not valid. Please provide a valid DuckDB connection.")
+    }
+    
+    # 2.2 Warn if conn_x and conn_y differ but no explicit conn was provided
+    if (is.null(conn) && 
+        !is.null(source_conn_x) && 
+        !is.null(source_conn_y) && 
+        !identical(source_conn_x, source_conn_y)) {
+        cli::cli_warn(c(
+            "{.arg x} and {.arg y} come from different DuckDB connections.",
+            "i" = "Using {.arg x}'s connection as the target. Provide {.arg conn} to override."
+        ))
+    }
+    
+    # 3. Handle imports if source connections differ from target
+    
+    # Check x
+    # We only import x if it HAS a source connection that is different from target
+    if (!is.null(source_conn_x) && !identical(target_conn, source_conn_x)) {
+         # Need to import x
+         cli::cli_warn(c(
+            "{.arg x} and the target connection are different.",
+            "i" = "Importing {.arg x} to the target connection.",
+            "i" = "This may require materializing data."
+         ))
+         
+         x_to_import <- x
+         if (is.character(x)) {
+             x_to_import <- tryCatch({
+                 tbl_obj <- dplyr::tbl(source_conn_x, x)
+                 suppressWarnings(as_duckspatial_df(tbl_obj))
+             }, error = function(e) {
+                 tryCatch(dplyr::tbl(source_conn_x, x), error = function(ex) x)
+             })
+         }
+         
+         res <- import_view_to_connection(target_conn, source_conn_x, x_to_import)
+         x <- res$name
+         
+         add_cleanup(function() {
+             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res$name}")), error = function(e) NULL)
+             if (is.function(res$cleanup)) tryCatch(res$cleanup(), error = function(e) NULL)
+         })
+    }
+    
+    # Check y
+    # We only import y if it HAS a source connection that is different from target
+    if (!is.null(source_conn_y) && !identical(target_conn, source_conn_y)) {
+         # Need to import y
+         cli::cli_warn(c(
+            "{.arg y} and the target connection are different.",
+            "i" = "Importing {.arg y} to the target connection.",
+            "i" = "This may require materializing data."
+         ))
+         
+         y_to_import <- y
+         if (is.character(y)) {
+             y_to_import <- tryCatch({
+                 tbl_obj <- dplyr::tbl(source_conn_y, y)
+                 suppressWarnings(as_duckspatial_df(tbl_obj))
+             }, error = function(e) {
+                 tryCatch(dplyr::tbl(source_conn_y, y), error = function(ex) y)
+             })
+         }
+         
+         res <- import_view_to_connection(target_conn, source_conn_y, y_to_import)
+         y <- res$name
+         
+         add_cleanup(function() {
+             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res$name}")), error = function(e) NULL)
+             if (is.function(res$cleanup)) tryCatch(res$cleanup(), error = function(e) NULL)
+         })
+    }
+    
+    list(
+        conn = target_conn,
+        x = x,
+        y = y,
+        cleanup = function() {
+            for (fn in cleanup_funs) fn()
+        }
+    )
 }

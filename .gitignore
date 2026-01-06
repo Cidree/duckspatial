@@ -8,3 +8,4 @@ internal/*
 private
 /doc/
 /Meta/
+.DS_Store
