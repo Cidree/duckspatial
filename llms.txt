@@ -146,12 +146,16 @@ Modify and process individual geometries
   : Returns the convex hull enclosing the geometry
 - [`ddbs_exterior_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.md)
   : Extracts the exterior ring of polygon geometries
+- [`ddbs_generate_points()`](https://cidree.github.io/duckspatial/reference/ddbs_generate_points.md)
+  : Generate random points within geometries
 - [`ddbs_make_polygon()`](https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.md)
   : Creates polygons from linestring geometries
 - [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md)
   : Make invalid geometries valid
 - [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md)
   : Simplify geometries
+- [`ddbs_transform()`](https://cidree.github.io/duckspatial/reference/ddbs_transform.md)
+  : Transform coordinate reference system of geometries
 - [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md)
   : Convert geometries to QuadKey tiles
 - [`ddbs_union()`](https://cidree.github.io/duckspatial/reference/ddbs_union.md)

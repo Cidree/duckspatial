@@ -40,6 +40,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_filter.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_flip.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_generate_points.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_glimpse.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_install.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_interpolate_aw.html</loc></url>
@@ -68,6 +69,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_simplify.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_touches.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_transform.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_union.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_within.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_within_properly.html</loc></url>
