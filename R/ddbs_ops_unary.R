@@ -1268,3 +1268,152 @@ ddbs_convex_hull <- function(
     feedback_query(quiet)
     return(data_sf)
 }
+
+
+
+
+
+#' Transform coordinate reference system of geometries
+#'
+#' Transforms geometries from a DuckDB table to a different coordinate reference system
+#' using the spatial extension. Works similarly to \code{sf::st_transform()}.
+#' Returns the result as an \code{sf} object or creates a new table in the database.
+#'
+#' @template x
+#' @param y Target CRS. Can be:
+#'   \itemize{
+#'     \item A character string with EPSG code (e.g., "EPSG:4326")
+#'     \item An \code{sf} object (uses its CRS)
+#'     \item Name of a DuckDB table (uses its CRS)
+#'   }
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template overwrite
+#' @template quiet
+#'
+#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @export
+#'
+#' @examples
+#' ## load packages
+#' library(duckspatial)
+#' library(sf)
+#'
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+#'
+#' ## store in duckdb
+#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#'
+#' ## transform to different CRS using EPSG code
+#' ddbs_transform("argentina", "EPSG:3857", conn)
+#'
+#' ## transform to match CRS of another sf object
+#' argentina_3857_sf <- st_transform(argentina_sf, "EPSG:3857")
+#' ddbs_write_vector(conn, argentina_3857_sf, "argentina_3857")
+#' ddbs_transform("argentina", argentina_3857_sf, conn)
+#'
+#' ## transform to match CRS of another DuckDB table
+#' ddbs_transform("argentina", "argentina_3857", conn)
+#'
+#' ## transform without using a connection
+#' ddbs_transform(argentina_sf, "EPSG:3857")
+ddbs_transform <- function(
+    x,
+    y,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    overwrite = FALSE,
+    quiet     = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
+
+    ## 0. Handle errors
+    assert_xy(x, "x")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
+
+    # 1. Manage connection to DB
+    ## 1.1. check if connection is provided, otherwise create a temporary connection
+    is_duckdb_conn <- dbConnCheck(conn)
+    if (isFALSE(is_duckdb_conn)) {
+      conn <- duckspatial::ddbs_create_conn()
+      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
+    }
+    ## 1.2. get query list of table names and CRS
+    x_list <- get_query_list(x, conn)
+    crs_x <- paste0("EPSG:", ddbs_crs(conn, x_list$query_name)$epsg)
+    ## CRS extraction depends if:
+    ## - starts with EPSG - it's an AUTH:CODE
+    ## - other character - it's a DuckDB table name
+    ## - other - it's an SF object
+    if (inherits(y, "character") && startsWith(y, "EPSG")) {
+      crs_y <- y
+    } else {
+      y_list <- get_query_list(y, conn)
+      crs_y <- paste0("EPSG:", ddbs_crs(conn, y_list$query_name)$epsg)
+    }
+    ## 1.3. if crs are the same, return warning
+    if (crs_x == crs_y) return(cli::cli_warn("The CRS of `x` and `y` is the same."))
+
+    # 2. Prepare params for query
+    x_geom <- get_geom_name(conn, x_list$query_name)
+    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    assert_geometry_column(x_geom, x_list)
+    ## remove CRS column from x_rest
+    x_rest <- x_rest[-grep(crs_column, x_rest)]
+    x_rest <- if (length(x_rest) > 0) paste0('"', x_rest, '",', collapse = ' ') else ""
+
+    ## 3. if name is not NULL (i.e. no SF returned)
+    if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
+        ## handle overwrite
+        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+
+        ## create query (no st_as_text)
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            '{crs_y}' AS '{crs_column}',
+            ST_Transform({x_geom}, '{crs_x}', '{crs_y}') as {x_geom} 
+            FROM {x_list$query_name};
+        ")
+        ## execute intersection query
+        DBI::dbExecute(conn, tmp.query)
+        feedback_query(quiet)
+        return(invisible(TRUE))
+    }
+
+    # 4. Get data frame
+    ## 4.1. create query
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        '{crs_y}' AS '{crs_column}',
+        ST_AsWKB(ST_Transform({x_geom}, '{crs_x}', '{crs_y}')) as {x_geom} 
+        FROM {x_list$query_name};
+    ")
+    ## 4.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+
+    ## 5. convert to SF and return result
+    data_sf <- convert_to_sf_wkb(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
+
+    feedback_query(quiet)
+    return(data_sf)
+}

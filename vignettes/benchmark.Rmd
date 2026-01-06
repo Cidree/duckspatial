@@ -54,9 +54,6 @@ library(lwgeom)
 library(ggplot2)
 options(scipen = 999)
 
-# Turn off S2 (Spherical geometry) for planar processing
-sf::sf_use_s2(FALSE)
-
 # read polygons data
 countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 #> Reading layer `countries' from data source 
@@ -102,16 +99,6 @@ points_sf_10mi <- data.frame(
 
 ```{r, message = FALSE}
 run_benchmark <- function(points_sf){
-    
-    # set.seed(42)
-    # 
-    # ## create points data
-    # points_sf <- data.frame(
-    #     id = 1:n,
-    #     x = runif(n, min = -180, max = 180),  
-    #     y = runif(n, min = -90, max = 90)
-    #     ) |> 
-    #     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
     
     temp_bench <- bench::mark(
         iterations = 1, 
@@ -208,7 +195,7 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 In this example working with 1 million points, {duckspatial} was `r time_diff`% 
-faster and used `r memo_diff` times less memory than {sf}. Not bad.
+faster and used `r memo_diff` times less memory than {sf}. 
 
 
 ```{r, warning=FALSE}
@@ -228,12 +215,12 @@ ggplot(data = df_bench_filter) +
 ![](../man/figures/bench/spatial-filter-bench.png)
 
 
-
-
-
 # Spatial distances
 
 ```{r, message = FALSE}
+# Turn on S2 (Spherical geometry)
+sf::sf_use_s2(TRUE)
+
 run_benchmark <- function(n){
     
     set.seed(42)
@@ -252,11 +239,12 @@ run_benchmark <- function(n){
         duckspatial = duckspatial::ddbs_distance(
             x = points_sf, 
             y = points_sf, 
-            dist_type = "planar"),
+            dist_type = "haversine"),
         
         sf = sf::st_distance(
             x = points_sf, 
-            y = points_sf)
+            y = points_sf, 
+            which = "Great Circle")
         )
     
     temp_bench$n <- nrow(points_sf)
@@ -278,12 +266,13 @@ df_bench_distance <- lapply(
 temp <- df_bench_distance |> 
     filter(n == 10000)
 
-memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
+memo_diff <- round(as.numeric(temp$mem_alloc[1]) / as.numeric(temp$mem_alloc[2]) ,1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
 In this example calculating the distance between 10K points, {duckspatial} was `r time_diff`% 
-faster and used `r memo_diff` times less memory than {sf}. Not bad.
+faster, but used `r memo_diff` times more memory than {sf}. Mind you that {sf} is 
+still more efficient when calculating Euclidean distances.
 
 
 ```{r, warning=FALSE}
