@@ -35,9 +35,18 @@ dplyr_reconstruct.duckspatial_df <- function(data, template) {
   }
   
   # Restore spatial attributes from template
+  # NOTE: We deliberately do NOT copy source_table here.
+
+  # The source_table attribute is an optimization hint for get_query_list()
+  # that allows direct table reference when the lazy query is unmodified.
+  # However, dplyr_reconstruct is called AFTER dplyr verbs modify the query,
+  # so copying source_table would cause get_query_list() to use the original
+  # table instead of the modified lazy query (losing filters, selects, etc).
+  #
+  # By not setting source_table, get_query_list() will use sql_render() to
+  # create a temporary view from the full lazy query, preserving all operations.
   attr(data, "sf_column") <- attr(template, "sf_column")
   attr(data, "crs") <- attr(template, "crs")
-  attr(data, "source_table") <- attr(template, "source_table")
   
   data
 }
@@ -121,35 +130,55 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
       
       # Check column type in the lazy table
       # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
+      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
       cached_type <- attr(x, "geom_type")
       
-      is_compatible <- if (!is.null(cached_type)) {
-          grepl("GEOMETRY|BLOB", cached_type, ignore.case = TRUE)
+      # Variables to hold resolved state
+      target_col_sql <- geom_col # Default to attribute name
+      should_convert <- FALSE
+      
+      if (!is.null(cached_type)) {
+          should_convert <- grepl("GEOMETRY|BLOB", cached_type, ignore.case = TRUE)
       } else {
           tryCatch({
               # Check type of geom_col
               # DESCRIBE (query) is standard DuckDB
               desc <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_sql}"))
-              # Match geom_col
-              col_info <- desc[desc$column_name == geom_col, ]
-              if (nrow(col_info) == 0) FALSE # Should not happen if col exists
-              else {
+              
+              # Match geom_col (case insensitive search)
+              # use numeric index to handle NAs safely
+              match_idx <- which(tolower(desc$column_name) == tolower(geom_col))
+              
+              if (length(match_idx) > 0) {
+                  # Found column in DB stats
+                  idx <- match_idx[1]
+                  col_info <- desc[idx, ]
+                  
+                  # resolving correct casing from DB for quoting
+                  target_col_sql <- col_info$column_name
+                  
                   ctype <- if ("column_type" %in% names(col_info)) col_info$column_type else col_info$data_type
                   # We only wrap ST_AsWKB if it is GEOMETRY or BLOB/WKB_BLOB
-                  grepl("GEOMETRY|BLOB", ctype, ignore.case = TRUE)
+                  should_convert <- grepl("GEOMETRY|BLOB", ctype, ignore.case = TRUE)
+              } else {
+                  # Column not found in DESCRIBE? 
+                  # It might be present but DESCRIBE logic missed it or view shenanigans.
+                  # Fallback: Assume it exists and needs conversion (Safe path)
+                  should_convert <- TRUE
               }
           }, error = function(e) {
               # Fallback: safer to wrap than to get raw DuckDB internal blobs
-              TRUE 
+              should_convert <<- TRUE 
           })
       }
 
-      if (is_compatible) {
+      if (should_convert) {
            x_lazy <- dplyr::mutate(
                x_lazy, 
-                !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB({DBI::dbQuoteIdentifier(conn, geom_col)})"))
+                !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB({DBI::dbQuoteIdentifier(conn, target_col_sql)})"))
            )
       }
+
   }
   
   # Collect with dbplyr
@@ -248,7 +277,9 @@ head.duckspatial_df <- function(x, n = 6L, ...) {
   # Preserve spatial metadata through head()
   crs <- attr(x, "crs")
   geom_col <- attr(x, "sf_column")
-  source_table <- attr(x, "source_table")
+  # NOTE: We do NOT preserve source_table here because head() modifies the
+
+  # query (adds LIMIT). The lazy query will be used by get_query_list().
   
   # Strip class to delegate to dbplyr's head.tbl_lazy
   class(x) <- setdiff(class(x), "duckspatial_df")
@@ -260,7 +291,7 @@ head.duckspatial_df <- function(x, n = 6L, ...) {
   class(result) <- c("duckspatial_df", class(result))
   attr(result, "sf_column") <- geom_col
   attr(result, "crs") <- crs
-  attr(result, "source_table") <- source_table
+  # source_table intentionally not set
   
   result
 }

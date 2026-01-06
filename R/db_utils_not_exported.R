@@ -415,12 +415,28 @@ get_query_list <- function(x, conn) {
 
   } else if (inherits(x, "duckspatial_df")) {
     
-    # 1. OPTIMIZATION: Check if we have a direct source table/view
+    # 1. OPTIMIZATION: Check if we have an unmodified direct source table/view
+    # This optimization is ONLY valid when the lazy query hasn't been modified.
+    #
+    # When dplyr verbs (filter, select, mutate, etc.) are applied, the lazy query
+    # changes but source_table attribute may still point to original table.
+    # We detect modification by comparing source_table with dbplyr::remote_name():
+    # - If remote_name returns the same table name, query is unmodified
+    # - If remote_name returns sql() or NULL, query has been modified via dplyr verbs
     source_table <- attr(x, "source_table")
     if (!is.null(source_table)) {
-      result <- get_query_name(source_table)
-      result$cleanup <- function() NULL
-      return(result)
+      remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
+      
+      # Only use optimization if remote_name matches source_table exactly
+      # (i.e., the query hasn't been modified by dplyr verbs)
+      if (!is.null(remote_name_result) && 
+          !inherits(remote_name_result, "sql") &&
+          as.character(remote_name_result) == source_table) {
+        result <- get_query_name(source_table)
+        result$cleanup <- function() NULL
+        return(result)
+      }
+      # Otherwise, fall through to SQL render path below
     }
     
     # 2. SQL render (efficient lazy evaluation)

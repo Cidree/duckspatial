@@ -250,3 +250,171 @@ test_that("inner_join.duckspatial_df preserves spatial attributes", {
   expect_equal(attr(result, "crs"), attr(nc_lazy, "crs"))
   expect_equal(attr(result, "sf_column"), attr(nc_lazy, "sf_column"))
 })
+
+# =============================================================================
+# Regression tests
+# =============================================================================
+
+test_that("dplyr::filter is preserved when chaining with ddbs_filter", {
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  argentina <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", package = "duckspatial")
+  )
+  
+  # Test 1: filter to subset, then spatial filter
+  # Brazil, Uruguay, Chile, France - only first 3 touch Argentina
+  subset <- countries |>
+    dplyr::filter(CNTR_ID %in% c("BR", "UY", "CL", "FR"))
+  
+  result <- subset |>
+    ddbs_filter(argentina, predicate = "touches") |>
+    dplyr::collect()
+  
+  # Should be 3 (BR, UY, CL touch Argentina), not 4 (FR doesn't touch) 
+  # and not 5 (all Argentina neighbors, which was the bug)
+  expect_equal(nrow(result), 3)
+  expect_setequal(result$CNTR_ID, c("BR", "UY", "CL"))
+})
+
+test_that("dplyr::select is preserved when chaining with ddbs_filter", {
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  argentina <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", package = "duckspatial")
+  )
+  
+  # Select only certain columns before spatial filter
+  result <- countries |>
+    dplyr::select(CNTR_ID, NAME_ENGL, geom) |>
+    ddbs_filter(argentina, predicate = "touches") |>
+    dplyr::collect()
+  
+  # Should only have selected columns
+  expect_true("CNTR_ID" %in% names(result))
+  expect_true("NAME_ENGL" %in% names(result))
+  # Other original columns should NOT be present
+  expect_false("ISO3_CODE" %in% names(result))
+})
+
+test_that("chained filter + select + ddbs_filter works", {
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  argentina <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", package = "duckspatial")
+  )
+  
+  result <- countries |>
+    dplyr::filter(CNTR_ID %in% c("BR", "UY", "CL", "FR", "DE")) |>
+    dplyr::select(CNTR_ID, geom) |>
+    ddbs_filter(argentina, predicate = "touches") |>
+    dplyr::collect()
+  
+  # Should be 3 (BR, UY, CL) and only selected columns (maybe crs_duckspatial added)
+  expect_equal(nrow(result), 3)
+  expect_setequal(result$CNTR_ID, c("BR", "UY", "CL"))
+  expect_true("CNTR_ID" %in% names(result))
+  expect_false("ISO3_CODE" %in% names(result))  # This was NOT selected
+})
+
+test_that("unmodified duckspatial_df still uses optimization", {
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  argentina <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", package = "duckspatial")
+  )
+  
+  # Without any dplyr operations, source_table optimization should still work
+  result <- countries |>
+    ddbs_filter(argentina, predicate = "touches") |>
+    dplyr::collect()
+  
+  # All countries touching Argentina: BR, UY, PY, BO, CL
+  expect_equal(nrow(result), 5)
+})
+
+test_that("mutate is preserved in ddbs_filter", {
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  argentina <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", package = "duckspatial")
+  )
+  
+  # Create a dummy column and filter on it
+  # If mutate is ignored, "dummy_col" won't exist or filter won't work
+  result <- countries |>
+    dplyr::mutate(dummy_col = 1) |>
+    dplyr::filter(dummy_col == 1) |>
+    # Add a filter that relies on mutate result
+    dplyr::mutate(is_ar = grepl("^AR", ISO3_CODE)) |>
+    dplyr::filter(is_ar) |>
+    ddbs_filter(argentina, predicate = "touches") |>
+    dplyr::collect()
+  
+  # Should work just like the direct filter case (0 rows)
+  expect_equal(nrow(result), 0)
+})
+
+test_that("rename is preserved in ddbs_filter", {
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  argentina <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", package = "duckspatial")
+  )
+  
+  # Rename ID column, then filter using new name
+  # If rename ignored, new name won't exist
+  result <- countries |>
+    dplyr::rename(new_id = CNTR_ID) |>
+    dplyr::filter(new_id %in% c("BR", "UY", "CL")) |>
+    ddbs_filter(argentina, predicate = "touches") |>
+    dplyr::collect()
+  
+  expect_equal(nrow(result), 3)
+  expect_true("new_id" %in% names(result))
+  expect_false("CNTR_ID" %in% names(result))
+})
+
+test_that("slice/head is preserved in ddbs_filter", {
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  argentina <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", package = "duckspatial")
+  )
+  
+  # Take top 1 country (Afghanistan usually), confirm it doesn't touch Argentina
+  # If slice ignored, we get all neighbors
+  result <- countries |>
+    dplyr::arrange(NAME_ENGL) |>
+    head(1) |>
+    ddbs_filter(argentina, predicate = "touches") |>
+    dplyr::collect()
+    
+  expect_equal(nrow(result), 0)
+})
+
+test_that("summarize before spatial op fails correctly (missing geom)", {
+  # Summarize drops geometry for non-spatial summaries
+  countries <- ddbs_open_dataset(
+    system.file("spatial/countries.geojson", package = "duckspatial")
+  )
+  
+  # Summarize to drop geometry, result is just a tibble (lazy)
+  summarized <- countries |>
+    dplyr::group_by(CNTR_ID) |>
+    dplyr::summarize(n = dplyr::n())
+    
+  # Should fail because geometry column is missing in the summarized view
+  # If it ignored summarize and used source_table, it would mistakenly succeed
+  expect_error(
+    ddbs_filter(summarized, countries),
+    "Values list .* does not have a column named .*geom"
+  )
+})
