@@ -101,20 +101,20 @@ ddbs_generate_points("argentina", n = 100, conn)
 #> Simple feature collection with 100 features and 0 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -73.50851 ymin: -52.03629 xmax: -53.72035 ymax: -22.21588
+#> Bounding box:  xmin: -73.44218 ymin: -52.23984 xmax: -53.80854 ymax: -21.8676
 #> Geodetic CRS:  WGS 84
 #> First 10 features:
 #>                       geometry
-#> 1  POINT (-68.08173 -47.21398)
-#> 2  POINT (-56.02919 -35.94749)
-#> 3  POINT (-62.15017 -26.63512)
-#> 4  POINT (-65.35472 -23.31202)
-#> 5  POINT (-61.71041 -47.10382)
-#> 6   POINT (-55.11455 -29.3518)
-#> 7  POINT (-60.23173 -33.47816)
-#> 8  POINT (-68.24235 -39.00622)
-#> 9  POINT (-68.65901 -26.42233)
-#> 10 POINT (-63.19506 -47.75552)
+#> 1  POINT (-71.11505 -50.66566)
+#> 2  POINT (-57.80266 -42.06965)
+#> 3  POINT (-54.81055 -49.75124)
+#> 4  POINT (-71.99969 -35.04964)
+#> 5  POINT (-64.16614 -47.79881)
+#> 6  POINT (-64.49384 -47.12553)
+#> 7  POINT (-65.61573 -44.22061)
+#> 8   POINT (-61.9153 -45.02629)
+#> 9  POINT (-58.09611 -48.14884)
+#> 10 POINT (-71.78374 -31.08563)
 
 ## generate points without using a connection
 ddbs_generate_points(argentina_sf, n = 100)
@@ -122,18 +122,18 @@ ddbs_generate_points(argentina_sf, n = 100)
 #> Simple feature collection with 100 features and 0 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -73.38563 ymin: -52.21347 xmax: -53.77032 ymax: -21.90505
+#> Bounding box:  xmin: -73.30153 ymin: -52.37327 xmax: -54.26202 ymax: -22.48149
 #> Geodetic CRS:  WGS 84
 #> First 10 features:
 #>                       geometry
-#> 1  POINT (-60.87414 -43.39879)
-#> 2  POINT (-54.45109 -44.33853)
-#> 3  POINT (-60.73822 -33.69727)
-#> 4  POINT (-73.38563 -29.05542)
-#> 5    POINT (-57.1724 -26.0192)
-#> 6  POINT (-60.70053 -32.12977)
-#> 7  POINT (-73.19363 -26.62783)
-#> 8   POINT (-55.26723 -30.5626)
-#> 9  POINT (-62.04115 -36.52936)
-#> 10  POINT (-65.61947 -42.8571)
+#> 1  POINT (-67.96577 -38.81274)
+#> 2  POINT (-63.40914 -31.16604)
+#> 3  POINT (-56.77943 -41.48607)
+#> 4   POINT (-65.22999 -23.2638)
+#> 5  POINT (-57.47277 -40.36704)
+#> 6  POINT (-56.83957 -47.63614)
+#> 7   POINT (-60.6504 -43.35117)
+#> 8  POINT (-54.47397 -26.97309)
+#> 9   POINT (-71.12737 -44.1492)
+#> 10 POINT (-60.64577 -29.61054)
 ```
