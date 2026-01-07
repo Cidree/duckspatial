@@ -57,13 +57,13 @@ points_sf_1mi <- data.frame(
     ) |> 
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 
-n = 10e6
-points_sf_10mi <- data.frame(
-    id = 1:n,
-    x = runif(n, min = -180, max = 180),  
-    y = runif(n, min = -90, max = 90)
-    ) |> 
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+# n = 10e6
+# points_sf_10mi <- data.frame(
+#     id = 1:n,
+#     x = runif(n, min = -180, max = 180),  
+#     y = runif(n, min = -90, max = 90)
+#     ) |> 
+#     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 ```
 
 ## Spatial Join
@@ -93,7 +93,7 @@ run_benchmark <- function(points_sf){
 
 # From 100K points to 1 million and 10 million points
 df_bench_join <- lapply(
-    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
+    X = list(points_sf_100k, points_sf_1mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
@@ -111,7 +111,7 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 58%
+In this example working with 1 million points, {duckspatial} was 57%
 faster and used 5.4 times less memory than {sf}. Not bad.
 
 ``` r
@@ -153,7 +153,7 @@ run_benchmark <- function(points_sf){
 
 # From 100K points to 1 million and 10 million points
 df_bench_filter <- lapply(
-    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
+    X = list(points_sf_100k, points_sf_1mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
@@ -236,6 +236,8 @@ df_bench_distance <- lapply(
     dplyr::bind_rows()
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 
 
 # calculate difference in performance
@@ -247,7 +249,7 @@ time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
 In this example calculating the distance between 10K points,
-{duckspatial} was 87% faster, but used 2 times more memory than {sf}.
+{duckspatial} was 86% faster, but used 2 times more memory than {sf}.
 Mind you that {sf} is still more efficient when calculating Euclidean
 distances.
 

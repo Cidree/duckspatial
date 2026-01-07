@@ -138,13 +138,13 @@ sample data sets used in this benchmark.</p>
 <span>    <span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">n</span> <span class="op">=</span> <span class="fl">10e6</span></span>
-<span><span class="va">points_sf_10mi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n</span>,</span>
-<span>    x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">180</span>, max <span class="op">=</span> <span class="fl">180</span><span class="op">)</span>,  </span>
-<span>    y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">90</span>, max <span class="op">=</span> <span class="fl">90</span><span class="op">)</span></span>
-<span>    <span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># n = 10e6</span></span>
+<span><span class="co"># points_sf_10mi &lt;- data.frame(</span></span>
+<span><span class="co">#     id = 1:n,</span></span>
+<span><span class="co">#     x = runif(n, min = -180, max = 180),  </span></span>
+<span><span class="co">#     y = runif(n, min = -90, max = 90)</span></span>
+<span><span class="co">#     ) |&gt; </span></span>
+<span><span class="co">#     sf::st_as_sf(coords = c("x", "y"), crs = 4326)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="spatial-join">Spatial Join<a class="anchor" aria-label="anchor" href="#spatial-join"></a>
@@ -174,7 +174,7 @@ sample data sets used in this benchmark.</p>
 <span></span>
 <span><span class="co"># From 100K points to 1 million and 10 million points</span></span>
 <span><span class="va">df_bench_join</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
-<span>    X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span>, <span class="va">points_sf_10mi</span><span class="op">)</span>,</span>
+<span>    X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span><span class="op">)</span>,</span>
 <span>    FUN <span class="op">=</span> <span class="va">run_benchmark</span></span>
 <span>    <span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -190,7 +190,7 @@ sample data sets used in this benchmark.</p>
 <span></span>
 <span><span class="va">memo_diff</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">mem_alloc</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">/</span> <span class="va">temp</span><span class="op">$</span><span class="va">mem_alloc</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,<span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">time_diff</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">median</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">temp</span><span class="op">$</span><span class="va">median</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span></span></code></pre></div>
-<p>In this example working with 1 million points, {duckspatial} was 58%
+<p>In this example working with 1 million points, {duckspatial} was 57%
 faster and used 5.4 times less memory than {sf}. Not bad.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">df_bench_join</span><span class="op">)</span> <span class="op">+</span></span>
@@ -230,7 +230,7 @@ faster and used 5.4 times less memory than {sf}. Not bad.</p>
 <span></span>
 <span><span class="co"># From 100K points to 1 million and 10 million points</span></span>
 <span><span class="va">df_bench_filter</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
-<span>    X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span>, <span class="va">points_sf_10mi</span><span class="op">)</span>,</span>
+<span>    X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span><span class="op">)</span>,</span>
 <span>    FUN <span class="op">=</span> <span class="va">run_benchmark</span></span>
 <span>    <span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -308,6 +308,8 @@ faster and used 2.7 times less memory than {sf}.</p>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Some expressions had a GC in every iteration; so filtering is</span></span>
 <span><span class="co">#&gt; disabled.</span></span>
+<span><span class="co">#&gt; Warning: Some expressions had a GC in every iteration; so filtering is</span></span>
+<span><span class="co">#&gt; disabled.</span></span>
 <span></span>
 <span></span>
 <span><span class="co"># calculate difference in performance</span></span>
@@ -317,7 +319,7 @@ faster and used 2.7 times less memory than {sf}.</p>
 <span><span class="va">memo_diff</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">mem_alloc</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">mem_alloc</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span> ,<span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">time_diff</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">temp</span><span class="op">$</span><span class="va">median</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="va">temp</span><span class="op">$</span><span class="va">median</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span></span></code></pre></div>
 <p>In this example calculating the distance between 10K points,
-{duckspatial} was 87% faster, but used 2 times more memory than {sf}.
+{duckspatial} was 86% faster, but used 2 times more memory than {sf}.
 Mind you that {sf} is still more efficient when calculating Euclidean
 distances.</p>
 <p>plot</p>
