@@ -76,13 +76,13 @@ points_sf_1mi <- data.frame(
     ) |> 
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 
-n = 10e6
-points_sf_10mi <- data.frame(
-    id = 1:n,
-    x = runif(n, min = -180, max = 180),  
-    y = runif(n, min = -90, max = 90)
-    ) |> 
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+# n = 10e6
+# points_sf_10mi <- data.frame(
+#     id = 1:n,
+#     x = runif(n, min = -180, max = 180),  
+#     y = runif(n, min = -90, max = 90)
+#     ) |> 
+#     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 
 ```
 # Spatial Join
@@ -112,7 +112,7 @@ run_benchmark <- function(points_sf){
 
 # From 100K points to 1 million and 10 million points
 df_bench_join <- lapply(
-    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
+    X = list(points_sf_100k, points_sf_1mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
@@ -170,7 +170,7 @@ run_benchmark <- function(points_sf){
 
 # From 100K points to 1 million and 10 million points
 df_bench_filter <- lapply(
-    X = list(points_sf_100k, points_sf_1mi, points_sf_10mi),
+    X = list(points_sf_100k, points_sf_1mi),
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
