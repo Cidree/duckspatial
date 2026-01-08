@@ -195,7 +195,8 @@ parameter.
 
 Prener, C. and Revord, C. (2019). *areal: An R package for areal
 weighted interpolation*. *Journal of Open Source Software*, 4(37), 1221.
-Available at: <https://doi.org/10.21105/joss.01221>
+Available at:
+[doi:10.21105/joss.01221](https://doi.org/10.21105/joss.01221)
 
 ## See also
 

@@ -41,43 +41,53 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.0999" id="duckspatial-020999-dev">duckspatial 0.2.0999 dev<a class="anchor" aria-label="anchor" href="#duckspatial-020999-dev"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.9.0" id="duckspatial-090">duckspatial 0.9.0<a class="anchor" aria-label="anchor" href="#duckspatial-090"></a></h2>
 <div class="section level3">
-<h3 id="major-changes-0-2-0999">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-0-2-0999"></a></h3>
-<ul><li><p><code>conn</code> argument defaults now to NULL. This parameter is not mandatory anymore in spatial operations, and it will be handled internally. The argument has been moved after <code>x</code> and <code>y</code> arguments.</p></li>
-<li><p><code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>: uses <code>intersects</code> for <code>ST_Intersects</code> instead of <code>intersection</code>.</p></li>
-<li><p>Allow the use of either <code>sf</code> object or a DuckDB table as input/output in every operation.</p></li>
-<li><p>Functions that use <code>x</code> and <code>y</code> arguments, can indistinctively use <code>sf</code>, DuckDB table name, or mixed.</p></li>
-<li><p><a href="https://github.com/Cidree/duckspatial/issues/15" class="external-link">#15</a> Significant improvement of the speed of <code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code>, and internal transformation of <code>data.frame</code> to <code>sf</code>, through optimizations with <code>wkb</code>.</p></li>
+<h3 id="major-changes-0-9-0">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-0-9-0"></a></h3>
+<ul><li><p><code>conn</code> argument defaults now to <code>NULL</code>. This parameter is not mandatory anymore in spatial operations, and it will be handled internally. The argument has been moved after <code>x</code>, <code>y</code>, and function-mandatory arguments (<a href="https://github.com/Cidree/duckspatial/issues/9" class="external-link">#9</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_write_vector.html">ddbs_write_vector()</a></code> allows to create a temporary view with the argument <code>temp = TRUE</code>, which is much faster than creating a table (<a href="https://github.com/Cidree/duckspatial/issues/14" class="external-link">#14</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code> uses internal optimizations with <code>geoarrow</code> making it much faster (<a href="https://github.com/Cidree/duckspatial/issues/15" class="external-link">#15</a>).</p></li>
+<li><p>The spatial functions allow now to have either an <code>sf</code> or a DuckDB table as input (<code>x</code>) and/or output (<code>name = NULL</code> or <code>name != NULL</code>) (<a href="https://github.com/Cidree/duckspatial/issues/19" class="external-link">#19</a>).</p></li>
+<li><p>The <code>crs</code> and <code>crs_column</code> arguments are deprecated and will be removed in <code>duckspatial</code> v1.0.0. This change aligns with planned native CRS support in DuckDB, scheduled for v1.5.0 (expected February 2025) (<a href="https://github.com/Cidree/duckspatial/issues/7" class="external-link">#7</a>).</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="new-features-0-2-0999">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-2-0999"></a></h3>
-<ul><li><p>Affine functions: <code><a href="../reference/ddbs_rotate.html">ddbs_rotate()</a></code>, <code><a href="../reference/ddbs_rotate_3d.html">ddbs_rotate_3d()</a></code>, <code><a href="../reference/ddbs_shift.html">ddbs_shift()</a></code>, <code><a href="../reference/ddbs_flip.html">ddbs_flip()</a></code>, <code><a href="../reference/ddbs_scale.html">ddbs_scale()</a></code>, and <code><a href="../reference/ddbs_shear.html">ddbs_shear()</a></code>.</p></li>
-<li><p><code><a href="../reference/ddbs_boundary.html">ddbs_boundary()</a></code>: returns the boundary of geometries.</p></li>
-<li><p><code><a href="../reference/ddbs_combine.html">ddbs_combine()</a></code>: combines geometries into a multi-geometry</p></li>
-<li><p><code><a href="../reference/ddbs_concave_hull.html">ddbs_concave_hull()</a></code>: new function to create the concave hull enclosing a geometry.</p></li>
-<li><p><code><a href="../reference/ddbs_convex_hull.html">ddbs_convex_hull()</a></code>: new function to create the convex hull enclosing a geometry.</p></li>
-<li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: new convenient function to create a DuckDB connection.</p></li>
+<h3 id="new-features-0-9-0">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-9-0"></a></h3>
+<ul><li><p>Affine functions: <code><a href="../reference/ddbs_rotate.html">ddbs_rotate()</a></code>, <code><a href="../reference/ddbs_rotate_3d.html">ddbs_rotate_3d()</a></code>, <code><a href="../reference/ddbs_shift.html">ddbs_shift()</a></code>, <code><a href="../reference/ddbs_flip.html">ddbs_flip()</a></code>, <code><a href="../reference/ddbs_scale.html">ddbs_scale()</a></code>, and <code><a href="../reference/ddbs_shear.html">ddbs_shear()</a></code> (<a href="https://github.com/Cidree/duckspatial/issues/37" class="external-link">#37</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_boundary.html">ddbs_boundary()</a></code>: returns the boundary of geometries (<a href="https://github.com/Cidree/duckspatial/issues/17" class="external-link">#17</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_concave_hull.html">ddbs_concave_hull()</a></code>: new function to create the concave hull enclosing a geometry (<a href="https://github.com/Cidree/duckspatial/issues/23" class="external-link">#23</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_convex_hull.html">ddbs_convex_hull()</a></code>: new function to create the convex hull enclosing a geometry (<a href="https://github.com/Cidree/duckspatial/issues/23" class="external-link">#23</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: new convenient function to create a DuckDB connection with spatial extension installed and loaded.</p></li>
 <li><p><code><a href="../reference/ddbs_drivers.html">ddbs_drivers()</a></code>: get list of GDAL drivers and file formats supported by DuckDB spatial extension.</p></li>
-<li><p><code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>: new function to perform spatial join operations.</p></li>
-<li><p><code><a href="../reference/ddbs_length.html">ddbs_length()</a></code>: adds a new column with the length of the geometries</p></li>
-<li><p><code><a href="../reference/ddbs_area.html">ddbs_area()</a></code>: adds a new column with the area of the geometries</p></li>
-<li><p><code><a href="../reference/ddbs_is_valid.html">ddbs_is_valid()</a></code>: adds a new logical column asserting the simplicity of the geometries</p></li>
-<li><p><code><a href="../reference/ddbs_is_valid.html">ddbs_is_valid()</a></code>: adds a new logical column asserting the validity of the geometries</p></li>
-<li><p><code><a href="../reference/ddbs_make_valid.html">ddbs_make_valid()</a></code>: makes the geometries valid</p></li>
-<li><p><code><a href="../reference/ddbs_simplify.html">ddbs_simplify()</a></code>: makes the geometries simple</p></li>
-<li><p><code><a href="../reference/ddbs_bbox.html">ddbs_bbox()</a></code>: calculates the bounding box</p></li>
-<li><p><code><a href="../reference/ddbs_union.html">ddbs_union()</a></code>: union of geometries</p></li>
-<li><p><code><a href="../reference/ddbs_quadkey.html">ddbs_quadkey()</a></code>: calculates quadkey tiles from point geometries</p></li>
-<li><p><code><a href="../reference/ddbs_exterior_ring.html">ddbs_exterior_ring()</a></code>: returns the exterior ring (shell) of a polygon geometry</p></li>
-<li><p><code><a href="../reference/ddbs_make_polygon.html">ddbs_make_polygon()</a></code>: create a POLYGON from a LINESTRING shell</p></li>
-<li><p>Conversion of geometries to standard spatial formats: <code><a href="../reference/ddbs_as_text.html">ddbs_as_text()</a></code>, <code><a href="../reference/ddbs_as_wkb.html">ddbs_as_wkb()</a></code> and <code><a href="../reference/ddbs_as_hexwkb.html">ddbs_as_hexwkb()</a></code>.</p></li>
+<li><p><code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>: new function to perform spatial join operations (<a href="https://github.com/Cidree/duckspatial/issues/6" class="external-link">#6</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_length.html">ddbs_length()</a></code>: adds a new column with the length of the geometries (<a href="https://github.com/Cidree/duckspatial/issues/17" class="external-link">#17</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_area.html">ddbs_area()</a></code>: adds a new column with the area of the geometries (<a href="https://github.com/Cidree/duckspatial/issues/17" class="external-link">#17</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_distance.html">ddbs_distance()</a></code>: calculates the distance between two geometries (<a href="https://github.com/Cidree/duckspatial/issues/34" class="external-link">#34</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_is_valid.html">ddbs_is_valid()</a></code>: adds a new logical column asserting the simplicity of the geometries (<a href="https://github.com/Cidree/duckspatial/issues/17" class="external-link">#17</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_is_valid.html">ddbs_is_valid()</a></code>: adds a new logical column asserting the validity of the geometries (<a href="https://github.com/Cidree/duckspatial/issues/17" class="external-link">#17</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_make_valid.html">ddbs_make_valid()</a></code>: makes the geometries valid (<a href="https://github.com/Cidree/duckspatial/issues/17" class="external-link">#17</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_simplify.html">ddbs_simplify()</a></code>: makes the geometries simple (<a href="https://github.com/Cidree/duckspatial/issues/17" class="external-link">#17</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_bbox.html">ddbs_bbox()</a></code>: calculates the bounding box (<a href="https://github.com/Cidree/duckspatial/issues/25" class="external-link">#25</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_envelope.html">ddbs_envelope()</a></code>: returns the envelope of the geometries (<a href="https://github.com/Cidree/duckspatial/issues/36" class="external-link">#36</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_union.html">ddbs_union()</a></code>: union of geometries (<a href="https://github.com/Cidree/duckspatial/issues/36" class="external-link">#36</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_combine.html">ddbs_combine()</a></code>: combines geometries into a multi-geometry (<a href="https://github.com/Cidree/duckspatial/issues/36" class="external-link">#36</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_quadkey.html">ddbs_quadkey()</a></code>: calculates quadkey tiles from point geometries (<a href="https://github.com/Cidree/duckspatial/issues/52" class="external-link">#52</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_exterior_ring.html">ddbs_exterior_ring()</a></code>: returns the exterior ring (shell) of a polygon geometry (<a href="https://github.com/Cidree/duckspatial/issues/45" class="external-link">#45</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_make_polygon.html">ddbs_make_polygon()</a></code>: create a POLYGON from a LINESTRING shell (<a href="https://github.com/Cidree/duckspatial/issues/46" class="external-link">#46</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_predicate.html">ddbs_predicate()</a></code>: spatial predicates between two geometries (<a href="https://github.com/Cidree/duckspatial/issues/28" class="external-link">#28</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_intersects.html">ddbs_intersects()</a></code>, <code><a href="../reference/ddbs_crosses.html">ddbs_crosses()</a></code>, <code><a href="../reference/ddbs_touches.html">ddbs_touches()</a></code>, …: shortcuts for e.g.: <code>ddbs_predicate(predicate = "intersects")</code> (<a href="https://github.com/Cidree/duckspatial/issues/28" class="external-link">#28</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_transform.html">ddbs_transform()</a></code>: transforms from one coordinates reference system to another (<a href="https://github.com/Cidree/duckspatial/issues/43" class="external-link">#43</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_as_text.html">ddbs_as_text()</a></code>: converts geometries to well-known text (WKT) format (<a href="https://github.com/Cidree/duckspatial/issues/47" class="external-link">#47</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_as_wkb.html">ddbs_as_wkb()</a></code>: converts geometries to well-known binary (WKB) format (<a href="https://github.com/Cidree/duckspatial/issues/48" class="external-link">#48</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_generate_points.html">ddbs_generate_points()</a></code>: generates random points within the bounding box of <code>x</code> (<a href="https://github.com/Cidree/duckspatial/issues/54" class="external-link">#54</a>).</p></li>
 <li><p><strong>Spatial predicates</strong>: spatial predicates are all included in a function called <code><a href="../reference/ddbs_predicate.html">ddbs_predicate()</a></code>, where the user can specify the spatial predicate. Another option, it’s to use the spatial predicate function, such as <code><a href="../reference/ddbs_intersects.html">ddbs_intersects()</a></code>, <code><a href="../reference/ddbs_crosses.html">ddbs_crosses()</a></code>, <code><a href="../reference/ddbs_touches.html">ddbs_touches()</a></code>, etc.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="minor-changes-0-2-0999">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-0-2-0999"></a></h3>
-<ul><li>All functions now have a parameter <code>quiet</code> that allows users to suppress informational messages. Closed <a href="https://github.com/Cidree/duckspatial/issues/3" class="external-link">#3</a>
-</li>
+<h3 id="minor-changes-0-9-0">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-0-9-0"></a></h3>
+<ul><li><p>All functions now have a parameter <code>quiet</code> that allows users to suppress messages (<a href="https://github.com/Cidree/duckspatial/issues/3" class="external-link">#3</a>).</p></li>
+<li><p>Spatial operations now don’t fail when a column has a dot (<a href="https://github.com/Cidree/duckspatial/issues/33" class="external-link">#33</a>).</p></li>
+<li><p>Added some vignettes (<a href="https://github.com/Cidree/duckspatial/issues/42" class="external-link">#42</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>: uses <code>intersects</code> for <code>ST_Intersects</code> instead of <code>intersection</code>.</p></li>
+<li><p><code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>: doesn’t return duplicated observations when the same geometry fulfills the spatial predicate in more than one geometries of <code>y</code> (<a href="https://github.com/Cidree/duckspatial/issues/50" class="external-link">#50</a>).</p></li>
 </ul></div>
 </div>
     <div class="section level2">
