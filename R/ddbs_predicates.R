@@ -66,7 +66,7 @@
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## Load packages
 #' library(duckspatial)
 #' library(dplyr)
@@ -98,6 +98,7 @@
 #'
 #' ## Example 4: Use table names inside duckdb
 #' ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
+#' }
 ddbs_predicate <- function(
   x,
   y,
@@ -211,7 +212,7 @@ ddbs_predicate <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -224,6 +225,7 @@ ddbs_predicate <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_intersects(countries_sf, rivers_sf, id_x = "NAME_ENGL")
+#' }
 ddbs_intersects <- function(
   x,
   y,
@@ -275,7 +277,7 @@ ddbs_intersects <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -288,6 +290,7 @@ ddbs_intersects <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_covers(countries_sf, rivers_sf, id_x = "NAME_ENGL")
+#' }
 ddbs_covers <- function(
   x,
   y,
@@ -339,7 +342,7 @@ ddbs_covers <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -351,6 +354,7 @@ ddbs_covers <- function(
 #'
 #' # Find neighboring countries
 #' ddbs_touches(countries_filter_sf, countries_sf, id_x = "NAME_ENGL", id_y = "NAME_ENGL")
+#' }
 ddbs_touches <- function(
   x,
   y,
@@ -405,7 +409,7 @@ ddbs_touches <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -417,6 +421,7 @@ ddbs_touches <- function(
 #'
 #' ## check countries within 1 degree of distance
 #' ddbs_is_within_distance(countries_filter_sf, countries_sf, 1)
+#' }
 ddbs_is_within_distance <- function(
   x,
   y,
@@ -470,7 +475,7 @@ ddbs_is_within_distance <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -483,6 +488,7 @@ ddbs_is_within_distance <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_disjoint(countries_sf, rivers_sf, id_x = "NAME_ENGL")
+#' }
 ddbs_disjoint <- function(
   x,
   y,
@@ -525,7 +531,7 @@ ddbs_disjoint <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -538,6 +544,7 @@ ddbs_disjoint <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_within(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
+#' }
 ddbs_within <- function(
   x,
   y,
@@ -589,7 +596,7 @@ ddbs_within <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -602,6 +609,7 @@ ddbs_within <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_contains(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
+#' }
 ddbs_contains <- function(
   x,
   y,
@@ -654,7 +662,7 @@ ddbs_contains <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -668,6 +676,7 @@ ddbs_contains <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "FI"))
 #'
 #' ddbs_overlaps(countries_sf, spain_sf)
+#' }
 ddbs_overlaps <- function(
   x,
   y,
@@ -719,7 +728,7 @@ ddbs_overlaps <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -732,6 +741,7 @@ ddbs_overlaps <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_crosses(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
+#' }
 ddbs_crosses <- function(
   x,
   y,
@@ -783,7 +793,7 @@ ddbs_crosses <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -794,6 +804,7 @@ ddbs_crosses <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ddbs_equals(countries_sf, countries_sf, id_x = "NAME_ENGL")
+#' }
 ddbs_equals <- function(
   x,
   y,
@@ -846,7 +857,7 @@ ddbs_equals <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -859,6 +870,7 @@ ddbs_equals <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_covered_by(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
+#' }
 ddbs_covered_by <- function(
   x,
   y,
@@ -912,7 +924,7 @@ ddbs_covered_by <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -926,6 +938,7 @@ ddbs_covered_by <- function(
 #'
 #' # Fast bounding box intersection check
 #' ddbs_intersects_extent(countries_sf, rivers_sf, id_x = "NAME_ENGL")
+#' }
 ddbs_intersects_extent <- function(
   x,
   y,
@@ -978,7 +991,7 @@ ddbs_intersects_extent <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -991,6 +1004,7 @@ ddbs_intersects_extent <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_contains_properly(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
+#' }
 ddbs_contains_properly <- function(
   x,
   y,
@@ -1043,7 +1057,7 @@ ddbs_contains_properly <- function(
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
@@ -1056,6 +1070,7 @@ ddbs_contains_properly <- function(
 #'   st_transform(st_crs(countries_sf))
 #'
 #' ddbs_within_properly(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
+#' }
 ddbs_within_properly <- function(
   x,
   y,

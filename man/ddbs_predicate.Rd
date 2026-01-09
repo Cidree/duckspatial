@@ -100,7 +100,7 @@ values of an identifier column in \code{x} or \code{y}, respectively.
 }
 }
 \examples{
-
+\dontrun{
 ## Load packages
 library(duckspatial)
 library(dplyr)
@@ -132,4 +132,5 @@ ddbs_predicate(countries_sf, rivers_sf, predicate = "disjoint",
 
 ## Example 4: Use table names inside duckdb
 ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
+}
 }

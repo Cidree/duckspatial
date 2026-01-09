@@ -52,7 +52,7 @@ This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate
 \code{predicate = "intersects_extent"}.
 }
 \examples{
-
+\dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -66,6 +66,7 @@ rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatia
 
 # Fast bounding box intersection check
 ddbs_intersects_extent(countries_sf, rivers_sf, id_x = "NAME_ENGL")
+}
 }
 \seealso{
 \code{\link[=ddbs_predicate]{ddbs_predicate()}} for other spatial predicates.

@@ -54,7 +54,7 @@ This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate
 \code{predicate = "dwithin"}.
 }
 \examples{
-
+\dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -66,6 +66,7 @@ countries_filter_sf <- countries_sf |> filter(CNTR_ID \%in\% c("PT", "ES", "FR",
 
 ## check countries within 1 degree of distance
 ddbs_is_within_distance(countries_filter_sf, countries_sf, 1)
+}
 }
 \seealso{
 \code{\link[=ddbs_predicate]{ddbs_predicate()}} for other spatial predicates.

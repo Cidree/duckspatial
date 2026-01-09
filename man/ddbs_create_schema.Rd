@@ -22,6 +22,7 @@ Check and create schema
 }
 \examples{
 ## load packages
+\dontrun{
 library(duckspatial)
 library(duckdb)
 
@@ -36,5 +37,5 @@ dbGetQuery(conn, "SELECT * FROM information_schema.schemata;")
 
 ## disconnect from db
 ddbs_stop_conn(conn)
-
+}
 }

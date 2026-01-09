@@ -293,6 +293,7 @@ ddbs_envelope <- function(
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -317,7 +318,7 @@ ddbs_envelope <- function(
 #' )
 #'
 #' DBI::dbReadTable(conn, "argentina_bbox")
-#'
+#' }
 ddbs_bbox <- function(
     x,
     by_feature = FALSE,

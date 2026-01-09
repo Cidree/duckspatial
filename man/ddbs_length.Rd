@@ -54,6 +54,7 @@ Note: Length units depend on the CRS of the input geometries (e.g., meters for p
 or degrees for geographic CRS).
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -78,4 +79,5 @@ ddbs_length("rivers", conn, name = "rivers_with_length")
 
 ## calculate length in a sf object (without a connection)
 ddbs_length(rivers_sf)
+}
 }

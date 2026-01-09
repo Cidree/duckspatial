@@ -57,6 +57,7 @@ using the spatial extension. Works similarly to \code{sf::st_transform()}.
 Returns the result as an \code{sf} object or creates a new table in the database.
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -83,4 +84,5 @@ ddbs_transform("argentina", "argentina_3857", conn)
 
 ## transform without using a connection
 ddbs_transform(argentina_sf, "EPSG:3857")
+}
 }

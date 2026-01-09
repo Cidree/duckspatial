@@ -30,6 +30,7 @@ geometry objects. This function is useful for exporting geometries in a
 portable text format that can be used with other spatial tools and databases.
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -48,4 +49,5 @@ wkt_text <- ddbs_as_text(conn = conn, "argentina")
 
 ## convert without using a connection
 wkt_text <- ddbs_as_text(argentina_sf)
+}
 }

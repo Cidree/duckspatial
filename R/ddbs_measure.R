@@ -19,6 +19,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -44,6 +45,7 @@
 #'
 #' ## calculate area in a sf object
 #' ddbs_area(argentina_sf)
+#' }
 ddbs_area <- function(
     x,
     conn = NULL,
@@ -159,6 +161,7 @@ ddbs_area <- function(
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -183,6 +186,7 @@ ddbs_area <- function(
 #'
 #' ## calculate length in a sf object (without a connection)
 #' ddbs_length(rivers_sf)
+#' }
 ddbs_length <- function(
     x,
     conn = NULL,

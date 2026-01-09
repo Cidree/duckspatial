@@ -18,6 +18,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -36,6 +37,7 @@
 #'
 #' ## generate points without using a connection
 #' ddbs_generate_points(argentina_sf, n = 100)
+#' }
 ddbs_generate_points <- function(
   x,
   n,

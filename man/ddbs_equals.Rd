@@ -50,7 +50,7 @@ This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate
 \code{predicate = "equals"}.
 }
 \examples{
-
+\dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -61,6 +61,7 @@ countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duck
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ddbs_equals(countries_sf, countries_sf, id_x = "NAME_ENGL")
+}
 }
 \seealso{
 \code{\link[=ddbs_predicate]{ddbs_predicate()}} for other spatial predicates.

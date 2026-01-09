@@ -51,7 +51,7 @@ This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate
 \code{predicate = "overlaps"}.
 }
 \examples{
-
+\dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -65,6 +65,7 @@ spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspat
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "FI"))
 
 ddbs_overlaps(countries_sf, spain_sf)
+}
 }
 \seealso{
 \code{\link[=ddbs_predicate]{ddbs_predicate()}} for other spatial predicates.
