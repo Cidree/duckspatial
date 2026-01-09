@@ -85,6 +85,7 @@ for other spatial predicates.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -96,17 +97,5 @@ countries_filter_sf <- countries_sf |> filter(CNTR_ID %in% c("PT", "ES", "FR", "
 
 ## check countries within 1 degree of distance
 ddbs_is_within_distance(countries_filter_sf, countries_sf, 1)
-#> ✔ Query successful
-#> [[1]]
-#> [1]   5  64  73  85 160 177
-#> 
-#> [[2]]
-#>  [1]   5  19  60  64  71  79  85  90  91  96 173 178 206
-#> 
-#> [[3]]
-#>  [1]   3  10  60  85  86  90  96 120 178 204 231 235
-#> 
-#> [[4]]
-#> [1]  64 160
-#> 
+} # }
 ```

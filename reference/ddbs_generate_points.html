@@ -119,7 +119,8 @@ Defaults to <code>FALSE</code>.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## load packages</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co">## load packages</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -128,60 +129,16 @@ Defaults to <code>FALSE</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## read data</span></span></span>
 <span class="r-in"><span><span class="va">argentina_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/argentina.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Reading layer `argentina' from data source </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   `/home/runner/work/_temp/Library/duckspatial/spatial/argentina.geojson' </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   using driver `GeoJSON'</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 1 feature and 6 fields</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POLYGON</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -73.52455 ymin: -52.39755 xmax: -53.62409 ymax: -21.81793</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## store in duckdb</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">argentina_sf</span>, <span class="st">"argentina"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table argentina successfully imported</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## generate 100 random points within each geometry</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_generate_points</span><span class="op">(</span><span class="st">"argentina"</span>, n <span class="op">=</span> <span class="fl">100</span>, <span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 100 features and 0 fields</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -73.13879 ymin: -52.30112 xmax: -53.75143 ymax: -22.13748</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> First 10 features:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                       geometry</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  POINT (-70.45694 -28.46132)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   POINT (-71.2339 -42.78054)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   POINT (-66.54101 -23.8763)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  POINT (-67.12546 -39.60996)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  POINT (-63.47584 -22.13748)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  POINT (-67.46186 -45.82993)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7   POINT (-58.0486 -45.41153)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8  POINT (-70.53694 -43.39914)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9  POINT (-63.74552 -33.27252)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10   POINT (-54.20293 -43.708)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## generate points without using a connection</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_generate_points</span><span class="op">(</span><span class="va">argentina_sf</span>, n <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 100 features and 0 fields</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -73.51863 ymin: -51.16846 xmax: -53.72028 ymax: -22.18924</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> First 10 features:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                       geometry</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  POINT (-71.28276 -32.71302)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  POINT (-64.77208 -25.99689)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  POINT (-63.34467 -30.63944)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  POINT (-54.80762 -38.41811)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  POINT (-63.62812 -42.57719)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   POINT (-59.90001 -27.3901)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7  POINT (-69.04288 -30.54965)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8  POINT (-72.69339 -39.50286)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9  POINT (-60.79873 -22.18924)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 POINT (-70.82081 -48.29778)</span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

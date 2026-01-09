@@ -208,6 +208,7 @@ Available at:
 ``` r
 # \donttest{
 library(sf)
+#> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 
 # 1. Prepare Data
 # Load NC counties (Source) and project to Albers (EPSG:5070)

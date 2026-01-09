@@ -79,6 +79,7 @@ for other spatial predicates.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -90,27 +91,7 @@ countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duck
 
 spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |>
   filter(CNTR_ID %in% c("PT", "ES", "FR", "FI"))
-#> Reading layer `countries' from data source 
-#>   `/home/runner/work/_temp/Library/duckspatial/spatial/countries.geojson' 
-#>   using driver `GeoJSON'
-#> Simple feature collection with 257 features and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187
-#> Geodetic CRS:  WGS 84
 
 ddbs_overlaps(countries_sf, spain_sf)
-#> ✔ Query successful
-#> [[1]]
-#> integer(0)
-#> 
-#> [[2]]
-#> integer(0)
-#> 
-#> [[3]]
-#> integer(0)
-#> 
-#> [[4]]
-#> integer(0)
-#> 
+} # }
 ```

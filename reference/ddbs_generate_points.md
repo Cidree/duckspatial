@@ -73,6 +73,7 @@ an `sf` object or `TRUE` (invisibly) for table creation
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -82,58 +83,14 @@ conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#> Reading layer `argentina' from data source 
-#>   `/home/runner/work/_temp/Library/duckspatial/spatial/argentina.geojson' 
-#>   using driver `GeoJSON'
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -73.52455 ymin: -52.39755 xmax: -53.62409 ymax: -21.81793
-#> Geodetic CRS:  WGS 84
 
 ## store in duckdb
 ddbs_write_vector(conn, argentina_sf, "argentina")
-#> ✔ Table argentina successfully imported
 
 ## generate 100 random points within each geometry
 ddbs_generate_points("argentina", n = 100, conn)
-#> ✔ Query successful
-#> Simple feature collection with 100 features and 0 fields
-#> Geometry type: POINT
-#> Dimension:     XY
-#> Bounding box:  xmin: -73.13879 ymin: -52.30112 xmax: -53.75143 ymax: -22.13748
-#> Geodetic CRS:  WGS 84
-#> First 10 features:
-#>                       geometry
-#> 1  POINT (-70.45694 -28.46132)
-#> 2   POINT (-71.2339 -42.78054)
-#> 3   POINT (-66.54101 -23.8763)
-#> 4  POINT (-67.12546 -39.60996)
-#> 5  POINT (-63.47584 -22.13748)
-#> 6  POINT (-67.46186 -45.82993)
-#> 7   POINT (-58.0486 -45.41153)
-#> 8  POINT (-70.53694 -43.39914)
-#> 9  POINT (-63.74552 -33.27252)
-#> 10   POINT (-54.20293 -43.708)
 
 ## generate points without using a connection
 ddbs_generate_points(argentina_sf, n = 100)
-#> ✔ Query successful
-#> Simple feature collection with 100 features and 0 fields
-#> Geometry type: POINT
-#> Dimension:     XY
-#> Bounding box:  xmin: -73.51863 ymin: -51.16846 xmax: -53.72028 ymax: -22.18924
-#> Geodetic CRS:  WGS 84
-#> First 10 features:
-#>                       geometry
-#> 1  POINT (-71.28276 -32.71302)
-#> 2  POINT (-64.77208 -25.99689)
-#> 3  POINT (-63.34467 -30.63944)
-#> 4  POINT (-54.80762 -38.41811)
-#> 5  POINT (-63.62812 -42.57719)
-#> 6   POINT (-59.90001 -27.3901)
-#> 7  POINT (-69.04288 -30.54965)
-#> 8  POINT (-72.69339 -39.50286)
-#> 9  POINT (-60.79873 -22.18924)
-#> 10 POINT (-70.82081 -48.29778)
+} # }
 ```

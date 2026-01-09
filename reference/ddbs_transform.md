@@ -80,6 +80,7 @@ an `sf` object or `TRUE` (invisibly) for table creation
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -89,71 +90,22 @@ conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#> Reading layer `argentina' from data source 
-#>   `/home/runner/work/_temp/Library/duckspatial/spatial/argentina.geojson' 
-#>   using driver `GeoJSON'
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -73.52455 ymin: -52.39755 xmax: -53.62409 ymax: -21.81793
-#> Geodetic CRS:  WGS 84
 
 ## store in duckdb
 ddbs_write_vector(conn, argentina_sf, "argentina")
-#> ✔ Table argentina successfully imported
 
 ## transform to different CRS using EPSG code
 ddbs_transform("argentina", "EPSG:3857", conn)
-#> ✔ Query successful
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -5832869 ymin: -12326250 xmax: -2428761 ymax: -7099282
-#> Projected CRS: WGS 84 / Pseudo-Mercator
-#>   CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date
-#> 1      AR Argentina       ARG Argentina  AR 2021-01-01
-#>                         geometry
-#> 1 POLYGON ((-2476911 -9013777...
 
 ## transform to match CRS of another sf object
 argentina_3857_sf <- st_transform(argentina_sf, "EPSG:3857")
 ddbs_write_vector(conn, argentina_3857_sf, "argentina_3857")
-#> ✔ Table argentina_3857 successfully imported
 ddbs_transform("argentina", argentina_3857_sf, conn)
-#> ✔ Query successful
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -5832869 ymin: -12326250 xmax: -2428761 ymax: -7099282
-#> Projected CRS: WGS 84 / Pseudo-Mercator
-#>   CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date
-#> 1      AR Argentina       ARG Argentina  AR 2021-01-01
-#>                         geometry
-#> 1 POLYGON ((-2476911 -9013777...
 
 ## transform to match CRS of another DuckDB table
 ddbs_transform("argentina", "argentina_3857", conn)
-#> ✔ Query successful
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -5832869 ymin: -12326250 xmax: -2428761 ymax: -7099282
-#> Projected CRS: WGS 84 / Pseudo-Mercator
-#>   CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date
-#> 1      AR Argentina       ARG Argentina  AR 2021-01-01
-#>                         geometry
-#> 1 POLYGON ((-2476911 -9013777...
 
 ## transform without using a connection
 ddbs_transform(argentina_sf, "EPSG:3857")
-#> ✔ Query successful
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -5832869 ymin: -12326250 xmax: -2428761 ymax: -7099282
-#> Projected CRS: WGS 84 / Pseudo-Mercator
-#>   CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date
-#> 1      AR Argentina       ARG Argentina  AR 2021-01-01
-#>                         geometry
-#> 1 POLYGON ((-2476911 -9013777...
+} # }
 ```

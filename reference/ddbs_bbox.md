@@ -74,26 +74,16 @@ an `sf` object or `TRUE` (invisibly) for table creation
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
 
 ## read data
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#> Reading layer `argentina' from data source 
-#>   `/home/runner/work/_temp/Library/duckspatial/spatial/argentina.geojson' 
-#>   using driver `GeoJSON'
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -73.52455 ymin: -52.39755 xmax: -53.62409 ymax: -21.81793
-#> Geodetic CRS:  WGS 84
 
 # option 1: passing sf objects
 ddbs_bbox(argentina_sf)
-#> ✔ Query successful
-#>       min_x     min_y     max_x     max_y
-#> 1 -73.52455 -52.39755 -53.62409 -21.81793
 
 
 ## option 2: passing the names of tables in a duckdb db
@@ -101,17 +91,13 @@ ddbs_bbox(argentina_sf)
 # creates a duckdb write sf to it
 conn <- duckspatial::ddbs_create_conn()
 ddbs_write_vector(conn, argentina_sf, "argentina_tbl", overwrite = TRUE)
-#> ℹ Table <argentina_tbl> dropped
-#> ✔ Table argentina_tbl successfully imported
 
 output2 <- ddbs_bbox(
     conn = conn,
     x = "argentina_tbl",
     name = "argentina_bbox"
 )
-#> ✔ Query successful
 
 DBI::dbReadTable(conn, "argentina_bbox")
-#>       min_x     min_y     max_x     max_y
-#> 1 -73.52455 -52.39755 -53.62409 -21.81793
+} # }
 ```

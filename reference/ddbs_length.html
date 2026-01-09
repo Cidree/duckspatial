@@ -123,7 +123,8 @@ Defaults to <code>FALSE</code>.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## load packages</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co">## load packages</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -132,99 +133,22 @@ Defaults to <code>FALSE</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## read data</span></span></span>
 <span class="r-in"><span><span class="va">rivers_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/rivers.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Reading layer `rivers' from data source </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   `/home/runner/work/_temp/Library/duckspatial/spatial/rivers.geojson' </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   using driver `GeoJSON'</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 100 features and 1 field</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: LINESTRING</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: 2766878 ymin: 2222357 xmax: 3578648 ymax: 2459939</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Projected CRS: ETRS89-extended / LAEA Europe</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## store in duckdb</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">rivers_sf</span>, <span class="st">"rivers"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table rivers successfully imported</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## calculate length (returns sf object with length column)</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_length</span><span class="op">(</span><span class="st">"rivers"</span>, <span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  34232.5206  29223.3570  22409.6485  27511.0723  14817.0831  40245.7499</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [7]  37421.6029  38787.4428  48753.1900  28956.8522  25919.4653  36597.7982</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [13]  36540.8556  49333.9047  55617.2751  41800.1935  38226.8089  53867.9142</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19]  46182.5143  48424.6809  33236.1217 106821.9772  86470.3410  38880.7081</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25]  39549.6752  26118.7215  17747.3794  16524.1617  22831.1831  53384.3893</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [31]  17442.6563   6789.6030  12059.9283  26856.6566  63429.8095  13767.1861</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37]  23738.5150  35694.8459  19646.1745  10029.0179  13968.4457  41043.7032</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43]  48714.4882  37133.2198  43436.8699  23642.8664  14212.4786   8445.8296</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49]  97428.9007  33310.8820  10918.3777  73866.4040   5397.1562  31303.2187</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55]  46783.2287  42065.3367  23982.1267   6855.8189  97390.1661  46243.7102</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [61]  15542.0333  31208.0987  30773.7428  40455.5784  10754.9779  39136.8449</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67]  65827.5937   3693.5384  17902.1442   4323.2089 120300.4900   1959.2291</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73]  60752.0324   9065.0840   6452.4055  42056.1917  18207.3070  39043.6943</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [79]  10745.6292  24112.5296   9128.6008  18416.8778  13895.3803  16908.1064</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [85]   6310.0966   4381.0841   7922.9705  12546.7703  11175.7684  31755.4344</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  36926.0258  48195.5038  40373.2595  10658.1011  25550.2617  11961.7774</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97]  39554.3265   4249.1463   8271.2878    619.3338</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## calculate length with custom column name</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_length</span><span class="op">(</span><span class="st">"rivers"</span>, <span class="va">conn</span>, new_column <span class="op">=</span> <span class="st">"length_meters"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 100 features and 2 fields</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: LINESTRING</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: 2766878 ymin: 2222357 xmax: 3578648 ymax: 2459939</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Projected CRS: ETRS89-extended / LAEA Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> First 10 features:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         RIVER_NAME length_meters                       geometry</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1       Rio Garona      34232.52 LINESTRING (3563589 2240292...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    Bidasoa Ibaia      29223.36 LINESTRING (3373540 2299136...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     Baztan Ibaia      22409.65 LINESTRING (3373540 2299136...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4       Rio Urumea      27511.07 LINESTRING (3359001 2301989...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5       Oria Ibaia      14817.08 LINESTRING (3346144 2312252...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6       Oria Ibaia      40245.75 LINESTRING (3346144 2312252...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7      Urola Ibaia      37421.60 LINESTRING (3317563 2294789...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8       Deba Ibaia      38787.44 LINESTRING (3300422 2296792...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9      Rio Nervion      48753.19 LINESTRING (3263336 2300537...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Ibaizabal Ibaia      28956.85 LINESTRING (3299820 2310528...</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## create a new table with length calculations</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_length</span><span class="op">(</span><span class="st">"rivers"</span>, <span class="va">conn</span>, name <span class="op">=</span> <span class="st">"rivers_with_length"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  34232.5206  29223.3570  22409.6485  27511.0723  14817.0831  40245.7499</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [7]  37421.6029  38787.4428  48753.1900  28956.8522  25919.4653  36597.7982</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [13]  36540.8556  49333.9047  55617.2751  41800.1935  38226.8089  53867.9142</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19]  46182.5143  48424.6809  33236.1217 106821.9772  86470.3410  38880.7081</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25]  39549.6752  26118.7215  17747.3794  16524.1617  22831.1831  53384.3893</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [31]  17442.6563   6789.6030  12059.9283  26856.6566  63429.8095  13767.1861</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37]  23738.5150  35694.8459  19646.1745  10029.0179  13968.4457  41043.7032</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43]  48714.4882  37133.2198  43436.8699  23642.8664  14212.4786   8445.8296</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49]  97428.9007  33310.8820  10918.3777  73866.4040   5397.1562  31303.2187</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55]  46783.2287  42065.3367  23982.1267   6855.8189  97390.1661  46243.7102</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [61]  15542.0333  31208.0987  30773.7428  40455.5784  10754.9779  39136.8449</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67]  65827.5937   3693.5384  17902.1442   4323.2089 120300.4900   1959.2291</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73]  60752.0324   9065.0840   6452.4055  42056.1917  18207.3070  39043.6943</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [79]  10745.6292  24112.5296   9128.6008  18416.8778  13895.3803  16908.1064</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [85]   6310.0966   4381.0841   7922.9705  12546.7703  11175.7684  31755.4344</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  36926.0258  48195.5038  40373.2595  10658.1011  25550.2617  11961.7774</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97]  39554.3265   4249.1463   8271.2878    619.3338</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## calculate length in a sf object (without a connection)</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_length</span><span class="op">(</span><span class="va">rivers_sf</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  34232.5206  29223.3570  22409.6485  27511.0723  14817.0831  40245.7499</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [7]  37421.6029  38787.4428  48753.1900  28956.8522  25919.4653  36597.7982</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [13]  36540.8556  49333.9047  55617.2751  41800.1935  38226.8089  53867.9142</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19]  46182.5143  48424.6809  33236.1217 106821.9772  86470.3410  38880.7081</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25]  39549.6752  26118.7215  17747.3794  16524.1617  22831.1831  53384.3893</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [31]  17442.6563   6789.6030  12059.9283  26856.6566  63429.8095  13767.1861</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37]  23738.5150  35694.8459  19646.1745  10029.0179  13968.4457  41043.7032</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43]  48714.4882  37133.2198  43436.8699  23642.8664  14212.4786   8445.8296</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49]  97428.9007  33310.8820  10918.3777  73866.4040   5397.1562  31303.2187</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55]  46783.2287  42065.3367  23982.1267   6855.8189  97390.1661  46243.7102</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [61]  15542.0333  31208.0987  30773.7428  40455.5784  10754.9779  39136.8449</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67]  65827.5937   3693.5384  17902.1442   4323.2089 120300.4900   1959.2291</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73]  60752.0324   9065.0840   6452.4055  42056.1917  18207.3070  39043.6943</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [79]  10745.6292  24112.5296   9128.6008  18416.8778  13895.3803  16908.1064</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [85]   6310.0966   4381.0841   7922.9705  12546.7703  11175.7684  31755.4344</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  36926.0258  48195.5038  40373.2595  10658.1011  25550.2617  11961.7774</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97]  39554.3265   4249.1463   8271.2878    619.3338</span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

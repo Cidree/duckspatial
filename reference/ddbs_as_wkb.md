@@ -42,6 +42,7 @@ returned as a raw vector of bytes.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -51,24 +52,14 @@ conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#> Reading layer `argentina' from data source 
-#>   `/home/runner/work/_temp/Library/duckspatial/spatial/argentina.geojson' 
-#>   using driver `GeoJSON'
-#> Simple feature collection with 1 feature and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -73.52455 ymin: -52.39755 xmax: -53.62409 ymax: -21.81793
-#> Geodetic CRS:  WGS 84
 
 ## store in duckdb
 ddbs_write_vector(conn, argentina_sf, "argentina")
-#> ✔ Table argentina successfully imported
 
 ## convert geometries to WKB
 wkb_list <- ddbs_as_wkb(conn = conn, "argentina")
-#> ✔ Query successful
 
 ## convert without using a connection
 wkb_list <- ddbs_as_wkb(argentina_sf)
-#> ✔ Query successful
+} # }
 ```

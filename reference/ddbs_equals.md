@@ -79,6 +79,7 @@ for other spatial predicates.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -89,17 +90,5 @@ countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duck
   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 
 ddbs_equals(countries_sf, countries_sf, id_x = "NAME_ENGL")
-#> ✔ Query successful
-#> $Spain
-#> [1] 1
-#> 
-#> $France
-#> [1] 2
-#> 
-#> $Italy
-#> [1] 3
-#> 
-#> $Portugal
-#> [1] 4
-#> 
+} # }
 ```

@@ -78,6 +78,7 @@ for other spatial predicates.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -89,19 +90,5 @@ countries_filter_sf <- countries_sf |> filter(CNTR_ID %in% c("PT", "ES", "FR", "
 
 # Find neighboring countries
 ddbs_touches(countries_filter_sf, countries_sf, id_x = "NAME_ENGL", id_y = "NAME_ENGL")
-#> ✔ Query successful
-#> $Spain
-#> [1] "Andorra"   "Gibraltar" "France"    "Portugal" 
-#> 
-#> $France
-#> [1] "Andorra"     "Belgium"     "Switzerland" "Spain"       "Italy"      
-#> [6] "Germany"     "Luxembourg"  "Monaco"     
-#> 
-#> $Italy
-#> [1] "Austria"      "Switzerland"  "France"       "Vatican City" "Slovenia"    
-#> [6] "San Marino"  
-#> 
-#> $Portugal
-#> [1] "Spain"
-#> 
+} # }
 ```

@@ -118,7 +118,7 @@ are disjoint from the corresponding geometry in <code>x</code>. See <code><a hre
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co">## load packages</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
@@ -129,44 +129,9 @@ are disjoint from the corresponding geometry in <code>x</code>. See <code><a hre
 <span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">CNTR_ID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PT"</span>, <span class="st">"ES"</span>, <span class="st">"FR"</span>, <span class="st">"IT"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">rivers_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/rivers.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">countries_sf</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Reading layer `rivers' from data source </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   `/home/runner/work/_temp/Library/duckspatial/spatial/rivers.geojson' </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   using driver `GeoJSON'</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 100 features and 1 field</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: LINESTRING</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: 2766878 ymin: 2222357 xmax: 3578648 ymax: 2459939</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Projected CRS: ETRS89-extended / LAEA Europe</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_disjoint</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">rivers_sf</span>, id_x <span class="op">=</span> <span class="st">"NAME_ENGL"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Spain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $France</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]   1   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [20]  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [39]  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56  57  58</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [58]  59  60  61  62  63  64  65  66  67  68  69  70  71  72  73  74  75  76  77</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [77]  78  79  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95  96</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [96]  97  98  99 100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Italy</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37]  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55]  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73]  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  91  92  93  94  95  96  97  98  99 100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Portugal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [20]  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [39]  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56  57</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [58]  58  60  61  62  63  64  65  66  67  68  69  70  71  72  73  74  75  76  77</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [77]  78  79  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95  97</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [96]  98  99 100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

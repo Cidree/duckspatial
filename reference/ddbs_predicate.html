@@ -162,7 +162,7 @@ values of an identifier column in <code>x</code> or <code>y</code>, respectively
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co">## Load packages</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
@@ -176,188 +176,25 @@ values of an identifier column in <code>x</code> or <code>y</code>, respectively
 <span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">CNTR_ID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PT"</span>, <span class="st">"ES"</span>, <span class="st">"FR"</span>, <span class="st">"IT"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">rivers_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/rivers.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">countries_sf</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Reading layer `rivers' from data source </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   `/home/runner/work/_temp/Library/duckspatial/spatial/rivers.geojson' </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   using driver `GeoJSON'</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 100 features and 1 field</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: LINESTRING</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: 2766878 ymin: 2222357 xmax: 3578648 ymax: 2459939</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Projected CRS: ETRS89-extended / LAEA Europe</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Store in DuckDB</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, <span class="st">"countries"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table countries successfully imported</span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">rivers_sf</span>, <span class="st">"rivers"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Table rivers successfully imported</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Example 1: Check which rivers intersect each country</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_predicate</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">rivers_sf</span>, predicate <span class="op">=</span> <span class="st">"intersects"</span>, <span class="va">conn</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37]  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55]  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73]  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91]  91  92  93  94  95  96  97  98  99 100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[4]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 59 96</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Example 2: Find neighboring countries</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_predicate</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">countries_sf</span>, predicate <span class="op">=</span> <span class="st">"touches"</span>,</span></span>
 <span class="r-in"><span>               id_x <span class="op">=</span> <span class="st">"NAME_ENGL"</span>, id_y <span class="op">=</span> <span class="st">"NAME_ENGL"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Spain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "France"   "Portugal"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $France</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Spain" "Italy"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Italy</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "France"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Portugal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Spain"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Example 3: Find rivers that don't intersect countries</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_predicate</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">rivers_sf</span>, predicate <span class="op">=</span> <span class="st">"disjoint"</span>,</span></span>
 <span class="r-in"><span>               id_x <span class="op">=</span> <span class="st">"NAME_ENGL"</span>, id_y <span class="op">=</span> <span class="st">"RIVER_NAME"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Spain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $France</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "Rio Garona"         "Baztan Ibaia"       "Rio Urumea"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "Oria Ibaia"         "Oria Ibaia"         "Urola Ibaia"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "Deba Ibaia"         "Rio Nervion"        "Ibaizabal Ibaia"   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "Rio Agüera O Mayor" "Rio Ason"           "Rio Miera"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "Rio Pas"            "Rio Saja"           "Rio Besaya"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "Rio Nansa"          "Rio Deva"           "Rio Cares"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "Rio Sella"          "Rio Piloña"         "Rio Nalon"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "Rio Narcea"         "Rio Pigüeña"        "Rio Nora"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "Rio Trubia"         "Rio Esva"           "Rio Barcena"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "Rio Navia"          "Rio Navia"          "Rio Navia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "Rio Navia"          "Rio Navia"          "Rio Agueira"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rio Eo"             "Rio Masma"          "Rio Landro"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "Rio Sor"            "Rio Mera"           "Rio Eume"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "Rio Eume"           "Rio Eume"           "Rio Mandeo"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "Rio Mero"           "Rio Anllons"        "Rio Xallas"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [46] "Rio Xallas"         "Rio Xallas"         "Rio Tambre"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [49] "Rio Ulla"           "Rio Ulla"           "Rio Ulla"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [52] "Rio Arnego"         "Rio Arnego"         "Rio Umia"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [55] "Rio Lerez"          "Rio Verdugo"        "Rio Miño"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [58] "Rio Miño"           "Rio Miño"           "Rio Miño"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [61] "Rio Miño"           "Rio Miño"           "Rio Miño"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [64] "Rio Miño"           "Rio Tea"            "Rio Arnoia"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [67] "Rio Avia"           "Rio Avia"           "Rio Avia"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [70] "Rio Sil"            "Rio Sil"            "Rio Sil"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [73] "Rio Sil"            "Rio Sil"            "Rio Cabe"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [76] "Rio Mao"            "Rio Bibei"          "Rio Bibei"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [79] "Rio Bibei"          "Rio Xares"          "Rio Xares"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [82] "Rio Xares"          "Rio Conso"          "Rio Conso"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [85] "Rio Camba"          "Rio Camba"          "Rio Camba"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [88] "Rio Camba"          "Rio Selmo"          "Rio Burbia"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [91] "Rio Boeza"          "Rio Neira"          "Rio Ladra"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [94] "Rio Parga"          "Rio Limia"          "Rio Limia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [97] "Rio Limia"          "Rio Limia"          "Rio Salas"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Italy</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] "Rio Garona"         "Bidasoa Ibaia"      "Baztan Ibaia"      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [4] "Rio Urumea"         "Oria Ibaia"         "Oria Ibaia"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [7] "Urola Ibaia"        "Deba Ibaia"         "Rio Nervion"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [10] "Ibaizabal Ibaia"    "Rio Agüera O Mayor" "Rio Ason"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [13] "Rio Miera"          "Rio Pas"            "Rio Saja"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [16] "Rio Besaya"         "Rio Nansa"          "Rio Deva"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] "Rio Cares"          "Rio Sella"          "Rio Piloña"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [22] "Rio Nalon"          "Rio Narcea"         "Rio Pigüeña"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25] "Rio Nora"           "Rio Trubia"         "Rio Esva"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [28] "Rio Barcena"        "Rio Navia"          "Rio Navia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [31] "Rio Navia"          "Rio Navia"          "Rio Navia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [34] "Rio Agueira"        "Rio Eo"             "Rio Masma"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] "Rio Landro"         "Rio Sor"            "Rio Mera"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [40] "Rio Eume"           "Rio Eume"           "Rio Eume"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43] "Rio Mandeo"         "Rio Mero"           "Rio Anllons"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [46] "Rio Xallas"         "Rio Xallas"         "Rio Xallas"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49] "Rio Tambre"         "Rio Ulla"           "Rio Ulla"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [52] "Rio Ulla"           "Rio Arnego"         "Rio Arnego"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55] "Rio Umia"           "Rio Lerez"          "Rio Verdugo"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [58] "Rio Miño"           "Rio Miño"           "Rio Miño"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [61] "Rio Miño"           "Rio Miño"           "Rio Miño"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [64] "Rio Miño"           "Rio Miño"           "Rio Tea"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67] "Rio Arnoia"         "Rio Avia"           "Rio Avia"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [70] "Rio Avia"           "Rio Sil"            "Rio Sil"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73] "Rio Sil"            "Rio Sil"            "Rio Sil"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [76] "Rio Cabe"           "Rio Mao"            "Rio Bibei"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [79] "Rio Bibei"          "Rio Bibei"          "Rio Xares"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [82] "Rio Xares"          "Rio Xares"          "Rio Conso"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [85] "Rio Conso"          "Rio Camba"          "Rio Camba"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [88] "Rio Camba"          "Rio Camba"          "Rio Selmo"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91] "Rio Burbia"         "Rio Boeza"          "Rio Neira"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [94] "Rio Ladra"          "Rio Parga"          "Rio Limia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97] "Rio Limia"          "Rio Limia"          "Rio Limia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [100] "Rio Salas"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Portugal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "Rio Garona"         "Bidasoa Ibaia"      "Baztan Ibaia"      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "Rio Urumea"         "Oria Ibaia"         "Oria Ibaia"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "Urola Ibaia"        "Deba Ibaia"         "Rio Nervion"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "Ibaizabal Ibaia"    "Rio Agüera O Mayor" "Rio Ason"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "Rio Miera"          "Rio Pas"            "Rio Saja"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "Rio Besaya"         "Rio Nansa"          "Rio Deva"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "Rio Cares"          "Rio Sella"          "Rio Piloña"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "Rio Nalon"          "Rio Narcea"         "Rio Pigüeña"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "Rio Nora"           "Rio Trubia"         "Rio Esva"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "Rio Barcena"        "Rio Navia"          "Rio Navia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "Rio Navia"          "Rio Navia"          "Rio Navia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rio Agueira"        "Rio Eo"             "Rio Masma"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "Rio Landro"         "Rio Sor"            "Rio Mera"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "Rio Eume"           "Rio Eume"           "Rio Eume"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "Rio Mandeo"         "Rio Mero"           "Rio Anllons"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [46] "Rio Xallas"         "Rio Xallas"         "Rio Xallas"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [49] "Rio Tambre"         "Rio Ulla"           "Rio Ulla"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [52] "Rio Ulla"           "Rio Arnego"         "Rio Arnego"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [55] "Rio Umia"           "Rio Lerez"          "Rio Verdugo"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [58] "Rio Miño"           "Rio Miño"           "Rio Miño"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [61] "Rio Miño"           "Rio Miño"           "Rio Miño"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [64] "Rio Miño"           "Rio Tea"            "Rio Arnoia"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [67] "Rio Avia"           "Rio Avia"           "Rio Avia"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [70] "Rio Sil"            "Rio Sil"            "Rio Sil"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [73] "Rio Sil"            "Rio Sil"            "Rio Cabe"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [76] "Rio Mao"            "Rio Bibei"          "Rio Bibei"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [79] "Rio Bibei"          "Rio Xares"          "Rio Xares"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [82] "Rio Xares"          "Rio Conso"          "Rio Conso"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [85] "Rio Camba"          "Rio Camba"          "Rio Camba"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [88] "Rio Camba"          "Rio Selmo"          "Rio Burbia"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [91] "Rio Boeza"          "Rio Neira"          "Rio Ladra"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [94] "Rio Parga"          "Rio Limia"          "Rio Limia"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [97] "Rio Limia"          "Rio Salas"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Example 4: Use table names inside duckdb</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_predicate</span><span class="op">(</span><span class="st">"countries"</span>, <span class="st">"rivers"</span>, predicate <span class="op">=</span> <span class="st">"within"</span>, <span class="va">conn</span>, <span class="st">"NAME_ENGL"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Spain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $France</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Italy</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $Portugal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> integer(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
