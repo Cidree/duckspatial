@@ -37,6 +37,7 @@ transfer of spatial data between systems. Each geometry is returned as a raw
 vector of bytes.
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -55,4 +56,5 @@ wkb_list <- ddbs_as_wkb(conn = conn, "argentina")
 
 ## convert without using a connection
 wkb_list <- ddbs_as_wkb(argentina_sf)
+}
 }

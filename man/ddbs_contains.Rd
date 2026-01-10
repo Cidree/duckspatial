@@ -55,7 +55,7 @@ This is a convenience wrapper around \code{\link[=ddbs_predicate]{ddbs_predicate
 \code{predicate = "contains"}.
 }
 \examples{
-
+\dontrun{
 ## load packages
 library(dplyr)
 library(duckspatial)
@@ -68,6 +68,7 @@ rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatia
   st_transform(st_crs(countries_sf))
 
 ddbs_contains(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
+}
 }
 \seealso{
 \code{\link[=ddbs_predicate]{ddbs_predicate()}} for other spatial predicates.

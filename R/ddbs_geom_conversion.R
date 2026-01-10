@@ -20,6 +20,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -38,6 +39,7 @@
 #'
 #' ## convert without using a connection
 #' wkt_text <- ddbs_as_text(argentina_sf)
+#' }
 ddbs_as_text <- function(
   x,
   conn = NULL,
@@ -104,6 +106,7 @@ ddbs_as_text <- function(
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -122,6 +125,7 @@ ddbs_as_text <- function(
 #'
 #' ## convert without using a connection
 #' wkb_list <- ddbs_as_wkb(argentina_sf)
+#' }
 ddbs_as_wkb <- function(
     x,
     conn = NULL,
@@ -188,6 +192,7 @@ ddbs_as_wkb <- function(
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -206,6 +211,7 @@ ddbs_as_wkb <- function(
 #'
 #' ## convert without using a connection
 #' hexwkb_text <- ddbs_as_hexwkb(argentina_sf)
+#' }
 ddbs_as_hexwkb <- function(
     x,
     conn = NULL,

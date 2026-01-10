@@ -9,6 +9,7 @@
 #'
 #' @examples
 #' ## load packages
+#' \dontrun{
 #' library(duckspatial)
 #' library(duckdb)
 #'
@@ -23,7 +24,7 @@
 #'
 #' ## disconnect from db
 #' ddbs_stop_conn(conn)
-#'
+#' }
 ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 
     # 1. Checks

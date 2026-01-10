@@ -181,7 +181,7 @@ plot(res_int["BIR74"], main = "Intensive (Weighted Avg)", border = NA)
 \references{
 Prener, C. and Revord, C. (2019). \emph{areal: An R package for areal weighted interpolation}.
 \emph{Journal of Open Source Software}, 4(37), 1221.
-Available at: \url{https://doi.org/10.21105/joss.01221}
+Available at: \doi{10.21105/joss.01221}
 }
 \seealso{
 \code{\link[areal:aw_interpolate]{areal::aw_interpolate()}} — reference implementation.

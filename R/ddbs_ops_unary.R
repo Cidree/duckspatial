@@ -1296,6 +1296,7 @@ ddbs_convex_hull <- function(
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -1322,6 +1323,7 @@ ddbs_convex_hull <- function(
 #'
 #' ## transform without using a connection
 #' ddbs_transform(argentina_sf, "EPSG:3857")
+#' }
 ddbs_transform <- function(
     x,
     y,

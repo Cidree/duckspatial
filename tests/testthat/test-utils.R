@@ -1,5 +1,5 @@
 # testthat::skip_if(Sys.getenv("TEST_ONE") != "")
-# testthat::skip_on_cran()
+testthat::skip_on_cran()
 
 test_that("crs_to_sql handles various inputs correctly", {
   # Numeric input (EPSG code)

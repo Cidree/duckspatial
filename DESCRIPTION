@@ -1,21 +1,33 @@
 Type: Package
 Package: duckspatial
 Title: R Interface to 'DuckDB' Database with Spatial Extension
-Version: 0.2.0.999
+Version: 0.9.0
 Authors@R: c(
-    person("Adrián", "Cidre González", , "adrian.cidre@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0002-3310-3052")),
-    person("Rafael H. M.", "Pereira", , "rafa.pereira.br@gmail.com", role = "aut",
-           comment = c(ORCID = "0000-0003-2125-7465")),
-    person("Egor", "Kotov", , "kotov.egor@gmail.com", role = "aut",
-           comment = c(ORCID = "0000-0001-6690-5345"))
-  )
-Description: Fast & memory-efficient functions to analyze and manipulate
-    large spatial data sets. It leverages the fast analytical capabilities
-    of DuckDB and its spatial extension (see
-    https://duckdb.org/docs/stable/core_extensions/spatial/overview) while
-    maintaining compatibility with R’s spatial data ecosystem to work with
-    spatial vector data.
+    person(
+        "Adrián", "Cidre González", 
+        email = "adrian.cidre@gmail.com", 
+        role = c("aut", "cre"),
+        comment = c(ORCID = "0000-0002-3310-3052")
+    ),
+    person(
+        "Rafael H. M.", "Pereira", , 
+        "rafa.pereira.br@gmail.com", 
+        role = "aut",
+        comment = c(ORCID = "0000-0003-2125-7465")
+    ),
+    person(
+        "Egor", "Kotov", , 
+        "kotov.egor@gmail.com", 
+        role = "aut",
+        comment = c(ORCID = "0000-0001-6690-5345")
+    ))
+Description: Fast & memory-efficient functions to analyze and manipulate large 
+             spatial data data sets. It leverages the fast analytical 
+             capabilities of 'DuckDB' and its spatial extension (see <https://duckdb.org/docs/stable/core_extensions/spatial/overview>) 
+             while maintaining compatibility with R’s spatial data ecosystem to 
+             work with spatial vector data.
+URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
+BugReports: https://github.com/Cidree/duckspatial/issues
 License: GPL (>= 3)
 URL: https://cidree.github.io/duckspatial/,
     https://github.com/Cidree/duckspatial

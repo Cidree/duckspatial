@@ -52,6 +52,7 @@ Works similarly to generating random points within polygons in \code{sf}.
 Returns the result as an \code{sf} object or creates a new table in the database.
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -70,4 +71,5 @@ ddbs_generate_points("argentina", n = 100, conn)
 
 ## generate points without using a connection
 ddbs_generate_points(argentina_sf, n = 100)
+}
 }

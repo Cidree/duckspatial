@@ -59,6 +59,7 @@ Note: Area units depend on the CRS of the input geometries (e.g., square meters 
 or degrees for geographic CRS).
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -84,4 +85,5 @@ ddbs_area("argentina", conn, name = "argentina_with_area")
 
 ## calculate area in a sf object
 ddbs_area(argentina_sf)
+}
 }

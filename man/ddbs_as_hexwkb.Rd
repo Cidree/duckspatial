@@ -37,6 +37,7 @@ binary structure. HEXWKB is commonly used in databases and web services for
 transmitting spatial data as text strings.
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -55,4 +56,5 @@ hexwkb_text <- ddbs_as_hexwkb(conn = conn, "argentina")
 
 ## convert without using a connection
 hexwkb_text <- ddbs_as_hexwkb(argentina_sf)
+}
 }

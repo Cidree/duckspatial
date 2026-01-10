@@ -59,6 +59,7 @@ or a DuckDB table. Returns the result as an \code{sf} object or creates a new
 table in the database.
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -83,5 +84,5 @@ output2 <- ddbs_bbox(
 )
 
 DBI::dbReadTable(conn, "argentina_bbox")
-
+}
 }
