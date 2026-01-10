@@ -2,6 +2,8 @@
 
 ## duckspatial 0.9.0
 
+CRAN release: 2026-01-10
+
 ### MAJOR CHANGES
 
 - `conn` argument defaults now to `NULL`. This parameter is not

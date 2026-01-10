@@ -111,8 +111,8 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 57%
-faster and used 5.4 times less memory than {sf}. Not bad.
+In this example working with 1 million points, {duckspatial} was 62%
+faster and used 5.5 times less memory than {sf}. Not bad.
 
 ``` r
 ggplot(data = df_bench_join) +
@@ -169,7 +169,7 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 64%
+In this example working with 1 million points, {duckspatial} was 61%
 faster and used 2.7 times less memory than {sf}.
 
 plot
@@ -234,10 +234,6 @@ df_bench_distance <- lapply(
     dplyr::bind_rows()
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 
 
 # calculate difference in performance
@@ -249,7 +245,7 @@ time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
 In this example calculating the distance between 10K points,
-{duckspatial} was 86% faster, but used 2 times more memory than {sf}.
+{duckspatial} was 89% faster, but used 2 times more memory than {sf}.
 Mind you that {sf} is still more efficient when calculating Euclidean
 distances.
 
