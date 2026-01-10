@@ -29,9 +29,6 @@ Description: Fast & memory-efficient functions to analyze and manipulate large
 URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
 BugReports: https://github.com/Cidree/duckspatial/issues
 License: GPL (>= 3)
-URL: https://cidree.github.io/duckspatial/,
-    https://github.com/Cidree/duckspatial
-BugReports: https://github.com/Cidree/duckspatial/issues
 Depends:
     R (>= 4.1.0)
 Imports: 
