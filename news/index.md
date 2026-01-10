@@ -1,8 +1,13 @@
 # Changelog
 
+## duckspatial (development version)
+
 ## duckspatial 0.9.0
 
 CRAN release: 2026-01-10
+
+Learn more about this version
+[here](https://adrian-cidre.com/posts/014_duckspatial/).
 
 ### MAJOR CHANGES
 

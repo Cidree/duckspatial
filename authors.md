@@ -14,16 +14,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/Cidree/duckspatial/blob/v0.9.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/Cidree/duckspatial/blob/main/DESCRIPTION)
 
 Cidre González A, Pereira R, Kotov E (2026). *duckspatial: R Interface
-to 'DuckDB' Database with Spatial Extension*. R package version 0.9.0,
-<https://cidree.github.io/duckspatial/>.
+to 'DuckDB' Database with Spatial Extension*. R package version
+0.9.0.9000, <https://cidree.github.io/duckspatial/>.
 
     @Manual{,
       title = {duckspatial: R Interface to 'DuckDB' Database with Spatial Extension},
       author = {Adrián {Cidre González} and Rafael H. M. Pereira and Egor Kotov},
       year = {2026},
-      note = {R package version 0.9.0},
+      note = {R package version 0.9.0.9000},
       url = {https://cidree.github.io/duckspatial/},
     }
