@@ -23,7 +23,7 @@ Authors@R: c(
     ))
 Description: Fast & memory-efficient functions to analyze and manipulate large 
              spatial data data sets. It leverages the fast analytical 
-             capabilities of DuckDB and its spatial extension (see <https://duckdb.org/docs/stable/core_extensions/spatial/overview>) 
+             capabilities of 'DuckDB' and its spatial extension (see <https://duckdb.org/docs/stable/core_extensions/spatial/overview>) 
              while maintaining compatibility with R’s spatial data ecosystem to 
              work with spatial vector data.
 URL: https://cidree.github.io/duckspatial/, https://github.com/Cidree/duckspatial
