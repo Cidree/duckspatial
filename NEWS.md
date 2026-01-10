@@ -1,4 +1,9 @@
+# duckspatial (development version)
+
+
 # duckspatial 0.9.0
+
+Learn more about this version [here](https://adrian-cidre.com/posts/014_duckspatial/).
 
 ## MAJOR CHANGES
 
