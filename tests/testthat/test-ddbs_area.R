@@ -283,7 +283,7 @@ testthat::test_that("ddbs_area(): errors work", {
     testthat::expect_error(tester_sf(x = 999))
     testthat::expect_error(tester_sf(conn = 999))
     testthat::expect_error(tester_sf(new_column = 999))
-    testthat::expect_error(testester_sfter(overwrite = 999))
+    testthat::expect_error(tester_sf(overwrite = 999))
     testthat::expect_error(tester_sf(quiet = 999))
     testthat::expect_error(tester_sf(x = "999", conn = conn_test))
     testthat::expect_error(tester_sf(conn = conn_test, name = c('banana', 'banana')))
