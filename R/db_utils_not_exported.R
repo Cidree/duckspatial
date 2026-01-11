@@ -1175,13 +1175,20 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 #' @noRd
 detect_crs <- function(x) {
 
-  ## try to extract from duckspatial_df attributes
+  ## 1. Handle sf objects directly
+  if (inherits(x, "sf")) {
+    return(sf::st_crs(x))
+  }
+
+  ## 2. Try to extract from duckspatial_df attributes
   crs_x <- attr(x, "crs")
 
-  ## if the CRS attribute is NULL, try auto-detection for tbl_duckdb_connection
-  if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
-    crs_x <- suppressWarnings(ddbs_crs(x))
-    if (is.na(crs_x)) crs_x <- NULL
+  ## 3. If the CRS attribute is NULL, try auto-detection for tbl_duckdb_connection
+  if (is.null(crs_x) && inherits(x, c("tbl_duckdb_connection", "tbl_lazy"))) {
+    crs_x <- tryCatch({
+      result <- suppressWarnings(ddbs_crs(x))
+      if (is.na(result)) NULL else result
+    }, error = function(e) NULL)
   }
 
   ## return the CRS
