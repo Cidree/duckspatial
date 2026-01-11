@@ -109,20 +109,10 @@ ddbs_join <- function(
     # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
     
     # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
-    crs_x <- attr(x, "crs")
-    crs_y <- attr(y, "crs")
+    crs_x <- detect_crs(x)
+    crs_y <- detect_crs(y)
     sf_col_x <- attr(x, "sf_column")
     sf_col_y <- attr(y, "sf_column")
-    
-    # Try auto-detection for tbl_duckdb_connection before conversion to duckspatial_df
-    if (is.null(crs_x) && inherits(x, "tbl_duckdb_connection")) {
-       crs_x <- suppressWarnings(ddbs_crs(x))
-       if (is.na(crs_x)) crs_x <- NULL
-    }
-    if (is.null(crs_y) && inherits(y, "tbl_duckdb_connection")) {
-       crs_y <- suppressWarnings(ddbs_crs(y))
-       if (is.na(crs_y)) crs_y <- NULL
-    }
 
     # Resolve conn_x/conn_y defaults from 'conn' for character inputs
     # (Only if conn was provided and we need a connection for a character input)
