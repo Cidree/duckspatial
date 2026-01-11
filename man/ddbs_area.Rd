@@ -11,6 +11,7 @@ ddbs_area(
   new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -43,12 +44,6 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
-\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
-to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
-
-\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
-Defaults to \code{FALSE}.}
-
 \item{output}{Character. Controls the return type. Options:
 \itemize{
 \item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
@@ -59,6 +54,12 @@ Defaults to \code{FALSE}.}
 }
 Can be set globally via \code{\link{ddbs_options}(output_type = "...")} or
 per-function via this argument. Per-function overrides global setting.}
+
+\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
+to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 a vector, an \code{sf} object or \code{TRUE} (invisibly) for table creation

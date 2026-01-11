@@ -66,6 +66,8 @@ ddbs_area <- function(
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
   assert_conn_character(conn, x)
+    
+    if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
 
   # 1. Manage connection to DB
 
@@ -149,7 +151,7 @@ ddbs_area <- function(
   ## 5.2. retrieve results of the query
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  ## 6. convert to SF and return result
+  ## 6. convert to target output
   data_sf <- ddbs_handle_output(
       data       = data_tbl,
       conn       = target_conn,
