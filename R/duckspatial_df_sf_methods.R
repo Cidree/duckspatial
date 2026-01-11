@@ -200,26 +200,37 @@ st_as_sf.duckspatial_df <- function(x, ...) {
 #' @rdname duckspatial_df_sf
 #' @export
 print.duckspatial_df <- function(x, ..., n = 10) {
+
+  ## get metadata for the header
   geom_col <- attr(x, "sf_column") %||% "geom"
   crs <- st_crs(x)
+  bbox <- st_bbox(x)
   
-  cat("# A duckspatial lazy spatial table\n")
-  cat("# CRS:", ddbs_format_crs(crs), "\n")
-  cat("# Geometry column:", geom_col, "\n")
-  cat("#\n")
-  cat("# Data backed by DuckDB (dbplyr lazy evaluation)\n")
-  cat("# Use ddbs_collect() or st_as_sf() to materialize to sf.\n")
-  cat("#\n")
+  ## header with visual separator
+  cat(cli::col_silver("# A duckspatial lazy spatial table\n"))
   
-  # Print a preview using standard print
-  # We need to call the parent class print
+  ## metadata with icons/symbols
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf CRS:"), cli::col_silver(ddbs_format_crs(crs)), "\n")
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf Geometry column:"), cli::col_silver(geom_col), "\n")
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf Bounding box:"), 
+      cli::col_silver(sprintf("xmin: %.5g ymin: %.5g xmax: %.5g ymax: %.5g", 
+                              bbox["xmin"], bbox["ymin"], bbox["xmax"], bbox["ymax"])), "\n")
+  
+  ## info box
+  cat(cli::col_silver("# Data backed by DuckDB (dbplyr lazy evaluation)\n"))
+  cat(cli::col_silver("# Use"), 
+      cli::col_green("ddbs_collect()"), 
+      cli::col_silver("or"), 
+      cli::col_green("st_as_sf()"), 
+      cli::col_silver("to materialize to sf\n"))
+  cat(cli::col_silver("#\n"))
+  
+  ## print preview
   tryCatch({
-    # Get preview without triggering full materialization
-    # dbplyr handles this well
     class(x) <- setdiff(class(x), "duckspatial_df")
     print(x, n = n)
   }, error = function(e) {
-    cat("# (Preview unavailable)\n")
+    cat(cli::col_yellow("\u26a0 Preview unavailable\n"))
   })
   
   invisible(x)
