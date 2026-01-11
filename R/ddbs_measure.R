@@ -54,6 +54,7 @@ ddbs_area <- function(
   new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
