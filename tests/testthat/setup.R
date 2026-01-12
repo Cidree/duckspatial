@@ -22,4 +22,5 @@ points_sf <- data.frame(
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
 
 # North Carolina data from sf package - used by duckspatial_df tests
-nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+nc_sf   <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+nc_ddbs <- duckspatial::ddbs_open_dataset(system.file("shape/nc.shp", package = "sf"))

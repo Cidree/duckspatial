@@ -40,7 +40,7 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE, extension = "spat
     if (target_ext$installed && !upgrade) {
 
         if (isFALSE(quiet)) {
-            cli::cli_alert_info("{extension} extension version <{target_ext$extension_version}> is already installed in this database")
+            cli::cli_alert_info("{extension} extension version {.val {target_ext$extension_version}} is already installed in this database")
         }
 
         return(invisible(TRUE))
