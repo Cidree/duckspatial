@@ -9,8 +9,8 @@ testthat::skip_if_not_installed("duckdb")
 ## create duckdb connection
 conn_test <- duckspatial::ddbs_create_conn()
 
-## helper functions
-tester_sf <- function(x = nc_sf,
+## helper functions for ddbs_area()
+area_test_sf <- function(x = nc_sf,
                     conn = NULL,
                     name = NULL,
                     new_column = NULL,
@@ -28,7 +28,7 @@ tester_sf <- function(x = nc_sf,
     )
 }
 
-tester_ddbs <- function(x = nc_ddbs,
+area_test_ddbs <- function(x = nc_ddbs,
                         conn = NULL,
                         name = NULL,
                         new_column = NULL,
@@ -46,7 +46,7 @@ tester_ddbs <- function(x = nc_ddbs,
     )
 }
 
-tester_conn <- function(x = "nc",
+area_test_conn <- function(x = "nc",
                         conn = conn_test,
                         name = NULL,
                         new_column = NULL,
@@ -64,7 +64,65 @@ tester_conn <- function(x = "nc",
     )
 }
 
-# 1. Input SF ------------------------------------------------------------
+
+## helper functions for ddbs_length()
+length_test_sf <- function(x = rivers_sf,
+                    conn = NULL,
+                    name = NULL,
+                    new_column = NULL,
+                    output = NULL,
+                    overwrite = FALSE,
+                    quiet = FALSE) {
+    ddbs_length(
+        x = x,
+        conn = conn,
+        name = name,
+        new_column = new_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet
+    )
+}
+
+length_test_ddbs <- function(x = rivers_ddbs,
+                        conn = NULL,
+                        name = NULL,
+                        new_column = NULL,
+                        output = NULL,
+                        overwrite = FALSE,
+                        quiet = FALSE) {
+    ddbs_length(
+        x = x,
+        conn = conn,
+        name = name,
+        new_column = new_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet
+    )
+}
+
+length_test_conn <- function(x = "rivers",
+                        conn = conn_test,
+                        name = NULL,
+                        new_column = NULL,
+                        output = NULL,
+                        overwrite = FALSE,
+                        quiet = FALSE) {
+    ddbs_length(
+        x = x,
+        conn = conn,
+        name = name,
+        new_column = new_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet
+    )
+}
+
+# 1. ddbs_area -----------------------------------------------------------
+
+## 1.1. Input SF -------------------
 
 ## expected behaviour for inherits(x, "sf")
 ## - CHECK 1.1: returns a vector by default
@@ -78,14 +136,14 @@ tester_conn <- function(x = "nc",
 testthat::test_that("ddbs_area(): expected behavior on sf", {
     
     ## CHECK 1.1
-    output1 <- tester_sf()
+    output1 <- area_test_sf()
     testthat::expect_true(is(output1 , 'vector'))
 
     ## CHECK 1.2
-    output2 <- tester_sf(new_column = "area_calc", output = NULL)
-    output3 <- tester_sf(new_column = "area_calc", output = "geoarrow")
-    output4 <- tester_sf(new_column = "area_calc", output = "sf")
-    output5 <- tester_sf(new_column = "area_calc", output = "raw")
+    output2 <- area_test_sf(new_column = "area_calc", output = NULL)
+    output3 <- area_test_sf(new_column = "area_calc", output = "geoarrow")
+    output4 <- area_test_sf(new_column = "area_calc", output = "sf")
+    output5 <- area_test_sf(new_column = "area_calc", output = "raw")
 
     testthat::expect_s3_class(output2, "duckspatial_df")
     testthat::expect_s3_class(output3$geometry, "geoarrow_vctr")
@@ -93,16 +151,16 @@ testthat::test_that("ddbs_area(): expected behavior on sf", {
     testthat::expect_s3_class(output5, "tbl_df")
 
     ## CHECK 1.3
-    output6 <- tester_sf(conn = conn_test, name = "area_tbl", new_column = "area_calc")
+    output6 <- area_test_sf(conn = conn_test, name = "area_tbl", new_column = "area_calc")
     testthat::expect_true(output6)
 
     ## CHECK 1.4
-    testthat::expect_message(tester_sf(new_column = "area_calc"))
-    testthat::expect_message(tester_sf(conn = conn_test, name = "area_tbl2", new_column = "area_calc"))
+    testthat::expect_message(area_test_sf(new_column = "area_calc"))
+    testthat::expect_message(area_test_sf(conn = conn_test, name = "area_tbl2", new_column = "area_calc"))
 
     ## CHECK 1.5
-    testthat::expect_no_message(tester_sf(new_column = "area_calc", quiet = TRUE))
-    testthat::expect_no_message(tester_sf(conn = conn_test, name = "area_tbl3", new_column = "area_calc", quiet = TRUE))
+    testthat::expect_no_message(area_test_sf(new_column = "area_calc", quiet = TRUE))
+    testthat::expect_no_message(area_test_sf(conn = conn_test, name = "area_tbl3", new_column = "area_calc", quiet = TRUE))
 
     ## CHECK 1.6 - calculate area on projected CRS
     argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
@@ -125,7 +183,7 @@ testthat::test_that("ddbs_area(): expected behavior on sf", {
 })
 
 
-# 2. Input duckspatial_df ------------------------------------------------
+## 1.2. Input duckspatial_df -------------
 
 ## expected behaviour for inherits(x, "duckspatial_df")
 ## - CHECK 2.1: returns a vector by default
@@ -141,14 +199,14 @@ testthat::test_that("ddbs_area(): expected behavior on sf", {
 testthat::test_that("ddbs_area(): expected behavior on duckspatial", {
     
     ## CHECK 3.1
-    output1 <- tester_ddbs()
+    output1 <- area_test_ddbs()
     testthat::expect_true(is(output1 , 'vector'))
 
     ## CHECK 2.2
-    output2 <- tester_ddbs(new_column = "area_calc", output = NULL)
-    output3 <- tester_ddbs(new_column = "area_calc", output = "geoarrow")
-    output4 <- tester_ddbs(new_column = "area_calc", output = "sf")
-    output5 <- tester_ddbs(new_column = "area_calc", output = "raw")
+    output2 <- area_test_ddbs(new_column = "area_calc", output = NULL)
+    output3 <- area_test_ddbs(new_column = "area_calc", output = "geoarrow")
+    output4 <- area_test_ddbs(new_column = "area_calc", output = "sf")
+    output5 <- area_test_ddbs(new_column = "area_calc", output = "raw")
 
     testthat::expect_s3_class(output2, "duckspatial_df")
     testthat::expect_s3_class(output3$geom, "geoarrow_vctr")
@@ -156,16 +214,16 @@ testthat::test_that("ddbs_area(): expected behavior on duckspatial", {
     testthat::expect_s3_class(output5, "tbl_df")
 
     ## CHECK 2.3
-    output6 <- tester_ddbs(conn = conn_test, name = "ddbs_area_tbl", new_column = "area_calc") |> suppressWarnings()
+    output6 <- area_test_ddbs(conn = conn_test, name = "ddbs_area_tbl", new_column = "area_calc") |> suppressWarnings()
     testthat::expect_true(output6)
 
     ## CHECK 2.4
-    testthat::expect_message(tester_ddbs(new_column = "area_calc"))
-    testthat::expect_message(tester_ddbs(conn = conn_test, name = "ddbs_area_tbl2", new_column = "area_calc") |> suppressWarnings())
-    testthat::expect_message(tester_ddbs(conn = conn_test, name = "ddbs_area_tbl3", new_column = "area_calc", quiet = TRUE) |> suppressWarnings())
+    testthat::expect_message(area_test_ddbs(new_column = "area_calc"))
+    testthat::expect_message(area_test_ddbs(conn = conn_test, name = "ddbs_area_tbl2", new_column = "area_calc") |> suppressWarnings())
+    testthat::expect_message(area_test_ddbs(conn = conn_test, name = "ddbs_area_tbl3", new_column = "area_calc", quiet = TRUE) |> suppressWarnings())
 
     ## CHECK 2.5
-    testthat::expect_no_message(tester_ddbs(new_column = "area_calc", quiet = TRUE))
+    testthat::expect_no_message(area_test_ddbs(new_column = "area_calc", quiet = TRUE))
 
     ## CHECK 2.6 - calculate area on projected CRS
     argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
@@ -174,7 +232,7 @@ testthat::test_that("ddbs_area(): expected behavior on duckspatial", {
     testthat::expect_equal(area_ddbs, area_sf)
 
     ## CHECK 2.7
-    testthat::expect_warning(tester_ddbs(conn = conn_test, name = "ddbs_area_tbl4", new_column = "area_calc"))
+    testthat::expect_warning(area_test_ddbs(conn = conn_test, name = "ddbs_area_tbl4", new_column = "area_calc"))
 
     ## CHECK 2.8    
     output7 <- output2 |> st_as_sf()
@@ -190,7 +248,7 @@ testthat::test_that("ddbs_area(): expected behavior on duckspatial", {
 
 })
 
-# 3. Input DuckDB table --------------------------------------------------
+## 1.3. Input DuckDB table ------------------
 
 
 ## expected behaviour for inherits(x, "character")
@@ -209,14 +267,14 @@ testthat::test_that("ddbs_area(): expected behavior on DuckDB table", {
     duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "nc")
     
     ## CHECK 3.1
-    output1 <- tester_conn(x = "nc", conn = conn_test)
+    output1 <- area_test_conn(x = "nc", conn = conn_test)
     testthat::expect_true(is(output1 , 'vector'))
 
     ## CHECK 3.2
-    output2 <- tester_conn(new_column = "area_calc", output = NULL)
-    output3 <- tester_conn(new_column = "area_calc", output = "geoarrow")
-    output4 <- tester_conn(new_column = "area_calc", output = "sf")
-    output5 <- tester_conn(new_column = "area_calc", output = "raw")
+    output2 <- area_test_conn(new_column = "area_calc", output = NULL)
+    output3 <- area_test_conn(new_column = "area_calc", output = "geoarrow")
+    output4 <- area_test_conn(new_column = "area_calc", output = "sf")
+    output5 <- area_test_conn(new_column = "area_calc", output = "raw")
 
     testthat::expect_s3_class(output2, "duckspatial_df")
     testthat::expect_s3_class(output3$geom, "geoarrow_vctr")
@@ -224,16 +282,16 @@ testthat::test_that("ddbs_area(): expected behavior on DuckDB table", {
     testthat::expect_s3_class(output5, "tbl_df")
 
     ## CHECK 3.3
-    output6 <- tester_conn(name = "conn_area_tbl", new_column = "area_calc")
+    output6 <- area_test_conn(name = "conn_area_tbl", new_column = "area_calc")
     testthat::expect_true(output6)
 
     ## CHECK 3.4
-    testthat::expect_message(tester_conn(new_column = "area_calc"))
-    testthat::expect_message(tester_conn(name = "conn_area_tbl2", new_column = "area_calc"))
+    testthat::expect_message(area_test_conn(new_column = "area_calc"))
+    testthat::expect_message(area_test_conn(name = "conn_area_tbl2", new_column = "area_calc"))
 
     ## CHECK 3.5
-    testthat::expect_no_message(tester_conn(new_column = "area_calc", quiet = TRUE))
-    testthat::expect_no_message(tester_conn(name = "conn_area_tbl3", new_column = "area_calc", quiet = TRUE))
+    testthat::expect_no_message(area_test_conn(new_column = "area_calc", quiet = TRUE))
+    testthat::expect_no_message(area_test_conn(name = "conn_area_tbl3", new_column = "area_calc", quiet = TRUE))
 
     ## CHECK 3.6 - calculate area on projected CRS
     argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
@@ -255,13 +313,13 @@ testthat::test_that("ddbs_area(): expected behavior on DuckDB table", {
     testthat::expect_identical(output1, output7$area_calc)
 
     ## CHECK 3.9
-    testthat::expect_error(tester_conn(x = "nc", conn = NULL))
+    testthat::expect_error(area_test_conn(x = "nc", conn = NULL))
 
 })
 
 
 
-# 4. Errors --------------------------------------------------------------
+## 1.4. Errors -------------------------------
 
 ## Check that errors work
 ## - CHECK 4.1: if name is specified, new_column cannot be NULL
@@ -271,24 +329,273 @@ testthat::test_that("ddbs_area(): errors work", {
 
 
     ## CHECK 4.1
-    testthat::expect_error(tester_sf(name = "new_tbl"))
+    testthat::expect_error(area_test_sf(name = "new_tbl"))
 
     ## CHECK 4.2
     ddbs_write_vector(conn_test, countries_sf, "countries")
     testthat::expect_error(
-        tester_sf(conn = conn_test, name = "countries", new_column = "area_calc")
+        area_test_sf(conn = conn_test, name = "countries", new_column = "area_calc")
     )
 
     ## CHECK 4.3
-    testthat::expect_error(tester_sf(x = 999))
-    testthat::expect_error(tester_sf(conn = 999))
-    testthat::expect_error(tester_sf(new_column = 999))
-    testthat::expect_error(tester_sf(overwrite = 999))
-    testthat::expect_error(tester_sf(quiet = 999))
-    testthat::expect_error(tester_sf(x = "999", conn = conn_test))
-    testthat::expect_error(tester_sf(conn = conn_test, name = c('banana', 'banana')))
+    testthat::expect_error(area_test_sf(x = 999))
+    testthat::expect_error(area_test_sf(conn = 999))
+    testthat::expect_error(area_test_sf(new_column = 999))
+    testthat::expect_error(area_test_sf(overwrite = 999))
+    testthat::expect_error(area_test_sf(quiet = 999))
+    testthat::expect_error(area_test_sf(x = "999", conn = conn_test))
+    testthat::expect_error(area_test_sf(conn = conn_test, name = c('banana', 'banana')))
 
 })
+
+
+# 2. ddbs_length ---------------------------------------------------------
+
+## 2.1. Input SF -------------------
+
+## expected behaviour for inherits(x, "sf")
+## - CHECK 1.1: returns a vector by default
+## - CHECK 1.2: returns the correct output (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.3: sf is written into the database
+## - CHECK 1.4: message is shown with quiet = FALSE
+## - CHECK 1.5: no message is shown with quiet = TRUE
+## - CHECK 1.6: length is calculated properly
+## - CHECK 1.7: materialize data, same output
+## - CHECK 1.8: length calculated as vector, and added as column must be the same
+## - CHECK 1.9: length on polygons or points is equal to 0
+testthat::test_that("ddbs_length(): expected behavior on sf", {
+    
+    ## CHECK 1.1
+    output1 <- length_test_sf()
+    testthat::expect_true(is(output1 , 'vector'))
+
+    ## CHECK 1.2
+    output2 <- length_test_sf(new_column = "length_calc", output = NULL)
+    output3 <- length_test_sf(new_column = "length_calc", output = "geoarrow")
+    output4 <- length_test_sf(new_column = "length_calc", output = "sf")
+    output5 <- length_test_sf(new_column = "length_calc", output = "raw")
+
+    testthat::expect_s3_class(output2, "duckspatial_df")
+    testthat::expect_s3_class(output3$geometry, "geoarrow_vctr")
+    testthat::expect_s3_class(output4, "sf")
+    testthat::expect_s3_class(output5, "tbl_df")
+
+    ## CHECK 1.3
+    output6 <- length_test_sf(conn = conn_test, name = "length_tbl", new_column = "length_calc")
+    testthat::expect_true(output6)
+
+    ## CHECK 1.4
+    testthat::expect_message(length_test_sf(new_column = "length_calc"))
+    testthat::expect_message(length_test_sf(conn = conn_test, name = "length_tbl2", new_column = "length_calc"))
+
+    ## CHECK 1.5
+    testthat::expect_no_message(length_test_sf(new_column = "length_calc", quiet = TRUE))
+    testthat::expect_no_message(length_test_sf(conn = conn_test, name = "length_tbl3", new_column = "length_calc", quiet = TRUE))
+
+    ## CHECK 1.6 - calculate length on projected CRS
+    rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
+    length_ddbs <- ddbs_length(rivers_3857_sf)
+    length_sf   <- sf::st_length(rivers_3857_sf) |> as.numeric()
+    expect_equal(length_ddbs, length_sf)
+
+    ## CHECK 1.7  
+    output7 <- output2 |> st_as_sf()
+    output8 <- output2 |> collect()
+    output9 <- output2 |> ddbs_collect()
+    testthat::expect_identical(output7, output8)
+    testthat::expect_identical(output8, output9)
+    testthat::expect_s3_class(output7, "sf")
+
+    ## CHECK 1.8
+    ## - The length in the column should be the same as the calculated vector
+    testthat::expect_identical(output1, output7$length_calc)
+
+    ## CHECK 1.9
+    ## - Returns 0 when length is calculated to polygons
+    output10 <- ddbs_length(countries_sf)
+    output11 <- ddbs_length(points_sf)
+    testthat::expect_true(all(output10 == 0))
+    testthat::expect_true(all(output11 == 0))
+
+})
+
+
+## 2.2. Input duckspatial_df -------------
+
+## expected behaviour for inherits(x, "duckspatial_df")
+## - CHECK 2.1: returns a vector by default
+## - CHECK 2.2: returns the correct output (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 2.3: duckspatial is written into the database
+## - CHECK 2.4: message is shown with quiet = FALSE
+## - CHECK 2.5: no message is shown with quiet = TRUE
+## - CHECK 2.6: length is calculated properly
+## - CHECK 2.7: when creating a new duckdb table, it shows warning if they come from 
+##   different connections
+## - CHECK 2.8 - materialize data, same output
+## - CHECK 2.9 - length calculated as vector, and added as column must be the same
+testthat::test_that("ddbs_length(): expected behavior on duckspatial", {
+    
+    ## CHECK 3.1
+    output1 <- length_test_ddbs()
+    testthat::expect_true(is(output1 , 'vector'))
+
+    ## CHECK 2.2
+    output2 <- length_test_ddbs(new_column = "length_calc", output = NULL)
+    output3 <- length_test_ddbs(new_column = "length_calc", output = "geoarrow")
+    output4 <- length_test_ddbs(new_column = "length_calc", output = "sf")
+    output5 <- length_test_ddbs(new_column = "length_calc", output = "raw")
+
+    testthat::expect_s3_class(output2, "duckspatial_df")
+    testthat::expect_s3_class(output3$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output4, "sf")
+    testthat::expect_s3_class(output5, "tbl_df")
+
+    ## CHECK 2.3
+    output6 <- length_test_ddbs(conn = conn_test, name = "ddbs_length_tbl", new_column = "length_calc") |> suppressWarnings()
+    testthat::expect_true(output6)
+
+    ## CHECK 2.4
+    testthat::expect_message(length_test_ddbs(new_column = "length_calc"))
+    testthat::expect_message(length_test_ddbs(conn = conn_test, name = "ddbs_length_tbl2", new_column = "length_calc") |> suppressWarnings())
+    testthat::expect_message(length_test_ddbs(conn = conn_test, name = "ddbs_length_tbl3", new_column = "length_calc", quiet = TRUE) |> suppressWarnings())
+
+    ## CHECK 2.5
+    testthat::expect_no_message(length_test_ddbs(new_column = "length_calc", quiet = TRUE))
+
+    ## CHECK 2.6 - calculate length on projected CRS
+    rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
+    length_ddbs <- ddbs_length(rivers_3857_sf)
+    length_sf   <- sf::st_length(rivers_3857_sf) |> as.numeric()
+    testthat::expect_equal(length_ddbs, length_sf)
+
+    ## CHECK 2.7
+    testthat::expect_warning(length_test_ddbs(conn = conn_test, name = "ddbs_length_tbl4", new_column = "length_calc"))
+
+    ## CHECK 2.8    
+    output7 <- output2 |> st_as_sf()
+    output8 <- output2 |> collect()
+    output9 <- output2 |> ddbs_collect()
+    testthat::expect_identical(output7, output8)
+    testthat::expect_identical(output8, output9)
+    testthat::expect_s3_class(output7, "sf")
+
+    ## CHECK 2.9
+    ## - The length in the column should be the same as the calculated vector
+    testthat::expect_identical(output1, output7$length_calc)
+
+})
+
+## 2.3. Input DuckDB table ------------------
+
+
+## expected behaviour for inherits(x, "character")
+## - CHECK 3.1: returns a vector by default
+## - CHECK 3.2: returns the correct output (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 3.3: duckspatial is written into the database
+## - CHECK 3.4: message is shown with quiet = FALSE
+## - CHECK 3.5: no message is shown with quiet = TRUE
+## - CHECK 3.6: length is calculated properly
+## - CHECK 3.7: materialize data, same output
+## - CHECK 3.8: length calculated as vector, and added as column must be the same
+## - CHECK 3.9: error if conn = NULL, and x = duckdb table
+testthat::test_that("ddbs_length(): expected behavior on DuckDB table", {
+
+    ## import table
+    duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "rivers")
+    
+    ## CHECK 3.1
+    output1 <- length_test_conn(conn = conn_test)
+    testthat::expect_true(is(output1 , 'vector'))
+
+    ## CHECK 3.2
+    output2 <- length_test_conn(new_column = "length_calc", output = NULL)
+    output3 <- length_test_conn(new_column = "length_calc", output = "geoarrow")
+    output4 <- length_test_conn(new_column = "length_calc", output = "sf")
+    output5 <- length_test_conn(new_column = "length_calc", output = "raw")
+
+    testthat::expect_s3_class(output2, "duckspatial_df")
+    testthat::expect_s3_class(output3$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output4, "sf")
+    testthat::expect_s3_class(output5, "tbl_df")
+
+    ## CHECK 3.3
+    output6 <- length_test_conn(name = "conn_length_tbl", new_column = "length_calc")
+    testthat::expect_true(output6)
+
+    ## CHECK 3.4
+    testthat::expect_message(length_test_conn(new_column = "length_calc"))
+    testthat::expect_message(length_test_conn(name = "conn_length_tbl2", new_column = "length_calc"))
+
+    ## CHECK 3.5
+    testthat::expect_no_message(length_test_conn(new_column = "length_calc", quiet = TRUE))
+    testthat::expect_no_message(length_test_conn(name = "conn_length_tbl3", new_column = "length_calc", quiet = TRUE))
+
+    ## CHECK 3.6 - calculate length on projected CRS
+    rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
+    duckspatial::ddbs_write_vector(conn_test, rivers_3857_sf, "rivers_3857")
+    length_ddbs <- ddbs_length("rivers_3857", conn_test)
+    length_sf   <- sf::st_length(rivers_3857_sf) |> as.numeric()
+    testthat::expect_equal(length_ddbs, length_sf)
+
+    ## CHECK 3.7    
+    output7 <- output2 |> st_as_sf()
+    output8 <- output2 |> collect()
+    output9 <- output2 |> ddbs_collect()
+    testthat::expect_identical(output7, output8)
+    testthat::expect_identical(output8, output9)
+    testthat::expect_s3_class(output7, "sf")
+
+    ## CHECK 3.8
+    ## - The length in the column should be the same as the calculated vector
+    testthat::expect_identical(output1, output7$length_calc)
+
+    ## CHECK 3.9
+    testthat::expect_error(length_test_conn(x = "nc", conn = NULL))
+
+})
+
+
+
+## 2.4. Errors -------------------------------
+
+## Check that errors work
+## - CHECK 4.1: if name is specified, new_column cannot be NULL
+## - CHECK 4.2: if overwrite = FALSE, it won't delete an existing table
+## - CHECK 4.3: incorrect inputs
+testthat::test_that("ddbs_length(): errors work", {
+
+
+    ## CHECK 4.1
+    testthat::expect_error(length_test_sf(name = "new_tbl"))
+
+    ## CHECK 4.2
+    ddbs_write_vector(conn_test, countries_sf, "countries")
+    testthat::expect_error(
+        length_test_sf(conn = conn_test, name = "countries", new_column = "length_calc")
+    )
+
+    ## CHECK 4.3
+    testthat::expect_error(length_test_sf(x = 999))
+    testthat::expect_error(length_test_sf(conn = 999))
+    testthat::expect_error(length_test_sf(new_column = 999))
+    testthat::expect_error(length_test_sf(overwrite = 999))
+    testthat::expect_error(length_test_sf(quiet = 999))
+    testthat::expect_error(length_test_sf(x = "999", conn = conn_test))
+    testthat::expect_error(length_test_sf(conn = conn_test, name = c('banana', 'banana')))
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## stop connection

@@ -10,6 +10,7 @@ argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "
 
 # read lines data
 rivers_sf <- sf::st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
+rivers_ddbs <- duckspatial::ddbs_open_dataset(system.file("spatial/rivers.geojson", package = "duckspatial"))
 
 ## create points data
 set.seed(42)
