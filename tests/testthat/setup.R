@@ -7,6 +7,7 @@ testthat::skip_if_not_installed("duckdb")
 countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 countries_sf <- subset(countries_sf, CNTR_ID %in% c("AR", "BR", "BO", "PE", "PY", "UY", "CL"))
 argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- duckspatial::ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
 
 # read lines data
 rivers_sf <- sf::st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))

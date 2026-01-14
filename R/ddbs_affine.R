@@ -19,6 +19,7 @@
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
@@ -60,6 +61,7 @@ ddbs_rotate <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -93,33 +95,53 @@ ddbs_rotate <- function(
     }
 
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- detect_crs(x)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 2.1. Convert angle to radians if needed
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+
+    ## 3.3. Convert angle to radians if needed
     if (units == "degrees") {
         angle_rad <- angle * pi / 180
     } else {
         angle_rad <- angle
     }
 
-    ## 2.2. Calculate rotation matrix parameters
+    ## 3.4. Calculate rotation matrix parameters
     cos_angle <- cos(angle_rad)
     sin_angle <- sin(angle_rad)
 
-    ## 2.3. Build rotation query
+    ## 3.5. Build rotation query
     if (by_feature) {
         # Rotate each feature around its own centroid or specified center
         if (is.null(center_x)) {
@@ -155,14 +177,15 @@ ddbs_rotate <- function(
         )
     }
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+  
+    # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query
         tmp.query <- glue::glue("
@@ -172,25 +195,31 @@ ddbs_rotate <- function(
             FROM {x_list$query_name};
         ")
         ## execute rotation query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+  
+    # 5. Get data frame
+  
+    ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest}
         ST_AsWKB({rotation_expr}) as {x_geom} 
         FROM {x_list$query_name};
     ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    ## 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+  
+    # 6. convert to target output
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
@@ -217,6 +246,7 @@ ddbs_rotate <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
@@ -260,6 +290,7 @@ ddbs_rotate_3d <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
 
@@ -275,39 +306,59 @@ ddbs_rotate_3d <- function(
     assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- detect_crs(x)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+  
+  
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 2.1. Convert angle to radians if needed
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    ## 3.3. Convert angle to radians if needed
     if (units == "degrees") {
         angle_rad <- angle * pi / 180
     } else {
         angle_rad <- angle
     }
 
-    ## 2.2. Build rotation expression
+    ## 3.4. Build rotation expression
     rotation_expr <- glue::glue("ST_Rotate{axis}({x_geom}, {angle_rad})")
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+  
+    # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query 
         tmp.query <- glue::glue("
@@ -317,25 +368,31 @@ ddbs_rotate_3d <- function(
             FROM {x_list$query_name};
         ")
         ## execute rotation query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+  
+    # 5. Get data frame
+  
+    ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest}
         ST_AsWKB({rotation_expr}) as {x_geom} 
         FROM {x_list$query_name};
     ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    # 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+  
+    # 6. convert to target output
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
@@ -361,6 +418,7 @@ ddbs_rotate_3d <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
@@ -396,6 +454,7 @@ ddbs_shift <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -410,34 +469,55 @@ ddbs_shift <- function(
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x)
 
+  
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- detect_crs(x)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 2.1. Build shift expression using ST_Affine
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    ## 3.3. Build shift expression using ST_Affine
     # Identity matrix (no rotation/scaling) with translation offsets
     shift_expr <- glue::glue("ST_Affine({x_geom}, 1, 0, 0, 1, {dx}, {dy})")
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+  
+    # 4. if name is not NULL
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query 
         tmp.query <- glue::glue("
@@ -447,25 +527,30 @@ ddbs_shift <- function(
             FROM {x_list$query_name};
         ")
         ## execute shift query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+  
+    # 5. Get data frame
+  
+    ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest}
         ST_AsWKB({shift_expr}) as {x_geom} 
         FROM {x_list$query_name};
     ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    ## 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+    # 6. convert to target output
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
@@ -492,6 +577,7 @@ ddbs_shift <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
@@ -530,6 +616,7 @@ ddbs_flip <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -544,23 +631,43 @@ ddbs_flip <- function(
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x)
 
+  
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- detect_crs(x)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 2.1. Build flip expression using ST_Affine
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    ## 3.3. Build flip expression using ST_Affine
     if (by_feature) {
         # Flip each feature around its own centroid
         if (direction == "horizontal") {
@@ -612,14 +719,15 @@ ddbs_flip <- function(
         }
     }
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+  
+    # 4. if name is not NULL
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query 
         tmp.query <- glue::glue("
@@ -629,25 +737,31 @@ ddbs_flip <- function(
             FROM {x_list$query_name};
         ")
         ## execute flip query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+  
+    # 5. Get data frame
+  
+    ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest}
         ST_AsWKB({flip_expr}) as {x_geom} 
         FROM {x_list$query_name};
     ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    ## 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+  
+    # 6. convert to target output
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
@@ -672,6 +786,7 @@ ddbs_flip <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
@@ -716,6 +831,7 @@ ddbs_scale <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -731,23 +847,43 @@ ddbs_scale <- function(
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x)
 
+  
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+  
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- detect_crs(x)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 2.1. Build scale expression using ST_Scale
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    ## 3.3. Build scale expression using ST_Scale
     if (by_feature) {
         # Scale each feature around its own centroid
         # ST_Scale scales around origin (0,0), so translate to origin, scale, translate back
@@ -776,14 +912,15 @@ ddbs_scale <- function(
         )
     }
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+  
+    # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query 
         tmp.query <- glue::glue("
@@ -793,25 +930,30 @@ ddbs_scale <- function(
             FROM {x_list$query_name};
         ")
         ## execute scale query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+  
+    # 5. Get data frame
+  
+    ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest}
         ST_AsWKB({scale_expr}) as {x_geom} 
         FROM {x_list$query_name};
     ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    ## 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+    # 6. convert to target output
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
@@ -839,6 +981,7 @@ ddbs_scale <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
@@ -882,12 +1025,13 @@ ddbs_shear <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
     deprecate_crs(crs_column, crs)
 
-    ## 0. Handle errors
+    # 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
     assert_numeric(x_shear, "x_shear")
@@ -897,23 +1041,43 @@ ddbs_shear <- function(
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x)
 
+  
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- detect_crs(x)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 2.1. Build shear expression using ST_Affine
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    ## 3.3. Build shear expression using ST_Affine
     # Shear matrix: a=1, b=x_shear, d=y_shear, e=1
     if (by_feature) {
         # Shear each feature around its own centroid
@@ -938,14 +1102,15 @@ ddbs_shear <- function(
         )
     }
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+
+    # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query 
         tmp.query <- glue::glue("
@@ -955,25 +1120,29 @@ ddbs_shear <- function(
             FROM {x_list$query_name};
         ")
         ## execute shear query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+
+    # 5. Get data frame
+    ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest}
         ST_AsWKB({shear_expr}) as {x_geom} 
         FROM {x_list$query_name};
     ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+    ## 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+
+    # 6. convert to target output
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )

@@ -48,121 +48,121 @@
 #' ddbs_area(argentina_sf)
 #' }
 ddbs_area <- function(
-  x,
-  conn = NULL,
-  name = NULL,
-  new_column = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
-  output = NULL,
-  overwrite = FALSE,
-  quiet = FALSE) {
-  
-  deprecate_crs(crs_column, crs)
+    x,
+    conn = NULL,
+    name = NULL,
+    new_column = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
 
-  # 0. Validate inputs
-  assert_xy(x, "x")
-  assert_name(name)
-  assert_logic(overwrite, "overwrite")
-  assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
+    # 0. Validate inputs
+    assert_xy(x, "x")
+    assert_name(name)
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    assert_conn_character(conn, x)
     
     if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
 
-  # 1. Manage connection to DB
+    # 1. Manage connection to DB
 
-  ## 1.1. Pre-extract attributes (CRS and geometry column name)
-  ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
-  sf_col_x <- attr(x, "sf_column")
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- detect_crs(x)
+    sf_col_x <- attr(x, "sf_column")
 
-  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-  ## validate character table names
-  x <- normalize_spatial_input(x, conn)
-
-
-  # 2. Manage connection to DB
-
-  ## 2.1. Resolve connections and handle imports
-  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-  target_conn  <- resolve_conn$conn
-  x            <- resolve_conn$x
-  ## register cleanup of the connection
-  on.exit(resolve_conn$cleanup(), add = TRUE)
-
-  ## 2.2. Get query list of table names
-  x_list <- get_query_list(x, target_conn)
-  on.exit(x_list$cleanup(), add = TRUE)
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
 
 
-  # 3. Prepare parameters for the query
+    # 2. Manage connection to DB
 
-  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-  assert_geometry_column(x_geom, x_list)
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
 
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
 
 
-  # 4. Handle new column = NULL
-  if (is.null(new_column)) {
-      tmp.query <- glue::glue("
-          SELECT ST_Area({x_geom}) as area,
-          FROM {x_list$query_name};
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+    assert_geometry_column(x_geom, x_list)
+
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+
+    # 4. Handle new column = NULL
+    if (is.null(new_column)) {
+        tmp.query <- glue::glue("
+            SELECT ST_Area({x_geom}) as area,
+            FROM {x_list$query_name};
+            ")
+
+            data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
+            return(data_vec[, 1])
+    }
+
+
+    # 5. if name is not NULL (i.e. no data frame returned)
+    if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
+        ## handle overwrite
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
+
+        ## create query
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            ST_Area({x_geom}) AS {new_column},
+            {x_geom}
+            FROM {x_list$query_name};
         ")
+        ## execute area query
+        DBI::dbExecute(target_conn, tmp.query)
+        feedback_query(quiet)
+        return(invisible(TRUE))
+    }
 
-        data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
-        return(data_vec[, 1])
-  }
+    # 5. Get data frame
+    ## 5.1. create query
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        ST_Area({x_geom}) AS {new_column},
+        ST_AsWKB({x_geom}) as {x_geom}
+        FROM {x_list$query_name}
+    ")
+    ## 5.2. retrieve results of the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
+    ## 6. convert to target output
+    data_sf <- ddbs_handle_output(
+        data       = data_tbl,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
 
-  # 5. if name is not NULL (i.e. no data frame returned)
-  if (!is.null(name)) {
-
-      ## convenient names of table and/or schema.table
-      name_list <- get_query_name(name)
-
-      ## handle overwrite
-      overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-      ## create query
-      tmp.query <- glue::glue("
-          CREATE TABLE {name_list$query_name} AS
-          SELECT {x_rest}
-          ST_Area({x_geom}) AS {new_column},
-          {x_geom}
-          FROM {x_list$query_name};
-      ")
-      ## execute area query
-      DBI::dbExecute(target_conn, tmp.query)
-      feedback_query(quiet)
-      return(invisible(TRUE))
-  }
-
-  # 5. Get data frame
-  ## 5.1. create query
-  tmp.query <- glue::glue("
-      SELECT {x_rest}
-      ST_Area({x_geom}) AS {new_column},
-      ST_AsWKB({x_geom}) as {x_geom}
-      FROM {x_list$query_name}
-  ")
-  ## 5.2. retrieve results of the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-  ## 6. convert to target output
-  data_sf <- ddbs_handle_output(
-      data       = data_tbl,
-      conn       = target_conn,
-      output     = output,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
-      x_geom     = x_geom
-  )
-
-  feedback_query(quiet)
-  return(data_sf)
+    feedback_query(quiet)
+    return(data_sf)
 }
 
 
@@ -319,7 +319,7 @@ ddbs_length <- function(
   ## 5.2. retrieve results of the query
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  ## 6. convert to target output
+  # 6. convert to target output
   data_sf <- ddbs_handle_output(
       data       = data_tbl,
       conn       = target_conn,
