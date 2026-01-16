@@ -1,0 +1,70 @@
+name: Build DuckDB Spatial Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      spatial_repo:
+        description: 'DuckDB Spatial Repository'
+        required: true
+        default: 'duckdb/duckdb-spatial'
+      duckdb_spatial_ref:
+        description: 'DuckDB Spatial Tag/Branch'
+        required: true
+        default: 'main' 
+      duckdb_ref:
+        description: 'DuckDB Commit/Tag (must match R package)'
+        required: true
+        default: 'main'
+
+jobs:
+  build-extension:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+      GEN: ninja
+
+    steps:
+      - name: Install Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build build-essential cmake git
+
+      - name: Checkout DuckDB Spatial
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.spatial_repo }}
+          ref: ${{ inputs.duckdb_spatial_ref }}
+          path: duckdb-spatial
+          submodules: recursive
+
+      - name: Checkout DuckDB (Override Submodule)
+        working-directory: duckdb-spatial/duckdb
+        run: |
+          git fetch origin ${{ inputs.duckdb_ref }}
+          # Try to checkout the ref, if ambiguous (e.g. branch vs tag), try origin/branch
+          git checkout ${{ inputs.duckdb_ref }} || git checkout origin/${{ inputs.duckdb_ref }}
+          echo "DuckDB Version Checked Out:"
+          git describe --tags --always
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: ${{ github.workspace }}/vcpkg 
+
+      - name: Build Extension (Release)
+        working-directory: duckdb-spatial
+        run: |
+          # VCPKG_TOOLCHAIN_PATH and GEN are set in env
+          make release
+
+      - name: List Output
+        run: |
+          ls -R duckdb-spatial/build/release/extension/spatial/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spatial-extension-linux-amd64
+          path: duckdb-spatial/build/release/extension/spatial/spatial.duckdb_extension

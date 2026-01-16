@@ -109,6 +109,7 @@ ddbs_quadkey <- function(
   }
   ## 1.2. get query list of table names
   x_list <- get_query_list(x, conn)
+  on.exit(x_list$cleanup(), add = TRUE)
 
   ## 2. get name of geometry column
   ## 2.1. get column names
@@ -210,4 +211,3 @@ ddbs_quadkey <- function(
   return(prep_data)
 
 }
-

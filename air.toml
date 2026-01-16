@@ -1,3 +1,2 @@
 [format]
 default-exclude   = true
-exclude = ["R/"]
