@@ -121,12 +121,30 @@ jobs:
 
       - name: Checkout DuckDB (Override Submodule)
         working-directory: duckdb-spatial/duckdb
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Fetch all branches and tags to ensure we have the commit
           git fetch --all --tags
           
+          REF="${{ steps.duckdb_version.outputs.DUCKDB_REF }}"
+          
           # Try to checkout the ref/SHA
-          git checkout ${{ steps.duckdb_version.outputs.DUCKDB_REF }} || git checkout origin/${{ steps.duckdb_version.outputs.DUCKDB_REF }}
+          if ! git checkout "$REF" && ! git checkout "origin/$REF"; then
+             echo "Standard checkout failed for $REF. Searching for associated Pull Request..."
+             
+             # Use gh CLI to find the PR containing this commit
+             PR_NUM=$(gh api "/repos/duckdb/duckdb/commits/$REF/pulls" --jq '.[0].number' || echo "")
+             
+             if [ -n "$PR_NUM" ] && [ "$PR_NUM" != "null" ]; then
+                echo "Found PR #$PR_NUM. Fetching ref..."
+                git fetch origin "refs/pull/$PR_NUM/head"
+                git checkout "$REF"
+             else
+                echo "Error: Could not find PR or commit for $REF"
+                exit 1
+             fi
+          fi
           echo "DuckDB Version Checked Out:"
           git describe --tags --always
 
