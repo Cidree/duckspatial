@@ -57,10 +57,11 @@ jobs:
 
       - name: Install duckdb R package
         run: |
-          # Use the official pak installer which handles architecture-specific binaries automatically
-          source("https://r-lib.github.io/p/pak/install.R")
+          # Install pak using system default repositories (PPM on Linux, CRAN on Windows/macOS)
+          # This ensures we get binaries on all platforms
+          install.packages("pak")
           
-          # Install duckdb from R-Universe (pak will find the Linux/macOS/Windows binaries)
+          # Install duckdb from R-Universe using pak
           pak::pkg_install("duckdb", repos = "https://duckdb.r-universe.dev")
         shell: Rscript {0}
         env:
