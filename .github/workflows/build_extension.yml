@@ -10,26 +10,106 @@ on:
       duckdb_spatial_ref:
         description: 'DuckDB Spatial Tag/Branch'
         required: true
-        default: 'main' 
-      duckdb_ref:
-        description: 'DuckDB Commit/Tag (must match R package)'
-        required: true
         default: 'main'
+      duckdb_ref:
+        description: 'DuckDB Commit/Tag (or "auto")'
+        required: false
+        default: 'auto'
+  schedule:
+    - cron: '0 4 * * *'  # Runs at 04:00 UTC daily
 
 jobs:
   build-extension:
-    name: Build Extension
-    runs-on: ubuntu-latest
+    name: Build Extension - ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-latest
+            vcpkg_triplet: x64-linux-release
+            artifact_name: spatial-extension-linux-x64
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            vcpkg_triplet: arm64-linux-release
+            artifact_name: spatial-extension-linux-arm64
+          - platform: macos-arm64
+            runner: macos-14
+            vcpkg_triplet: arm64-osx-release
+            artifact_name: spatial-extension-macos-arm64
+          - platform: windows-x64
+            runner: windows-latest
+            vcpkg_triplet: x64-windows-static-md-release
+            artifact_name: spatial-extension-windows-x64
+    
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+      VCPKG_TARGET_TRIPLET: ${{ matrix.vcpkg_triplet }}
+      VCPKG_HOST_TRIPLET: ${{ matrix.vcpkg_triplet }}
       GEN: ninja
 
     steps:
-      - name: Install Build Tools
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: Install duckdb R package
+        run: |
+          # Install from R-Universe to get latest daily builds
+          install.packages("duckdb", repos = c("https://duckdb.r-universe.dev", "https://cloud.r-project.org"))
+        shell: Rscript {0}
+
+      - name: Determines DuckDB Version/Commit
+        id: duckdb_version
+        run: |
+          input_ref <- "${{ github.event.inputs.duckdb_ref }}"
+          
+          if (input_ref == "" || input_ref == "auto") {
+            message("Auto-detecting DuckDB version from installed R package...")
+            
+            version_info <- packageDescription("duckdb")
+            version <- version_info$Version
+            
+            duckdb_ref <- tryCatch({
+              con <- DBI::dbConnect(duckdb::duckdb())
+              src_id <- DBI::dbGetQuery(con, 'PRAGMA version')$source_id
+              DBI::dbDisconnect(con)
+              src_id
+            }, error = function(e) {
+              sprintf("v%s", version)
+            })
+            
+            # If src_id is suspicious (e.g. not a hash or 'v..') use formatted version
+            if (nchar(duckdb_ref) < 4) {
+               duckdb_ref <- sprintf("v%s", version)
+            }
+            
+            message(sprintf("DETECTED_REF=%s", duckdb_ref))
+          } else {
+            message(sprintf("Using manual DuckDB ref: %s", input_ref))
+            duckdb_ref <- input_ref
+          }
+          
+          cat(sprintf("DUCKDB_REF=%s\n", duckdb_ref), file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
+        shell: Rscript {0}
+
+      - name: Install Build Tools (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build build-essential cmake git
+
+      - name: Install Build Tools (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja cmake
+
+      - name: Install Build Tools (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install ninja cmake -y
 
       - name: Checkout DuckDB Spatial
         uses: actions/checkout@v4
@@ -42,9 +122,9 @@ jobs:
       - name: Checkout DuckDB (Override Submodule)
         working-directory: duckdb-spatial/duckdb
         run: |
-          git fetch origin ${{ inputs.duckdb_ref }}
+          git fetch origin ${{ steps.duckdb_version.outputs.DUCKDB_REF }}
           # Try to checkout the ref, if ambiguous (e.g. branch vs tag), try origin/branch
-          git checkout ${{ inputs.duckdb_ref }} || git checkout origin/${{ inputs.duckdb_ref }}
+          git checkout ${{ steps.duckdb_version.outputs.DUCKDB_REF }} || git checkout origin/${{ steps.duckdb_version.outputs.DUCKDB_REF }}
           echo "DuckDB Version Checked Out:"
           git describe --tags --always
 
@@ -57,15 +137,21 @@ jobs:
       - name: Build Extension (Release)
         working-directory: duckdb-spatial
         run: |
-          # VCPKG_TOOLCHAIN_PATH and GEN are set in env
+          # VCPKG_TOOLCHAIN_PATH, VCPKG_TARGET_TRIPLET, VCPKG_HOST_TRIPLET and GEN are set in env
           make release
 
-      - name: List Output
+      - name: List Output (Unix)
+        if: runner.os != 'Windows'
         run: |
           ls -R duckdb-spatial/build/release/extension/spatial/
+
+      - name: List Output (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          dir duckdb-spatial\build\release\extension\spatial\ /s
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: spatial-extension-linux-amd64
+          name: ${{ matrix.artifact_name }}
           path: duckdb-spatial/build/release/extension/spatial/spatial.duckdb_extension
