@@ -55,61 +55,12 @@ jobs:
         with:
           r-version: 'release'
 
-      - name: Install duckdb R package
-        run: |
-          # Install pak using system default repositories (PPM on Linux, CRAN on Windows/macOS)
-          install.packages("pak")
-          
-          # Add DuckDB repo to existing repositories (preserves Linux PPM if active)
-          r_repos <- getOption("repos")
-          r_repos["DUCKDB"] <- "https://duckdb.r-universe.dev"
-          options(repos = r_repos)
-          
-          # Install duckdb using pak
-          pak::pkg_install("duckdb")
-        shell: Rscript {0}
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Determines DuckDB Version/Commit
-        id: duckdb_version
-        run: |
-          input_ref <- "${{ github.event.inputs.duckdb_ref }}"
-          
-          if (input_ref == "" || input_ref == "auto") {
-            message("Auto-detecting DuckDB version from installed R package...")
-            
-            version_info <- packageDescription("duckdb")
-            version <- version_info$Version
-            
-            duckdb_ref <- tryCatch({
-              con <- DBI::dbConnect(duckdb::duckdb())
-              src_id <- DBI::dbGetQuery(con, 'PRAGMA version')$source_id
-              DBI::dbDisconnect(con)
-              src_id
-            }, error = function(e) {
-              sprintf("v%s", version)
-            })
-            
-            # If src_id is suspicious (e.g. not a hash or 'v..') use formatted version
-            if (nchar(duckdb_ref) < 4) {
-               duckdb_ref <- sprintf("v%s", version)
-            }
-            
-            message(sprintf("DETECTED_REF=%s", duckdb_ref))
-          } else {
-            message(sprintf("Using manual DuckDB ref: %s", input_ref))
-            duckdb_ref <- input_ref
-          }
-          
-          cat(sprintf("DUCKDB_REF=%s\n", duckdb_ref), file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
-        shell: Rscript {0}
-
       - name: Install Build Tools (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build build-essential cmake git
+          sudo apt-get install -y ninja-build build-essential cmake git \
+            libcurl4-openssl-dev libssl-dev
 
       - name: Install Build Tools (macOS)
         if: runner.os == 'macOS'
@@ -120,6 +71,56 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           choco install ninja cmake -y
+
+      - name: Install duckdb R package
+        run: |
+          # Install pak using system default repositories (PPM on Linux, CRAN on Windows/macOS)
+          install.packages("pak")
+
+          # Add DuckDB repo to existing repositories (preserves Linux PPM if active)
+          r_repos <- getOption("repos")
+          r_repos["DUCKDB"] <- "https://duckdb.r-universe.dev"
+          options(repos = r_repos)
+
+          # Install duckdb using pak
+          pak::pkg_install("duckdb")
+        shell: Rscript {0}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Determines DuckDB Version/Commit
+        id: duckdb_version
+        run: |
+          input_ref <- "${{ github.event.inputs.duckdb_ref }}"
+
+          if (input_ref == "" || input_ref == "auto") {
+            message("Auto-detecting DuckDB version from installed R package...")
+
+            version_info <- packageDescription("duckdb")
+            version <- version_info$Version
+
+            duckdb_ref <- tryCatch({
+              con <- DBI::dbConnect(duckdb::duckdb())
+              src_id <- DBI::dbGetQuery(con, 'PRAGMA version')$source_id
+              DBI::dbDisconnect(con)
+              src_id
+            }, error = function(e) {
+              sprintf("v%s", version)
+            })
+
+            # If src_id is suspicious (e.g. not a hash or 'v..') use formatted version
+            if (nchar(duckdb_ref) < 4) {
+               duckdb_ref <- sprintf("v%s", version)
+            }
+
+            message(sprintf("DETECTED_REF=%s", duckdb_ref))
+          } else {
+            message(sprintf("Using manual DuckDB ref: %s", input_ref))
+            duckdb_ref <- input_ref
+          }
+
+          cat(sprintf("DUCKDB_REF=%s\n", duckdb_ref), file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
+        shell: Rscript {0}
 
       - name: Checkout DuckDB Spatial
         uses: actions/checkout@v4
