@@ -1,2 +1,1 @@
-#' @param conn A connection object to a DuckDB database
-
+#' @param conn A `DBIConnection` object to a DuckDB database

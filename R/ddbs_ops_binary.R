@@ -67,7 +67,9 @@ ddbs_intersection <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
+    on.exit(x_list$cleanup(), add = TRUE)
     y_list <- get_query_list(y, conn)
+    on.exit(y_list$cleanup(), add = TRUE)
     assert_crs(conn, x_list$query_name, y_list$query_name)
 
     ## 2. get name of geometry column
@@ -205,7 +207,9 @@ ddbs_difference <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
+    on.exit(x_list$cleanup(), add = TRUE)
     y_list <- get_query_list(y, conn)
+    on.exit(y_list$cleanup(), add = TRUE)
     assert_crs(conn, x_list$query_name, y_list$query_name)
 
     # 2. Prepare params for query
