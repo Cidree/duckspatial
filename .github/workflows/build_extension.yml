@@ -124,27 +124,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Fetch all branches and tags to ensure we have the commit
-          git fetch --all --tags
+          # Ensure we have tags for git describe
+          git fetch origin --tags --quiet
           
           REF="${{ steps.duckdb_version.outputs.DUCKDB_REF }}"
+          echo "Resolving full SHA for DuckDB reference: $REF"
           
-          # Try to checkout the ref/SHA
-          if ! git checkout "$REF" && ! git checkout "origin/$REF"; then
-             echo "Standard checkout failed for $REF. Searching for associated Pull Request..."
-             
-             # Use gh CLI to find the PR containing this commit
-             PR_NUM=$(gh api "/repos/duckdb/duckdb/commits/$REF/pulls" --jq '.[0].number' || echo "")
-             
-             if [ -n "$PR_NUM" ] && [ "$PR_NUM" != "null" ]; then
-                echo "Found PR #$PR_NUM. Fetching ref..."
-                git fetch origin "refs/pull/$PR_NUM/head"
-                git checkout "$REF"
-             else
-                echo "Error: Could not find PR or commit for $REF"
-                exit 1
-             fi
-          fi
+          # Resolve to 40-character SHA to avoid ambiguity and facilitate direct fetch
+          FULL_SHA=$(gh api "/repos/duckdb/duckdb/commits/$REF" --jq '.sha' || echo "$REF")
+          echo "Determined Full SHA: $FULL_SHA"
+          
+          # Fetch the specific commit directly into a local reference
+          # This is the most robust way to get a specific SHA on GitHub
+          git fetch origin "+$FULL_SHA:refs/remotes/origin/target_sha" --quiet || echo "Direct fetch unsuccessful, checking local cache..."
+          
+          # Checkout the commit in detached HEAD state
+          git checkout --detach "$FULL_SHA"
+          
           echo "DuckDB Version Checked Out:"
           git describe --tags --always
 
