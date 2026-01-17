@@ -84,7 +84,8 @@ jobs:
           repository: ${{ inputs.spatial_repo || 'duckdb/duckdb-spatial' }}
           ref: ${{ inputs.duckdb_spatial_ref || 'main' }}
           path: duckdb-spatial
-          submodules: recursive
+          submodules: 'recursive'
+          fetch-depth: 0
 
       - name: Checkout DuckDB (Override Submodule)
         if: github.event.inputs.duckdb_ref != '' && github.event.inputs.duckdb_ref != 'auto'
@@ -117,12 +118,18 @@ jobs:
         shell: bash
         run: |
           echo "Verifying DuckDB submodule..."
+          echo "Contents of duckdb-spatial:"
+          ls -la duckdb-spatial/
+          echo ""
+          echo "Contents of duckdb-spatial/duckdb:"
+          ls -la duckdb-spatial/duckdb/ || echo "duckdb directory doesn't exist"
+          echo ""
+          echo "Contents of duckdb-spatial/duckdb/tools:"
+          ls -la duckdb-spatial/duckdb/tools/ || echo "tools directory doesn't exist"
+          echo ""
+
           if [ ! -d "duckdb-spatial/duckdb/tools/rpkg" ]; then
             echo "Error: DuckDB R package directory not found!"
-            echo "Contents of duckdb-spatial:"
-            ls -la duckdb-spatial/
-            echo "Contents of duckdb-spatial/duckdb:"
-            ls -la duckdb-spatial/duckdb/ || echo "duckdb directory doesn't exist"
             exit 1
           fi
           echo "DuckDB R package directory verified"
