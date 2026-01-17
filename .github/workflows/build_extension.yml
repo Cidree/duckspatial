@@ -81,8 +81,8 @@ jobs:
       - name: Checkout DuckDB Spatial
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.spatial_repo }}
-          ref: ${{ inputs.duckdb_spatial_ref }}
+          repository: ${{ inputs.spatial_repo || 'duckdb/duckdb-spatial' }}
+          ref: ${{ inputs.duckdb_spatial_ref || 'main' }}
           path: duckdb-spatial
           submodules: recursive
 
@@ -113,6 +113,20 @@ jobs:
           echo "DuckDB Version Checked Out:"
           git describe --tags --always
 
+      - name: Verify DuckDB Submodule
+        shell: bash
+        run: |
+          echo "Verifying DuckDB submodule..."
+          if [ ! -d "duckdb-spatial/duckdb/tools/rpkg" ]; then
+            echo "Error: DuckDB R package directory not found!"
+            echo "Contents of duckdb-spatial:"
+            ls -la duckdb-spatial/
+            echo "Contents of duckdb-spatial/duckdb:"
+            ls -la duckdb-spatial/duckdb/ || echo "duckdb directory doesn't exist"
+            exit 1
+          fi
+          echo "DuckDB R package directory verified"
+
       - name: Build DuckDB R Package (Unix)
         if: runner.os != 'Windows'
         working-directory: duckdb-spatial/duckdb/tools/rpkg
@@ -120,8 +134,7 @@ jobs:
         run: |
           echo "Building DuckDB R package from source..."
 
-          # Set up ccache for compilation
-          export PATH="/usr/local/opt/ccache/libexec:$PATH"
+          # Set up ccache for compilation (ccache-action already added it to PATH)
           export CCACHE_DIR="${{ github.workspace }}/.ccache"
 
           # Build the package (source tarball)
