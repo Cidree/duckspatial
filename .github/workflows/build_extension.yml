@@ -58,11 +58,15 @@ jobs:
       - name: Install duckdb R package
         run: |
           # Install pak using system default repositories (PPM on Linux, CRAN on Windows/macOS)
-          # This ensures we get binaries on all platforms
           install.packages("pak")
           
-          # Install duckdb from R-Universe using pak
-          pak::pkg_install("duckdb", repos = "https://duckdb.r-universe.dev")
+          # Add DuckDB repo to existing repositories (preserves Linux PPM if active)
+          r_repos <- getOption("repos")
+          r_repos["DUCKDB"] <- "https://duckdb.r-universe.dev"
+          options(repos = r_repos)
+          
+          # Install duckdb using pak
+          pak::pkg_install("duckdb")
         shell: Rscript {0}
         env:
           GH_TOKEN: ${{ github.token }}
