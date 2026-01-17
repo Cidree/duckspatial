@@ -133,13 +133,14 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          MSYS_NO_PATHCONV: 1
         run: |
           # Ensure we have tags for git describe
           git fetch origin --tags --quiet
-          
+
           REF="${{ steps.duckdb_version.outputs.DUCKDB_REF }}"
           echo "Resolving full SHA for DuckDB reference: $REF"
-          
+
           # Resolve to 40-character SHA to avoid ambiguity and facilitate direct fetch
           FULL_SHA=$(gh api "/repos/duckdb/duckdb/commits/$REF" --jq '.sha' || echo "$REF")
           echo "Determined Full SHA: $FULL_SHA"
