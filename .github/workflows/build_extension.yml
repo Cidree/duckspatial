@@ -122,10 +122,10 @@ jobs:
       - name: Checkout DuckDB (Override Submodule)
         working-directory: duckdb-spatial/duckdb
         run: |
-          # Try fetching specific sha/ref first, fallback to fetching all refs (e.g. if SHA is not a ref)
-          git fetch origin ${{ steps.duckdb_version.outputs.DUCKDB_REF }} || git fetch origin
+          # Fetch all branches and tags to ensure we have the commit
+          git fetch --all --tags
           
-          # Try to checkout the ref, if ambiguous (e.g. branch vs tag), try origin/branch
+          # Try to checkout the ref/SHA
           git checkout ${{ steps.duckdb_version.outputs.DUCKDB_REF }} || git checkout origin/${{ steps.duckdb_version.outputs.DUCKDB_REF }}
           echo "DuckDB Version Checked Out:"
           git describe --tags --always
