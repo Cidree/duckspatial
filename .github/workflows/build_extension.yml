@@ -57,9 +57,12 @@ jobs:
 
       - name: Install duckdb R package
         run: |
-          # Install from R-Universe to get latest daily builds
-          install.packages("duckdb", repos = c("https://duckdb.r-universe.dev", "https://cloud.r-project.org"))
+          # Use pak for faster binary installation across all platforms
+          install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel")
+          pak::pkg_install("duckdb", lib = .libPaths()[1])
         shell: Rscript {0}
+        env:
+          PKG_REPOS: https://duckdb.r-universe.dev
 
       - name: Determines DuckDB Version/Commit
         id: duckdb_version
@@ -121,6 +124,7 @@ jobs:
 
       - name: Checkout DuckDB (Override Submodule)
         working-directory: duckdb-spatial/duckdb
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -135,11 +139,10 @@ jobs:
           echo "Determined Full SHA: $FULL_SHA"
           
           # Fetch the specific commit directly into a local reference
-          # This is the most robust way to get a specific SHA on GitHub
           git fetch origin "+$FULL_SHA:refs/remotes/origin/target_sha" --quiet || echo "Direct fetch unsuccessful, checking local cache..."
           
-          # Checkout the commit in detached HEAD state
-          git checkout --detach "$FULL_SHA"
+          # Checkout the commit in detached HEAD state (quietly)
+          git checkout -q --detach "$FULL_SHA"
           
           echo "DuckDB Version Checked Out:"
           git describe --tags --always
