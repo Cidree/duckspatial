@@ -101,7 +101,6 @@ ddbs_rotate <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -283,7 +282,6 @@ ddbs_rotate_3d <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -419,7 +417,6 @@ ddbs_shift <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -553,7 +550,6 @@ ddbs_flip <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -740,7 +736,6 @@ ddbs_scale <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -906,7 +901,6 @@ ddbs_shear <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)

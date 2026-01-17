@@ -12,15 +12,9 @@ assert_logic <- function(arg, ref = "quiet") { # nocov start
 
 assert_xy <- function(xy, ref = "x") { # nocov start
 
-    valid_types <- inherits(xy, "sf") || 
-                   inherits(xy, "duckspatial_df") ||
-                   inherits(xy, "tbl_sql") ||
-                   inherits(xy, "tbl_lazy") ||
-                   is.character(xy)
-    
-    if (!valid_types) {
+    if (!(inherits(xy, "sf") || is.character(xy))) {
         cli::cli_abort(
-            "{.arg {ref}} must be an sf object, duckspatial_df, tbl_lazy, or a table name string.",
+            "{.arg {ref}} must be either an sf object or a string.",
             .frame = parent.frame()
         )
     }
@@ -84,15 +78,12 @@ assert_geometry_column <- function(geom, name_list) { # nocov start
 
 
 
-## assert crs_column (needed for ddbs_filter and ddbs_join)
-## cols can be a character vector or a collapsed string
+## assert crs_column (needed for ddbs_filter)
 assert_crs_column <- function(crs_column, cols) { # nocov start
-    if (!is.null(crs_column)) {
-        # Handle both vector and string inputs
-        found <- crs_column %in% cols | any(grepl(crs_column, cols, fixed = TRUE))
-        if (!found)
+    if (!is.null(crs_column))
+        if (!crs_column %in% cols & !grepl(crs_column, cols))
             cli::cli_abort("CRS column <{crs_column}> do not found in the table. If the data do not have CRS column, set the argument `crs_column = NULL`")
-    }
+
 } # nocov end
 
 
@@ -108,14 +99,12 @@ assert_predicate_id <- function(id, conn, lst) { # nocov start
 ## assert if the CRS of `x` and `y` is the same
 assert_crs <- function(conn, x, y) { # nocov start
 
-  ## get CRS using character method
-  crs_x <- duckspatial::ddbs_crs(x, conn = conn)
-  crs_y <- duckspatial::ddbs_crs(y, conn = conn)
+  ## get CRS
+  crs_x <- duckspatial::ddbs_crs(conn, x)
+  crs_y <- duckspatial::ddbs_crs(conn, y)
 
-  ## abort if CRS is different (use crs_equal for proper comparison)
-  if (!crs_equal(crs_x, crs_y)) {
-    cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
-  }
+  ## abort if CRS is different
+  if (crs_x != crs_y) cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
 
 } # nocov end
 

@@ -2,49 +2,25 @@
 % Please edit documentation in R/ddbs_utils.R
 \name{ddbs_crs}
 \alias{ddbs_crs}
-\alias{ddbs_crs.duckspatial_df}
-\alias{ddbs_crs.sf}
-\alias{ddbs_crs.tbl_duckdb_connection}
-\alias{ddbs_crs.character}
-\alias{ddbs_crs.duckdb_connection}
-\alias{ddbs_crs.default}
-\title{Check CRS of spatial objects or database tables}
+\title{Check CRS of a table}
 \usage{
-ddbs_crs(x, ...)
-
-\method{ddbs_crs}{duckspatial_df}(x, ...)
-
-\method{ddbs_crs}{sf}(x, ...)
-
-\method{ddbs_crs}{tbl_duckdb_connection}(x, ...)
-
-\method{ddbs_crs}{character}(x, conn, crs_column = "crs_duckspatial", ...)
-
-\method{ddbs_crs}{duckdb_connection}(x, name, ...)
-
-\method{ddbs_crs}{default}(x, ...)
+ddbs_crs(conn, name, crs_column = "crs_duckspatial")
 }
 \arguments{
-\item{x}{An object containing spatial data. Can be:
-\itemize{
-\item \code{duckspatial_df}: Lazy spatial data frame (CRS from attributes)
-\item \code{sf}: sf object (CRS from sf metadata)
-\item \code{character}: Name of table in database (requires \code{conn})
-}}
+\item{conn}{A connection object to a DuckDB database}
 
-\item{...}{Additional arguments passed to methods}
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names.}
 
-\item{conn}{A DuckDB connection (required for character method)}
-
-\item{crs_column}{Column name storing CRS info (default: "crs_duckspatial")}
-
-\item{name}{Table name (for backward compatibility when first arg is connection)}
+\item{crs_column}{a character string of length one specifying the column
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}})}
 }
 \value{
-CRS object from \code{sf} package
+CRS object
 }
 \description{
-This is an S3 generic that extracts CRS information from various spatial objects.
+Check CRS of a table
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
@@ -53,18 +29,16 @@ library(duckdb)
 library(duckspatial)
 library(sf)
 
-# Method 1: duckspatial_df objects
-nc <- ddbs_open_dataset(system.file("shape/nc.shp", package = "sf"))
-ddbs_crs(nc)
-
-# Method 2: sf objects
-nc_sf <- st_read(system.file("shape/nc.shp", package = "sf"))
-ddbs_crs(nc_sf)
-
-# Method 3: table name in database
+# create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
-ddbs_write_vector(conn, nc_sf, "nc_table")
-ddbs_crs(conn, "nc_table")
-ddbs_stop_conn(conn)
+
+## read data
+countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+
+## store in duckdb
+ddbs_write_vector(conn, countries_sf, "countries")
+
+## check CRS
+ddbs_crs(conn, "countries")
 \dontshow{\}) # examplesIf}
 }

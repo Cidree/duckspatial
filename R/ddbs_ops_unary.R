@@ -68,7 +68,6 @@ ddbs_buffer <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -185,7 +184,6 @@ ddbs_centroid <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
 
     ## 2. get name of geometry column
@@ -307,7 +305,6 @@ ddbs_is_valid <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -439,7 +436,6 @@ ddbs_make_valid <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -560,7 +556,6 @@ ddbs_is_simple <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -695,7 +690,6 @@ ddbs_simplify <- function(
         }
         ## 1.2. get query list of table names
         x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -818,7 +812,6 @@ ddbs_exterior_ring <- function(
         }
         ## 1.2. get query list of table names
         x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -939,7 +932,6 @@ ddbs_make_polygon <- function(
         }
         ## 1.2. get query list of table names
         x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -1088,7 +1080,6 @@ ddbs_concave_hull <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
     ## 2. get name of geometry column
     x_geom <- get_geom_name(conn, x_list$query_name)
@@ -1218,7 +1209,6 @@ ddbs_convex_hull <- function(
     }
     ## 1.2. get query list of table names
     x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
 
     ## 2. get name of geometry column

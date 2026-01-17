@@ -17,13 +17,8 @@ ddbs_union(
 )
 }
 \arguments{
-\item{x}{Input spatial data. Can be:
-\itemize{
-\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
-\item An \code{sf} object
-\item A \code{tbl_lazy} from dbplyr
-\item A character string naming a table/view in \code{conn}
-}
+\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database \code{conn}.
 Data is returned from this object.}
 
 \item{y}{optional. A second table name, \code{sf} object, or DuckDB connection
@@ -42,7 +37,7 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
+\item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
 \item{crs_column}{character string specifying the name of the CRS column.

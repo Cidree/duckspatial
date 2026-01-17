@@ -13,16 +13,16 @@ ddbs_glimpse(
 )
 }
 \arguments{
-\item{conn}{A \code{DBIConnection} object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
 names.}
 
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
+\item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
+\item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
