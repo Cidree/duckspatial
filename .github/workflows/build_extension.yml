@@ -12,11 +12,11 @@ on:
         required: true
         default: 'main'
       duckdb_ref:
-        description: 'DuckDB Commit/Tag (or "auto")'
+        description: 'DuckDB Commit/Tag (leave empty to use submodule version)'
         required: false
-        default: 'auto'
+        default: ''
   schedule:
-    - cron: '0 4 * * *'  # Runs at 04:00 UTC daily
+    - cron: '0 4 * * 0'  # Runs at 04:00 UTC every Sunday
 
 jobs:
   build-extension:
@@ -72,53 +72,11 @@ jobs:
         run: |
           choco install ninja cmake -y
 
-      - name: Install duckdb R package
-        run: |
-          # Install pak using system default repositories (PPM on Linux, CRAN on Windows/macOS)
-          install.packages("pak")
-
-          # Add DuckDB r-universe repo to pak (provides pre-built binaries)
-          pak::repo_add(DUCKDB = "https://duckdb.r-universe.dev")
-
-          # Install duckdb using pak
-          pak::pkg_install("duckdb")
-        shell: Rscript {0}
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Determines DuckDB Version/Commit
-        id: duckdb_version
-        run: |
-          input_ref <- "${{ github.event.inputs.duckdb_ref }}"
-
-          if (input_ref == "" || input_ref == "auto") {
-            message("Auto-detecting DuckDB version from installed R package...")
-
-            version_info <- packageDescription("duckdb")
-            version <- version_info$Version
-
-            duckdb_ref <- tryCatch({
-              con <- DBI::dbConnect(duckdb::duckdb())
-              src_id <- DBI::dbGetQuery(con, 'PRAGMA version')$source_id
-              DBI::dbDisconnect(con)
-              src_id
-            }, error = function(e) {
-              sprintf("v%s", version)
-            })
-
-            # If src_id is suspicious (e.g. not a hash or 'v..') use formatted version
-            if (nchar(duckdb_ref) < 4) {
-               duckdb_ref <- sprintf("v%s", version)
-            }
-
-            message(sprintf("DETECTED_REF=%s", duckdb_ref))
-          } else {
-            message(sprintf("Using manual DuckDB ref: %s", input_ref))
-            duckdb_ref <- input_ref
-          }
-
-          cat(sprintf("DUCKDB_REF=%s\n", duckdb_ref), file = Sys.getenv("GITHUB_OUTPUT"), append = TRUE)
-        shell: Rscript {0}
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.platform }}-duckdb
+          max-size: 2G
 
       - name: Checkout DuckDB Spatial
         uses: actions/checkout@v4
@@ -129,6 +87,7 @@ jobs:
           submodules: recursive
 
       - name: Checkout DuckDB (Override Submodule)
+        if: github.event.inputs.duckdb_ref != '' && github.event.inputs.duckdb_ref != 'auto'
         working-directory: duckdb-spatial/duckdb
         shell: bash
         env:
@@ -138,21 +97,71 @@ jobs:
           # Ensure we have tags for git describe
           git fetch origin --tags --quiet
 
-          REF="${{ steps.duckdb_version.outputs.DUCKDB_REF }}"
+          REF="${{ github.event.inputs.duckdb_ref }}"
           echo "Resolving full SHA for DuckDB reference: $REF"
 
           # Resolve to 40-character SHA to avoid ambiguity and facilitate direct fetch
           FULL_SHA=$(gh api "/repos/duckdb/duckdb/commits/$REF" --jq '.sha' || echo "$REF")
           echo "Determined Full SHA: $FULL_SHA"
-          
+
           # Fetch the specific commit directly into a local reference
           git fetch origin "+$FULL_SHA:refs/remotes/origin/target_sha" --quiet || echo "Direct fetch unsuccessful, checking local cache..."
-          
+
           # Checkout the commit in detached HEAD state (quietly)
           git checkout -q --detach "$FULL_SHA"
-          
+
           echo "DuckDB Version Checked Out:"
           git describe --tags --always
+
+      - name: Build DuckDB R Package (Unix)
+        if: runner.os != 'Windows'
+        working-directory: duckdb-spatial/duckdb/tools/rpkg
+        shell: bash
+        run: |
+          echo "Building DuckDB R package from source..."
+
+          # Set up ccache for compilation
+          export PATH="/usr/local/opt/ccache/libexec:$PATH"
+          export CCACHE_DIR="${{ github.workspace }}/.ccache"
+
+          # Build the package (source tarball)
+          R CMD build .
+
+          # Install and build binary package
+          PKG_NAME=$(ls duckdb_*.tar.gz)
+          echo "Installing $PKG_NAME..."
+          R CMD INSTALL --build "$PKG_NAME"
+
+          # Collect artifacts
+          mkdir -p ${{ github.workspace }}/r-packages
+          mv duckdb_*.tar.gz ${{ github.workspace }}/r-packages/
+          mv duckdb_*.tgz ${{ github.workspace }}/r-packages/ 2>/dev/null || true
+
+          echo "R package built:"
+          ls -lh ${{ github.workspace }}/r-packages/
+
+      - name: Build DuckDB R Package (Windows)
+        if: runner.os == 'Windows'
+        working-directory: duckdb-spatial/duckdb/tools/rpkg
+        shell: bash
+        run: |
+          echo "Building DuckDB R package from source..."
+
+          # Build the package (source tarball)
+          R CMD build .
+
+          # Install and build binary package
+          PKG_NAME=$(ls duckdb_*.tar.gz)
+          echo "Installing $PKG_NAME..."
+          R CMD INSTALL --build "$PKG_NAME"
+
+          # Collect artifacts
+          mkdir -p ${{ github.workspace }}/r-packages
+          mv duckdb_*.tar.gz ${{ github.workspace }}/r-packages/
+          mv duckdb_*.zip ${{ github.workspace }}/r-packages/ 2>/dev/null || true
+
+          echo "R package built:"
+          ls -lh ${{ github.workspace }}/r-packages/
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
@@ -176,8 +185,14 @@ jobs:
         run: |
           dir duckdb-spatial\build\release\extension\spatial\ /s
 
-      - name: Upload Artifact
+      - name: Upload Spatial Extension Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: duckdb-spatial/build/release/extension/spatial/spatial.duckdb_extension
+
+      - name: Upload DuckDB R Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: duckdb-r-package-${{ matrix.platform }}
+          path: r-packages/duckdb_*.*
