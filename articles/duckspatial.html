@@ -70,7 +70,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Intro to duckspatial</h1>
             
-            <h4 data-toc-skip class="date">2026-01-10</h4>
+            <h4 data-toc-skip class="date">2026-01-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/duckspatial.Rmd" class="external-link"><code>vignettes/duckspatial.Rmd</code></a></small>
       <div class="d-none name"><code>duckspatial.Rmd</code></div>
@@ -166,25 +166,24 @@ by each point.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result_sf</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simple feature collection with 6 features and 7 fields</span></span>
-<span><span class="co">#&gt; Geometry type: POINT</span></span>
-<span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591</span></span>
-<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#&gt;     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date</span></span>
-<span><span class="co">#&gt; 1  708      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt;                      geometry</span></span>
-<span><span class="co">#&gt; 1 POINT (-72.75607 -50.15994)</span></span>
-<span><span class="co">#&gt; 2 POINT (-68.77194 -48.12303)</span></span>
-<span><span class="co">#&gt; 3 POINT (-70.82253 -46.23146)</span></span>
-<span><span class="co">#&gt; 4  POINT (-71.6444 -44.25323)</span></span>
-<span><span class="co">#&gt; 5 POINT (-71.18679 -44.60882)</span></span>
-<span><span class="co">#&gt; 6 POINT (-67.79479 -43.01591)</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #555555;"># A duckspatial lazy spatial table</span></span></span>
+<span><span class="co"><span style="color: #555555;">#&gt; #</span> <span style="color: #0000BB;">● CRS:</span> <span style="color: #555555;">EPSG:4326</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">#</span> <span style="color: #0000BB;">● Geometry column:</span> <span style="color: #555555;">geometry</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">#</span> <span style="color: #0000BB;">● Bounding box:</span> <span style="color: #555555;">xmin: -72.756 ymin: -50.16 xmax: -67.795 ymax: -43.016</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #555555;"># Data backed by DuckDB (dbplyr lazy evaluation)</span></span></span>
+<span><span class="co"><span style="color: #555555;">#&gt; # Use</span> <span style="color: #00BB00;">ddbs_collect()</span> <span style="color: #555555;">or</span> <span style="color: #00BB00;">st_as_sf()</span> <span style="color: #555555;">to materialize to sf</span></span></span>
+<span><span class="co"><span style="color: #555555;">#&gt; #</span></span></span>
+<span><span class="co"><span style="color: #555555;">#&gt; </span><span style="color: #949494;"># Source:   SQL [?? x 9]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt;      id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID   date       geometry  </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   708 AR      Argentina ARG       Argentina AR    2021-01-01 <span style="color: #949494;">&lt;raw [32]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>  <span style="text-decoration: underline;">3</span>041 AR      Argentina ARG       Argentina AR    2021-01-01 <span style="color: #949494;">&lt;raw [32]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>  <span style="text-decoration: underline;">9</span>309 AR      Argentina ARG       Argentina AR    2021-01-01 <span style="color: #949494;">&lt;raw [32]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>  <span style="text-decoration: underline;">2</span>446 AR      Argentina ARG       Argentina AR    2021-01-01 <span style="color: #949494;">&lt;raw [32]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>  <span style="text-decoration: underline;">8</span>456 AR      Argentina ARG       Argentina AR    2021-01-01 <span style="color: #949494;">&lt;raw [32]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>  <span style="text-decoration: underline;">2</span>707 AR      Argentina ARG       Argentina AR    2021-01-01 <span style="color: #949494;">&lt;raw [32]&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: crs_duckspatial &lt;chr&gt;</span></span></span></code></pre></div>
 <ul>
 <li>
 <strong>When to use:</strong> quick analysis, prototyping, or when

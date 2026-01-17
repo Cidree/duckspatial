@@ -21,7 +21,7 @@ ddbs_write_vector(
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - data:
 

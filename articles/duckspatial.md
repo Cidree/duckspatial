@@ -94,25 +94,24 @@ result_sf <- ddbs_join(
 )
 
 head(result_sf)
-#> Simple feature collection with 6 features and 7 fields
-#> Geometry type: POINT
-#> Dimension:     XY
-#> Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591
-#> Geodetic CRS:  WGS 84
-#>     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date
-#> 1  708      AR Argentina       ARG Argentina  AR 2021-01-01
-#> 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01
-#> 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01
-#> 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01
-#> 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01
-#> 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01
-#>                      geometry
-#> 1 POINT (-72.75607 -50.15994)
-#> 2 POINT (-68.77194 -48.12303)
-#> 3 POINT (-70.82253 -46.23146)
-#> 4  POINT (-71.6444 -44.25323)
-#> 5 POINT (-71.18679 -44.60882)
-#> 6 POINT (-67.79479 -43.01591)
+#> # A duckspatial lazy spatial table
+#> # ● CRS: EPSG:4326 
+#> # ● Geometry column: geometry 
+#> # ● Bounding box: xmin: -72.756 ymin: -50.16 xmax: -67.795 ymax: -43.016 
+#> # Data backed by DuckDB (dbplyr lazy evaluation)
+#> # Use ddbs_collect() or st_as_sf() to materialize to sf
+#> #
+#> # Source:   SQL [?? x 9]
+#> # Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]
+#>      id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID   date       geometry  
+#>   <int> <chr>   <chr>     <chr>     <chr>     <chr> <date>     <list>    
+#> 1   708 AR      Argentina ARG       Argentina AR    2021-01-01 <raw [32]>
+#> 2  3041 AR      Argentina ARG       Argentina AR    2021-01-01 <raw [32]>
+#> 3  9309 AR      Argentina ARG       Argentina AR    2021-01-01 <raw [32]>
+#> 4  2446 AR      Argentina ARG       Argentina AR    2021-01-01 <raw [32]>
+#> 5  8456 AR      Argentina ARG       Argentina AR    2021-01-01 <raw [32]>
+#> 6  2707 AR      Argentina ARG       Argentina AR    2021-01-01 <raw [32]>
+#> # ℹ 1 more variable: crs_duckspatial <chr>
 ```
 
 - **When to use:** quick analysis, prototyping, or when you don’t need

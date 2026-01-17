@@ -12,7 +12,7 @@ ddbs_stop_conn(conn)
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 ## Value
 

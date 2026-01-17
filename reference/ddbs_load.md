@@ -6,19 +6,23 @@ database
 ## Usage
 
 ``` r
-ddbs_load(conn, quiet = FALSE)
+ddbs_load(conn, quiet = FALSE, extension = "spatial")
 ```
 
 ## Arguments
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - quiet:
 
   A logical value. If `TRUE`, suppresses any informational messages.
   Defaults to `FALSE`.
+
+- extension:
+
+  name of the extension to load, default is "spatial"
 
 ## Value
 

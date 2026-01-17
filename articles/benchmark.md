@@ -97,10 +97,6 @@ df_bench_join <- lapply(
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 
 
 # calculate difference in performance
@@ -111,8 +107,8 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 59%
-faster and used 5.4 times less memory than {sf}. Not bad.
+In this example working with 1 million points, {duckspatial} was XX%
+faster and used XX times less memory than {sf}. Not bad.
 
 ``` r
 ggplot(data = df_bench_join) +
@@ -125,7 +121,7 @@ ggplot(data = df_bench_join) +
     theme_minimal()
 ```
 
-![](benchmark_files/figure-html/unnamed-chunk-4-1.png)
+![](../reference/figures/bench/spatial-join-bench.png)
 
 ## Spatial filter
 
@@ -157,8 +153,6 @@ df_bench_filter <- lapply(
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 
 
 # calculate difference in performance
@@ -169,10 +163,8 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 64%
-faster and used 2.7 times less memory than {sf}.
-
-plot
+In this example working with 1 million points, {duckspatial} was XX%
+faster and used XX times less memory than {sf}.
 
 ``` r
 ggplot(data = df_bench_filter) +
@@ -185,7 +177,7 @@ ggplot(data = df_bench_filter) +
     theme_minimal()
 ```
 
-![](benchmark_files/figure-html/unnamed-chunk-6-1.png)
+![](../reference/figures/bench/spatial-filter-bench.png)
 
 ## Spatial distances
 
@@ -232,12 +224,6 @@ df_bench_distance <- lapply(
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 
 
 # calculate difference in performance
@@ -249,11 +235,9 @@ time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
 In this example calculating the distance between 10K points,
-{duckspatial} was 87% faster, but used 2 times more memory than {sf}.
+{duckspatial} was XX% faster, but used XX times more memory than {sf}.
 Mind you that {sf} is still more efficient when calculating Euclidean
 distances.
-
-plot
 
 ``` r
 ggplot(data = df_bench_distance) +
@@ -266,4 +250,4 @@ ggplot(data = df_bench_distance) +
     theme_minimal()
 ```
 
-![](benchmark_files/figure-html/unnamed-chunk-8-1.png)
+![](../reference/figures/bench/spatial-distance-bench.png)

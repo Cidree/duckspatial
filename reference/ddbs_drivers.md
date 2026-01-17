@@ -5,14 +5,17 @@ Get list of GDAL drivers and file formats
 ## Usage
 
 ``` r
-ddbs_drivers(conn)
+ddbs_drivers(conn = NULL)
 ```
 
 ## Arguments
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database. If not specified
+  (`conn = NULL`), uses the default connection created with
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  (or a temporary one).
 
 ## Value
 

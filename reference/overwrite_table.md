@@ -16,7 +16,7 @@ overwrite_table(x, conn, quiet, overwrite)
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - quiet:
 

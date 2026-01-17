@@ -80,9 +80,11 @@ Returns the result as an <code>sf</code> object or creates a new table in the da
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An <code>sf</code> spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database <code>conn</code>.
-Data is returned from this object.</p></dd>
+<dd><p>Input spatial data. Can be:</p><ul><li><p>A <code>duckspatial_df</code> object (lazy spatial data frame via dbplyr)</p></li>
+<li><p>An <code>sf</code> object</p></li>
+<li><p>A <code>tbl_lazy</code> from dbplyr</p></li>
+<li><p>A character string naming a table/view in <code>conn</code></p></li>
+</ul><p>Data is returned from this object.</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
@@ -110,7 +112,7 @@ names. If <code>NULL</code> (the default), the function returns the result as an
 
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
-<dd><p>The coordinates reference system of the data. Specify if the data
+<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> The coordinates reference system of the data. Specify if the data
 doesn't have a <code>crs_column</code>, and you know the CRS.</p></dd>
 
 

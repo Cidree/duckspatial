@@ -6,14 +6,14 @@ database
 ## Usage
 
 ``` r
-ddbs_install(conn, upgrade = FALSE, quiet = FALSE)
+ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 ```
 
 ## Arguments
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - upgrade:
 
@@ -23,6 +23,10 @@ ddbs_install(conn, upgrade = FALSE, quiet = FALSE)
 
   A logical value. If `TRUE`, suppresses any informational messages.
   Defaults to `FALSE`.
+
+- extension:
+
+  name of the extension to install, default is "spatial"
 
 ## Value
 
@@ -41,7 +45,7 @@ conn <- duckdb::dbConnect(duckdb::duckdb())
 
 # install the spatial extension
 ddbs_install(conn)
-#> ✔ Spatial extension installed
+#> ✔ spatial extension installed
 
 # disconnect from db
 duckdb::dbDisconnect(conn)
