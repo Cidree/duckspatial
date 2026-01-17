@@ -18,7 +18,7 @@ ddbs_glimpse(
 
 - conn:
 
-  A `DBIConnection` object to a DuckDB database
+  A connection object to a DuckDB database
 
 - name:
 
@@ -28,15 +28,13 @@ ddbs_glimpse(
 
 - crs:
 
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
+  The coordinates reference system of the data. Specify if the data
+  doesn't have a `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
+  a character string of length one specifying the column storing the CRS
+  (created automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
 

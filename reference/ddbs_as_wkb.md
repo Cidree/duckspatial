@@ -13,17 +13,9 @@ ddbs_as_wkb(x, conn = NULL, quiet = FALSE)
 
 - x:
 
-  Input spatial data. Can be:
-
-  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
-
-  - An `sf` object
-
-  - A `tbl_lazy` from dbplyr
-
-  - A character string naming a table/view in `conn`
-
-  Data is returned from this object.
+  An `sf` spatial object. Alternatively, it can be a string with the
+  name of a table with geometry column within the DuckDB database
+  `conn`. Data is returned from this object.
 
 - conn:
 

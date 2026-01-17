@@ -12,7 +12,7 @@ get_geom_name(conn, x, rest = FALSE, collapse = FALSE, table_id = NULL)
 
 - conn:
 
-  A `DBIConnection` object to a DuckDB database
+  A connection object to a DuckDB database
 
 - x:
 

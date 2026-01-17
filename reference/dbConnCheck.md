@@ -12,7 +12,7 @@ dbConnCheck(conn)
 
 - conn:
 
-  A `DBIConnection` object to a DuckDB database
+  A connection object to a DuckDB database
 
 ## Value
 

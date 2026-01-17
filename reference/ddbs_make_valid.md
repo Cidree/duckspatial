@@ -22,17 +22,9 @@ ddbs_make_valid(
 
 - x:
 
-  Input spatial data. Can be:
-
-  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
-
-  - An `sf` object
-
-  - A `tbl_lazy` from dbplyr
-
-  - A character string naming a table/view in `conn`
-
-  Data is returned from this object.
+  An `sf` spatial object. Alternatively, it can be a string with the
+  name of a table with geometry column within the DuckDB database
+  `conn`. Data is returned from this object.
 
 - conn:
 
@@ -48,9 +40,8 @@ ddbs_make_valid(
 
 - crs:
 
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
+  The coordinates reference system of the data. Specify if the data
+  doesn't have a `crs_column`, and you know the CRS.
 
 - crs_column:
 

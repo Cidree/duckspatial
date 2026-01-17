@@ -16,7 +16,6 @@ ddbs_area(
   new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -26,17 +25,9 @@ ddbs_area(
 
 - x:
 
-  Input spatial data. Can be:
-
-  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
-
-  - An `sf` object
-
-  - A `tbl_lazy` from dbplyr
-
-  - A character string naming a table/view in `conn`
-
-  Data is returned from this object.
+  An `sf` spatial object. Alternatively, it can be a string with the
+  name of a table with geometry column within the DuckDB database
+  `conn`. Data is returned from this object.
 
 - conn:
 
@@ -57,39 +48,15 @@ ddbs_area(
 
 - crs:
 
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
+  The coordinates reference system of the data. Specify if the data
+  doesn't have a `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
+  a character string of length one specifying the column storing the CRS
+  (created automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
-
-- output:
-
-  Character. Controls the return type. Options:
-
-  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
-    dbplyr/DuckDB
-
-  - `"sf"`: Eagerly collected sf object (uses memory)
-
-  - `"tibble"`: Eagerly collected tibble without geometry
-
-  - `"raw"`: Eagerly collected tibble with WKB geometry (list of raw
-    vectors)
-
-  - `"geoarrow"`: Eagerly collected tibble with geoarrow geometry
-    (geoarrow_vctr)
-
-  Can be set globally via
-  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(output_type = "...")`
-  or per-function via this argument. Per-function overrides global
-  setting.
 
 - overwrite:
 

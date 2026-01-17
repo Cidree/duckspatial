@@ -68,21 +68,13 @@ Install spatial extension and manage database connections
   : Checks and installs the Spatial extension
 - [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)
   : Loads the Spatial extension
-- [`ddbs_options()`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)
-  : Get or set global duckspatial options
-- [`ddbs_sitrep()`](https://cidree.github.io/duckspatial/reference/ddbs_sitrep.md)
-  : Report duckspatial configuration status
 
 ## Data Import/Export
 
 Read and write spatial data
 
-- [`ddbs_open_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.md)
-  : Open spatial dataset lazily via DuckDB
 - [`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md)
   : Load spatial vector data from DuckDB into R
-- [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
-  : Write spatial dataset to disk
 - [`ddbs_write_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)
   : Write an SF Object to a DuckDB Database
 - [`ddbs_register_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_register_vector.md)
@@ -235,41 +227,13 @@ Helper functions for database management
 - [`ddbs_create_schema()`](https://cidree.github.io/duckspatial/reference/ddbs_create_schema.md)
   : Check and create schema
 - [`ddbs_crs()`](https://cidree.github.io/duckspatial/reference/ddbs_crs.md)
-  : Check CRS of spatial objects or database tables
+  : Check CRS of a table
 - [`ddbs_drivers()`](https://cidree.github.io/duckspatial/reference/ddbs_drivers.md)
   : Get list of GDAL drivers and file formats
 - [`ddbs_glimpse()`](https://cidree.github.io/duckspatial/reference/ddbs_glimpse.md)
   : Check first rows of the data
 - [`ddbs_list_tables()`](https://cidree.github.io/duckspatial/reference/ddbs_list_tables.md)
   : Check tables and schemas inside a database
-
-## Lazy Spatial Data Frames
-
-Create and work with lazy duckspatial_df objects
-
-- [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md)
-  : Convert objects to duckspatial_df
-- [`is_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/is_duckspatial_df.md)
-  : Check if object is a duckspatial_df
-- [`collect(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)
-  [`ddbs_collect()`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)
-  : Collect a duckspatial_df with flexible output formats
-- [`ddbs_compute()`](https://cidree.github.io/duckspatial/reference/ddbs_compute.md)
-  : Force computation of a lazy duckspatial_df
-- [`ddbs_geom_col()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_col.md)
-  : Get the geometry column name
-- [`st_crs(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
-  [`st_geometry(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
-  [`st_bbox(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
-  [`st_as_sf(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
-  [`print(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
-  : sf methods for duckspatial_df
-- [`dplyr_reconstruct(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`left_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`inner_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`head(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`compute(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  : dplyr methods for duckspatial_df
 
 # Articles
 

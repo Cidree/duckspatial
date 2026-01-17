@@ -76,20 +76,6 @@
 
         </dt>
         <dd>Loads the Spatial extension</dd>
-
-        <dt>
-
-          <code><a href="ddbs_options.html">ddbs_options()</a></code>
-
-        </dt>
-        <dd>Get or set global duckspatial options</dd>
-
-        <dt>
-
-          <code><a href="ddbs_sitrep.html">ddbs_sitrep()</a></code>
-
-        </dt>
-        <dd>Report duckspatial configuration status</dd>
       </dl></div><div class="section level2">
       <h2 id="data-import-export">Data Import/Export<a class="anchor" aria-label="anchor" href="#data-import-export"></a></h2>
 
@@ -102,24 +88,10 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_open_dataset.html">ddbs_open_dataset()</a></code>
-
-        </dt>
-        <dd>Open spatial dataset lazily via DuckDB</dd>
-
-        <dt>
-
           <code><a href="ddbs_read_vector.html">ddbs_read_vector()</a></code>
 
         </dt>
         <dd>Load spatial vector data from DuckDB into R</dd>
-
-        <dt>
-
-          <code><a href="ddbs_write_dataset.html">ddbs_write_dataset()</a></code>
-
-        </dt>
-        <dd>Write spatial dataset to disk</dd>
 
         <dt>
 
@@ -578,7 +550,7 @@
           <code><a href="ddbs_crs.html">ddbs_crs()</a></code>
 
         </dt>
-        <dd>Check CRS of spatial objects or database tables</dd>
+        <dd>Check CRS of a table</dd>
 
         <dt>
 
@@ -600,64 +572,6 @@
 
         </dt>
         <dd>Check tables and schemas inside a database</dd>
-      </dl></div><div class="section level2">
-      <h2 id="lazy-spatial-data-frames">Lazy Spatial Data Frames<a class="anchor" aria-label="anchor" href="#lazy-spatial-data-frames"></a></h2>
-
-      <div class="section-desc"><p>Create and work with lazy duckspatial_df objects</p></div>
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="as_duckspatial_df.html">as_duckspatial_df()</a></code>
-
-        </dt>
-        <dd>Convert objects to duckspatial_df</dd>
-
-        <dt>
-
-          <code><a href="is_duckspatial_df.html">is_duckspatial_df()</a></code>
-
-        </dt>
-        <dd>Check if object is a duckspatial_df</dd>
-
-        <dt>
-
-          <code><a href="ddbs_collect.html">collect(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="ddbs_collect.html">ddbs_collect()</a></code>
-
-        </dt>
-        <dd>Collect a duckspatial_df with flexible output formats</dd>
-
-        <dt>
-
-          <code><a href="ddbs_compute.html">ddbs_compute()</a></code>
-
-        </dt>
-        <dd>Force computation of a lazy duckspatial_df</dd>
-
-        <dt>
-
-          <code><a href="ddbs_geom_col.html">ddbs_geom_col()</a></code>
-
-        </dt>
-        <dd>Get the geometry column name</dd>
-
-        <dt>
-
-          <code><a href="duckspatial_df_sf.html">st_crs(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_sf.html">st_geometry(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_sf.html">st_bbox(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_sf.html">st_as_sf(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_sf.html">print(<i>&lt;duckspatial_df&gt;</i>)</a></code>
-
-        </dt>
-        <dd>sf methods for duckspatial_df</dd>
-
-        <dt>
-
-          <code><a href="duckspatial_df_dplyr.html">dplyr_reconstruct(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_dplyr.html">left_join(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_dplyr.html">inner_join(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_dplyr.html">head(<i>&lt;duckspatial_df&gt;</i>)</a></code> <code><a href="duckspatial_df_dplyr.html">compute(<i>&lt;duckspatial_df&gt;</i>)</a></code>
-
-        </dt>
-        <dd>dplyr methods for duckspatial_df</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -66,11 +66,9 @@ geometries have some but not all interior points in common.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Input spatial data. Can be:</p><ul><li><p>A <code>duckspatial_df</code> object (lazy spatial data frame via dbplyr)</p></li>
-<li><p>An <code>sf</code> object</p></li>
-<li><p>A <code>tbl_lazy</code> from dbplyr</p></li>
-<li><p>A character string naming a table/view in <code>conn</code></p></li>
-</ul><p>Data is returned from this object.</p></dd>
+<dd><p>An <code>sf</code> spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database <code>conn</code>.
+Data is returned from this object.</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>

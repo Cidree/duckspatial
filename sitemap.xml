@@ -9,11 +9,8 @@
 <url><loc>https://cidree.github.io/duckspatial/authors.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/index.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/news/index.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/as_duckspatial_df.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/convert_to_sf_wkb.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/convert_wkb_to_sfc.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/crs_equal.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_area.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_hexwkb.html</loc></url>
@@ -23,9 +20,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_boundary.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_buffer.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_centroid.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_collect.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_combine.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_compute.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_concave_hull.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_contains.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_contains_properly.html</loc></url>
@@ -36,7 +31,6 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_create_schema.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_crosses.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_crs.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_default_conn.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_difference.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_disjoint.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_distance.html</loc></url>
@@ -46,9 +40,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_filter.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_flip.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_format_crs.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_generate_points.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_geom_col.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_glimpse.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_install.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_interpolate_aw.html</loc></url>
@@ -64,8 +56,6 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_load.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_valid.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_options.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_overlaps.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_predicate.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_quadkey.html</loc></url>
@@ -77,27 +67,18 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_shear.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_shift.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_simplify.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_sitrep.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_temp_view_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_touches.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_transform.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_union.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_within.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_within_properly.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_vector.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/feedback_query.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/get_conn_from_input.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_geom_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_query_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_st_predicate.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/import_view_to_connection.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/index.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/is_duckspatial_df.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/new_duckspatial_df.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/overwrite_table.html</loc></url>
 </urlset>
 

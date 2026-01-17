@@ -10,13 +10,10 @@ ddbs_filter(
   y,
   predicate = "intersects",
   conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
   distance = NULL,
-  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -26,17 +23,9 @@ ddbs_filter(
 
 - x:
 
-  Input spatial data. Can be:
-
-  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
-
-  - An `sf` object
-
-  - A `tbl_lazy` from dbplyr
-
-  - A character string naming a table/view in `conn`
-
-  Data is returned from this object.
+  An `sf` spatial object. Alternatively, it can be a string with the
+  name of a table with geometry column within the DuckDB database
+  `conn`. Data is returned from this object.
 
 - y:
 
@@ -52,16 +41,6 @@ ddbs_filter(
   A connection object to a DuckDB database. If `NULL`, the function runs
   on a temporary DuckDB database.
 
-- conn_x:
-
-  A `DBIConnection` object to a DuckDB database for the input `x`. If
-  `NULL` (default), it is resolved from `conn` or extracted from `x`.
-
-- conn_y:
-
-  A `DBIConnection` object to a DuckDB database for the input `y`. If
-  `NULL` (default), it is resolved from `conn` or extracted from `y`.
-
 - name:
 
   A character string of length one specifying the name of the table, or
@@ -71,15 +50,13 @@ ddbs_filter(
 
 - crs:
 
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
+  The coordinates reference system of the data. Specify if the data
+  doesn't have a `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
+  a character string of length one specifying the column storing the CRS
+  (created automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
 
@@ -88,28 +65,6 @@ ddbs_filter(
   a numeric value specifying the distance for ST_DWithin. Units
   correspond to the coordinate system of the geometry (e.g. degrees or
   meters)
-
-- output:
-
-  Character. Controls the return type. Options:
-
-  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
-    dbplyr/DuckDB
-
-  - `"sf"`: Eagerly collected sf object (uses memory)
-
-  - `"tibble"`: Eagerly collected tibble without geometry
-
-  - `"raw"`: Eagerly collected tibble with WKB geometry (list of raw
-    vectors)
-
-  - `"geoarrow"`: Eagerly collected tibble with geoarrow geometry
-    (geoarrow_vctr)
-
-  Can be set globally via
-  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(output_type = "...")`
-  or per-function via this argument. Per-function overrides global
-  setting.
 
 - overwrite:
 
@@ -123,24 +78,7 @@ ddbs_filter(
 
 ## Value
 
-Depends on the `output` argument (or global preference set by
-[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
-
-- `duckspatial_df` (default): A lazy spatial data frame backed by
-  dbplyr/DuckDB.
-
-- `sf`: An eagerly collected `sf` object in R memory.
-
-- `tibble`: An eagerly collected `tibble` without geometry in R memory.
-
-- `raw`: An eagerly collected `tibble` with WKB geometry (no
-  conversion).
-
-- `geoarrow`: An eagerly collected `tibble` with geometry converted to
-  `geoarrow_vctr`.
-
-When `name` is provided, the result is also written as a table or view
-in DuckDB and the function returns `TRUE` (invisibly).
+An sf object or TRUE (invisibly) for table creation
 
 ## Details
 
@@ -178,40 +116,25 @@ overview of the most commonly used ones, taking two geometries a and b:
 
 ``` r
 if (FALSE) { # \dontrun{
-# RECOMMENDED: Efficient lazy workflow using ddbs_open_dataset
+## load packages
 library(duckspatial)
-
-# Load data directly as lazy spatial data frames (CRS auto-detected)
-countries <- ddbs_open_dataset(
-  system.file("spatial/countries.geojson", package = "duckspatial")
-)
-
-argentina <- ddbs_open_dataset(
-  system.file("spatial/argentina.geojson", package = "duckspatial")
-)
-
-# Lazy filter - computation stays in DuckDB
-neighbors <- ddbs_filter(countries, argentina, predicate = "touches")
-
-# Collect to sf when needed
-neighbors_sf <- dplyr::collect(neighbors) |> sf::st_as_sf()
-
-
-# Alternative: using sf objects directly (legacy compatibility)
 library(sf)
 
+# create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
+
+## read data
 countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
 
-result <- ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
-
-
-# Alternative: using table names in a duckdb connection
-conn <- ddbs_create_conn(dbdir = "memory")
-
+## store in duckdb
 ddbs_write_vector(conn, countries_sf, "countries")
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
+## filter countries touching argentina
 ddbs_filter(conn = conn, "countries", "argentina", predicate = "touches")
+
+## filter without using a connection
+ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
 } # }
 ```
