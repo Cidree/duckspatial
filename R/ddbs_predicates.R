@@ -15,6 +15,7 @@
 #'        Data is returned from this object.
 #' @template predicate
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
@@ -104,48 +105,88 @@ ddbs_predicate <- function(
   y,
   predicate = "intersects",
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
   quiet = FALSE) {
 
+  
   ## 0. Handle errors
   assert_xy(x, "x")
   assert_xy(y, "y")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x, y)
+  assert_logic(sparse, "sparse")
 
-  # 1. Manage connection to DB
-  ## 1.1. check if connection is provided, otherwise create a temporary connection
-  is_duckdb_conn <- dbConnCheck(conn)
-  if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-  }
-  ## 1.2. get query list of table names
-  x_list <- get_query_list(x, conn)
-  on.exit(x_list$cleanup(), add = TRUE)
-  y_list <- get_query_list(y, conn)
-  on.exit(y_list$cleanup(), add = TRUE)
-  assert_crs(conn, x_list$query_name, y_list$query_name)
-
-  ## 2. get name of geometry columns
-  x_geom <- get_geom_name(conn, x_list$query_name)
-  assert_geometry_column(x_geom, x_list)
-
-  y_geom <- get_geom_name(conn, y_list$query_name)
-  assert_geometry_column(y_geom, y_list)
-
-  ## check if id column name exists in x or y
-  assert_predicate_id(id_x, conn, x_list$query_name)
-  assert_predicate_id(id_y, conn, y_list$query_name)
-
-  ## get predicate
+  ## Validate predicate early (it aborts on invalid)
   st_predicate <- get_st_predicate(predicate)
 
-  # 3. Get data frame
-  ## 3.1. create query
+
+  # 1. Manage connection to DB
+
+  ## 1.1. Pre-extract attributes (CRS and geometry column name)
+  ## this step should be before normalize_spatial_input()
+  crs_x <- detect_crs(x)
+  crs_y <- detect_crs(y)
+  sf_col_x <- attr(x, "sf_column")
+  sf_col_y <- attr(y, "sf_column")
+
+  ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
+  if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+  if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+  ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn_x)
+  y <- normalize_spatial_input(y, conn_y)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  y            <- resolve_conn$y
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+  y_list <- get_query_list(y, target_conn)
+  on.exit(y_list$cleanup(), add = TRUE)
+
+  ## check if id column name exists in x or y
+  assert_predicate_id(id_x, target_conn, x_list$query_name)
+  assert_predicate_id(id_y, target_conn, y_list$query_name)
+
+  ## CRS already extracted at start of function
+  if (!is.null(crs_x) && !is.null(crs_y)) {
+      if (!crs_equal(crs_x, crs_y)) {
+        cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
+      }
+  } else {
+      assert_crs(target_conn, x_list$query_name, y_list$query_name)
+  }
+
+
+  # 3. Prepare parameters for the query
+
+  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+  assert_geometry_column(y_geom, y_list)
+
+  ## 3.2. Get names of the rest of the columns
+  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+  
+  # 4. Get data frame
+  ## 4.1. create query
   if (st_predicate == "ST_DWithin") {
 
     ## if distance is not specified, it will use ST_Within
@@ -167,12 +208,12 @@ ddbs_predicate <- function(
       CROSS JOIN {y_list$query_name} y
     ")
   }
-  ## 3.2. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  ## 4.2. retrieve results from the query
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  # 4. Reframe data
+  # 5. Reframe data
   result_lst <- reframe_predicate_data(
-    conn   = conn,
+    conn   = target_conn,
     data   = data_tbl,
     x_list = x_list,
     y_list = y_list,
@@ -183,7 +224,7 @@ ddbs_predicate <- function(
 
   feedback_query(quiet)
   return(result_lst)
-  }
+}
 
 
 
@@ -198,6 +239,7 @@ ddbs_predicate <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -232,6 +274,8 @@ ddbs_intersects <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -242,6 +286,8 @@ ddbs_intersects <- function(
     y         = y,
     predicate = "intersects",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -263,6 +309,7 @@ ddbs_intersects <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -297,6 +344,8 @@ ddbs_covers <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -307,6 +356,8 @@ ddbs_covers <- function(
     y         = y,
     predicate = "covers",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -328,6 +379,7 @@ ddbs_covers <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -361,6 +413,8 @@ ddbs_touches <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -371,6 +425,8 @@ ddbs_touches <- function(
     y         = y,
     predicate = "touches",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -395,6 +451,7 @@ ddbs_touches <- function(
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -429,6 +486,8 @@ ddbs_is_within_distance <- function(
   y,
   distance = NULL,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -439,6 +498,8 @@ ddbs_is_within_distance <- function(
     y         = y,
     predicate = "dwithin",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -461,6 +522,7 @@ ddbs_is_within_distance <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -495,12 +557,25 @@ ddbs_disjoint <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "disjoint", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "disjoint", 
+    conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
 
 }
 
@@ -517,6 +592,7 @@ ddbs_disjoint <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -551,6 +627,8 @@ ddbs_within <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -561,6 +639,8 @@ ddbs_within <- function(
     y         = y,
     predicate = "within",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -582,6 +662,7 @@ ddbs_within <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -616,6 +697,8 @@ ddbs_contains <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -626,6 +709,8 @@ ddbs_contains <- function(
     y         = y,
     predicate = "contains",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -648,6 +733,7 @@ ddbs_contains <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -683,6 +769,8 @@ ddbs_overlaps <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -693,6 +781,8 @@ ddbs_overlaps <- function(
     y         = y,
     predicate = "overlaps",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -714,6 +804,7 @@ ddbs_overlaps <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -748,6 +839,8 @@ ddbs_crosses <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -758,6 +851,8 @@ ddbs_crosses <- function(
     y         = y,
     predicate = "crosses",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -779,6 +874,7 @@ ddbs_crosses <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -811,6 +907,8 @@ ddbs_equals <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -821,6 +919,8 @@ ddbs_equals <- function(
     y         = y,
     predicate = "equals",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -843,6 +943,7 @@ ddbs_equals <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -877,6 +978,8 @@ ddbs_covered_by <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -887,6 +990,8 @@ ddbs_covered_by <- function(
     y         = y,
     predicate = "covered_by",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -909,6 +1014,7 @@ ddbs_covered_by <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -945,6 +1051,8 @@ ddbs_intersects_extent <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -955,6 +1063,8 @@ ddbs_intersects_extent <- function(
     y         = y,
     predicate = "intersects_extent",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -977,6 +1087,7 @@ ddbs_intersects_extent <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -1011,6 +1122,8 @@ ddbs_contains_properly <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -1021,6 +1134,8 @@ ddbs_contains_properly <- function(
     y         = y,
     predicate = "contains_properly",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -1043,6 +1158,7 @@ ddbs_contains_properly <- function(
 #' @param y An `sf` spatial object. Alternatively, it can be a string with the
 #'        name of a table with geometry column within the DuckDB database `conn`.
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @template quiet
 #'
@@ -1077,6 +1193,8 @@ ddbs_within_properly <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -1087,6 +1205,8 @@ ddbs_within_properly <- function(
     y         = y,
     predicate = "within_properly",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,

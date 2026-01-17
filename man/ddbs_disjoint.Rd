@@ -8,6 +8,8 @@ ddbs_disjoint(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -29,6 +31,12 @@ name of a table with geometry column within the DuckDB database \code{conn}.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
+
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
 
 \item{id_x}{Character; optional name of the column in \code{x} whose values will
 be used to name the list elements. If \code{NULL}, integer row numbers of \code{x} are used.}
