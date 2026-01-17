@@ -9,7 +9,7 @@ overwrite_table(x, conn, quiet, overwrite)
 \arguments{
 \item{x}{table name}
 
-\item{conn}{A \code{DBIConnection} object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}

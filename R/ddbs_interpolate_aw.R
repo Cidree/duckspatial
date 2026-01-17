@@ -195,9 +195,7 @@ ddbs_interpolate_aw <- function(
 
   # 1.2 Get query list
   t_list <- get_query_list(target, conn)
-  on.exit(t_list$cleanup(), add = TRUE)
   s_list <- get_query_list(source, conn)
-  on.exit(s_list$cleanup(), add = TRUE)
 
   # 2. Get Geometry and Attribute Columns
   t_geom <- get_geom_name(conn, t_list$query_name)

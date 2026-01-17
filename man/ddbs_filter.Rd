@@ -9,25 +9,17 @@ ddbs_filter(
   y,
   predicate = "intersects",
   conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
   distance = NULL,
-  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
 }
 \arguments{
-\item{x}{Input spatial data. Can be:
-\itemize{
-\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
-\item An \code{sf} object
-\item A \code{tbl_lazy} from dbplyr
-\item A character string naming a table/view in \code{conn}
-}
+\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
+name of a table with geometry column within the DuckDB database \code{conn}.
 Data is returned from this object.}
 
 \item{y}{Y table with geometry column within the DuckDB database}
@@ -38,37 +30,20 @@ a wrapper of \code{ST_Intersects}. See details for other options.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
-\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
-If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
-
-\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
-If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
-
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
+\item{crs}{The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
+\item{crs_column}{a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
 \item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)}
-
-\item{output}{Character. Controls the return type. Options:
-\itemize{
-\item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
-\item \code{"sf"}: Eagerly collected sf object (uses memory)
-\item \code{"tibble"}: Eagerly collected tibble without geometry
-\item \code{"raw"}: Eagerly collected tibble with WKB geometry (list of raw vectors)
-\item \code{"geoarrow"}: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)
-}
-Can be set globally via \code{\link{ddbs_options}(output_type = "...")} or
-per-function via this argument. Per-function overrides global setting.}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
@@ -77,15 +52,7 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-Depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
-\itemize{
-\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
-\item \code{sf}: An eagerly collected \code{sf} object in R memory.
-\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
-\item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
-\item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
-}
-When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
+An sf object or TRUE (invisibly) for table creation
 }
 \description{
 Filters data spatially based on a spatial predicate
@@ -113,40 +80,25 @@ most commonly used ones, taking two geometries a and b:
 }
 \examples{
 \dontrun{
-# RECOMMENDED: Efficient lazy workflow using ddbs_open_dataset
+## load packages
 library(duckspatial)
-
-# Load data directly as lazy spatial data frames (CRS auto-detected)
-countries <- ddbs_open_dataset(
-  system.file("spatial/countries.geojson", package = "duckspatial")
-)
-
-argentina <- ddbs_open_dataset(
-  system.file("spatial/argentina.geojson", package = "duckspatial")
-)
-
-# Lazy filter - computation stays in DuckDB
-neighbors <- ddbs_filter(countries, argentina, predicate = "touches")
-
-# Collect to sf when needed
-neighbors_sf <- dplyr::collect(neighbors) |> sf::st_as_sf()
-
-
-# Alternative: using sf objects directly (legacy compatibility)
 library(sf)
 
+# create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
+
+## read data
 countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
 argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
 
-result <- ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
-
-
-# Alternative: using table names in a duckdb connection
-conn <- ddbs_create_conn(dbdir = "memory")
-
+## store in duckdb
 ddbs_write_vector(conn, countries_sf, "countries")
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
+## filter countries touching argentina
 ddbs_filter(conn = conn, "countries", "argentina", predicate = "touches")
+
+## filter without using a connection
+ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
 }
 }

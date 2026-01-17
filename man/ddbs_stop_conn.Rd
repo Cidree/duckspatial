@@ -7,7 +7,7 @@
 ddbs_stop_conn(conn)
 }
 \arguments{
-\item{conn}{A \code{DBIConnection} object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 }
 \value{
 TRUE (invisibly) for successful disconnection

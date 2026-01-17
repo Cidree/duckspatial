@@ -34,24 +34,19 @@ Depends:
 Imports: 
     arrow,
     cli,
-    DBI,
-    dbplyr (>= 2.0.0),
-    dplyr,
     duckdb,
     geoarrow,
+    DBI,
     glue,
-    lifecycle,
-    nanoarrow,
-    rlang,
     sf,
-    tibble,
+    wk,
     uuid,
-    withr,
-    wk
+    rlang,
+    lifecycle
 Suggests:
     areal,
     bench,
-    duckdbfs,
+    dplyr,
     ggplot2 (>= 3.3.1),
     knitr,
     lwgeom,
@@ -61,8 +56,8 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
+RoxygenNote: 7.3.3
+Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3

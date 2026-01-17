@@ -7,7 +7,7 @@
 ddbs_create_schema(conn, name, quiet = FALSE)
 }
 \arguments{
-\item{conn}{A \code{DBIConnection} object to a DuckDB database}
+\item{conn}{A connection object to a DuckDB database}
 
 \item{name}{A character string with the name of the schema to be created}
 
