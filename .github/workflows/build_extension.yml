@@ -57,18 +57,14 @@ jobs:
 
       - name: Install duckdb R package
         run: |
-          # Install pak from CRAN - this avoids architecture mismatches from the devel stream
-          install.packages("pak", repos = "https://cloud.r-project.org")
+          # Use the official pak installer which handles architecture-specific binaries automatically
+          source("https://r-lib.github.io/p/pak/install.R")
           
-          # Configure repos so pak finds the DuckDB binary in R-Universe
-          options(repos = c(
-            DUCKDB = "https://duckdb.r-universe.dev",
-            CRAN = "https://cloud.r-project.org"
-          ))
-          
-          # Install duckdb using pak (it will prioritize binaries on Linux/macOS/Windows)
-          pak::pkg_install("duckdb")
+          # Install duckdb from R-Universe (pak will find the Linux/macOS/Windows binaries)
+          pak::pkg_install("duckdb", repos = "https://duckdb.r-universe.dev")
         shell: Rscript {0}
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Determines DuckDB Version/Commit
         id: duckdb_version
