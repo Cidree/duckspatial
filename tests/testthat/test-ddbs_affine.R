@@ -10,6 +10,9 @@ testthat::skip_if_not_installed("duckdb")
 ## create duckdb connection
 conn_test <- duckspatial::ddbs_create_conn()
 
+## write some data
+ddbs_write_vector(conn_test, argentina_sf, "argentina")
+ddbs_write_vector(conn_test, nc_sf, "nc")
 
 # 1. ddbs_rotate() -------------------------------------------------------
 
@@ -45,7 +48,7 @@ testthat::test_that("ddbs_rotate(): expected behavior", {
     output_ddbs_7 <- ddbs_rotate(argentina_ddbs, 45, output = "sf")
     output_ddbs_8 <- ddbs_rotate(argentina_ddbs, 45, output = "raw")
 
-    testthat::expect_s3_class(output_ddbs_6$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output_ddbs_6$geometry, "geoarrow_vctr")
     testthat::expect_s3_class(output_ddbs_7, "sf")
     testthat::expect_s3_class(output_ddbs_8, "tbl_df")
   
@@ -74,7 +77,6 @@ testthat::test_that("ddbs_rotate(): expected behavior", {
   
   
     ## CHECK 1.5
-    ddbs_write_vector(conn_test, argentina_sf, "argentina")
     output_conn_1 <- ddbs_rotate("argentina", 45, conn = conn_test)
     output_conn_2 <- ddbs_rotate("argentina", 45, conn = conn_test, units = "radians")
     output_conn_3 <- ddbs_rotate("argentina", 45, conn = conn_test, by_feature = TRUE)
@@ -167,7 +169,7 @@ testthat::test_that("ddbs_rotate_3d(): expected behavior", {
     output_ddbs_7 <- ddbs_rotate_3d(argentina_ddbs, 45, output = "sf")
     output_ddbs_8 <- ddbs_rotate_3d(argentina_ddbs, 45, output = "raw")
 
-    testthat::expect_s3_class(output_ddbs_6$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output_ddbs_6$geometry, "geoarrow_vctr")
     testthat::expect_s3_class(output_ddbs_7, "sf")
     testthat::expect_s3_class(output_ddbs_8, "tbl_df")
   
@@ -195,8 +197,7 @@ testthat::test_that("ddbs_rotate_3d(): expected behavior", {
     testthat::expect_s3_class(output_sf_8, "tbl_df")
   
   
-    ## CHECK 1.5
-    ddbs_write_vector(conn_test, argentina_sf, "argentina")
+    ## CHECK 1.5    
     output_conn_1 <- ddbs_rotate_3d("argentina", 45, conn = conn_test)
     output_conn_2 <- ddbs_rotate_3d("argentina", 45, conn = conn_test, units = "radians")
     output_conn_3 <- ddbs_rotate_3d("argentina", 90, conn = conn_test, axis = "y")
@@ -289,7 +290,7 @@ testthat::test_that("ddbs_shift(): expected behavior", {
     output_ddbs_7 <- ddbs_shift(argentina_ddbs, 45, output = "sf")
     output_ddbs_8 <- ddbs_shift(argentina_ddbs, 45, output = "raw")
 
-    testthat::expect_s3_class(output_ddbs_6$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output_ddbs_6$geometry, "geoarrow_vctr")
     testthat::expect_s3_class(output_ddbs_7, "sf")
     testthat::expect_s3_class(output_ddbs_8, "tbl_df")
   
@@ -297,7 +298,7 @@ testthat::test_that("ddbs_shift(): expected behavior", {
     output_sf_1 <- ddbs_shift(argentina_sf, 10)
     output_sf_2 <- ddbs_shift(argentina_sf, 10, 20)
     output_sf_3 <- ddbs_shift(argentina_sf, dy = 10)
-    output_sf_5 <- ddbs_shift(argentina_sf, 45, quiet = TRUE)
+    output_sf_4 <- ddbs_shift(argentina_sf, 45, quiet = TRUE)
   
     testthat::expect_s3_class(output_sf_1, "duckspatial_df")
     testthat::expect_s3_class(output_sf_2, "duckspatial_df")
@@ -316,7 +317,6 @@ testthat::test_that("ddbs_shift(): expected behavior", {
   
   
     ## CHECK 1.5
-    ddbs_write_vector(conn_test, argentina_sf, "argentina")
     output_conn_1 <- ddbs_shift("argentina", 10, conn = conn_test)
     output_conn_2 <- ddbs_shift("argentina", 10, 20, conn = conn_test)
     output_conn_3 <- ddbs_shift("argentina", dy = 10, conn = conn_test)
@@ -358,7 +358,6 @@ testthat::test_that("ddbs_shift(): expected behavior", {
 testthat::test_that("ddbs_shift(): errors work", {
   
     ## CHECK 2.1
-    testthat::expect_error(ddbs_shift(argentina_ddbs))
     testthat::expect_error(ddbs_shift(argentina_ddbs, dx = "10"))
     testthat::expect_error(ddbs_shift(argentina_ddbs, dy = "banana"))
     testthat::expect_error(ddbs_shift("argentina", conn = NULL))
@@ -406,7 +405,7 @@ testthat::test_that("ddbs_flip(): expected behavior", {
     output_ddbs_7 <- ddbs_flip(argentina_ddbs, output = "sf")
     output_ddbs_8 <- ddbs_flip(argentina_ddbs, output = "raw")
 
-    testthat::expect_s3_class(output_ddbs_6$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output_ddbs_6$geometry, "geoarrow_vctr")
     testthat::expect_s3_class(output_ddbs_7, "sf")
     testthat::expect_s3_class(output_ddbs_8, "tbl_df")
   
@@ -414,7 +413,7 @@ testthat::test_that("ddbs_flip(): expected behavior", {
     output_sf_1 <- ddbs_flip(argentina_sf)
     output_sf_2 <- ddbs_flip(argentina_sf, "vertical")
     output_sf_3 <- ddbs_flip(nc_ddbs, by_feature = TRUE)
-    output_sf_5 <- ddbs_flip(nc_sf, "vertical", by_feature = TRUE, quiet = TRUE)
+    output_sf_4 <- ddbs_flip(nc_sf, "vertical", by_feature = TRUE, quiet = TRUE)
   
     testthat::expect_s3_class(output_sf_1, "duckspatial_df")
     testthat::expect_s3_class(output_sf_2, "duckspatial_df")
@@ -433,7 +432,6 @@ testthat::test_that("ddbs_flip(): expected behavior", {
   
   
     ## CHECK 1.5
-    ddbs_write_vector(conn_test, nc_sf, "nc")
     output_conn_1 <- ddbs_flip("nc", conn = conn_test)
     output_conn_2 <- ddbs_flip("nc", "vertical", conn = conn_test)
     output_conn_3 <- ddbs_flip("nc", by_feature = TRUE, conn = conn_test)
@@ -476,7 +474,6 @@ testthat::test_that("ddbs_flip(): errors work", {
   
     ## CHECK 2.1
     testthat::expect_error(ddbs_flip(argentina_ddbs, direction = "uptodown"))
-    testthat::expect_error(ddbs_flip(argentina_ddbs))
     testthat::expect_error(ddbs_flip(argentina_ddbs, by_feature = "TRUE"))
     testthat::expect_error(ddbs_flip("argentina", conn = NULL))
   
@@ -523,7 +520,7 @@ testthat::test_that("ddbs_scale(): expected behavior", {
     output_ddbs_7 <- ddbs_scale(argentina_ddbs, output = "sf")
     output_ddbs_8 <- ddbs_scale(argentina_ddbs, output = "raw")
 
-    testthat::expect_s3_class(output_ddbs_6$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output_ddbs_6$geometry, "geoarrow_vctr")
     testthat::expect_s3_class(output_ddbs_7, "sf")
     testthat::expect_s3_class(output_ddbs_8, "tbl_df")
   
@@ -548,7 +545,6 @@ testthat::test_that("ddbs_scale(): expected behavior", {
   
   
     ## CHECK 1.5
-    ddbs_write_vector(conn_test, nc_sf, "nc")
     output_conn_1 <- ddbs_scale("nc", conn = conn_test)
     output_conn_2 <- ddbs_scale("nc", y_scale = -1, conn = conn_test)
     output_conn_3 <- ddbs_scale("nc", by_feature = TRUE, conn = conn_test)
@@ -636,7 +632,7 @@ testthat::test_that("ddbs_shear(): expected behavior", {
     output_ddbs_7 <- ddbs_shear(argentina_ddbs, output = "sf")
     output_ddbs_8 <- ddbs_shear(argentina_ddbs, output = "raw")
 
-    testthat::expect_s3_class(output_ddbs_6$geom, "geoarrow_vctr")
+    testthat::expect_s3_class(output_ddbs_6$geometry, "geoarrow_vctr")
     testthat::expect_s3_class(output_ddbs_7, "sf")
     testthat::expect_s3_class(output_ddbs_8, "tbl_df")
   
@@ -661,7 +657,6 @@ testthat::test_that("ddbs_shear(): expected behavior", {
   
   
     ## CHECK 1.5
-    ddbs_write_vector(conn_test, nc_sf, "nc")
     output_conn_1 <- ddbs_shear("nc", conn = conn_test)
     output_conn_2 <- ddbs_shear("nc", y_shear = -1, conn = conn_test)
     output_conn_3 <- ddbs_shear("nc", by_feature = TRUE, conn = conn_test)
@@ -716,3 +711,7 @@ testthat::test_that("ddbs_shear(): errors work", {
     testthat::expect_error(ddbs_shear(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
   
 })
+
+
+## stop connection
+duckspatial::ddbs_stop_conn(conn_test)

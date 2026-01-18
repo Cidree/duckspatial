@@ -9,6 +9,11 @@ testthat::skip_if_not_installed("duckdb")
 ## create duckdb connection
 conn_test <- duckspatial::ddbs_create_conn()
 
+## write some data
+ddbs_write_vector(conn_test, countries_sf, "countries")
+duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "nc")
+duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "rivers")
+
 ## helper functions for ddbs_area()
 area_test_sf <- function(x = nc_sf,
                     conn = NULL,
@@ -262,9 +267,6 @@ testthat::test_that("ddbs_area(): expected behavior on duckspatial", {
 ## - CHECK 3.8: area calculated as vector, and added as column must be the same
 ## - CHECK 3.9: error if conn = NULL, and x = duckdb table
 testthat::test_that("ddbs_area(): expected behavior on DuckDB table", {
-
-    ## import table
-    duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "nc")
     
     ## CHECK 3.1
     output1 <- area_test_conn(x = "nc", conn = conn_test)
@@ -332,7 +334,6 @@ testthat::test_that("ddbs_area(): errors work", {
     testthat::expect_error(area_test_sf(name = "new_tbl"))
 
     ## CHECK 4.2
-    ddbs_write_vector(conn_test, countries_sf, "countries")
     testthat::expect_error(
         area_test_sf(conn = conn_test, name = "countries", new_column = "area_calc")
     )
@@ -499,9 +500,7 @@ testthat::test_that("ddbs_length(): expected behavior on duckspatial", {
 ## - CHECK 3.8: length calculated as vector, and added as column must be the same
 ## - CHECK 3.9: error if conn = NULL, and x = duckdb table
 testthat::test_that("ddbs_length(): expected behavior on DuckDB table", {
-
-    ## import table
-    duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "rivers")
+    
     
     ## CHECK 3.1
     output1 <- length_test_conn(conn = conn_test)
@@ -569,7 +568,6 @@ testthat::test_that("ddbs_length(): errors work", {
     testthat::expect_error(length_test_sf(name = "new_tbl"))
 
     ## CHECK 4.2
-    ddbs_write_vector(conn_test, countries_sf, "countries")
     testthat::expect_error(
         length_test_sf(conn = conn_test, name = "countries", new_column = "length_calc")
     )
