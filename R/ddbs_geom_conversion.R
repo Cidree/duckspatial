@@ -50,34 +50,54 @@ ddbs_as_text <- function(
   assert_logic(quiet, "quiet")
   assert_conn_character(conn, x)
 
-  # 1. Manage connection to DB
-  ## 1.1. check if connection is provided, otherwise create a temporary connection
-  is_duckdb_conn <- dbConnCheck(conn)
-  if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-  }
-  ## 1.2. get query list of table names
-  x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
-  ## 2. get name of geometry column
-  x_geom <- get_geom_name(conn, x_list$query_name)
-  x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+  # 1. Manage connection to DB
+
+  ## 1.1. Pre-extract attributes (CRS and geometry column name)
+  ## this step should be before normalize_spatial_input()
+  crs_x    <- detect_crs(x)
+  sf_col_x <- attr(x, "sf_column")
+
+  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 3. Prepare parameters for the query
+
+  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  # 3. Get data as vector
-  ## 3.1. create query
+
+  # 4. Get data as vector
+
+  ## 4.1. create query
   tmp.query <- glue::glue("
-      SELECT ST_AsText({x_geom}) as {x_geom}
+      SELECT ST_AsText({x_geom}) as geometry
       FROM {x_list$query_name};
   ")
-  ## 3.2. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(conn, tmp.query) |> 
-    as.vector()
+
+  ## 4.2. retrieve results from the query
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+  data_vec <- data_tbl$geometry
 
   feedback_query(quiet)
-  return(data_tbl)
+  return(data_vec)
 }
 
 
@@ -127,43 +147,63 @@ ddbs_as_text <- function(
 #' wkb_list <- ddbs_as_wkb(argentina_sf)
 #' }
 ddbs_as_wkb <- function(
-    x,
-    conn = NULL,
-    quiet = FALSE) {
+  x,
+  conn = NULL,
+  quiet = FALSE) {
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
+  ## 0. Handle errors
+  assert_xy(x, "x")
+  assert_logic(quiet, "quiet")
+  assert_conn_character(conn, x)
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()
-        on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
+  # 1. Manage connection to DB
 
-    # 3. Get data as list
-    ## 3.1. create query
-    tmp.query <- glue::glue("
-        SELECT ST_AsWkb({x_geom}) as geometry
-        FROM {x_list$query_name};
-    ")
-    ## 3.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query) 
-    data_lst <- data_tbl$geometry
+  ## 1.1. Pre-extract attributes (CRS and geometry column name)
+  ## this step should be before normalize_spatial_input()
+  crs_x    <- detect_crs(x)
+  sf_col_x <- attr(x, "sf_column")
 
-    feedback_query(quiet)
-    return(data_lst)
+  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 3. Prepare parameters for the query
+
+  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+
+  # 4. Get data as list
+  
+  ## 4.1. create query
+  tmp.query <- glue::glue("
+      SELECT ST_AsWkb({x_geom}) as geometry
+      FROM {x_list$query_name};
+  ")
+
+  ## 4.2. retrieve results from the query
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query) 
+  data_lst <- data_tbl$geometry
+
+  feedback_query(quiet)
+  return(data_lst)
 }
 
 
@@ -213,41 +253,61 @@ ddbs_as_wkb <- function(
 #' hexwkb_text <- ddbs_as_hexwkb(argentina_sf)
 #' }
 ddbs_as_hexwkb <- function(
-    x,
-    conn = NULL,
-    quiet = FALSE) {
+  x,
+  conn = NULL,
+  quiet = FALSE) {
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
+  ## 0. Handle errors
+  assert_xy(x, "x")
+  assert_logic(quiet, "quiet")
+  assert_conn_character(conn, x)
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()
-        on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-    on.exit(x_list$cleanup(), add = TRUE)
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
+  # 1. Manage connection to DB
 
-    # 3. Get data as list
-    ## 3.1. create query
-    tmp.query <- glue::glue("
-        SELECT ST_AsHEXWKB({x_geom}) as geometry
-        FROM {x_list$query_name};
-    ")
-    ## 3.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query) |> 
-      as.vector()
+  ## 1.1. Pre-extract attributes (CRS and geometry column name)
+  ## this step should be before normalize_spatial_input()
+  crs_x    <- detect_crs(x)
+  sf_col_x <- attr(x, "sf_column")
 
-    feedback_query(quiet)
-    return(data_tbl)
+  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 3. Prepare parameters for the query
+
+  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+
+  # 4. Get data as list
+
+  ## 4.1. create query
+  tmp.query <- glue::glue("
+      SELECT ST_AsHEXWKB({x_geom}) as geometry
+      FROM {x_list$query_name};
+  ")
+
+  ## 4.2. retrieve results from the query
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query) 
+  data_vec <- data_tbl$geometry
+
+  feedback_query(quiet)
+  return(data_vec)
 }
