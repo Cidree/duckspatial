@@ -1024,10 +1024,22 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
       db_file <- tempfile(fileext = ".duckdb")
     }
     
+    # IMPORTANT: DuckDB cannot open non-existent files in read-only mode
+    # If creating a new tempfile with read_only=TRUE, we must create it first
+    if (isTRUE(read_only) && !file.exists(db_file)) {
+      # Create the database file first in writable mode
+      conn_init <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = FALSE)
+      DBI::dbDisconnect(conn_init)
+    }
+    
     conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = read_only)
     attr(conn, "db_file") <- db_file
     
     # Checks and installs the Spatial extension
+    # NOTE: These operations work fine on read-only connections:
+    # - INSTALL writes to global extension dir (~/.duckdb/extensions), not the database
+    # - LOAD just loads extension into session memory
+    # - SET operations are session-level settings
     ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
     ddbs_load(conn, quiet = TRUE)
 

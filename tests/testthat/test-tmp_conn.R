@@ -91,3 +91,31 @@ test_that("ddbs_temp_conn: read_only file connection", {
   
   unlink(base_path)
 })
+
+test_that("ddbs_temp_conn: read_only with file=TRUE creates file first (regression)", {
+  # Regression test: Previously failed because DuckDB can't open non-existent
+  # files in read-only mode. The fix creates the file first, then opens as read-only.
+  test_tempfile_readonly <- function() {
+    conn <- ddbs_temp_conn(file = TRUE, read_only = TRUE, cleanup = FALSE)
+    
+    # Verify connection is valid
+    expect_true(DBI::dbIsValid(conn))
+    
+    # Verify it's actually read-only by attempting a write operation
+    expect_error(
+      DBI::dbExecute(conn, "CREATE TABLE should_fail (id INT)"),
+      "read-only"
+    )
+    
+    # Verify spatial extension is loaded and works
+    result <- DBI::dbGetQuery(conn, "SELECT ST_Point(0, 0) as geom;")
+    expect_equal(nrow(result), 1)
+    
+    # Cleanup
+    db_file <- attr(conn, "db_file")
+    DBI::dbDisconnect(conn, shutdown = TRUE)
+    unlink(db_file)
+  }
+  
+  test_tempfile_readonly()
+})
