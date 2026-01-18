@@ -156,3 +156,24 @@ assert_col_exists <- function(conn, table, cols, ref) { # nocov start
     }
     invisible(TRUE)
 } # nocov end
+
+assert_threads <- function(threads, ref = "threads") { # nocov start
+  if (!is.null(threads)) {
+    valid <- is.numeric(threads) && length(threads) == 1 && 
+             threads > 0 && as.integer(threads) == threads
+    
+    if (!valid) {
+      cli::cli_abort("{.arg {ref}} must be a positive integer or NULL.")
+    }
+  }
+} # nocov end
+
+assert_memory_limit_gb <- function(memory_limit, ref = "memory_limit_gb") { # nocov start
+  if (!is.null(memory_limit)) {
+    valid <- is.numeric(memory_limit) && length(memory_limit) == 1 && memory_limit > 0
+    
+    if (!valid) {
+      cli::cli_abort("{.arg {ref}} must be a positive number (GB) or NULL.")
+    }
+  }
+} # nocov end

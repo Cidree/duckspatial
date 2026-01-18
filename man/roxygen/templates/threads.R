@@ -1,0 +1,1 @@
+#' @param threads Integer. Number of threads to use. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use all available cores it detects (warning, on some shared HPC nodes the detected number of cores might be total number of cores on the node, not the per-job allocation).

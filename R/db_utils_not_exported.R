@@ -1002,13 +1002,20 @@ ddbs_temp_view_name <- function() {
 #'   database file will be deleted.
 #' @param envir The environment in which to schedule cleanup. Default is the
 #'   parent frame (the caller's environment).
+#' @template threads
+#' @template memory_limit_gb
 #'
 #' @returns A `duckdb_connection` that will be automatically closed on exit.
 #'   For file-based connections, also returns the file path as an attribute 
 #'   `db_file`.
 #' @noRd
 #' @keywords internal
-ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envir = parent.frame()) {
+ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, 
+                            envir = parent.frame(), threads = NULL, memory_limit_gb = NULL) {
+
+  assert_threads(threads)
+  assert_memory_limit_gb(memory_limit_gb)
+
   if (isTRUE(file) || is.character(file)) {
     # File-based connection
     if (is.character(file)) {
@@ -1020,6 +1027,13 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envi
     conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = read_only)
     attr(conn, "db_file") <- db_file
     
+    # Checks and installs the Spatial extension
+    ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
+    ddbs_load(conn, quiet = TRUE)
+
+    # Configure resources
+    ddbs_set_resources(conn, threads = threads, memory_limit_gb = memory_limit_gb)
+
     # Cleanup: disconnect and optionally delete file
     withr::defer({
       if (DBI::dbIsValid(conn)) {
@@ -1029,8 +1043,12 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, envi
     }, envir = envir)
   } else {
     # In-memory connection
-    conn <- ddbs_create_conn(dbdir = "memory")
-    withr::defer(duckdb::dbDisconnect(conn), envir = envir)
+    conn <- ddbs_create_conn(dbdir = "memory", threads = threads, memory_limit_gb = memory_limit_gb)
+    withr::defer({
+      if (DBI::dbIsValid(conn)) {
+        tryCatch(suppressWarnings(DBI::dbDisconnect(conn)), error = function(e) NULL)
+      }
+    }, envir = envir)
   }
   
   conn
