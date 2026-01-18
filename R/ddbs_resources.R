@@ -59,8 +59,42 @@ ddbs_get_resources <- function(conn) {
   # Format result
   res <- as.list(stats::setNames(settings$value, settings$name))
   
-  # Try to parse numeric values where possible
+  # Parse numeric values for programmatic use
   if (!is.null(res$threads)) res$threads <- as.integer(res$threads)
+  if (!is.null(res$memory_limit)) {
+    res$memory_limit_gb <- parse_memory_limit_gb(res$memory_limit)
+  }
   
   return(res)
+}
+
+#' Parse DuckDB memory limit string to numeric GB
+#' 
+#' @param mem_str Character string from DuckDB (e.g., "4GB", "3.7 GiB", "953.6 MiB")
+#' @return Numeric value in GB
+#' @noRd
+parse_memory_limit_gb <- function(mem_str) {
+  if (is.null(mem_str) || is.na(mem_str)) return(NA_real_)
+  mem_str <- trimws(mem_str)
+  
+  # Extract numeric part and unit
+  num_part <- as.numeric(sub("^([0-9.]+).*", "\\1", mem_str))
+  unit_part <- toupper(sub("^[0-9.]+\\s*", "", mem_str))
+  
+  if (is.na(num_part)) return(NA_real_)
+  
+  # Conversion factors to GB (10^9 bytes)
+  # DuckDB: KB/MB/GB/TB = 1000 base; KiB/MiB/GiB/TiB = 1024 base
+  multipliers <- c(
+    "TIB" = 1024^4 / 10^9, "TB" = 1000,
+    "GIB" = 1024^3 / 10^9, "GB" = 1,
+    "MIB" = 1024^2 / 10^9, "MB" = 1/1000,
+    "KIB" = 1024 / 10^9,   "KB" = 1/10^6,
+    "B"   = 1/10^9
+  )
+  
+  m <- multipliers[unit_part]
+  if (is.na(m)) m <- 1 # Default to GB if unit not found
+  
+  num_part * m
 }
