@@ -4,10 +4,14 @@
 \alias{ddbs_create_conn}
 \title{Create a DuckDB connection with spatial extension}
 \usage{
-ddbs_create_conn(dbdir = "memory")
+ddbs_create_conn(dbdir = "memory", threads = NULL, memory_limit_gb = NULL)
 }
 \arguments{
 \item{dbdir}{String. Either \code{"tempdir"} or \code{"memory"}. Defaults to \code{"memory"}.}
+
+\item{threads}{Integer. Number of threads to use. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use all available cores it detects (warning, on some shared HPC nodes the detected number of cores might be total number of cores on the node, not the per-job allocation).}
+
+\item{memory_limit_gb}{Numeric. Memory limit in GB. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use 80\% of available operating system memory it detects (warning, on some shared HPC nodes the detected memory might be the full node memory, not the per-job allocation).}
 }
 \value{
 A \code{duckdb_connection}
@@ -26,5 +30,9 @@ conn <- ddbs_create_conn(dbdir = "memory")
 
 # create a duckdb database in disk  (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "tempdir")
+
+# create a connection with 1 thread and 2GB memory limit
+conn <- ddbs_create_conn(threads = 1, memory_limit_gb = 2)
+ddbs_stop_conn(conn)
 \dontshow{\}) # examplesIf}
 }

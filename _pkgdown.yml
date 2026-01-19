@@ -31,6 +31,8 @@ reference:
   - ddbs_install
   - ddbs_load
   - ddbs_options
+  - ddbs_set_resources
+  - ddbs_get_resources
   - ddbs_sitrep
 
 - title: Data Import/Export
