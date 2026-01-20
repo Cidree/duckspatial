@@ -18,3 +18,4 @@ internal/*
 ^docs$
 ^Meta$
 ^\.sync$
+^tools$
