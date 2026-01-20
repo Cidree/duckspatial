@@ -196,7 +196,7 @@ install_cran_duckdb_spatial <- function(force = FALSE) {
       "if (!requireNamespace('duckdb', quietly=TRUE)) stop('DuckDB not found after install'); ",
       "con <- DBI::dbConnect(duckdb::duckdb(), dbdir=':memory:'); ",
       "tryCatch({ ",
-      "  DBI::dbExecute(con, 'INSTALL spatial; LOAD spatial;'); ",
+      "  DBI::dbExecute(con, 'FORCE INSTALL spatial; LOAD spatial;'); ",
       "  DBI::dbDisconnect(con, shutdown=TRUE); ", # Close first
       "  cat('\\n'); ",
       "}, error = function(e) { ",

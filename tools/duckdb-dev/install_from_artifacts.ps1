@@ -262,7 +262,7 @@ Make sure:
     $rScript = @"
 library(duckdb)
 con <- DBI::dbConnect(duckdb::duckdb(config=list(allow_unsigned_extensions='true')))
-DBI::dbExecute(con, sprintf("INSTALL '%s'", '$extFilePath'))
+DBI::dbExecute(con, sprintf("FORCE INSTALL '%s'", '$extFilePath'))
 DBI::dbExecute(con, 'LOAD spatial')
 result <- DBI::dbGetQuery(con, "SELECT ST_AsText(ST_Point(1, 2)) as point")
 print(result)

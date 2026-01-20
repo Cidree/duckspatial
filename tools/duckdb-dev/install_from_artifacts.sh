@@ -330,7 +330,7 @@ echo "   Extension file: $EXT_FILE"
 echo ""
 
 # Use R to INSTALL from the file path and then LOAD/Verify
-Rscript -e "args <- commandArgs(trailingOnly=TRUE); ext_path <- args[1]; cat(sprintf('Installing extension from: %s\n', ext_path)); library(duckdb); con <- DBI::dbConnect(duckdb::duckdb(config=list(allow_unsigned_extensions='true'))); DBI::dbExecute(con, sprintf(\"INSTALL '%s'\", ext_path)); DBI::dbExecute(con, 'LOAD spatial'); result <- DBI::dbGetQuery(con, \"SELECT ST_AsText(ST_Point(1, 2)) as point\"); print(result); DBI::dbDisconnect(con, shutdown=TRUE)" "$EXT_FILE"
+Rscript -e "args <- commandArgs(trailingOnly=TRUE); ext_path <- args[1]; cat(sprintf('Installing extension from: %s\n', ext_path)); library(duckdb); con <- DBI::dbConnect(duckdb::duckdb(config=list(allow_unsigned_extensions='true'))); DBI::dbExecute(con, sprintf(\"FORCE INSTALL '%s'\", ext_path)); DBI::dbExecute(con, 'LOAD spatial'); result <- DBI::dbGetQuery(con, \"SELECT ST_AsText(ST_Point(1, 2)) as point\"); print(result); DBI::dbDisconnect(con, shutdown=TRUE)" "$EXT_FILE"
 
 echo ""
 echo "Success! You can now use DuckDB with the spatial extension."
