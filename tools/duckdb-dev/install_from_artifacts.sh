@@ -129,7 +129,17 @@ if [ -z "$RUN_ID_ARG" ]; then
         echo "Usage: $0 [run_id_or_url]"
         echo ""
         echo "To install gh CLI:"
-        echo "  Linux:  sudo apt-get install gh"
+        if command -v apt-get &> /dev/null; then
+            echo "  Linux (Debian/Ubuntu): sudo apt-get install gh"
+        elif command -v dnf &> /dev/null; then
+            echo "  Linux (Fedora/RHEL):   sudo dnf install gh"
+        elif command -v yum &> /dev/null; then
+            echo "  Linux (RHEL/CentOS):   sudo yum install gh"
+        elif command -v pacman &> /dev/null; then
+            echo "  Linux (Arch):          sudo pacman -S github-cli"
+        else
+            echo "  Linux:                 Visit https://github.com/cli/cli#installation"
+        fi
         echo "  macOS:  brew install gh"
         echo ""
         echo "Or download manually from:"
@@ -236,17 +246,25 @@ echo ""
 
 # Check if gh CLI is available
 if ! command -v gh &> /dev/null; then
-    echo "Error: gh CLI not found. Installing..."
-    sudo apt-get update && sudo apt-get install -y gh || {
-        echo "Failed to install gh CLI. Please install manually:"
+    echo "Error: gh CLI not found."
+    if command -v apt-get &> /dev/null; then
+        echo "Attempting to install gh via apt-get..."
+        sudo apt-get update && sudo apt-get install -y gh || {
+            echo "Failed to install gh CLI via apt-get. Please install manually:"
+            echo "  https://github.com/cli/cli#installation"
+            exit 1
+        }
+    else
+        echo "Automatic installation of gh is not supported on this system."
+        echo "Please install the GitHub CLI manually:"
         echo "  https://github.com/cli/cli#installation"
         exit 1
-    }
+    fi
 fi
 
 # Create temp directory
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DIR" EXIT
+trap "rm -rf \"$TEMP_DIR\"" EXIT
 
 echo "Downloading artifacts..."
 echo ""
@@ -310,15 +328,6 @@ echo "   SHA:     $DUCKDB_SHA"
 # Install spatial extension
 echo ""
 echo "3. Installing Spatial Extension..."
-EXT_FILE="$TEMP_DIR/spatial-ext/spatial.duckdb_extension"
-
-if [ ! -f "$EXT_FILE" ]; then
-    echo "Error: Spatial extension file not found."
-    exit 1
-fi
-
-# Install spatial extension using DuckDB's INSTALL command
-echo "3. Installing Spatial Extension from file..."
 EXT_FILE="$TEMP_DIR/spatial-ext/spatial.duckdb_extension"
 
 if [ ! -f "$EXT_FILE" ]; then

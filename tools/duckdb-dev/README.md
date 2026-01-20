@@ -75,8 +75,8 @@ Visit [GitHub Actions](https://github.com/e-kotov/duckspatial/actions/workflows/
 
 ## What Gets Installed?
 
-1.  **DuckDB R Package**: A standard CRAN-like source or binary package (depending on platform) built from the `v1.1.4-dev` branch.
-2.  **Spatial Extension**: A `.duckdb_extension` binary file, installed into your local DuckDB extensions directory (e.g., `~/.duckdb/extensions/v1.1.4-dev/spatial.duckdb_extension`).
+1.  **DuckDB R Package**: A standard CRAN-like source or binary package (depending on platform) built from the current development branch.
+2.  **Spatial Extension**: A `.duckdb_extension` binary file, installed into your local DuckDB extensions directory (e.g., `~/.duckdb/extensions/vX.Y.Z-dev/spatial.duckdb_extension`).
     - Note: This is an **unsigned extension**, which is why the `allow_unsigned_extensions` setting is required.
 
 ## Troubleshooting

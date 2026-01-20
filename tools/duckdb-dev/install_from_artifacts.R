@@ -219,8 +219,7 @@ install_cran_duckdb_spatial <- function(force = FALSE) {
   cat("\nRestart your R session to use the new version.\n")
 }
 
-# If run from command line
-# If run from command line directly (and not sourced)
+# If this script is run from command line (not sourced interactively)
 if (!interactive()) {
   # Check if this script matches the --file argument to ensure we are the main script
   args_all <- commandArgs(trailingOnly = FALSE)
