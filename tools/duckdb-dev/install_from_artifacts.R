@@ -132,26 +132,31 @@ install_artifacts <- function(run_id_or_url = NULL, force = FALSE) {
   cat("==========================================\n")
   
   tryCatch({
-    library(duckdb, quietly = TRUE)
-    con <- DBI::dbConnect(duckdb::duckdb(config = list(allow_unsigned_extensions = "true")))
+    # Use a fresh R process to check the installed version
+    # This avoids the issue where the current session has the old DLL loaded
+    cmd <- paste0(
+      "library(duckdb, quietly=TRUE); ",
+      "con <- DBI::dbConnect(duckdb::duckdb(config=list(allow_unsigned_extensions='true'))); ",
+      "v <- DBI::dbGetQuery(con, 'PRAGMA version'); ",
+      "cat('DuckDB R Package:\\n'); ",
+      "cat('  Version:   ', v$library_version, '\\n'); ",
+      "cat('  Source ID: ', v$source_id, '\\n'); ",
+      "tryCatch({ ",
+      "  DBI::dbExecute(con, 'LOAD spatial'); ",
+      "  ext <- DBI::dbGetQuery(con, \"SELECT extension_name, extension_version, install_mode FROM duckdb_extensions() WHERE extension_name = 'spatial'\"); ",
+      "  if (nrow(ext) > 0) { ",
+      "    cat('\\nSpatial Extension:\\n'); ",
+      "    cat('  Version:   ', ext$extension_version, '\\n'); ",
+      "    cat('  Mode:      ', ext$install_mode, '\\n'); ",
+      "  } ",
+      "}, error = function(e) { ",
+      "  cat('\\nSpatial Extension: not installed (or load failed)\\n'); ",
+      "}); ",
+      "DBI::dbDisconnect(con, shutdown=TRUE);"
+    )
     
-    # DuckDB R package info
-    version_info <- DBI::dbGetQuery(con, "PRAGMA version")
-    cat("DuckDB R Package:\n")
-    cat("  Version:   ", version_info$library_version, "\n")
-    cat("  Source ID: ", version_info$source_id, "\n")
+    system2("Rscript", args = c("-e", shQuote(cmd)), stdout = "", stderr = "")
     
-    # Spatial extension info
-    DBI::dbExecute(con, "LOAD spatial")
-    ext_info <- DBI::dbGetQuery(con, "SELECT extension_name, extension_version, install_mode FROM duckdb_extensions() WHERE extension_name = 'spatial'")
-    if (nrow(ext_info) > 0) {
-      cat("\nSpatial Extension:\n")
-      cat("  Version:   ", ext_info$extension_version, "\n")
-      cat("  Mode:      ", ext_info$install_mode, "\n")
-    }
-    cat("==========================================\n")
-    
-    DBI::dbDisconnect(con, shutdown = TRUE)
   }, error = function(e) {
     cat("Could not retrieve version info: ", conditionMessage(e), "\n")
   })
