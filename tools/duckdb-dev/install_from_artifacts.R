@@ -6,10 +6,13 @@
 #
 # Usage (from R console):
 #   source("tools/duckdb-dev/install_from_artifacts.R")
-#   install_artifacts()                     # Auto-detect latest, with confirmation
-#   install_artifacts(force = TRUE)         # Skip confirmation prompt
-#   install_artifacts(12345678)             # Specific run ID
-#   install_artifacts(12345678, force = TRUE)
+#   install_dev_duckdb_spatial()                     # Auto-detect latest, with confirmation
+#   install_dev_duckdb_spatial(force = TRUE)         # Skip confirmation prompt
+#   install_dev_duckdb_spatial(12345678)             # Specific run ID
+#   install_dev_duckdb_spatial(12345678, force = TRUE)
+#
+#   install_cran_duckdb_spatial()                    # Revert to CRAN version
+#   check_duckdb_spatial_version()                   # Check installed versions
 #
 # Or from command line:
 #   Rscript tools/duckdb-dev/install_from_artifacts.R
@@ -47,7 +50,41 @@ get_script_dir <- function() {
   stop("Cannot determine script location. Please run from the repo root or provide the full path.")
 }
 
-install_artifacts <- function(run_id_or_url = NULL, force = FALSE) {
+check_duckdb_spatial_version <- function() {
+  if (!requireNamespace("duckdb", quietly = TRUE)) {
+    cat("DuckDB R Package: Not installed\n")
+    return(invisible(NULL))
+  }
+
+  tryCatch({
+    con <- DBI::dbConnect(duckdb::duckdb(config = list(allow_unsigned_extensions = "true")))
+    on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+    
+    v <- DBI::dbGetQuery(con, "PRAGMA version")
+    cat("DuckDB R Package:\n")
+    cat("  Version:   ", v$library_version, "\n")
+    cat("  Source ID: ", v$source_id, "\n")
+    
+    tryCatch({
+      DBI::dbExecute(con, "LOAD spatial")
+      ext <- DBI::dbGetQuery(con, "SELECT extension_version, install_mode FROM duckdb_extensions() WHERE extension_name='spatial'")
+      if (nrow(ext) > 0) {
+        cat("\nSpatial Extension:\n")
+        cat("  Version:   ", ext$extension_version, "\n")
+        if (!is.null(ext$install_mode)) {
+          cat("  Mode:      ", ext$install_mode, "\n")
+        }
+      }
+    }, error = function(e) {
+      cat("\nSpatial Extension: not installed (or load failed)\n")
+    })
+    
+  }, error = function(e) {
+    cat("Error checking version: ", conditionMessage(e), "\n")
+  })
+}
+
+install_dev_duckdb_spatial <- function(run_id_or_url = NULL, force = FALSE) {
   script_dir <- get_script_dir()
   os_type <- Sys.info()["sysname"]
   
@@ -58,29 +95,8 @@ install_artifacts <- function(run_id_or_url = NULL, force = FALSE) {
         cat("==========================================\n")
         cat("Currently installed:\n")
         cat("==========================================\n")
-        
-        con <- DBI::dbConnect(duckdb::duckdb(config = list(allow_unsigned_extensions = "true")))
-        # Don't use on.exit() here as it accumulates across the function execution
-        
-        v <- DBI::dbGetQuery(con, "PRAGMA version")
-        cat("DuckDB R Package:\n")
-        cat("  Version:   ", v$library_version, "\n")
-        cat("  Source ID: ", v$source_id, "\n")
-        
-        tryCatch({
-          DBI::dbExecute(con, "LOAD spatial")
-          ext <- DBI::dbGetQuery(con, "SELECT extension_version FROM duckdb_extensions() WHERE extension_name='spatial'")
-          if (nrow(ext) > 0) {
-            cat("\nSpatial Extension:\n")
-            cat("  Version:   ", ext$extension_version, "\n")
-          }
-        }, error = function(e) {
-          cat("\nSpatial Extension: not installed\n")
-        })
-        
+        check_duckdb_spatial_version()
         cat("==========================================\n\n")
-        
-        DBI::dbDisconnect(con, shutdown = TRUE)
         
         confirm <- readline("Override with dev build? [y/N]: ")
         if (!tolower(confirm) %in% c("y", "yes")) {
@@ -131,49 +147,96 @@ install_artifacts <- function(run_id_or_url = NULL, force = FALSE) {
   cat("Installed Versions\n")
   cat("==========================================\n")
   
-  tryCatch({
-    # Use a fresh R process to check the installed version
-    # This avoids the issue where the current session has the old DLL loaded
-    cmd <- paste0(
-      "library(duckdb, quietly=TRUE); ",
-      "con <- DBI::dbConnect(duckdb::duckdb(config=list(allow_unsigned_extensions='true'))); ",
-      "v <- DBI::dbGetQuery(con, 'PRAGMA version'); ",
-      "cat('DuckDB R Package:\\n'); ",
-      "cat('  Version:   ', v$library_version, '\\n'); ",
-      "cat('  Source ID: ', v$source_id, '\\n'); ",
-      "tryCatch({ ",
-      "  DBI::dbExecute(con, 'LOAD spatial'); ",
-      "  ext <- DBI::dbGetQuery(con, \"SELECT extension_name, extension_version, install_mode FROM duckdb_extensions() WHERE extension_name = 'spatial'\"); ",
-      "  if (nrow(ext) > 0) { ",
-      "    cat('\\nSpatial Extension:\\n'); ",
-      "    cat('  Version:   ', ext$extension_version, '\\n'); ",
-      "    cat('  Mode:      ', ext$install_mode, '\\n'); ",
-      "  } ",
-      "}, error = function(e) { ",
-      "  cat('\\nSpatial Extension: not installed (or load failed)\\n'); ",
-      "}); ",
-      "DBI::dbDisconnect(con, shutdown=TRUE);"
-    )
-    
-    system2("Rscript", args = c("-e", shQuote(cmd)), stdout = "", stderr = "")
-    
-  }, error = function(e) {
-    cat("Could not retrieve version info: ", conditionMessage(e), "\n")
-  })
+  # Use a fresh R process to verify
+  # We assume this script is available at its relative path since we are in the project
+  # If we can't find it easily for the child process, we might need a fallback.
+  # Using the absolute path of THIS script file is safest.
+  this_script_path <- normalizePath(file.path(script_dir, "install_from_artifacts.R"), mustWork = FALSE)
   
+  cmd <- sprintf("source('%s'); check_duckdb_spatial_version()", this_script_path)
+  system2("Rscript", args = c("-e", shQuote(cmd)), stdout = "", stderr = "")
+   
+  cat("==========================================\n")
   cat("\nIMPORTANT: Restart your R session to use the new version.\n")
   cat("Every time you restart R session, you must enable unsigned extensions to use this dev build:\n")
   cat("  con <- DBI::dbConnect(duckdb::duckdb(config = list(allow_unsigned_extensions = \"true\")))\n")
   cat("  DBI::dbExecute(con, \"LOAD spatial\")\n")
 }
 
-# If run from command line
-if (!interactive()) {
-  args <- commandArgs(trailingOnly = TRUE)
+install_cran_duckdb_spatial <- function(force = FALSE) {
+  # Check if duckdb is already installed and prompt for confirmation
+  if (!force && interactive()) {
+    tryCatch({
+      if (requireNamespace("duckdb", quietly = TRUE)) {
+        cat("==========================================\n")
+        cat("Currently installed:\n")
+        cat("==========================================\n")
+        check_duckdb_spatial_version()
+        cat("==========================================\n\n")
+        
+        confirm <- readline("Revert to CRAN version? [y/N]: ")
+        if (!tolower(confirm) %in% c("y", "yes")) {
+          cat("Aborted.\n")
+          return(invisible(0))
+        }
+        cat("\n")
+      }
+    }, error = function(e) {
+      # duckdb not installed, no need to prompt
+    })
+  }
+
+  cat("Installing DuckDB from CRAN...\n")
+  install.packages("duckdb", repos = "https://cloud.r-project.org")
   
-  if (length(args) == 0) {
-    install_artifacts()
-  } else {
-    install_artifacts(args[1])
+  cat("\nInstalling Spatial Extension...\n")
+  
+  # Use a fresh R process to verify and install spatial extension (ensuring clean state)
+  cmd <- paste0(
+      "if (!requireNamespace('duckdb', quietly=TRUE)) stop('DuckDB not found after install'); ",
+      "con <- DBI::dbConnect(duckdb::duckdb(), dbdir=':memory:'); ",
+      "tryCatch({ ",
+      "  DBI::dbExecute(con, 'INSTALL spatial; LOAD spatial;'); ",
+      "  DBI::dbDisconnect(con, shutdown=TRUE); ", # Close first
+      "  cat('\\n'); ",
+      "}, error = function(e) { ",
+      "  cat('Error installing/loading spatial extension: ', conditionMessage(e), '\\n'); ",
+      "});"
+  )
+  system2("Rscript", args = c("-e", shQuote(cmd)), stdout = "", stderr = "")
+
+  # Check versions using our new function
+  cat("\n==========================================\n")
+  cat("Installed Versions\n")
+  cat("==========================================\n")
+  
+  script_dir <- get_script_dir()
+  this_script_path <- normalizePath(file.path(script_dir, "install_from_artifacts.R"), mustWork = FALSE)
+  cmd_check <- sprintf("source('%s'); check_duckdb_spatial_version()", this_script_path)
+  system2("Rscript", args = c("-e", shQuote(cmd_check)), stdout = "", stderr = "")
+  
+  cat("==========================================\n")
+  cat("\nRestart your R session to use the new version.\n")
+}
+
+# If run from command line
+# If run from command line directly (and not sourced)
+if (!interactive()) {
+  # Check if this script matches the --file argument to ensure we are the main script
+  args_all <- commandArgs(trailingOnly = FALSE)
+  file_arg <- grep("^--file=", args_all, value = TRUE)
+  
+  if (length(file_arg) > 0) {
+    script_path <- sub("^--file=", "", file_arg)
+    # Check if the script path ends with our filename (robustness check)
+    if (grepl("install_from_artifacts.R$", script_path)) {
+      args <- commandArgs(trailingOnly = TRUE)
+      
+      if (length(args) == 0) {
+        install_dev_duckdb_spatial()
+      } else {
+        install_dev_duckdb_spatial(args[1])
+      }
+    }
   }
 }

@@ -53,14 +53,20 @@ The scripts automatically install the **latest successful build** when run witho
 ```r
 source("tools/duckdb-dev/install_from_artifacts.R")
 
-# Install latest (prompts if already installed)
-install_artifacts()
+# Install latest dev version (prompts if already installed)
+install_dev_duckdb_spatial()
 
 # Skip confirmation prompt
-install_artifacts(force = TRUE)
+install_dev_duckdb_spatial(force = TRUE)
 
 # Specify a run ID
-install_artifacts(12345678)
+install_dev_duckdb_spatial(12345678)
+
+# Revert to stable CRAN version
+install_cran_duckdb_spatial()
+
+# Check installed versions
+check_duckdb_spatial_version()
 ```
 
 ### Finding a Specific Run ID
