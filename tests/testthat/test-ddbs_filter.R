@@ -1,13 +1,13 @@
 # skip tests on CRAN because they take too much time
 skip_if(Sys.getenv("TEST_ONE") != "")
-testthat::skip_on_cran()
-testthat::skip_if_not_installed("duckdb")
+skip_on_cran()
+skip_if_not_installed("duckdb")
 
 
 # helpers --------------------------------------------------------------
 
 # create duckdb connection
-conn_test <- duckspatial::ddbs_create_conn()
+conn_test <- ddbs_temp_conn()
 
 # helper function
 tester <- function(x = points_sf,
@@ -20,7 +20,7 @@ tester <- function(x = points_sf,
                    distance = NULL,
                    output = "sf",
                    overwrite = FALSE,
-                   quiet = FALSE) {
+                   quiet = getOption("duckspatial.quiet", FALSE)) {
     ddbs_filter(
         x = x,
         y = y,
@@ -40,7 +40,7 @@ tester <- function(x = points_sf,
 # expected behavior --------------------------------------------------------------
 
 
-testthat::test_that("expected behavior", {
+test_that("expected behavior", {
 
     # option 1: passing sf objects
     output1 <- tester(
@@ -49,7 +49,7 @@ testthat::test_that("expected behavior", {
         predicate = "intersects"
     )
 
-    testthat::expect_true(is(output1 , 'sf'))
+    expect_true(is(output1 , 'sf'))
 
     # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
@@ -64,7 +64,7 @@ testthat::test_that("expected behavior", {
         predicate = "intersects"
     )
 
-    testthat::expect_true(is(output2 , 'sf'))
+    expect_true(is(output2 , 'sf'))
 
     # option 3: passing the names of tables in a duckdb db, creating new table in db
     output3 <- tester(
@@ -76,23 +76,25 @@ testthat::test_that("expected behavior", {
         overwrite = TRUE
     )
 
-    testthat::expect_true(output3)
+    expect_true(output3)
 
-    ddbs_read_vector(conn = conn_test, name = "filter_result", crs = 4326)
+    ddbs_read_vector(conn = conn_test, name = "filter_result", quiet = TRUE)
 
 
     # show and suppress messages
-    testthat::expect_message( tester() )
-    testthat::expect_no_message( tester(quiet = TRUE))
+    expect_message( tester(quiet = FALSE) )
+    expect_no_message( tester(quiet = TRUE))
+    # verify default respects global option
+    expect_no_message( tester() )
 
 
 })
 
 
-testthat::test_that("error if table already exists", {
+test_that("error if table already exists", {
 
     # write table for the 1st time
-    testthat::expect_true(tester(x = "points",
+    expect_true(tester(x = "points",
                                     y = "argentina",
                                     conn = conn_test,
                                     name = 'banana_filter',
@@ -100,14 +102,14 @@ testthat::test_that("error if table already exists", {
                              )
 
     # expected error if overwrite = FALSE
-    testthat::expect_error(tester(x = "points",
+    expect_error(tester(x = "points",
                                     y = "argentina",
                                     conn = conn_test,
                                     name = 'banana_filter',
                                     overwrite = FALSE))
 
     # overwrite table
-    testthat::expect_true(tester(x = "points",
+    expect_true(tester(x = "points",
                                     y = "argentina",
                                     conn = conn_test,
                                     name = 'banana_filter',
@@ -118,19 +120,19 @@ testthat::test_that("error if table already exists", {
 
 # expected errors --------------------------------------------------------------
 
-testthat::test_that("errors with incorrect input", {
+test_that("errors with incorrect input", {
 
-    testthat::expect_error(tester(x = 999))
-    testthat::expect_error(tester(y = 999))
-    testthat::expect_error(tester(predicate = 999))
-    testthat::expect_error(tester(conn = 999))
-    testthat::expect_error(tester(overwrite = 999))
-    testthat::expect_error(tester(quiet = 999))
+    expect_error(tester(x = 999))
+    expect_error(tester(y = 999))
+    expect_error(tester(predicate = 999))
+    expect_error(tester(conn = 999))
+    expect_error(tester(overwrite = 999))
+    expect_error(tester(quiet = 999))
 
-    testthat::expect_error(tester(x = "999", conn = conn_test))
-    testthat::expect_error(tester(y = "999", conn = conn_test))
+    expect_error(tester(x = "999", conn = conn_test))
+    expect_error(tester(y = "999", conn = conn_test))
 
-    testthat::expect_error(tester(conn = conn_test, name = c('banana', 'banana')))
+    expect_error(tester(conn = conn_test, name = c('banana', 'banana')))
 
 
     })
@@ -139,7 +141,7 @@ testthat::test_that("errors with incorrect input", {
 
 # duckspatial_df inputs --------------------------------------------------------
 
-testthat::test_that("ddbs_filter works with duckspatial_df inputs", {
+test_that("ddbs_filter works with duckspatial_df inputs", {
   argentina_path <- system.file("spatial/argentina.geojson", package = "duckspatial")
   
   # Create a distinct connection for this test to avoid interference
@@ -157,7 +159,7 @@ testthat::test_that("ddbs_filter works with duckspatial_df inputs", {
   
   # Register points to the same connection as a duckspatial_df
   ddbs_write_vector(conn, points_small_sf, "test_points_filter")
-  points_ds <- ddbs_read_vector(conn, "test_points_filter")
+  points_ds <- ddbs_read_vector(conn, "test_points_filter", quiet = TRUE)
   
   # 1. duckspatial_df x duckspatial_df
   result1 <- ddbs_filter(points_ds, argentina_ds, predicate = "intersects")
@@ -177,7 +179,8 @@ testthat::test_that("ddbs_filter works with duckspatial_df inputs", {
 
 # predicates -------------------------------------------------------------------
 
-testthat::test_that("ddbs_filter works with different predicates", {
+
+test_that("ddbs_filter works with different predicates", {
   # Polygon: square (0,0) to (10,10)
   p1 <- sf::st_polygon(list(matrix(c(0,0, 10,0, 10,10, 0,10, 0,0), ncol=2, byrow=TRUE)))
   poly_sf <- sf::st_sf(id = 1, geometry = sf::st_sfc(p1), crs=4326)
@@ -204,7 +207,7 @@ testthat::test_that("ddbs_filter works with different predicates", {
 
 # output parameters ------------------------------------------------------------
 
-testthat::test_that("ddbs_filter respects output parameter", {
+test_that("ddbs_filter respects output parameter", {
   result_sf <- ddbs_filter(points_sf, argentina_sf, output = "sf")
   expect_s3_class(result_sf, "sf")
   
@@ -218,11 +221,260 @@ testthat::test_that("ddbs_filter respects output parameter", {
 
 # error handling ---------------------------------------------------------------
 
-testthat::test_that("ddbs_filter throws error on CRS mismatch", {
+test_that("ddbs_filter throws error on CRS mismatch", {
   points_3857 <- sf::st_transform(points_sf[1:10,], 3857)
   
   expect_error(
     ddbs_filter(points_3857, argentina_sf),
     "Coordinates Reference System"
   )
+})
+
+
+# cross-verification: ddbs_filter vs sf::st_filter ------------------------------------
+# relies on nc_sf and nc_sf_5070 datasets loaded in testthat/setup.R
+
+test_that("ddbs_filter matches sf::st_filter for intersects", {
+    bbox <- sf::st_bbox(nc_sf_5070[1:5, ]) |> sf::st_as_sfc() |> sf::st_as_sf()
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        bbox,
+        .predicate = sf::st_intersects
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        bbox,
+        predicate = "intersects",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for within", {
+    # Interior bbox to avoid boundary edge cases
+    central <- nc_sf_5070[nc_sf_5070$NAME %in% c("Wake", "Durham", "Orange", "Chatham"), ]
+    bbox_proj <- sf::st_bbox(central) |>
+        sf::st_as_sfc() |>
+        sf::st_buffer(20000)
+    bbox <- sf::st_as_sf(bbox_proj)
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        bbox,
+        .predicate = sf::st_within
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        bbox,
+        predicate = "within",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter dwithin matches sf::st_is_within_distance", {
+    centroid <- sf::st_centroid(sf::st_union(nc_sf_5070))
+    point_sf <- sf::st_as_sf(centroid)
+    distance_m <- 100000
+    
+    within_dist <- sf::st_is_within_distance(nc_sf_5070, point_sf, dist = distance_m)
+    sf_result <- nc_sf_5070[lengths(within_dist) > 0, ]
+    
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        point_sf,
+        predicate = "dwithin",
+        distance = distance_m,
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for contains", {
+    # Use a larger polygon to contain smaller ones
+    large_counties <- nc_sf_5070[nc_sf_5070$AREA > 0.2, ]
+    container <- sf::st_union(large_counties) |> sf::st_as_sf()
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        container,
+        .predicate = sf::st_contains
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        container,
+        predicate = "contains",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for touches", {
+    # Find counties that touch Wake county
+    wake <- nc_sf_5070[nc_sf_5070$NAME == "Wake", ]
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        wake,
+        .predicate = sf::st_touches
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        wake,
+        predicate = "touches",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for overlaps", {
+    # Create overlapping polygons by buffering
+    buffered <- sf::st_buffer(nc_sf_5070[1:5, ], dist = 10000)
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        buffered,
+        .predicate = sf::st_overlaps
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        buffered,
+        predicate = "overlaps",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for crosses", {
+    # Create a line crossing the state
+    bbox <- sf::st_bbox(nc_sf_5070)
+    line <- sf::st_linestring(matrix(
+        c(
+            bbox["xmin"], (bbox["ymin"] + bbox["ymax"]) / 2,
+            bbox["xmax"], (bbox["ymin"] + bbox["ymax"]) / 2
+        ),
+        ncol = 2, byrow = TRUE
+    ))
+    line_sf <- sf::st_sfc(line, crs = sf::st_crs(nc_sf_5070)) |> sf::st_as_sf()
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        line_sf,
+        .predicate = sf::st_crosses
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        line_sf,
+        predicate = "crosses",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for covers", {
+    # Use bbox that covers some counties
+    bbox <- sf::st_bbox(nc_sf_5070[1:10, ]) |> sf::st_as_sfc() |> sf::st_as_sf()
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        bbox,
+        .predicate = sf::st_covers
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        bbox,
+        predicate = "covers",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for covered_by", {
+    # Find counties covered by a large polygon
+    large_area <- sf::st_union(nc_sf_5070[1:20, ]) |>
+        sf::st_buffer(dist = 5000) |>
+        sf::st_as_sf()
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        large_area,
+        .predicate = sf::st_covered_by
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        large_area,
+        predicate = "covered_by",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for disjoint", {
+    # Find counties disjoint from a specific region
+    western_counties <- nc_sf_5070[nc_sf_5070$NAME %in% c("Mecklenburg", "Gaston"), ]
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        western_counties,
+        .predicate = sf::st_disjoint
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        western_counties,
+        predicate = "disjoint",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for equals", {
+    # Test with identical geometries
+    test_counties <- nc_sf_5070[1:5, ]
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        test_counties,
+        .predicate = sf::st_equals
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        test_counties,
+        predicate = "equals",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
+})
+
+test_that("ddbs_filter matches sf::st_filter for contains_properly", {
+    # Buffer to ensure strict containment (no shared boundaries)
+    # Already using 5070, so simplified transformation logic
+    container <- sf::st_union(nc_sf_5070[nc_sf_5070$AREA > 0.2, ]) |>
+        sf::st_buffer(dist = 1000) |>
+        sf::st_as_sf()
+    
+    sf_result <- sf::st_filter(
+        nc_sf_5070,
+        container,
+        .predicate = sf::st_contains_properly
+    )
+    ddbs_result <- ddbs_filter(
+        nc_sf_5070,
+        container,
+        predicate = "contains_properly",
+        output = "sf"
+    )
+    
+    expect_ddbs_sf_equal(ddbs_result, sf_result)
 })
