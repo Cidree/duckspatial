@@ -15,7 +15,17 @@ NULL
 #' @export
 #' @importFrom dplyr dplyr_reconstruct
 dplyr_reconstruct.duckspatial_df <- function(data, template) {
-  # Get the base classes from data
+  # 1. Identify current geometry column
+  geom_col <- attr(template, "sf_column") %||% "geom"
+  
+  # 2. Check if geometry column still exists in the result
+  # If it's gone (e.g. via mutate(geom = NULL)), we should drop the class 
+  # and attributes, returning to a standard lazy table.
+  if (!geom_col %in% colnames(data)) {
+    return(data)
+  }
+  
+  # 3. Get the base classes from data
   base_classes <- class(data)
   
   # Reconstruct proper class hierarchy based on template
@@ -173,9 +183,18 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
       }
 
       if (should_convert) {
+           # Construct the SQL expression for the geometry column
+           # If it's a BLOB, we must first cast/parse it to GEOMETRY using ST_GeomFromWKB
+           # because ST_AsWKB(BLOB) fails in DuckDB.
+           if (grepl("BLOB", if (exists("ctype")) ctype else "", ignore.case = TRUE)) {
+               geom_expr <- glue::glue("ST_GeomFromWKB({DBI::dbQuoteIdentifier(conn, target_col_sql)})")
+           } else {
+               geom_expr <- DBI::dbQuoteIdentifier(conn, target_col_sql)
+           }
+           
            x_lazy <- dplyr::mutate(
                x_lazy, 
-                !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB({DBI::dbQuoteIdentifier(conn, target_col_sql)})"))
+                !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB({geom_expr})"))
            )
       }
 
@@ -268,6 +287,210 @@ inner_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE,
       attr(out, "crs") <- attr(x, "crs")
   }
   out
+}
+
+# =============================================================================
+# Verbs: select, rename, relocate, mutate
+# =============================================================================
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr select
+#' @importFrom tidyselect eval_select
+select.duckspatial_df <- function(.data, ...) {
+  # 1. Identify current geometry column
+  geom_col <- attr(.data, "sf_column") %||% "geom"
+  
+  # 2. Evaluate selection
+  loc <- tidyselect::eval_select(rlang::expr(c(...)), .data)
+  
+  # 3. Handle sticky geometry (like sf)
+  if (!geom_col %in% names(loc)) {
+    # If the geometry column was NOT selected, we add it back
+    geom_idx <- match(geom_col, colnames(.data))
+    
+    if (!is.na(geom_idx)) {
+       # Append to selection at the end
+       loc <- c(loc, setNames(geom_idx, geom_col))
+    }
+  }
+  
+  # 4. Perform selection on the lazy table
+  cl <- class(.data)
+  class(.data) <- setdiff(cl, "duckspatial_df")
+  
+  # Use rlang::inject to evaluate loc before calling select
+  out <- rlang::inject(dplyr::select(.data, tidyselect::all_of(!!loc)))
+  
+  # 5. Reconstruct as duckspatial_df
+  class(out) <- cl
+  attr(out, "sf_column") <- geom_col
+  attr(out, "crs") <- attr(.data, "crs")
+  
+  out
+}
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr rename
+#' @importFrom tidyselect eval_rename
+rename.duckspatial_df <- function(.data, ...) {
+  geom_col <- attr(.data, "sf_column") %||% "geom"
+  
+  # 1. Evaluate renaming
+  loc <- tidyselect::eval_rename(rlang::expr(c(...)), .data)
+  
+  # 2. Detect if geometry column changed name
+  new_geom_name <- geom_col
+  geom_idx <- match(geom_col, colnames(.data))
+  
+  if (!is.na(geom_idx) && geom_idx %in% loc) {
+      new_geom_name <- names(loc)[which(loc == geom_idx)]
+  }
+  
+  # 3. Perform rename on lazy table
+  cl <- class(.data)
+  class(.data) <- setdiff(cl, "duckspatial_df")
+  out <- dplyr::rename(.data, ...)
+  
+  # 4. Reconstruct and update attribute
+  class(out) <- cl
+  attr(out, "sf_column") <- new_geom_name
+  attr(out, "crs") <- attr(.data, "crs")
+  
+  out
+}
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr rename_with
+rename_with.duckspatial_df <- function(.data, .fn, .cols = dplyr::everything(), ...) {
+  # 1. Identify current geometry column
+  geom_col <- attr(.data, "sf_column") %||% "geom"
+  
+  # 2. Perform rename_with on lazy table
+  cl <- class(.data)
+  class(.data) <- setdiff(cl, "duckspatial_df")
+  
+  # We use curly-curly for .cols to allow passing selections
+  out <- dplyr::rename_with(.data, .fn, .cols = {{ .cols }}, ...)
+  
+  # 3. Detect new geometry name
+  # Since rename_with preserves order, we can match by index
+  old_names <- colnames(.data)
+  new_names <- colnames(out)
+  geom_idx <- match(geom_col, old_names)
+  
+  new_geom_name <- geom_col
+  if (!is.na(geom_idx)) {
+    new_geom_name <- new_names[geom_idx]
+  }
+  
+  # 4. Reconstruct
+  class(out) <- cl
+  attr(out, "sf_column") <- new_geom_name
+  attr(out, "crs") <- attr(.data, "crs")
+  
+  out
+}
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr pull
+pull.duckspatial_df <- function(.data, var = -1, name = NULL, ...) {
+  # 1. Identify current geometry column
+  geom_col <- attr(.data, "sf_column") %||% "geom"
+  
+  # 2. Resolve column to be pulled
+  # We use tidyselect to find which column name 'var' refers to
+  var_enq <- rlang::enquo(var)
+  loc <- tidyselect::vars_pull(colnames(.data), !!var_enq)
+  
+  # 3. If it's NOT the geometry, delegate to dbplyr
+  if (loc != geom_col) {
+      cl <- class(.data)
+      class(.data) <- setdiff(cl, "duckspatial_df")
+      
+      # We pass 'loc' which is already the character name
+      return(dplyr::pull(.data, var = loc, name = {{ name }}, ...))
+  }
+  
+  # 4. If it IS the geometry, we need conversion to sfc (eager collection)
+  # We use existing collect logic for conversion
+  collected_sf <- .data |> 
+    dplyr::select(!!rlang::sym(geom_col)) |> 
+    dplyr::collect(as = "sf")
+    
+  # Extract the sfc column
+  res <- sf::st_geometry(collected_sf)
+  
+  # 5. Handle 'name' argument if provided
+  name_enq <- rlang::enquo(name)
+  if (!rlang::quo_is_null(name_enq)) {
+    # Pull the name values (lazy execution)
+    nm_vals <- dplyr::pull(.data, !!name_enq)
+    names(res) <- nm_vals
+  }
+  
+  res
+}
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr transmute
+transmute.duckspatial_df <- function(.data, ...) {
+  # 1. Identify current geometry column
+  geom_col <- attr(.data, "sf_column") %||% "geom"
+  
+  # 2. Strip class to work with lazy table
+  cl <- class(.data)
+  class(.data) <- setdiff(cl, "duckspatial_df")
+  
+  # 3. Identify which columns would be returned by a normal transmute
+  # (Dry run - dbplyr is lazy so this is cheap metadata operation)
+  temp_transmuted <- dplyr::transmute(.data, ...)
+  transmuted_names <- colnames(temp_transmuted)
+  
+  # 4. Perform the operation as mutate + select to ensure stickiness
+  # This ensures we have access to the geometry column if it wasn't transmuted
+  out <- dplyr::mutate(.data, ...)
+  
+  # Sticky logic: include geometry if not explicitly in transmuted list
+  final_names <- unique(c(transmuted_names, geom_col))
+  out <- dplyr::select(out, dplyr::all_of(final_names))
+  
+  # 5. Reconstruct
+  class(out) <- cl
+  attr(out, "sf_column") <- geom_col
+  attr(out, "crs") <- attr(.data, "crs")
+  
+  out
+}
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr mutate
+mutate.duckspatial_df <- function(.data, ...) {
+  cl <- class(.data)
+  class(.data) <- setdiff(cl, "duckspatial_df")
+  
+  out <- dplyr::mutate(.data, ...)
+  
+  # Call our reconstruction method directly to avoid dispatch issues
+  # when .data has been stripped
+  dplyr_reconstruct.duckspatial_df(out, .data)
+}
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr relocate
+relocate.duckspatial_df <- function(.data, ...) {
+  cl <- class(.data)
+  class(.data) <- setdiff(cl, "duckspatial_df")
+  out <- dplyr::relocate(.data, ...)
+  
+  # Call our reconstruction method directly
+  dplyr_reconstruct.duckspatial_df(out, .data)
 }
 
 #' @rdname duckspatial_df_dplyr

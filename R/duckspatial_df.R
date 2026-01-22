@@ -90,17 +90,22 @@ as_duckspatial_df.sf <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ..
 #' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.tbl_duckdb_connection <- function(x, conn = NULL, crs = NULL, 
-                                                     geom_col = "geom", ...) {
-  # Auto-detect CRS if not provided (DuckDB-specific)
-  if (is.null(crs)) {
-    crs <- ddbs_crs(x)
-  }
-  
+                                                     geom_col = NULL, ...) {
   # Extract source table for efficient get_query_list path
   source_table <- tryCatch(
     as.character(dbplyr::remote_name(x)),
     error = function(e) NULL
   )
+
+  # Auto-detect geometry column if not provided
+  if (is.null(geom_col)) {
+      geom_col <- detect_geometry_column(x, source_table)
+  }
+
+  # Auto-detect CRS if not provided (DuckDB-specific)
+  if (is.null(crs)) {
+    crs <- ddbs_crs(x, geom_col = geom_col)
+  }
   
   # Auto-detect geometry type for collect optimization
   geom_type <- tryCatch({
@@ -116,17 +121,22 @@ as_duckspatial_df.tbl_duckdb_connection <- function(x, conn = NULL, crs = NULL,
 #' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.tbl_lazy <- function(x, conn = NULL, crs = NULL, 
-                                        geom_col = "geom", ...) {
-  # Auto-detect CRS if not provided
-  if (is.null(crs)) {
-    crs <- ddbs_crs(x)
-  }
-  
+                                        geom_col = NULL, ...) {
   # Extract source table for efficient get_query_list path
   source_table <- tryCatch(
     as.character(dbplyr::remote_name(x)),
     error = function(e) NULL
   )
+
+  # Auto-detect geometry column if not provided
+  if (is.null(geom_col)) {
+      geom_col <- detect_geometry_column(x, source_table)
+  }
+
+  # Auto-detect CRS if not provided
+  if (is.null(crs)) {
+    crs <- ddbs_crs(x, geom_col = geom_col)
+  }
   
   new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
 }
@@ -134,7 +144,7 @@ as_duckspatial_df.tbl_lazy <- function(x, conn = NULL, crs = NULL,
 #' @rdname as_duckspatial_df
 #' @export
 as_duckspatial_df.character <- function(x, conn = NULL, crs = NULL, 
-                                         geom_col = "geom", ...) {
+                                         geom_col = NULL, ...) {
   if (is.null(conn)) {
     conn <- ddbs_default_conn(create = FALSE)
     if (is.null(conn)) {
@@ -143,7 +153,7 @@ as_duckspatial_df.character <- function(x, conn = NULL, crs = NULL,
   }
   
   lazy_tbl <- dplyr::tbl(conn, x)
-  new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = x)
+  as_duckspatial_df.tbl_duckdb_connection(lazy_tbl, conn = conn, crs = crs, geom_col = geom_col, ...)
 }
 
 #' @rdname as_duckspatial_df
@@ -167,7 +177,9 @@ as_duckspatial_df.data.frame <- function(x, conn = NULL, crs = NULL,
      } else {
         # Pick the first sfc column as geometry
         first_sfc <- names(x)[which(is_sfc)[1]]
+    if (!getOption("duckspatial.quiet", FALSE)) {
         cli::cli_inform("Detected {.cls sfc} column {.val {first_sfc}}, converting to {.cls sf} first.")
+    }
         return(as_duckspatial_df(sf::st_as_sf(x, sf_column_name = first_sfc), conn = conn, crs = crs, ...))
      }
    }
@@ -178,7 +190,9 @@ as_duckspatial_df.data.frame <- function(x, conn = NULL, crs = NULL,
    # For now, let's enforce that it must have at least one sfc or we error.
    if (!any(is_sfc)) {
      if (!is.null(geom_col) && geom_col %in% names(x)) {
+    if (!getOption("duckspatial.quiet", FALSE)) {
         cli::cli_warn("Column {.val {geom_col}} exists but is not {.cls sfc}. Attempting raw upload.")
+    }
      } else {
         cli::cli_abort("No {.cls sfc} geometry column found in data frame. Use {.fn st_as_sf} first or provide valid spatial data.")
      }
@@ -192,4 +206,37 @@ as_duckspatial_df.data.frame <- function(x, conn = NULL, crs = NULL,
    
    lazy_tbl <- dplyr::tbl(conn, view_name)
    new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+}
+
+#' Auto-detect geometry column name from DuckDB table/query
+#'
+#' @param x A dbplyr lazy table or compatible object with a remote connection
+#' @param source_table Optional character string of the source table name (optimization)
+#' @return Character string of the detected geometry column or "geom" fallback
+#' @keywords internal
+detect_geometry_column <- function(x, source_table = NULL) {
+  tryCatch({
+    conn <- dbplyr::remote_con(x)
+    
+    # Construct DESCRIBE query safely
+    query <- if (!is.null(source_table) && !inherits(source_table, "sql")) {
+      # Use quoted identifier for table name
+      glue::glue("DESCRIBE {DBI::dbQuoteIdentifier(conn, source_table)}")
+    } else {
+      # Use subquery for lazy table
+      glue::glue("DESCRIBE {dbplyr::sql_render(x)}")
+    }
+    
+    desc <- DBI::dbGetQuery(conn, query)
+    
+    # Robust check for geometry types (including EPSG variants)
+    # Check for 'GEOMETRY' (standard) or type starting with 'GEOMETRY('
+    is_geom <- grepl("^GEOMETRY", desc$column_type, ignore.case = TRUE)
+    
+    if (any(is_geom)) {
+      desc$column_name[which(is_geom)[1]]
+    } else {
+      "geom" # Fallback
+    }
+  }, error = function(e) "geom")
 }

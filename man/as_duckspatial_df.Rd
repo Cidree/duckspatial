@@ -16,11 +16,11 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
 
 \method{as_duckspatial_df}{sf}(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
-\method{as_duckspatial_df}{tbl_duckdb_connection}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+\method{as_duckspatial_df}{tbl_duckdb_connection}(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
-\method{as_duckspatial_df}{tbl_lazy}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+\method{as_duckspatial_df}{tbl_lazy}(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
-\method{as_duckspatial_df}{character}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+\method{as_duckspatial_df}{character}(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 \method{as_duckspatial_df}{data.frame}(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
 }

@@ -5,6 +5,13 @@
 \alias{dplyr_reconstruct.duckspatial_df}
 \alias{left_join.duckspatial_df}
 \alias{inner_join.duckspatial_df}
+\alias{select.duckspatial_df}
+\alias{rename.duckspatial_df}
+\alias{rename_with.duckspatial_df}
+\alias{pull.duckspatial_df}
+\alias{transmute.duckspatial_df}
+\alias{mutate.duckspatial_df}
+\alias{relocate.duckspatial_df}
 \alias{head.duckspatial_df}
 \alias{compute.duckspatial_df}
 \title{dplyr methods for duckspatial_df}
@@ -34,6 +41,20 @@
   na_matches = c("na", "never"),
   relationship = NULL
 )
+
+\method{select}{duckspatial_df}(.data, ...)
+
+\method{rename}{duckspatial_df}(.data, ...)
+
+\method{rename_with}{duckspatial_df}(.data, .fn, .cols = dplyr::everything(), ...)
+
+\method{pull}{duckspatial_df}(.data, var = -1, name = NULL, ...)
+
+\method{transmute}{duckspatial_df}(.data, ...)
+
+\method{mutate}{duckspatial_df}(.data, ...)
+
+\method{relocate}{duckspatial_df}(.data, ..., .before = NULL, .after = NULL)
 
 \method{head}{duckspatial_df}(x, n = 6L, ...)
 
