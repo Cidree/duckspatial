@@ -32,7 +32,6 @@ nc_ddbs <- duckspatial::ddbs_open_dataset(system.file("shape/nc.shp", package = 
 nc_sf_5070 <- sf::st_transform(nc_sf, 5070)
 
 # DuckDB uses GEOS (planar), disable S2 for consistent comparison with sf
-# DuckDB uses GEOS (planar), disable S2 for consistent comparison with sf
 sf::sf_use_s2(FALSE)
 
 # Silence duckspatial messages globally during tests
