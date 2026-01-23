@@ -49,11 +49,3 @@ test_that("detect_geometry_column works correctly", {
     # 6. NULL/Empty (Fallbacks)
     expect_equal(detect_geometry_column(dplyr::tbl(conn, "t_blob")), "geom")
 })
-
-# Helper check for native CRS availability if needed
-ddbs_has_native_crs <- function(conn) {
-    tryCatch({
-        DBI::dbExecute(conn, "CREATE TEMP TABLE t_test_crs (g GEOMETRY(EPSG:4326));")
-        TRUE
-    }, error = function(e) FALSE)
-}
