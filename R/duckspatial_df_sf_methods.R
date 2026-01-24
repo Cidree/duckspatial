@@ -205,6 +205,7 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   geom_col <- attr(x, "sf_column") %||% "geom"
   crs <- st_crs(x)
   bbox <- st_bbox(x)
+  geomtype <- ddbs_geometry_type(x, by_feature = FALSE, quiet = TRUE)
   
   ## header with visual separator
   cat(cli::col_silver("# A duckspatial lazy spatial table\n"))
@@ -212,6 +213,7 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   ## metadata with icons/symbols
   cat(cli::col_silver("#"), cli::col_blue("\u25cf CRS:"), cli::col_silver(ddbs_format_crs(crs)), "\n")
   cat(cli::col_silver("#"), cli::col_blue("\u25cf Geometry column:"), cli::col_silver(geom_col), "\n")
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf Geometry type:"), cli::col_silver(geomtype), "\n")
   cat(cli::col_silver("#"), cli::col_blue("\u25cf Bounding box:"), 
       cli::col_silver(sprintf("xmin: %.5g ymin: %.5g xmax: %.5g ymax: %.5g", 
                               bbox["xmin"], bbox["ymin"], bbox["xmax"], bbox["ymax"])), "\n")
