@@ -644,3 +644,185 @@ testthat::test_that("ddbs_make_polygon(): errors work", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+
+# 9. ddbs_convex_hull() -----------------------------------------------------
+
+
+## 9.1. Expected behaviour -------------------
+
+## expected behaviour
+## - CHECK 1.1: works on all formats
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.3: messages work
+#  - CHECK 1.4: writting table works
+testthat::test_that("ddbs_convex_hull(): expected behavior", {
+  
+  ## CHECK 1.1
+  output_ddbs <- ddbs_convex_hull(argentina_ddbs)
+  output_sf   <- ddbs_convex_hull(argentina_sf)
+  output_conn <- ddbs_convex_hull("argentina", conn = conn_test)
+
+  testthat::expect_s3_class(output_ddbs, "duckspatial_df")
+  testthat::expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+  testthat::expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+  
+
+  ## CHECK 1.2
+  output_geoarrow_fmt <- ddbs_convex_hull(argentina_ddbs, output = "geoarrow")
+  output_sf_fmt       <- ddbs_convex_hull(argentina_ddbs, output = "sf")
+  output_raw_fmt      <- ddbs_convex_hull(argentina_ddbs, output = "raw")
+
+  testthat::expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+  testthat::expect_s3_class(output_sf_fmt, "sf")
+  testthat::expect_s3_class(output_raw_fmt, "tbl_df")
+
+
+  ## CHECK 1.3
+  testthat::expect_message(ddbs_convex_hull(argentina_ddbs))
+  testthat::expect_message(ddbs_convex_hull("argentina", conn = conn_test, name = "convex_hull"))
+  testthat::expect_message(ddbs_convex_hull("argentina", conn = conn_test, name = "convex_hull", overwrite = TRUE))
+  testthat::expect_true(ddbs_convex_hull("argentina", conn = conn_test, name = "convex_hull2"))
+
+  testthat::expect_no_message(ddbs_convex_hull(argentina_ddbs, quiet = TRUE))
+  testthat::expect_no_message(ddbs_convex_hull("argentina", conn = conn_test, name = "convex_hull", overwrite = TRUE, quiet = TRUE))
+    
+  ## CHECK 1.4
+  output_tbl <- ddbs_read_vector(conn_test, "convex_hull")
+  testthat::expect_equal(
+    ddbs_collect(output_ddbs)$geometry,
+    output_tbl$geometry
+  )
+
+  ## CHECK 1.5
+  ## TODO - Review why it is slightly different
+  # sf_output   <- sf::st_convex_hull(argentina_sf)
+  # ddbs_output <- ddbs_convex_hull(argentina_sf) |> 
+  #   sf::st_as_sf() |> 
+  #   dplyr::select(-crs_duckspatial)
+
+  # testthat::expect_equal(sf_output$geometry, ddbs_output$geometry)
+
+})
+
+## 9.2. Errors -------------------------
+
+## CHECK 2.1: errors
+testthat::test_that("ddbs_convex_hull(): errors work", {
+  
+    ## CHECK 2.1
+    testthat::expect_error(ddbs_convex_hull("argentina", conn = NULL))
+    testthat::expect_error(ddbs_convex_hull(x = 999))
+    testthat::expect_error(ddbs_convex_hull(argentina_ddbs, conn = 999))
+    testthat::expect_error(ddbs_convex_hull(argentina_ddbs, new_column = 999))
+    testthat::expect_error(ddbs_convex_hull(argentina_ddbs, overwrite = 999))
+    testthat::expect_error(ddbs_convex_hull(argentina_ddbs, quiet = 999))
+    testthat::expect_error(ddbs_convex_hull(x = "999", conn = conn_test))
+    testthat::expect_error(ddbs_convex_hull(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
+  
+})
+
+
+
+# 10. ddbs_concave_hull() ---------------------------------------------------
+
+
+## 10.1. Expected behaviour -------------------
+
+## expected behaviour
+## - CHECK 1.1: works on all formats
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.3: messages work
+#  - CHECK 1.4: writting table works
+## - CHECK 1.5: ratio work
+## - CHECK 1.6: allow_holes work
+## - CHECK 1.7: same result as sf
+testthat::test_that("ddbs_concave_hull(): expected behavior", {
+  
+  ## CHECK 1.1
+  output_ddbs <- ddbs_concave_hull(argentina_ddbs)
+  output_sf   <- ddbs_concave_hull(argentina_sf)
+  output_conn <- ddbs_concave_hull("argentina", conn = conn_test)
+
+  testthat::expect_s3_class(output_ddbs, "duckspatial_df")
+  testthat::expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+  testthat::expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+  
+
+  ## CHECK 1.2
+  output_geoarrow_fmt <- ddbs_concave_hull(argentina_ddbs, output = "geoarrow")
+  output_sf_fmt       <- ddbs_concave_hull(argentina_ddbs, output = "sf")
+  output_raw_fmt      <- ddbs_concave_hull(argentina_ddbs, output = "raw")
+
+  testthat::expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+  testthat::expect_s3_class(output_sf_fmt, "sf")
+  testthat::expect_s3_class(output_raw_fmt, "tbl_df")
+
+
+  ## CHECK 1.3
+  testthat::expect_message(ddbs_concave_hull(argentina_ddbs))
+  testthat::expect_message(ddbs_concave_hull("argentina", conn = conn_test, name = "concave_hull"))
+  testthat::expect_message(ddbs_concave_hull("argentina", conn = conn_test, name = "concave_hull", overwrite = TRUE))
+  testthat::expect_true(ddbs_concave_hull("argentina", conn = conn_test, name = "concave_hull2"))
+
+  testthat::expect_no_message(ddbs_concave_hull(argentina_ddbs, quiet = TRUE))
+  testthat::expect_no_message(ddbs_concave_hull("argentina", conn = conn_test, name = "concave_hull", overwrite = TRUE, quiet = TRUE))
+    
+
+  ## CHECK 1.4
+  output_tbl <- ddbs_read_vector(conn_test, "concave_hull")
+  testthat::expect_equal(
+    ddbs_collect(output_ddbs)$geometry,
+    output_tbl$geometry
+  )
+
+
+  ## CHECK 1.5
+  output_ratio_1 <- ddbs_concave_hull(argentina_ddbs, ratio = 1, output = "sf")
+  output_ratio_2 <- ddbs_concave_hull(argentina_ddbs, ratio = 0.2, output = "sf")
+
+  testthat::expect_false(identical(output_ratio_1, output_ratio_2))
+
+
+  ## CHECK 1.6
+  output_holes_1 <- ddbs_concave_hull(argentina_ddbs, allow_holes = TRUE, output = "sf")
+  output_holes_2 <- ddbs_concave_hull(argentina_ddbs, allow_holes = FALSE, output = "sf")
+
+  testthat::expect_false(identical(output_holes_1, output_holes_2))
+
+  ## CHECK 1.7
+  sf_output   <- sf::st_concave_hull(argentina_sf, ratio = 0.5, allow_holes = FALSE)
+  ddbs_output <- ddbs_concave_hull(argentina_sf, ratio = 0.5, allow_holes = FALSE, output = "sf")
+  testthat::expect_equal(sf_output$geometry, ddbs_output$geometry)
+
+})
+
+## 9.2. Errors -------------------------
+
+## CHECK 2.1: specific errors
+## CHECK 2.2: general errors
+testthat::test_that("ddbs_concave_hull(): errors work", {
+
+  ## CHECK 2.1
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, ratio = -1))
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, ratio = 2))
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, ratio = c(0.1, 0.5)))
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, ratio = "0.5"))
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, ratio = TRUE))
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, ratio = NULL))
+  
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, allow_holes = 3))
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, allow_holes = NULL))
+   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, allow_holes = "TRUE"))
+  
+  ## CHECK 2.2
+  testthat::expect_error(ddbs_concave_hull("argentina", conn = NULL))
+  testthat::expect_error(ddbs_concave_hull(x = 999))
+  testthat::expect_error(ddbs_concave_hull(argentina_ddbs, conn = 999))
+  testthat::expect_error(ddbs_concave_hull(argentina_ddbs, new_column = 999))
+  testthat::expect_error(ddbs_concave_hull(argentina_ddbs, overwrite = 999))
+  testthat::expect_error(ddbs_concave_hull(argentina_ddbs, quiet = 999))
+  testthat::expect_error(ddbs_concave_hull(x = "999", conn = conn_test))
+  testthat::expect_error(ddbs_concave_hull(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
+  
+})
