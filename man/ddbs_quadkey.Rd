@@ -7,7 +7,6 @@
 ddbs_quadkey(
   x,
   level = 10,
-  output = "polygon",
   field = NULL,
   fun = "mean",
   background = NA,
@@ -15,6 +14,7 @@ ddbs_quadkey(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = "polygon",
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -31,13 +31,6 @@ Data is returned from this object.}
 
 \item{level}{An integer specifying the zoom level for QuadKey generation (1-23).
 Higher values provide finer spatial resolution. Default is 10.}
-
-\item{output}{Character string specifying output format. One of:
-\itemize{
-\item \code{"polygon"} - Returns QuadKey tile boundaries as polygons (default)
-\item \code{"raster"} - Returns QuadKey values as a raster grid
-\item \code{"tilexy"} - Returns tile XY coordinates
-}}
 
 \item{field}{Character string specifying the field name for raster output.
 Only used when \code{output = "raster"}}
@@ -63,6 +56,13 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
+\item{output}{Character string specifying output format. One of:
+\itemize{
+\item \code{"polygon"} - Returns QuadKey tile boundaries as \code{duckspatial_df} (default)
+\item \code{"raster"} - Returns QuadKey values as a \code{SpatRaster}
+\item \code{"tilexy"} - Returns tile XY coordinates as a \code{tibble}
+}}
+
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
@@ -80,6 +80,9 @@ QuadKeys are a hierarchical spatial indexing system used by mapping services lik
 QuadKeys divide the world into a hierarchical grid of tiles, where each tile
 is subdivided into four smaller tiles at the next zoom level. This function
 wraps DuckDB's ST_QuadKey spatial function to generate these tiles from input geometries.
+
+Note that creating a table inside the connection will generate a non-spatial table, and
+therefore, it cannot be read with \code{ddbs_read_vector()}.
 }
 \examples{
 \dontrun{
@@ -100,7 +103,7 @@ rand_sf["var"] <- runif(100)
 ddbs_write_vector(conn, rand_sf, "rand_sf")
 
 ## generate QuadKey polygons at zoom level 8
-qkey_sf <- ddbs_quadkey(conn = conn, "rand_sf", level = 8, output = "polygon")
+qkey_ddbs <- ddbs_quadkey(conn = conn, "rand_sf", level = 8, output = "polygon")
 
 ## generate QuadKey raster with custom field name
 qkey_rast <- ddbs_quadkey(conn = conn, "rand_sf", level = 6, output = "raster", field = "var")
