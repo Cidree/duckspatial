@@ -4,7 +4,15 @@
 \alias{ddbs_distance}
 \title{Returns the distance between two geometries}
 \usage{
-ddbs_distance(x, y, dist_type = "haversine", conn = NULL, quiet = FALSE)
+ddbs_distance(
+  x,
+  y,
+  dist_type = "haversine",
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -28,6 +36,12 @@ of the input.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
+
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}

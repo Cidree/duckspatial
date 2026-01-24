@@ -10,9 +10,10 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## write some data
-ddbs_write_vector(conn_test, countries_sf, "countries")
+duckspatial::ddbs_write_vector(conn_test, countries_sf, "countries")
 duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "nc")
 duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "rivers")
+duckspatial::ddbs_write_vector(conn_test, points_ddbs, "points")
 
 ## helper functions for ddbs_area()
 area_test_sf <- function(x = nc_sf,
@@ -584,17 +585,77 @@ testthat::test_that("ddbs_length(): errors work", {
 })
 
 
+# 3. ddbs_distance -------------------------------------------------------
+
+## 3.1. Expected behaviour -------------------
+
+## expected behaviour
+## - CHECK 1.1: works on all formats
+## - CHECK 1.2: ddbs returns a matrix
+## - CHECK 1.3: messages work
+testthat::test_that("ddbs_distance(): expected behavior", {
+    
+    ## CHECK 1.1
+    output_sf_ddbs   <- ddbs_distance(points_sf, points_ddbs)
+    output_ddbs_sf   <- ddbs_distance(points_ddbs, points_sf)
+    output_sf_sf     <- ddbs_distance(points_sf, points_sf)
+    output_ddbs_ddbs <- ddbs_distance(points_ddbs, points_ddbs)
+
+    output_conn_sf   <- ddbs_distance("points", points_sf, conn = conn_test)
+    output_sf_conn   <- ddbs_distance(points_sf, "points", conn = conn_test)
+    testthat::expect_warning(ddbs_distance("points", points_ddbs, conn = conn_test))
+    testthat::expect_warning(ddbs_distance(points_ddbs, "points", conn = conn_test))
+
+    testthat::expect_equal(output_sf_ddbs, output_ddbs_sf)
+    testthat::expect_equal(output_sf_ddbs, output_sf_sf)
+    testthat::expect_equal(output_sf_ddbs, output_sf_sf)
+    testthat::expect_equal(output_sf_ddbs, output_ddbs_ddbs)
+    testthat::expect_equal(output_sf_ddbs, output_conn_sf)
+    testthat::expect_equal(output_sf_ddbs, output_sf_conn)
+  
+
+    ## CHECK 1.2
+    testthat::expect_equal(class(output_sf_ddbs), c("matrix", "array"))
 
 
+    ## CHECK 1.3
+    testthat::expect_message(ddbs_distance(points_sf, points_ddbs))
+    testthat::expect_no_message(ddbs_distance(points_sf, points_ddbs, quiet = TRUE))
 
 
+})
 
+## 3.2. Errors -------------------------
 
+## CHECK 2.1: specific errors
+## CHECK 2.2: general errors
+testthat::test_that("ddbs_distance(): errors work", {
 
+    ## transform to other CRS
+    points_3587_sf <- st_transform(points_sf, "EPSG:3857")
 
+    ## CHECK 2.1
+    testthat::expect_error(ddbs_distance(points_sf, points_ddbs, dist_type = "best_dist"))
+    testthat::expect_error(ddbs_distance(points_sf, points_ddbs, dist_type = TRUE))
+    testthat::expect_error(ddbs_distance(points_sf, points_ddbs, dist_type = 5))
+    testthat::expect_error(ddbs_distance(points_sf, points_3587_sf))
+    testthat::expect_error(ddbs_distance(points_3587_sf, points_ddbs))
 
+    testthat::expect_error(ddbs_distance(argentina_sf, points_ddbs))
+    testthat::expect_error(ddbs_distance(points_ddbs, argentina_sf))
+    testthat::expect_error(ddbs_distance(points_sf, sf::st_transform(rivers_sf, sf::st_crs(points_sf))))
 
-
+    testthat::expect_error(ddbs_distance(x = points_ddbs))
+    testthat::expect_error(ddbs_distance(y = points_ddbs))
+    
+    ## CHECK 2.2
+    testthat::expect_error(ddbs_distance("points", "points", conn = NULL))
+    testthat::expect_error(ddbs_distance(x = 999))
+    testthat::expect_error(ddbs_distance(points_ddbs, points_ddbs, conn = 999))
+    testthat::expect_error(ddbs_distance(points_ddbs, points_ddbs, quiet = 999))
+    testthat::expect_error(ddbs_distance(x = "999", points_ddbs, conn = conn_test))
+  
+})
 
 ## stop connection
 ddbs_stop_conn(conn_test)
