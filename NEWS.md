@@ -4,6 +4,9 @@
 
 * `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (#55).
 
+## NEW FEATURES
+
+* `ddbs_geometry_type()`: returns the geometry type of an object (#76).
 
 # duckspatial 0.9.0
 

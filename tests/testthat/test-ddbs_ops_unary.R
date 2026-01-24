@@ -797,7 +797,7 @@ testthat::test_that("ddbs_concave_hull(): expected behavior", {
 
 })
 
-## 9.2. Errors -------------------------
+## 10.2. Errors -------------------------
 
 ## CHECK 2.1: specific errors
 ## CHECK 2.2: general errors
@@ -824,5 +824,78 @@ testthat::test_that("ddbs_concave_hull(): errors work", {
   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, quiet = 999))
   testthat::expect_error(ddbs_concave_hull(x = "999", conn = conn_test))
   testthat::expect_error(ddbs_concave_hull(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
+  
+})
+
+
+
+
+
+# 11. ddbs_geometry_type() ---------------------------------------------------
+
+
+## 11.1. Expected behaviour -------------------
+
+## expected behaviour
+## - CHECK 1.1: works on all formats with by_feature = TRUE
+## - CHECK 1.2: works on all formats with by_feature = FALSE
+## - CHECK 1.3: messages work
+## - CHECK 1.4: returns the right geometry type
+testthat::test_that("ddbs_geometry_type(): expected behavior", {
+  
+  ## CHECK 1.1
+  output_ddbs <- ddbs_geometry_type(points_ddbs, by_feature = TRUE)
+  output_sf   <- ddbs_geometry_type(points_sf, by_feature = TRUE)
+  output_conn <- ddbs_geometry_type("points", conn = conn_test, by_feature = TRUE)
+
+  testthat::expect_s3_class(output_ddbs, "factor")
+  testthat::expect_equal(output_ddbs, output_sf)
+  testthat::expect_equal(output_ddbs, output_conn)
+  
+
+  ## CHECK 1.2
+  output_ddbs_2 <- ddbs_geometry_type(points_ddbs, by_feature = FALSE)
+  output_sf_2   <- ddbs_geometry_type(points_sf, by_feature = FALSE)
+  output_conn_2 <- ddbs_geometry_type("points", conn = conn_test, by_feature = FALSE)
+
+  testthat::expect_s3_class(output_ddbs_2, "factor")
+  testthat::expect_equal(output_ddbs_2, output_sf_2)
+  testthat::expect_equal(output_ddbs_2, output_conn_2)
+
+
+  ## CHECK 1.3
+  testthat::expect_message(ddbs_geometry_type(argentina_ddbs))
+  testthat::expect_no_message(ddbs_geometry_type(argentina_ddbs, quiet = TRUE))
+    
+
+  ## CHECK 1.4
+  output_point   <- ddbs_geometry_type(points_ddbs, by_feature = FALSE) |> as.character()
+  output_polygon <- ddbs_geometry_type(argentina_ddbs, by_feature = FALSE) |> as.character()
+  output_line    <- ddbs_geometry_type(rivers_ddbs, by_feature = FALSE) |> as.character()
+
+  testthat::expect_equal(output_point, "POINT")
+  testthat::expect_equal(output_polygon, "POLYGON")
+  testthat::expect_equal(output_line, "LINESTRING")
+  
+
+})
+
+## 11.2. Errors -------------------------
+
+## CHECK 2.1: specific errors
+## CHECK 2.2: general errors
+testthat::test_that("ddbs_geometry_type(): errors work", {
+
+  ## CHECK 2.1
+  testthat::expect_error(ddbs_geometry_type(argentina_ddbs, by_feature = 3))
+  testthat::expect_error(ddbs_geometry_type(argentina_ddbs, by_feature = NULL))
+  testthat::expect_error(ddbs_geometry_type(argentina_ddbs, by_feature = "TRUE"))
+  
+  ## CHECK 2.2
+  testthat::expect_error(ddbs_geometry_type("argentina", conn = NULL))
+  testthat::expect_error(ddbs_geometry_type(x = 999))
+  testthat::expect_error(ddbs_geometry_type(argentina_ddbs, conn = 999))
+  testthat::expect_error(ddbs_geometry_type(argentina_ddbs, quiet = 999))
+  testthat::expect_error(ddbs_geometry_type(x = "999", conn = conn_test))
   
 })

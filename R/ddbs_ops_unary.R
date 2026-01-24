@@ -1699,3 +1699,101 @@ ddbs_transform <- function(
     feedback_query(quiet)
     return(data_sf)
 }
+
+
+
+
+
+#' Returns the geometry type of input features
+#'
+#' Returns the geometry type(s) from a `sf` object or a DuckDB table. 
+#'
+#' @template x
+#' @template conn_null
+#' @param by_feature Boolean. If `TRUE` (default), returns the geometry type for 
+#'        each feature. If `FALSE`, returns a single geometry type summary for 
+#'        the entire dataset.
+#' @template quiet
+#'
+#' @returns A factor with geometry type(s)
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load packages
+#' library(duckspatial)
+#' library(sf)
+#'
+#' ## read data
+#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+#'
+#' # option 1: passing sf objects
+#' # Get geometry type for each feature
+#' ddbs_geometry_type(countries_sf)
+#' 
+#' # Get overall geometry type
+#' ddbs_geometry_type(countries_sf, by_feature = FALSE)
+#' }
+ddbs_geometry_type <- function(
+  x,
+  conn = NULL,
+  by_feature = TRUE,
+  quiet = FALSE) {
+
+  ## 0. Handle errors
+  assert_xy(x, "x")
+  assert_logic(quiet, "quiet")
+  assert_conn_character(conn, x)
+  assert_logic(by_feature, "by_feature")
+  
+
+  # 1. Manage connection to DB
+
+  ## 1.1. Pre-extract attributes (geometry column name)
+  ## this step should be before normalize_spatial_input()
+  sf_col_x <- attr(x, "sf_column")
+
+  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 3. Prepare parameters for the query
+
+  ## Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+
+  # 4. create the base query
+  if (isTRUE(by_feature)) {
+    tmp.query <- glue::glue("
+          SELECT ST_GeometryType({x_geom}) as geometry
+          FROM {x_list$query_name};
+      ")
+  } else {
+    tmp.query <- glue::glue("
+          SELECT DISTINCT ST_GeometryType({x_geom}) as geometry
+          FROM {x_list$query_name};
+      ")
+  }
+  
+  ## send the query, and return a factor vector
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+  feedback_query(quiet)
+  return(data_tbl$geometry)
+}

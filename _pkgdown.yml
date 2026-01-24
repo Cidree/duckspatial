@@ -90,6 +90,7 @@ reference:
 - title: Geometry Validation
   desc: Check geometry validity
   contents:
+  - ddbs_geometry_type
   - ddbs_is_simple
   - ddbs_is_valid
 
