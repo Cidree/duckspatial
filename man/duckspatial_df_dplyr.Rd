@@ -6,6 +6,7 @@
 \alias{left_join.duckspatial_df}
 \alias{inner_join.duckspatial_df}
 \alias{head.duckspatial_df}
+\alias{glimpse.duckspatial_df}
 \alias{compute.duckspatial_df}
 \title{dplyr methods for duckspatial_df}
 \usage{
@@ -36,6 +37,8 @@
 )
 
 \method{head}{duckspatial_df}(x, n = 6L, ...)
+
+\method{glimpse}{duckspatial_df}(x, width = NULL, ...)
 
 \method{compute}{duckspatial_df}(x, name = NULL, temporary = TRUE, ...)
 }

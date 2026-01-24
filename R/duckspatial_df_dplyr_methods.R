@@ -296,6 +296,35 @@ head.duckspatial_df <- function(x, n = 6L, ...) {
   result
 }
 
+
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr glimpse
+glimpse.duckspatial_df <- function(x, width = NULL, ...) {
+  # Preserve spatial metadata
+  crs <- attr(x, "crs")
+  geom_col <- attr(x, "sf_column")
+  
+  # Strip class to delegate to dplyr's glimpse.tbl_lazy
+  class(x) <- setdiff(class(x), "duckspatial_df")
+
+  # Execute via dplyr
+  dplyr::glimpse(x, width = width, ...)
+
+  # Add spatial metadata info to output
+  if (!is.null(crs)) {
+    cat("CRS:             ", crs$input, "\n", sep = "")
+  }
+  if (!is.null(geom_col)) {
+    cat("Geometry column: ", geom_col, "\n", sep = "")
+  }
+  
+  # Return invisibly (following glimpse convention)
+  invisible(x)
+}
+
+
 # =============================================================================
 # compute - Force execution while staying lazy
 # =============================================================================
