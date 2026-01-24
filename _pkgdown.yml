@@ -73,6 +73,7 @@ reference:
 - title: Geometry Processing
   desc: Modify and process individual geometries
   contents:
+  - ddbs_as_spatial
   - ddbs_buffer
   - ddbs_centroid
   - ddbs_combine

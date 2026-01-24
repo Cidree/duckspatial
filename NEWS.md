@@ -6,7 +6,11 @@
 
 ## NEW FEATURES
 
+* `ddbs_as_spatial()`: converts a table with coordinates into a spatial object (#75).
+
 * `ddbs_geometry_type()`: returns the geometry type of an object (#76).
+
+
 
 # duckspatial 0.9.0
 
