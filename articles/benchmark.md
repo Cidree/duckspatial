@@ -111,8 +111,8 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 59%
-faster and used 5.4 times less memory than {sf}. Not bad.
+In this example working with 1 million points, {duckspatial} was 62%
+faster and used 5.5 times less memory than {sf}. Not bad.
 
 ``` r
 ggplot(data = df_bench_join) +
@@ -169,7 +169,7 @@ memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
 time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
 ```
 
-In this example working with 1 million points, {duckspatial} was 65%
+In this example working with 1 million points, {duckspatial} was 75%
 faster and used 2.6 times less memory than {sf}.
 
 plot
@@ -232,10 +232,6 @@ df_bench_distance <- lapply(
     FUN = run_benchmark
     ) |> 
     dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 
