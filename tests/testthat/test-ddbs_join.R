@@ -1,13 +1,13 @@
 # skip tests on CRAN because they take too much time
 skip_if(Sys.getenv("TEST_ONE") != "")
-testthat::skip_on_cran()
-testthat::skip_if_not_installed("duckdb")
+skip_on_cran()
+skip_if_not_installed("duckdb")
 
 
 # helpers --------------------------------------------------------------
 
 # create duckdb connection
-conn_test <- duckspatial::ddbs_create_conn()
+conn_test <- ddbs_temp_conn()
 
 # helper function
 tester <- function(x = points_sf,
@@ -19,7 +19,7 @@ tester <- function(x = points_sf,
                    crs_column = "crs_duckspatial",
                    output = "sf",
                    overwrite = FALSE,
-                   quiet = FALSE) {
+                   quiet = getOption("duckspatial.quiet", FALSE)) {
     ddbs_join(
         x = x,
         y = y,
@@ -38,7 +38,7 @@ tester <- function(x = points_sf,
 # expected behavior --------------------------------------------------------------
 
 
-testthat::test_that("expected behavior", {
+test_that("expected behavior", {
 
     # option 1: passing sf objects
     output1 <- tester(
@@ -47,7 +47,7 @@ testthat::test_that("expected behavior", {
         join = "within"
     )
 
-    testthat::expect_true(is(output1 , 'sf'))
+    expect_true(is(output1 , 'sf'))
 
     # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
@@ -62,7 +62,7 @@ testthat::test_that("expected behavior", {
         join = "within"
     )
 
-    testthat::expect_true(is(output2 , 'sf'))
+    expect_true(is(output2 , 'sf'))
 
     # option 3: passing the names of tables in a duckdb db, creating new table in db
     output3 <- tester(
@@ -74,29 +74,31 @@ testthat::test_that("expected behavior", {
         overwrite = TRUE
     )
 
-    testthat::expect_true(output3)
+    expect_true(output3)
 
     # TODO - Review this because it fails
     # output3 <- DBI::dbReadTable(conn_test, "test_result") |>
     #     sf::st_as_sf(wkt = 'geometry')
 
-    # testthat::expect_true(is(output3 , 'sf'))
+    # expect_true(is(output3 , 'sf'))
 
-    ddbs_read_vector(conn = conn_test, name = "test_result", crs = 4326)
+    ddbs_read_vector(conn = conn_test, name = "test_result", quiet = TRUE)
 
 
     # show and suppress messages
-    testthat::expect_message( tester() )
-    testthat::expect_no_message( tester(quiet = TRUE))
+    expect_message( tester(quiet = FALSE) )
+    expect_no_message( tester(quiet = TRUE))
+    # verify default respects global option (which is TRUE in setup)
+    expect_no_message( tester() )
 
 
 })
 
 
-testthat::test_that("error if table already exists", {
+test_that("error if table already exists", {
 
     # write table for the 1st time
-    testthat::expect_true(tester(x = "points",
+    expect_true(tester(x = "points",
                                     y = "countries",
                                     conn = conn_test,
                                     name = 'banana',
@@ -104,14 +106,14 @@ testthat::test_that("error if table already exists", {
                              )
 
     # expected error if overwrite = FALSE
-    testthat::expect_error(tester(x = "points",
+    expect_error(tester(x = "points",
                                     y = "countries",
                                     conn = conn_test,
                                     name = 'banana',
                                     overwrite = FALSE))
 
     # overwrite table
-    testthat::expect_true(tester(x = "points",
+    expect_true(tester(x = "points",
                                     y = "countries",
                                     conn = conn_test,
                                     name = 'banana',
@@ -122,19 +124,19 @@ testthat::test_that("error if table already exists", {
 
 # expected errors --------------------------------------------------------------
 
-testthat::test_that("errors with incorrect input", {
+test_that("errors with incorrect input", {
 
-    testthat::expect_error(tester(x = 999))
-    testthat::expect_error(tester(y = 999))
-    testthat::expect_error(tester(join = 999))
-    testthat::expect_error(tester(conn = 999))
-    testthat::expect_error(tester(overwrite = 999))
-    testthat::expect_error(tester(quiet = 999))
+    expect_error(tester(x = 999))
+    expect_error(tester(y = 999))
+    expect_error(tester(join = 999))
+    expect_error(tester(conn = 999))
+    expect_error(tester(overwrite = 999))
+    expect_error(tester(quiet = 999))
 
-    testthat::expect_error(tester(x = "999", conn = conn_test))
-    testthat::expect_error(tester(y = "999", conn = conn_test))
+    expect_error(tester(x = "999", conn = conn_test))
+    expect_error(tester(y = "999", conn = conn_test))
 
-    testthat::expect_error(tester(conn = conn_test, name = c('banana', 'banana')))
+    expect_error(tester(conn = conn_test, name = c('banana', 'banana')))
 
 
     })
@@ -143,7 +145,7 @@ testthat::test_that("errors with incorrect input", {
 
 # duckspatial_df inputs --------------------------------------------------------
 
-testthat::test_that("ddbs_join works with duckspatial_df inputs", {
+test_that("ddbs_join works with duckspatial_df inputs", {
   countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")
   
   # Create a distinct connection for this test to avoid interference
@@ -163,7 +165,7 @@ testthat::test_that("ddbs_join works with duckspatial_df inputs", {
   
   # Register points to the same connection as a duckspatial_df for consistent testing
   ddbs_write_vector(conn, points_sf, "test_points")
-  points_ds <- ddbs_read_vector(conn, "test_points")
+  points_ds <- ddbs_read_vector(conn, "test_points", quiet = TRUE)
   
   # 1. duckspatial_df x duckspatial_df
   # Using intersects
@@ -186,7 +188,7 @@ testthat::test_that("ddbs_join works with duckspatial_df inputs", {
 
 # predicates -------------------------------------------------------------------
 
-testthat::test_that("ddbs_join works with different predicates", {
+test_that("ddbs_join works with different predicates", {
   # We test a few key ones to ensure parameter passing works
   # Use simple data where we know the answer
   
@@ -215,7 +217,7 @@ testthat::test_that("ddbs_join works with different predicates", {
 
 # output parameters ------------------------------------------------------------
 
-testthat::test_that("ddbs_join respects output parameter", {
+test_that("ddbs_join respects output parameter", {
   result_sf <- ddbs_join(points_sf, countries_sf, output = "sf")
   expect_s3_class(result_sf, "sf")
   
@@ -229,11 +231,194 @@ testthat::test_that("ddbs_join respects output parameter", {
 
 # error handling ---------------------------------------------------------------
 
-testthat::test_that("ddbs_join throws error on CRS mismatch", {
+test_that("ddbs_join throws error on CRS mismatch", {
   points_3857 <- sf::st_transform(points_sf, 3857)
   
   expect_error(
     ddbs_join(points_3857, countries_sf),
     "Coordinates Reference System"
   )
+})
+
+
+# cross-verification: ddbs_join vs sf::st_join ------------------------------------
+# relies on nc_sf and nc_sf_5070 datasets loaded in testthat/setup.R
+
+test_that("ddbs_join matches sf::st_join for intersects", {
+    nc_subset <- nc_sf_5070[1:10, ]
+    box <- sf::st_bbox(nc_sf_5070[1:5, ]) |> sf::st_as_sfc() |> sf::st_as_sf()
+    box$box_id <- "BOX1"
+    
+    sf_result <- sf::st_join(
+        nc_subset,
+        box,
+        join = sf::st_intersects,
+        left = FALSE
+    )
+    ddbs_result <- ddbs_join(
+        nc_subset,
+        box,
+        join = "intersects",
+        output = "sf"
+    )
+    
+    # Compare row counts
+    expect_equal(nrow(ddbs_result), nrow(sf_result))
+    
+    # Compare matched features (order-independent)
+    expect_equal(sort(ddbs_result$NAME), sort(sf_result$NAME))
+    
+    # Verify box_id was joined
+    expect_true("box_id" %in% names(ddbs_result))
+})
+
+test_that("ddbs_join with within predicate matches sf", {
+    # Point within polygon test - use point_on_surface to avoid boundary issues
+    point <- sf::st_point_on_surface(nc_sf_5070[5, ]) |> sf::st_as_sf()
+    point$point_id <- "P1"
+    
+    sf_result <- sf::st_join(
+        point,
+        nc_sf_5070,
+        join = sf::st_within,
+        left = FALSE
+    )
+    ddbs_result <- ddbs_join(
+        point,
+        nc_sf_5070,
+        join = "within",
+        output = "sf"
+    )
+    
+    # Should match exactly 1 county
+    expect_equal(nrow(ddbs_result), nrow(sf_result))
+    
+    # If we have results, compare them
+    if (nrow(sf_result) > 0) {
+        # Handle suffix collision - sf may use NAME.x
+        sf_name <- if ("NAME.x" %in% names(sf_result)) sf_result$NAME.x else sf_result$NAME
+        ddbs_name <- if ("NAME.x" %in% names(ddbs_result)) ddbs_result$NAME.x else ddbs_result$NAME
+        expect_equal(ddbs_name, sf_name)
+    }
+    expect_ddbs_sf_equal(ddbs_result, sf_result, id_col = "point_id")
+})
+
+test_that("ddbs_join with contains predicate matches sf", {
+    # Polygon contains point test
+    point <- sf::st_point_on_surface(nc_sf_5070[5, ]) |> sf::st_as_sf()
+    point$point_id <- "P1"
+    
+    sf_result <- sf::st_join(
+        nc_sf_5070,
+        point,
+        join = sf::st_contains,
+        left = FALSE
+    )
+    ddbs_result <- ddbs_join(
+        nc_sf_5070,
+        point,
+        join = "contains",
+        output = "sf"
+    )
+    
+    # Should match exactly 1 county containing the point
+    expect_equal(nrow(ddbs_result), nrow(sf_result))
+    
+    # If we have results, compare them
+    if (nrow(sf_result) > 0) {
+        sf_name <- if ("NAME.x" %in% names(sf_result)) sf_result$NAME.x else sf_result$NAME
+        ddbs_name <- if ("NAME.x" %in% names(ddbs_result)) ddbs_result$NAME.x else ddbs_result$NAME
+        expect_equal(ddbs_name, sf_name)
+    }
+    expect_ddbs_sf_equal(ddbs_result, sf_result, id_col = "point_id")
+})
+
+test_that("ddbs_join handles multiple y matches per x", {
+    # Create scenario where one x feature matches multiple y features
+    buffered <- sf::st_buffer(nc_sf_5070[1:5, ], dist = 50000)
+    buffered$buff_id <- paste0("B", 1:5)
+    
+    # Sample points that will fall in multiple buffers
+    points <- sf::st_sample(nc_sf_5070[1, ], 3) |> sf::st_as_sf()
+    points$pt_id <- paste0("P", 1:3)
+
+    sf_result <- sf::st_join(
+        points,
+        buffered,
+        join = sf::st_intersects,
+        left = FALSE
+    )
+    ddbs_result <- ddbs_join(
+        points,
+        buffered,
+        join = "intersects",
+        output = "sf"
+    )
+    
+    # Multiple matches: each point joined to multiple buffers
+    expect_true(nrow(ddbs_result) >= 3)
+    expect_equal(nrow(ddbs_result), nrow(sf_result))
+    
+    # Same point IDs repeated
+    expect_equal(sort(ddbs_result$pt_id), sort(sf_result$pt_id))
+    expect_ddbs_sf_equal(ddbs_result, sf_result, id_col = "pt_id", check_geom = FALSE)
+})
+
+test_that("ddbs_join matches sf::st_join for touches", {
+    # Find counties that touch Wake county
+    wake <- nc_sf_5070[nc_sf_5070$NAME == "Wake", ]
+    wake$wake_id <- "WAKE"
+    
+    sf_result <- sf::st_join(
+        nc_sf_5070,
+        wake,
+        join = sf::st_touches,
+        left = FALSE
+    )
+    ddbs_result <- ddbs_join(
+        nc_sf_5070,
+        wake,
+        join = "touches",
+        output = "sf"
+    )
+    
+    expect_equal(nrow(ddbs_result), nrow(sf_result))
+    
+    # Handle suffix collision
+    sf_names <- if ("NAME.x" %in% names(sf_result)) sf_result$NAME.x else sf_result$NAME
+    ddbs_names <- if ("NAME.x" %in% names(ddbs_result)) ddbs_result$NAME.x else ddbs_result$NAME
+    expect_equal(sort(ddbs_names), sort(sf_names))
+})
+
+test_that("ddbs_join row order differs but content matches", {
+    nc_subset <- nc_sf_5070[10:20, ]
+    box <- sf::st_bbox(nc_sf_5070[10:20, ]) |> sf::st_as_sfc() |> sf::st_as_sf()
+    box$box_id <- "BOX1"
+    
+    sf_result <- sf::st_join(
+        nc_subset,
+        box,
+        join = sf::st_intersects,
+        left = FALSE
+    )
+    ddbs_result <- ddbs_join(
+        nc_subset,
+        box,
+        join = "intersects",
+        output = "sf"
+    )
+    
+    # Content match (order-independent)
+    expect_equal(sort(ddbs_result$FIPS), sort(sf_result$FIPS))
+    
+    # Geometry equivalence
+    sf_sorted <- sf_result[order(sf_result$FIPS), ]
+    ddbs_sorted <- ddbs_result[order(ddbs_result$FIPS), ]
+    geom_equal <- sf::st_equals_exact(
+        sf_sorted,
+        ddbs_sorted,
+        par = 1e-6,
+        sparse = FALSE
+    )
+    expect_true(all(diag(geom_equal)))
 })
