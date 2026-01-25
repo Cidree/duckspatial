@@ -486,10 +486,10 @@ ddbs_distance <- function(
         if (crs_y$input != "EPSG:4326") cli::cli_abort(msg_crs_error)
 
         ## abort if the geometry is not point
-        geom_type_x <- ddbs_geometry_type(x, by_feature = FALSE)
+        geom_type_x <- ddbs_geometry_type(x, conn = target_conn, by_feature = FALSE, quiet = TRUE)
         if (geom_type_x != "POINT") cli::cli_abort(msg_geom_error)
           
-        geom_type_y <- ddbs_geometry_type(y, by_feature = FALSE)
+        geom_type_y <- ddbs_geometry_type(y, conn = target_conn, by_feature = FALSE, quiet = TRUE)
         if (geom_type_y != "POINT") cli::cli_abort(msg_geom_error)
 
     }

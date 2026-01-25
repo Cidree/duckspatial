@@ -187,9 +187,9 @@ testthat::test_that("ddbs_difference(): expected behavior", {
   output_10 <- ddbs_difference("points", "argentina", conn_x = conn_test, conn_y = conn_test_2)
   testthat::expect_equal(ddbs_collect(output_1), ddbs_collect(output_10))
 
-  testthat::expect_message(ddbs_difference("points", "argentina", conn_x = conn_test, conn_y = conn_test_2, name = "test"))
-  testthat::expect_true(DBI::dbExistsTable(conn_test, "test"))
-  testthat::expect_false(DBI::dbExistsTable(conn_test_2, "test"))
+  testthat::expect_message(ddbs_difference("points", "argentina", conn_x = conn_test, conn_y = conn_test_2, name = "diff3"))
+  testthat::expect_true(DBI::dbExistsTable(conn_test, "diff3"))
+  testthat::expect_false(DBI::dbExistsTable(conn_test_2, "diff3"))
 
 
   ## CHECK 1.6

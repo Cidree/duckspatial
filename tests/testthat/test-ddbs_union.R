@@ -72,7 +72,7 @@ testthat::test_that("ddbs_union_agg(): expected behavior", {
     ## CHECK 1.4
     output_tbl <- ddbs_read_vector(conn_test, "union_agg")
     testthat::expect_equal(
-    ddbs_collect(output_ddbs)$geometry,
+        ddbs_collect(output_conn)$geometry,
         output_tbl$geometry
     )
 

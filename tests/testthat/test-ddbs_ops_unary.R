@@ -642,10 +642,6 @@ testthat::test_that("ddbs_make_polygon(): errors work", {
 })
 
 
-## stop connection
-ddbs_stop_conn(conn_test)
-
-
 # 9. ddbs_convex_hull() -----------------------------------------------------
 
 
@@ -899,3 +895,7 @@ testthat::test_that("ddbs_geometry_type(): errors work", {
   testthat::expect_error(ddbs_geometry_type(x = "999", conn = conn_test))
   
 })
+
+
+## stop connection
+ddbs_stop_conn(conn_test)

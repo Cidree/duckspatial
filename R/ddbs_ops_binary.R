@@ -193,6 +193,7 @@ ddbs_intersection <- function(
 #' @template x
 #' @param y A table with geometry column within the DuckDB database
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template name
 #' @template crs
 #' @template output
