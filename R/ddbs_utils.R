@@ -399,6 +399,8 @@ ddbs_glimpse <- function(
 #' spatial extension
 #'
 #' @param dbdir String. Either `"tempdir"` or `"memory"`. Defaults to `"memory"`.
+#' @template threads
+#' @template memory_limit_gb
 #'
 #' @returns A `duckdb_connection`
 #' @export
@@ -413,13 +415,19 @@ ddbs_glimpse <- function(
 #' # create a duckdb database in disk  (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "tempdir")
 #'
-ddbs_create_conn <- function(dbdir = "memory"){
+#' # create a connection with 1 thread and 2GB memory limit
+#' conn <- ddbs_create_conn(threads = 1, memory_limit_gb = 2)
+#' ddbs_stop_conn(conn)
+#'
+ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb = NULL){
 
     # 0. Handle errors
     if (!dbdir %in% c("tempdir","memory")) {
             cli::cli_abort("dbdir should be one of <'tempdir'>, <'memory'>")
         }
 
+    assert_threads(threads)
+    assert_memory_limit_gb(memory_limit_gb)
 
     # this creates a local database which allows DuckDB to
     # perform **larger-than-memory** workloads
@@ -448,24 +456,11 @@ ddbs_create_conn <- function(dbdir = "memory"){
     ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
     ddbs_load(conn, quiet = TRUE)
 
+    # Configure resources if requested
+    ddbs_set_resources(conn, threads = threads, memory_limit_gb = memory_limit_gb)
 
-        # # Set Number of cores for parallel operation
-        # if (is.null(n_cores)) {
-        #     n_cores <- parallel::detectCores()
-        #     n_cores <- n_cores - 1
-        #     if (n_cores<1) {n_cores <- 1}
-        # }
-        #
-        # DBI::dbExecute(con, sprintf("SET threads = %s;", n_cores))
-
-        # Set Memory limit
-        # DBI::dbExecute(con, "SET memory_limit = '8GB'")
-
-        # DBI::dbExecute(con, "INSTALL arrow FROM community; LOAD arrow;")
-        # DBI::dbExecute(con, "LOAD arrow;")
-
-        return(conn)
-    }
+    return(conn)
+}
 
 
 
