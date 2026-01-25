@@ -23,7 +23,7 @@
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -250,7 +250,7 @@ ddbs_rotate <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -422,7 +422,7 @@ ddbs_rotate_3d <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -581,7 +581,7 @@ ddbs_shift <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -790,7 +790,7 @@ ddbs_flip <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -985,7 +985,7 @@ ddbs_scale <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples

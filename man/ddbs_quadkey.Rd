@@ -70,7 +70,13 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-An sf object or TRUE (invisibly) for table creation
+Depends on the output argument
+\itemize{
+\item \code{polygon} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+\item \code{raster}: An eagerly collected \code{SpatRaster} object in R memory.
+\item \code{tilexy}: An eagerly collected \code{tibble} without geometry in R memory.
+}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Converts POINT geometries to QuadKey tile representations at a specified zoom level.

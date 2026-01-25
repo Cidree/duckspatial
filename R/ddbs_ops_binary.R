@@ -14,7 +14,7 @@
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an sf object or TRUE (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -200,7 +200,7 @@ ddbs_intersection <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns An sf object or TRUE (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples

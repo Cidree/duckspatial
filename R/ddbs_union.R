@@ -40,7 +40,7 @@
 #' without dissolving shared boundaries. This is faster than union but preserves all
 #' original geometry boundaries.
 #'
-#' @return A spatial dataset with unioned or combined geometries
+#' @template returns_output
 #'
 #' @examples
 #' \dontrun{

@@ -16,7 +16,7 @@
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples

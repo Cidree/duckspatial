@@ -12,7 +12,7 @@
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -164,7 +164,7 @@ ddbs_boundary <- function(
 #' When \code{by_feature = FALSE}, all geometries are combined and a single envelope
 #' is returned that encompasses the entire dataset.
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
@@ -343,7 +343,7 @@ ddbs_envelope <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples

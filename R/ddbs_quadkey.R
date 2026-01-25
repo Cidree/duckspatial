@@ -26,7 +26,13 @@
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns An sf object or TRUE (invisibly) for table creation
+#' @returns Depends on the output argument
+#' \itemize{
+#'     \item \code{polygon} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+#'     \item \code{raster}: An eagerly collected \code{SpatRaster} object in R memory.
+#'     \item \code{tilexy}: An eagerly collected \code{tibble} without geometry in R memory.
+#'   }
+#' When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 #'
 #' @details
 #' QuadKeys divide the world into a hierarchical grid of tiles, where each tile
