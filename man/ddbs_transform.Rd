@@ -8,9 +8,12 @@ ddbs_transform(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -35,6 +38,12 @@ Data is returned from this object.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
+
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
@@ -46,6 +55,17 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 \item{crs_column}{\link{Deprecated} a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
+
+\item{output}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+\item \code{"tibble"}: Eagerly collected tibble without geometry
+\item \code{"raw"}: Eagerly collected tibble with WKB geometry (list of raw vectors)
+\item \code{"geoarrow"}: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)
+}
+Can be set globally via \code{\link{ddbs_options}(output_type = "...")} or
+per-function via this argument. Per-function overrides global setting.}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}

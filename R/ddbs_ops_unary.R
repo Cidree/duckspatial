@@ -1567,8 +1567,10 @@ ddbs_convex_hull <- function(
 #'     \item Name of a DuckDB table (uses its CRS)
 #'   }
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
@@ -1608,9 +1610,12 @@ ddbs_transform <- function(
     x,
     y,
     conn = NULL,
+    conn_x = NULL,
+    conn_y = NULL,
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
     
@@ -1624,32 +1629,63 @@ ddbs_transform <- function(
     assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names and CRS
-    x_list <- get_query_list(x, conn)
-    crs_x <- paste0("EPSG:", ddbs_crs(conn, x_list$query_name)$epsg)
-    ## CRS extraction depends if:
-    ## - starts with EPSG - it's an AUTH:CODE
-    ## - other character - it's a DuckDB table name
-    ## - other - it's an SF object
-    if (inherits(y, "character") && startsWith(y, "EPSG")) {
-      crs_y <- y
-    } else {
-      y_list <- get_query_list(y, conn)
-      crs_y <- paste0("EPSG:", ddbs_crs(conn, y_list$query_name)$epsg)
-    }
-    ## 1.3. if crs are the same, return warning
-    if (crs_x == crs_y) return(cli::cli_warn("The CRS of `x` and `y` is the same."))
 
-    # 2. Prepare params for query
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x <- detect_crs(x)
+    crs_y <- detect_crs(y)
+    sf_col_x <- attr(x, "sf_column")
+    sf_col_y <- attr(y, "sf_column")
+
+    ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
+    if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+    if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn_x)
+    try(y <- normalize_spatial_input(y, conn_y), silent = TRUE)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    y            <- resolve_conn$y
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+    y_list <- get_query_list(y, target_conn)
+    on.exit(y_list$cleanup(), add = TRUE)
+
+    ## if CRS wasn't guessed earlier
+    if (is.null(crs_x)) crs_x <- ddbs_crs(x_list$query_name, target_conn)
+    if (is.null(crs_y)) {
+        ## try to get from `y`. if it fails, it's not sf, nor duckspatial_df
+        ## therefore, it might be a CRS or character string with CRS
+        try(crs_y <- ddbs_crs(y_list$query_name, target_conn), silent = TRUE)
+
+        if (is.null(crs_y)) crs_y <- sf::st_crs(y)
+    }
+
+    ## warn if the crs is the same
+    if (crs_x$input == crs_y$input) return(cli::cli_warn("The CRS of `x` and `y` is the same."))
+
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
+
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE, table_id = "v1")
+
     ## remove CRS column from x_rest
     x_rest <- x_rest[-grep(crs_column, x_rest)]
     x_rest <- if (length(x_rest) > 0) paste0('"', x_rest, '",', collapse = ' ') else ""
@@ -1661,18 +1697,20 @@ ddbs_transform <- function(
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query (no st_as_text)
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            '{crs_y}' AS '{crs_column}',
-            ST_Transform({x_geom}, '{crs_x}', '{crs_y}') as {x_geom} 
-            FROM {x_list$query_name};
+            SELECT 
+                {x_rest}
+                '{crs_y$input}' AS '{crs_column}',
+                ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}') as {x_geom} 
+            FROM 
+                {x_list$query_name};
         ")
         ## execute intersection query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
@@ -1680,18 +1718,22 @@ ddbs_transform <- function(
     # 4. Get data frame
     ## 4.1. create query
     tmp.query <- glue::glue("
-        SELECT {x_rest}
-        '{crs_y}' AS '{crs_column}',
-        ST_AsWKB(ST_Transform({x_geom}, '{crs_x}', '{crs_y}')) as {x_geom} 
-        FROM {x_list$query_name};
+        SELECT 
+            {x_rest}
+            '{crs_y$input}' AS '{crs_column}',
+            ST_AsWKB(ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}')) as {x_geom} 
+        FROM 
+            {x_list$query_name};
     ")
     ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = crs_y,
         crs_column = crs_column,
         x_geom     = x_geom
     )
