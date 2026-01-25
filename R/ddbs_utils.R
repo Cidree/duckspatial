@@ -303,16 +303,17 @@ ddbs_list_tables <- function(conn) {
 
 
 
-#' Check first rows of the data
+#' Check first rows of the data 
+#' 
+#' Prints a transposed table of the first rows of a DuckDB table, similarly
+#' as the S3 [dplyr::glimpse] method.
 #'
 #' @template conn
-#' @param name A character string of length one specifying the name of the table,
-#'        or a character string of length two specifying the schema and table
-#'        names.
+#' @template name
 #' @template crs
 #' @template quiet
 #'
-#' @returns `sf` object
+#' @returns Invisibly `duckspatial_df` object
 #' @export
 #'
 #' @examplesIf interactive()
@@ -330,44 +331,63 @@ ddbs_list_tables <- function(conn) {
 #'
 #' ddbs_glimpse(conn, "argentina")
 #'
-ddbs_glimpse <- function(conn,
-                         name,
-                         crs = NULL,
-                         crs_column = "crs_duckspatial",
-                         quiet = FALSE) {
+ddbs_glimpse <- function(
+  conn,
+  name,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  quiet = FALSE) {
 
-    ## 1. check conn
-    dbConnCheck(conn)
+  
+  ## 1. Handle errors
+  dbConnCheck(conn)
+  assert_name(name)
+  assert_logic(quiet, "quiet")
 
-    ## 2. get column names
-    ## convenient names of table and/or schema.table
-    name_list <- get_query_name(name)
-    ## get column names
-    x_geom    <- get_geom_name(conn, name_list$query_name)
-    no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE, collapse = TRUE)
 
-    # 3. Get data
-    ## get data as table
-    data_tbl <- DBI::dbGetQuery(conn, glue::glue("
-      SELECT
-      {no_geom_cols},
-      ST_AsWKB({x_geom}) AS {x_geom}
-      FROM {name}
-      LIMIT 10;
+  # 2. Prepare parameters for the query
+
+  ## 2.1. Convenient names of table and/or schema.table
+  name_list <- get_query_name(name)
+
+  ## 2.2. Get column names
+  x_geom    <- get_geom_name(conn, name_list$query_name)
+  no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE, collapse = TRUE)
+
+
+  # 4. Get data
+
+  ## 4.1. Build the query adn retrieve the results
+  data_tbl <- DBI::dbGetQuery(conn, glue::glue("
+    SELECT
+    {no_geom_cols}
+    ST_AsWKB({x_geom}) AS {x_geom}
+    FROM {name}
+    LIMIT 10;
   "))
-    ## Convert to sf
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
 
-    if (isFALSE(quiet)) {
-        cli::cli_alert_success("Showing first 10 rows of the data")
-    }
+  ## 4.2. Convert to sf
+  data_sf <- convert_to_sf_wkb(
+      data       = data_tbl,
+      crs        = crs,
+      crs_column = crs_column,
+      x_geom     = x_geom
+  )
 
-    return(data_sf)
+  ## 4.3. Get CRS from the sf object
+  crs_obj <- sf::st_crs(data_sf)
+  
+  ## 4.4. Convert sf to duckspatial_df
+  result <- as_duckspatial_df(
+    x        = data_sf,
+    conn     = conn,
+    crs      = crs_obj,
+    geom_col = x_geom
+  )
+  
+  ## 4.5. Return glimpse.duckspatial.df() and the result
+  glimpse(result)
+  return(invisible(result))
 
 }
 
