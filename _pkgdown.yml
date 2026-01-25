@@ -87,6 +87,7 @@ reference:
   - ddbs_transform
   - ddbs_quadkey
   - ddbs_union
+  - ddbs_union_agg
 
 - title: Geometry Validation
   desc: Check geometry validity
