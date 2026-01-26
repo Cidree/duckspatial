@@ -786,6 +786,11 @@ testthat::test_that("ddbs_concave_hull(): expected behavior", {
 
   testthat::expect_false(identical(output_holes_1, output_holes_2))
 
+  
+  ## SKIP the test if GEOS is less than "3.11.0" (fails in ubuntu)
+  geos_version <- package_version(sf::sf_extSoftVersion()["GEOS"])
+  testthat::skip_if(geos_version < "3.11.0")
+
   ## CHECK 1.7
   sf_output   <- sf::st_concave_hull(argentina_sf, ratio = 0.5, allow_holes = FALSE)
   ddbs_output <- ddbs_concave_hull(argentina_sf, ratio = 0.5, allow_holes = FALSE, output = "sf")
