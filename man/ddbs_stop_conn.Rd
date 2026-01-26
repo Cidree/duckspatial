@@ -16,7 +16,7 @@ TRUE (invisibly) for successful disconnection
 Close a duckdb connection
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 ## load packages
 library(duckspatial)
 
@@ -25,5 +25,5 @@ conn <- ddbs_create_conn(dbdir = "memory")
 
 ## close the connection
 ddbs_stop_conn(conn)
-\dontshow{\}) # examplesIf}
+}
 }

@@ -14,7 +14,8 @@
 #' @returns TRUE (invisibly) for successful import
 #' @export
 #'
-#' @examplesIf interactive()
+#' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -40,6 +41,7 @@
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
+#' }
 ddbs_write_vector <- function(
     conn,
     data,

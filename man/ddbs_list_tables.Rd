@@ -16,8 +16,22 @@ ddbs_list_tables(conn)
 Check tables and schemas inside a database
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-## TODO
-2+2
-\dontshow{\}) # examplesIf}
+\dontrun{
+## load packages
+library(duckspatial)
+
+## create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
+
+## read some data
+argentina_ddbs <- ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
+countries_ddbs <- ddbs_open_dataset(system.file("spatial/countries.geojson", package = "duckspatial"))
+
+## insert into the database
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
+ddbs_write_vector(conn, countries_ddbs, "countries")
+
+## list tables in the database
+ddbs_list_tables(conn)
+}
 }

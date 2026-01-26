@@ -47,7 +47,7 @@ CRS object from \code{sf} package
 This is an S3 generic that extracts CRS information from various spatial objects.
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 ## load packages
 library(duckdb)
 library(duckspatial)
@@ -66,5 +66,5 @@ conn <- ddbs_create_conn(dbdir = "memory")
 ddbs_write_vector(conn, nc_sf, "nc_table")
 ddbs_crs(conn, "nc_table")
 ddbs_stop_conn(conn)
-\dontshow{\}) # examplesIf}
+}
 }

@@ -44,7 +44,7 @@ both persistent tables created by \code{ddbs_write_vector} and temporary
 Arrow views created by \code{ddbs_register_vector}.
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -72,5 +72,5 @@ ddbs_read_vector(conn, "points_view", crs = 4326)
 
 ## disconnect from db
 ddbs_stop_conn(conn)
-\dontshow{\}) # examplesIf}
+}
 }

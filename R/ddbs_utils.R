@@ -68,7 +68,8 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 #' @returns CRS object from \code{sf} package
 #' @export
 #'
-#' @examplesIf interactive()
+#' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckdb)
 #' library(duckspatial)
@@ -87,6 +88,7 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 #' ddbs_write_vector(conn, nc_sf, "nc_table")
 #' ddbs_crs(conn, "nc_table")
 #' ddbs_stop_conn(conn)
+#' }
 ddbs_crs <- function(x, ...) {
   UseMethod("ddbs_crs")
 }
@@ -288,10 +290,25 @@ ddbs_crs.default <- function(x, ...) {
 #' @returns `data.frame`
 #' @export
 #'
-#' @examplesIf interactive()
-#' ## TODO
-#' 2+2
-#'
+#' @examples
+#' \dontrun{
+#' ## load packages
+#' library(duckspatial)
+#' 
+#' ## create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#' 
+#' ## read some data
+#' argentina_ddbs <- ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
+#' countries_ddbs <- ddbs_open_dataset(system.file("spatial/countries.geojson", package = "duckspatial"))
+#' 
+#' ## insert into the database
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' 
+#' ## list tables in the database
+#' ddbs_list_tables(conn)
+#' }
 ddbs_list_tables <- function(conn) {
   DBI::dbGetQuery(conn, "
       SELECT table_schema, table_name, table_type
@@ -316,21 +333,22 @@ ddbs_list_tables <- function(conn) {
 #' @returns Invisibly `duckspatial_df` object
 #' @export
 #'
-#' @examplesIf interactive()
+#' @examples
+#' \dontrun{
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+#' argentina_sf <- ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
 #'
 #' ## store in duckdb
 #' ddbs_write_vector(conn, argentina_sf, "argentina")
 #'
+#' ## glimpse the inserted table
 #' ddbs_glimpse(conn, "argentina")
-#'
+#' }
 ddbs_glimpse <- function(
   conn,
   name,
@@ -405,7 +423,8 @@ ddbs_glimpse <- function(
 #' @returns A `duckdb_connection`
 #' @export
 #'
-#' @examplesIf interactive()
+#' @examples
+#' \dontrun{
 #' # load packages
 #' library(duckspatial)
 #'
@@ -418,7 +437,7 @@ ddbs_glimpse <- function(
 #' # create a connection with 1 thread and 2GB memory limit
 #' conn <- ddbs_create_conn(threads = 1, memory_limit_gb = 2)
 #' ddbs_stop_conn(conn)
-#'
+#' }
 ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb = NULL){
 
     # 0. Handle errors
@@ -473,18 +492,17 @@ ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb =
 #' @returns `data.frame`
 #' @export
 #'
-#' @examplesIf interactive()
-#' ## load packages
-#' library(duckdb)
+#' @examples
+#' \dontrun{
+#' ## load package
 #' library(duckspatial)
 #'
 #' ## database setup
-#' conn <- dbConnect(duckdb())
-#' ddbs_install(conn)
-#' ddbs_load(conn)
+#' conn <- ddbs_create_conn()
 #'
 #' ## check drivers
 #' ddbs_drivers(conn)
+#' }
 ddbs_drivers <- function(conn = NULL) {
   if (is.null(conn)) {
     conn <- ddbs_default_conn()
@@ -505,7 +523,8 @@ ddbs_drivers <- function(conn = NULL) {
 #' @returns TRUE (invisibly) for successful disconnection
 #' @export
 #'
-#' @examplesIf interactive()
+#' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #'
@@ -514,7 +533,7 @@ ddbs_drivers <- function(conn = NULL) {
 #'
 #' ## close the connection
 #' ddbs_stop_conn(conn)
-#'
+#' }
 ddbs_stop_conn <- function(conn) {
     # Check if connection is correct
     dbConnCheck(conn)
