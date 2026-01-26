@@ -103,7 +103,7 @@ ddbs_length("rivers", conn)
 ddbs_length("rivers", conn, new_column = "length_meters")
 
 ## create a new table with length calculations
-ddbs_length("rivers", conn, name = "rivers_with_length")
+ddbs_length("rivers", conn, name = "rivers_with_length", new_column = "length_meters")
 
 ## calculate length in a sf object (without a connection)
 ddbs_length(rivers_ddbs)

@@ -104,7 +104,7 @@ ddbs_area("argentina", conn)
 ddbs_area("argentina", conn, new_column = "area_sqm")
 
 ## create a new table with area calculations
-ddbs_area("argentina", conn, name = "argentina_with_area")
+ddbs_area("argentina", conn, name = "argentina_with_area", new_column = "area_sqm")
 
 ## calculate area in a sf object
 ddbs_area(argentina_ddbs)
