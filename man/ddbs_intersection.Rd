@@ -87,23 +87,29 @@ or creates a new table
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+)
+
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## intersection inside the connection
 ddbs_intersection("countries", "argentina", conn)
 
 ## intersection without using a connection
-ddbs_intersection(countries_sf, argentina_sf)
+ddbs_intersection(countries_ddbs, argentina_ddbs)
 }
 }

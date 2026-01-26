@@ -87,17 +87,20 @@ an \code{sf} object or creates a new table in the database.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
+library(dplyr)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## scale to 150\% in both directions
 ddbs_scale(conn = conn, "countries", x_scale = 1.5, y_scale = 1.5)
@@ -106,10 +109,10 @@ ddbs_scale(conn = conn, "countries", x_scale = 1.5, y_scale = 1.5)
 ddbs_scale(conn = conn, "countries", x_scale = 2, y_scale = 0.5)
 
 ## scale all features together (default)
-ddbs_scale(countries_sf, x_scale = 1.5, y_scale = 1.5, by_feature = FALSE)
+ddbs_scale(countries_ddbs, x_scale = 1.5, y_scale = 1.5, by_feature = FALSE)
 
 ## scale each feature independently
-ddbs_scale(countries_sf, x_scale = 1.5, y_scale = 1.5, by_feature = TRUE)
+ddbs_scale(countries_ddbs, x_scale = 1.5, y_scale = 1.5, by_feature = TRUE)
 
 }
 }

@@ -90,19 +90,21 @@ is returned that encompasses the entire dataset.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 # input as sf, and output as sf
-env <- ddbs_envelope(x = argentina_sf, by_feature = TRUE)
+env <- ddbs_envelope(x = argentina_ddbs, by_feature = TRUE)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 # store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 # envelope for each feature
 env <- ddbs_envelope("argentina", conn, by_feature = TRUE)

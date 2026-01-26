@@ -91,31 +91,33 @@ Returns the result as an \code{sf} object or creates a new table in the database
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## transform to different CRS using EPSG code
 ddbs_transform("argentina", "EPSG:3857", conn)
 
-## transform to match CRS of another sf object
-argentina_3857_sf <- st_transform(argentina_sf, "EPSG:3857")
-ddbs_write_vector(conn, argentina_3857_sf, "argentina_3857")
-ddbs_transform("argentina", argentina_3857_sf, conn)
+## transform to match CRS of another object
+argentina_3857_ddbs <- ddbs_transform(argentina_ddbs, "EPSG:3857")
+ddbs_write_vector(conn, argentina_3857_ddbs, "argentina_3857")
+ddbs_transform("argentina", argentina_3857_ddbs, conn)
 
 ## transform to match CRS of another DuckDB table
 ddbs_transform("argentina", "argentina_3857", conn)
 
 ## transform without using a connection
-ddbs_transform(argentina_sf, "EPSG:3857")
+ddbs_transform(argentina_ddbs, "EPSG:3857")
 }
 }

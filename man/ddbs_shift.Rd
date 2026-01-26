@@ -83,21 +83,23 @@ This function is equivalent to \code{terra::shift()}.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## shift 10 degrees east and 5 degrees north
 ddbs_shift(conn = conn, "argentina", dx = 10, dy = 5)
 
 ## shift without using a connection
-ddbs_shift(argentina_sf, dx = 10, dy = 5)
+ddbs_shift(argentina_ddbs, dx = 10, dy = 5)
 }
 }

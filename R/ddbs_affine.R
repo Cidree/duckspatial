@@ -30,16 +30,18 @@
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## rotate 45 degrees
 #' ddbs_rotate(conn = conn, "argentina", angle = 45)
@@ -48,7 +50,7 @@
 #' ddbs_rotate(conn = conn, "argentina", angle = 90, center_x = -64, center_y = -34)
 #'
 #' ## rotate without using a connection
-#' ddbs_rotate(argentina_sf, angle = 45)
+#' ddbs_rotate(argentina_ddbs, angle = 45)
 #' }
 ddbs_rotate <- function(
     x,
@@ -257,17 +259,20 @@ ddbs_rotate <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
+#' library(dplyr)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read 3D data
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+#' countries_ddbs <- ddbs_open_dataset(
+#'  system.file("spatial/countries.geojson", 
+#'  package = "duckspatial")
+#' ) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## rotate 45 degrees around X axis (pitch)
 #' ddbs_rotate_3d(conn = conn, "countries", angle = 45, axis = "x")
@@ -279,7 +284,7 @@ ddbs_rotate <- function(
 #' ddbs_rotate_3d(conn = conn, "countries", angle = 180, axis = "z")
 #'
 #' ## rotate without using a connection
-#' ddbs_rotate_3d(countries_sf, angle = 45, axis = "z")
+#' ddbs_rotate_3d(countries_ddbs, angle = 45, axis = "z")
 #' }
 ddbs_rotate_3d <- function(
     x,
@@ -429,22 +434,24 @@ ddbs_rotate_3d <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## shift 10 degrees east and 5 degrees north
 #' ddbs_shift(conn = conn, "argentina", dx = 10, dy = 5)
 #'
 #' ## shift without using a connection
-#' ddbs_shift(argentina_sf, dx = 10, dy = 5)
+#' ddbs_shift(argentina_ddbs, dx = 10, dy = 5)
 #' }
 ddbs_shift <- function(
     x,
@@ -588,16 +595,18 @@ ddbs_shift <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## flip all features together as a whole (default)
 #' ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = FALSE)
@@ -606,7 +615,7 @@ ddbs_shift <- function(
 #' ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = TRUE)
 #'
 #' ## flip without using a connection
-#' ddbs_flip(argentina_sf, direction = "horizontal")
+#' ddbs_flip(argentina_ddbs, direction = "horizontal")
 #' }
 ddbs_flip <- function(
     x,
@@ -797,17 +806,20 @@ ddbs_flip <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
+#' library(dplyr)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' ) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## scale to 150% in both directions
 #' ddbs_scale(conn = conn, "countries", x_scale = 1.5, y_scale = 1.5)
@@ -816,10 +828,10 @@ ddbs_flip <- function(
 #' ddbs_scale(conn = conn, "countries", x_scale = 2, y_scale = 0.5)
 #'
 #' ## scale all features together (default)
-#' ddbs_scale(countries_sf, x_scale = 1.5, y_scale = 1.5, by_feature = FALSE)
+#' ddbs_scale(countries_ddbs, x_scale = 1.5, y_scale = 1.5, by_feature = FALSE)
 #'
 #' ## scale each feature independently
-#' ddbs_scale(countries_sf, x_scale = 1.5, y_scale = 1.5, by_feature = TRUE)
+#' ddbs_scale(countries_ddbs, x_scale = 1.5, y_scale = 1.5, by_feature = TRUE)
 #'
 #' }
 ddbs_scale <- function(
@@ -992,17 +1004,20 @@ ddbs_scale <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
+#' library(dplyr)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' ) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## shear in X direction (creates italic-like effect)
 #' ddbs_shear(conn = conn, "countries", x_shear = 0.3, y_shear = 0)
@@ -1014,7 +1029,7 @@ ddbs_scale <- function(
 #' ddbs_shear(conn = conn, "countries", x_shear = 0.2, y_shear = 0.2)
 #'
 #' ## shear without using a connection
-#' ddbs_shear(countries_sf, x_shear = 0.3, y_shear = 0)
+#' ddbs_shear(countries_ddbs, x_shear = 0.3, y_shear = 0)
 #' }
 ddbs_shear <- function(
     x,

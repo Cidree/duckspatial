@@ -29,7 +29,6 @@
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' ## create sample data with coordinates
 #' cities_df <- data.frame(

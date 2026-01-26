@@ -76,23 +76,25 @@ in the database.
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## extract exterior ring
 ddbs_exterior_ring(conn = conn, "countries")
 
 ## extract exterior ring without using a connection
-ddbs_exterior_ring(countries_sf)
+ddbs_exterior_ring(countries_ddbs)
 }
 }

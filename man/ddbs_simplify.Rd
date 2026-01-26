@@ -77,23 +77,25 @@ Returns the result as an \code{sf} object or creates a new table in the database
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## simplify with tolerance of 0.01
 ddbs_simplify("countries", tolerance = 0.01, conn)
 
 ## simplify without using a connection
-ddbs_simplify(countries_sf, tolerance = 0.01)
+ddbs_simplify(countries_ddbs, tolerance = 0.01)
 }
 }

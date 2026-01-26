@@ -21,24 +21,26 @@
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## buffer
 #' ddbs_buffer(conn = conn, "argentina", distance = 1)
 #'
 #' ## buffer without using a connection
-#' ddbs_buffer(argentina_sf, distance = 1)
+#' ddbs_buffer(argentina_ddbs, distance = 1)
 #' }
 ddbs_buffer <- function(
     x,
@@ -167,24 +169,26 @@ ddbs_buffer <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## centroid
 #' ddbs_centroid("argentina", conn)
 #'
 #' ## centroid without using a connection
-#' ddbs_centroid(argentina_sf)
+#' ddbs_centroid(argentina_ddbs)
 #' }
 ddbs_centroid <- function(
     x,
@@ -324,24 +328,26 @@ ddbs_centroid <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## check validity
 #' ddbs_is_valid("argentina", conn)
 #'
 #' ## check validity without using a connection
-#' ddbs_is_valid(argentina_sf)
+#' ddbs_is_valid(argentina_ddbs)
 #' }
 ddbs_is_valid <- function(
     x,
@@ -488,24 +494,26 @@ ddbs_is_valid <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#'
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## make valid
 #' ddbs_make_valid("countries", conn)
 #'
 #' ## make valid without using a connection
-#' ddbs_make_valid(countries_sf)
+#' ddbs_make_valid(countries_ddbs)
 #' }
 ddbs_make_valid <- function(
     x,
@@ -646,24 +654,26 @@ ddbs_make_valid <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## check simplicity
 #' ddbs_is_simple("argentina", conn)
 #'
 #' ## check simplicity without using a connection
-#' ddbs_is_simple(argentina_sf)
+#' ddbs_is_simple(argentina_ddbs)
 #' }
 ddbs_is_simple <- function(
     x,
@@ -811,24 +821,26 @@ ddbs_is_simple <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#'
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## simplify with tolerance of 0.01
 #' ddbs_simplify("countries", tolerance = 0.01, conn)
 #'
 #' ## simplify without using a connection
-#' ddbs_simplify(countries_sf, tolerance = 0.01)
+#' ddbs_simplify(countries_ddbs, tolerance = 0.01)
 #' }
 ddbs_simplify <- function(
     x,
@@ -965,24 +977,26 @@ ddbs_simplify <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#'
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## extract exterior ring
 #' ddbs_exterior_ring(conn = conn, "countries")
 #'
 #' ## extract exterior ring without using a connection
-#' ddbs_exterior_ring(countries_sf)
+#' ddbs_exterior_ring(countries_ddbs)
 #' }
 ddbs_exterior_ring <- function(
     x,
@@ -1113,25 +1127,27 @@ ddbs_exterior_ring <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## extract exterior ring as linestring, then convert back to polygon
-#' ring_sf <- ddbs_exterior_ring(conn = conn, "argentina")
-#' ddbs_make_polygon(conn = conn, ring_sf, name = "argentina_poly")
+#' ring_ddbs <- ddbs_exterior_ring(conn = conn, "argentina")
+#' ddbs_make_polygon(conn = conn, ring_ddbs, name = "argentina_poly")
 #'
 #' ## create polygon without using a connection
-#' ddbs_make_polygon(ring_sf)
+#' ddbs_make_polygon(ring_ddbs)
 #' }
 ddbs_make_polygon <- function(
     x,
@@ -1267,25 +1283,22 @@ ddbs_make_polygon <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
 #' library(sf)
 #'
 #' # create points data
 #' n <- 5
-#' points_sf <- data.frame(
-#'     id = 1,
-#'     x = runif(n, min = -180, max = 180),
-#'     y = runif(n, min = -90, max = 90)
-#'     ) |>
-#'     sf::st_as_sf(coords = c("x", "y"), crs = 4326) |>
-#'     st_geometry() |>
-#'     st_combine() |>
-#'     st_cast("MULTIPOINT") |>
-#'     st_as_sf()
+#' points_ddbs <- data.frame(
+#'   id = 1,
+#'   x = runif(n, min = -180, max = 180),
+#'   y = runif(n, min = -90, max = 90)
+#' ) |>
+#'   ddbs_as_spatial(coords = c("x", "y"), crs = 4326) |>
+#'   ddbs_combine()
 #'
-#' # option 1: passing sf objects
-#' output1 <- duckspatial::ddbs_concave_hull(x = points_sf)
+#' # option 1: passing ddbs or sf objects
+#' output1 <- duckspatial::ddbs_concave_hull(points_ddbs, output = "sf")
 #'
 #' plot(output1)
 #'
@@ -1296,13 +1309,14 @@ ddbs_make_polygon <- function(
 #' conn <- duckspatial::ddbs_create_conn()
 #'
 #' # write sf to duckdb
-#' ddbs_write_vector(conn, points_sf, "points_tbl")
+#' ddbs_write_vector(conn, points_ddbs, "points_tbl")
 #'
 #' # spatial join
 #' output2 <- duckspatial::ddbs_concave_hull(
-#'     conn = conn,
-#'     x = "points_tbl"
-#'     )
+#'  conn = conn,
+#'  x = "points_tbl",
+#'  output = "sf"
+#' )
 #'
 #' plot(output2)
 #'
@@ -1436,7 +1450,7 @@ ddbs_concave_hull <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -1444,10 +1458,13 @@ ddbs_concave_hull <- function(
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' # read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' # option 1: passing sf objects
-#' output1 <- duckspatial::ddbs_convex_hull(x = argentina_sf)
+#' output1 <- duckspatial::ddbs_convex_hull(x = argentina_ddbs, output = "sf")
 #'
 #' plot(output1["CNTR_NAME"])#' # store in duckdb
 #'
@@ -1457,13 +1474,14 @@ ddbs_concave_hull <- function(
 #' conn <- duckspatial::ddbs_create_conn()
 #'
 #' # write sf to duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina_tbl")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl")
 #'
 #' # spatial join
 #' output2 <- duckspatial::ddbs_convex_hull(
-#'     conn = conn,
-#'     x = "argentina_tbl"
-#'     )
+#'  conn = conn,
+#'  x = "argentina_tbl",
+#'  output = "sf"
+#' )
 #'
 #' plot(output2["CNTR_NAME"])
 #' }
@@ -1599,32 +1617,34 @@ ddbs_convex_hull <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
-#'
+#' 
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
-#'
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' 
 #' ## transform to different CRS using EPSG code
 #' ddbs_transform("argentina", "EPSG:3857", conn)
-#'
-#' ## transform to match CRS of another sf object
-#' argentina_3857_sf <- st_transform(argentina_sf, "EPSG:3857")
-#' ddbs_write_vector(conn, argentina_3857_sf, "argentina_3857")
-#' ddbs_transform("argentina", argentina_3857_sf, conn)
-#'
+#' 
+#' ## transform to match CRS of another object
+#' argentina_3857_ddbs <- ddbs_transform(argentina_ddbs, "EPSG:3857")
+#' ddbs_write_vector(conn, argentina_3857_ddbs, "argentina_3857")
+#' ddbs_transform("argentina", argentina_3857_ddbs, conn)
+#' 
 #' ## transform to match CRS of another DuckDB table
 #' ddbs_transform("argentina", "argentina_3857", conn)
-#'
+#' 
 #' ## transform without using a connection
-#' ddbs_transform(argentina_sf, "EPSG:3857")
+#' ddbs_transform(argentina_ddbs, "EPSG:3857")
 #' }
 ddbs_transform <- function(
     x,
@@ -1694,7 +1714,7 @@ ddbs_transform <- function(
     }
 
     ## warn if the crs is the same
-    if (crs_x$input == crs_y$input) return(cli::cli_warn("The CRS of `x` and `y` is the same."))
+    if (crs_x$input == crs_y$input) cli::cli_warn("The CRS of `x` and `y` is the same.")
 
 
     # 3. Prepare parameters for the query
@@ -1704,11 +1724,17 @@ ddbs_transform <- function(
     assert_geometry_column(x_geom, x_list)
 
     ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE, table_id = "v1")
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
 
     ## remove CRS column from x_rest
-    x_rest <- x_rest[-grep(crs_column, x_rest)]
-    x_rest <- if (length(x_rest) > 0) paste0('"', x_rest, '",', collapse = ' ') else ""
+    x_rest <- setdiff(x_rest, crs_column)
+    
+    x_rest <- if (length(x_rest) > 0) {
+        x_rest <- paste0('"', x_rest, '"', collapse = ', ')
+        x_rest <- paste0(x_rest, ", ")
+    } else {
+        ""
+    }
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -1737,11 +1763,12 @@ ddbs_transform <- function(
 
     # 4. Get data frame
     ## 4.1. create query
+    ## always_xy assumes [northing, easting]
     tmp.query <- glue::glue("
         SELECT 
             {x_rest}
             '{crs_y$input}' AS '{crs_column}',
-            ST_AsWKB(ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}')) as {x_geom} 
+            ST_AsWKB(ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)) as {x_geom} 
         FROM 
             {x_list$query_name};
     ")
@@ -1782,19 +1809,21 @@ ddbs_transform <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' ## read data
-#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#'
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' # option 1: passing sf objects
 #' # Get geometry type for each feature
-#' ddbs_geometry_type(countries_sf)
+#' ddbs_geometry_type(countries_ddbs)
 #' 
 #' # Get overall geometry type
-#' ddbs_geometry_type(countries_sf, by_feature = FALSE)
+#' ddbs_geometry_type(countries_ddbs, by_feature = FALSE)
 #' }
 ddbs_geometry_type <- function(
   x,

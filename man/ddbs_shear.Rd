@@ -90,17 +90,20 @@ database. Shearing skews the geometry by shifting coordinates proportionally.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
+library(dplyr)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## shear in X direction (creates italic-like effect)
 ddbs_shear(conn = conn, "countries", x_shear = 0.3, y_shear = 0)
@@ -112,6 +115,6 @@ ddbs_shear(conn = conn, "countries", x_shear = 0, y_shear = 0.3)
 ddbs_shear(conn = conn, "countries", x_shear = 0.2, y_shear = 0.2)
 
 ## shear without using a connection
-ddbs_shear(countries_sf, x_shear = 0.3, y_shear = 0)
+ddbs_shear(countries_ddbs, x_shear = 0.3, y_shear = 0)
 }
 }

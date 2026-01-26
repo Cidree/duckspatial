@@ -75,7 +75,7 @@ from a DuckDB table using the spatial extension. Returns the result as an
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
 library(sf)
 
@@ -83,10 +83,13 @@ library(sf)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 # read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 # option 1: passing sf objects
-output1 <- duckspatial::ddbs_convex_hull(x = argentina_sf)
+output1 <- duckspatial::ddbs_convex_hull(x = argentina_ddbs, output = "sf")
 
 plot(output1["CNTR_NAME"])#' # store in duckdb
 
@@ -96,13 +99,14 @@ plot(output1["CNTR_NAME"])#' # store in duckdb
 conn <- duckspatial::ddbs_create_conn()
 
 # write sf to duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina_tbl")
+ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl")
 
 # spatial join
 output2 <- duckspatial::ddbs_convex_hull(
-    conn = conn,
-    x = "argentina_tbl"
-    )
+ conn = conn,
+ x = "argentina_tbl",
+ output = "sf"
+)
 
 plot(output2["CNTR_NAME"])
 }

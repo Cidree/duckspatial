@@ -87,16 +87,18 @@ equivalent to \code{terra::flip()}.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## flip all features together as a whole (default)
 ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = FALSE)
@@ -105,6 +107,6 @@ ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = FALSE
 ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = TRUE)
 
 ## flip without using a connection
-ddbs_flip(argentina_sf, direction = "horizontal")
+ddbs_flip(argentina_ddbs, direction = "horizontal")
 }
 }

@@ -74,23 +74,25 @@ Returns the result as an \code{sf} object or creates a new table in the database
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## centroid
 ddbs_centroid("argentina", conn)
 
 ## centroid without using a connection
-ddbs_centroid(argentina_sf)
+ddbs_centroid(argentina_ddbs)
 }
 }

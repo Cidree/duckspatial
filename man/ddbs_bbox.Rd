@@ -70,20 +70,22 @@ table in the database.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 # option 1: passing sf objects
-ddbs_bbox(argentina_sf)
+ddbs_bbox(argentina_ddbs)
 
 
 ## option 2: passing the names of tables in a duckdb db
 
 # creates a duckdb write sf to it
 conn <- duckspatial::ddbs_create_conn()
-ddbs_write_vector(conn, argentina_sf, "argentina_tbl", overwrite = TRUE)
+ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
 
 output2 <- ddbs_bbox(
     conn = conn,

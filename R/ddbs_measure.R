@@ -33,17 +33,19 @@
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |>
-#'     st_transform("EPSG:3857")
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' ) |>
+#'   ddbs_transform("EPSG:3857")
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## calculate area (returns sf object with area column)
 #' ddbs_area("argentina", conn)
@@ -52,10 +54,10 @@
 #' ddbs_area("argentina", conn, new_column = "area_sqm")
 #'
 #' ## create a new table with area calculations
-#' ddbs_area("argentina", conn, name = "argentina_with_area")
+#' ddbs_area("argentina", conn, name = "argentina_with_area", new_column = "area_sqm")
 #'
 #' ## calculate area in a sf object
-#' ddbs_area(argentina_sf)
+#' ddbs_area(argentina_ddbs)
 #' }
 ddbs_area <- function(
     x,
@@ -213,16 +215,18 @@ ddbs_area <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson", 
+#'   package = "duckspatial")
+#' )
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, rivers_sf, "rivers")
+#' ddbs_write_vector(conn, rivers_ddbs, "rivers")
 #'
 #' ## calculate length (returns sf object with length column)
 #' ddbs_length("rivers", conn)
@@ -231,10 +235,10 @@ ddbs_area <- function(
 #' ddbs_length("rivers", conn, new_column = "length_meters")
 #'
 #' ## create a new table with length calculations
-#' ddbs_length("rivers", conn, name = "rivers_with_length")
+#' ddbs_length("rivers", conn, name = "rivers_with_length", new_column = "length_meters")
 #'
 #' ## calculate length in a sf object (without a connection)
-#' ddbs_length(rivers_sf)
+#' ddbs_length(rivers_ddbs)
 #' }
 ddbs_length <- function(
   x,
@@ -383,7 +387,6 @@ ddbs_length <- function(
 #' \dontrun{
 #' # load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create points data
 #' n <- 10
@@ -392,7 +395,7 @@ ddbs_length <- function(
 #'     x = runif(n, min = -180, max = 180),
 #'     y = runif(n, min = -90, max = 90)
 #' ) |>
-#'     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+#'     ddbs_as_spatial(coords = c("x", "y"), crs = "EPSG:4326")
 #'
 #' # option 1: passing sf objects
 #' output1 <- duckspatial::ddbs_distance(

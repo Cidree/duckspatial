@@ -34,18 +34,20 @@ Returns the geometry type(s) from a \code{sf} object or a DuckDB table.
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
-library(sf)
 
 ## read data
-countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+)
 
 # option 1: passing sf objects
 # Get geometry type for each feature
-ddbs_geometry_type(countries_sf)
+ddbs_geometry_type(countries_ddbs)
 
 # Get overall geometry type
-ddbs_geometry_type(countries_sf, by_feature = FALSE)
+ddbs_geometry_type(countries_ddbs, by_feature = FALSE)
 }
 }

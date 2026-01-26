@@ -47,27 +47,33 @@
 #' ## load packages
 #' library(dplyr)
 #' library(duckspatial)
-#' library(sf)
 #' 
 #' ## create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #' 
 #' ## read data
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' ) |> 
 #'   filter(ISO3_CODE != "ATA")
-#' rivers_sf <- read_sf(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
-#'  st_transform("EPSG:4326")
+#' 
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson", 
+#'   package = "duckspatial")
+#' ) |> 
+#'  ddbs_transform("EPSG:4326")
 #' 
 #' ## combine countries into a single MULTI-geometry
 #' ## (without solving boundaries)
-#' combined_countries_ddbs <- ddbs_combine(countries_sf)
+#' combined_countries_ddbs <- ddbs_combine(countries_ddbs)
 #' 
 #' ## combine countries into a single MULTI-geometry
 #' ## (solving boundaries)
-#' union_countries_ddbs <- ddbs_union(countries_sf)
+#' union_countries_ddbs <- ddbs_union(countries_ddbs)
 #' 
 #' ## union of geometries of two objects, into 1 geometry
-#' union_countries_rivers_ddbs <- ddbs_union(countries_sf, rivers_sf)
+#' union_countries_rivers_ddbs <- ddbs_union(countries_ddbs, rivers_ddbs)
 #' }
 #'
 #' @name ddbs_union

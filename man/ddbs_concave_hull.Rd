@@ -84,25 +84,22 @@ from a DuckDB table using the spatial extension. Returns the result as an
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
 library(sf)
 
 # create points data
 n <- 5
-points_sf <- data.frame(
-    id = 1,
-    x = runif(n, min = -180, max = 180),
-    y = runif(n, min = -90, max = 90)
-    ) |>
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326) |>
-    st_geometry() |>
-    st_combine() |>
-    st_cast("MULTIPOINT") |>
-    st_as_sf()
+points_ddbs <- data.frame(
+  id = 1,
+  x = runif(n, min = -180, max = 180),
+  y = runif(n, min = -90, max = 90)
+) |>
+  ddbs_as_spatial(coords = c("x", "y"), crs = 4326) |>
+  ddbs_combine()
 
-# option 1: passing sf objects
-output1 <- duckspatial::ddbs_concave_hull(x = points_sf)
+# option 1: passing ddbs or sf objects
+output1 <- duckspatial::ddbs_concave_hull(points_ddbs, output = "sf")
 
 plot(output1)
 
@@ -113,13 +110,14 @@ plot(output1)
 conn <- duckspatial::ddbs_create_conn()
 
 # write sf to duckdb
-ddbs_write_vector(conn, points_sf, "points_tbl")
+ddbs_write_vector(conn, points_ddbs, "points_tbl")
 
 # spatial join
 output2 <- duckspatial::ddbs_concave_hull(
-    conn = conn,
-    x = "points_tbl"
-    )
+ conn = conn,
+ x = "points_tbl",
+ output = "sf"
+)
 
 plot(output2)
 

@@ -19,16 +19,18 @@
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' # read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' # store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' # boundary
 #' b <- ddbs_boundary(x = "argentina", conn)
@@ -171,19 +173,21 @@ ddbs_boundary <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' # input as sf, and output as sf
-#' env <- ddbs_envelope(x = argentina_sf, by_feature = TRUE)
+#' env <- ddbs_envelope(x = argentina_ddbs, by_feature = TRUE)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' # store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' # envelope for each feature
 #' env <- ddbs_envelope("argentina", conn, by_feature = TRUE)
@@ -350,20 +354,22 @@ ddbs_envelope <- function(
 #' \dontrun{
 #' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' # option 1: passing sf objects
-#' ddbs_bbox(argentina_sf)
+#' ddbs_bbox(argentina_ddbs)
 #'
 #'
 #' ## option 2: passing the names of tables in a duckdb db
 #'
 #' # creates a duckdb write sf to it
 #' conn <- duckspatial::ddbs_create_conn()
-#' ddbs_write_vector(conn, argentina_sf, "argentina_tbl", overwrite = TRUE)
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
 #'
 #' output2 <- ddbs_bbox(
 #'     conn = conn,

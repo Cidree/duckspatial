@@ -87,17 +87,20 @@ in the database.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
+library(dplyr)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read 3D data
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+countries_ddbs <- ddbs_open_dataset(
+ system.file("spatial/countries.geojson", 
+ package = "duckspatial")
+) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## rotate 45 degrees around X axis (pitch)
 ddbs_rotate_3d(conn = conn, "countries", angle = 45, axis = "x")
@@ -109,6 +112,6 @@ ddbs_rotate_3d(conn = conn, "countries", angle = 30, axis = "y")
 ddbs_rotate_3d(conn = conn, "countries", angle = 180, axis = "z")
 
 ## rotate without using a connection
-ddbs_rotate_3d(countries_sf, angle = 45, axis = "z")
+ddbs_rotate_3d(countries_ddbs, angle = 45, axis = "z")
 }
 }

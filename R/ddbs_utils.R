@@ -299,8 +299,15 @@ ddbs_crs.default <- function(x, ...) {
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #' 
 #' ## read some data
-#' argentina_ddbs <- ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#' countries_ddbs <- ddbs_open_dataset(system.file("spatial/countries.geojson", package = "duckspatial"))
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
 #' 
 #' ## insert into the database
 #' ddbs_write_vector(conn, argentina_ddbs, "argentina")

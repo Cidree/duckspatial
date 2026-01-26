@@ -83,16 +83,18 @@ or degrees for geographic CRS).
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
+rivers_ddbs <- ddbs_open_dataset(
+  system.file("spatial/rivers.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, rivers_sf, "rivers")
+ddbs_write_vector(conn, rivers_ddbs, "rivers")
 
 ## calculate length (returns sf object with length column)
 ddbs_length("rivers", conn)
@@ -104,6 +106,6 @@ ddbs_length("rivers", conn, new_column = "length_meters")
 ddbs_length("rivers", conn, name = "rivers_with_length")
 
 ## calculate length in a sf object (without a connection)
-ddbs_length(rivers_sf)
+ddbs_length(rivers_ddbs)
 }
 }

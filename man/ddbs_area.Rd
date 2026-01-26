@@ -83,17 +83,19 @@ or degrees for geographic CRS).
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |>
-    st_transform("EPSG:3857")
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+) |>
+  ddbs_transform("EPSG:3857")
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## calculate area (returns sf object with area column)
 ddbs_area("argentina", conn)
@@ -105,6 +107,6 @@ ddbs_area("argentina", conn, new_column = "area_sqm")
 ddbs_area("argentina", conn, name = "argentina_with_area")
 
 ## calculate area in a sf object
-ddbs_area(argentina_sf)
+ddbs_area(argentina_ddbs)
 }
 }

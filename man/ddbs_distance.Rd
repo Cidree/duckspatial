@@ -57,7 +57,6 @@ a \code{data.frame} object or creates a new table in a DuckDB database.
 \dontrun{
 # load packages
 library(duckspatial)
-library(sf)
 
 # create points data
 n <- 10
@@ -66,7 +65,7 @@ points_sf <- data.frame(
     x = runif(n, min = -180, max = 180),
     y = runif(n, min = -90, max = 90)
 ) |>
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+    ddbs_as_spatial(coords = c("x", "y"), crs = "EPSG:4326")
 
 # option 1: passing sf objects
 output1 <- duckspatial::ddbs_distance(
