@@ -7,6 +7,10 @@
 ddbs_buffer(
   x,
   distance,
+  num_triangles = 8L,
+  cap_style = "CAP_ROUND",
+  join_style = "JOIN_ROUND",
+  mitre_limit = 1,
   conn = NULL,
   name = NULL,
   crs = NULL,
@@ -28,6 +32,20 @@ Data is returned from this object.}
 
 \item{distance}{a numeric value specifying the buffer distance. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)}
+
+\item{num_triangles}{an integer representing how many triangles will be produced to
+approximate a quarter circle. The larger the number, the smoother the resulting geometry.
+Default is 8.}
+
+\item{cap_style}{a character string specifying the cap style. Must be one of
+"CAP_ROUND" (default), "CAP_FLAT", or "CAP_SQUARE". Case-insensitive.}
+
+\item{join_style}{a character string specifying the join style. Must be one of
+"JOIN_ROUND" (default), "JOIN_MITRE", or "JOIN_BEVEL". Case-insensitive.}
+
+\item{mitre_limit}{a numeric value specifying the mitre limit ratio. Only applies when
+\code{join_style} is "JOIN_MITRE". It is the ratio of the distance from the corner to
+the mitre point to the corner radius. Default is 1.0.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -93,8 +111,12 @@ argentina_ddbs <- ddbs_open_dataset(
 ## store in duckdb
 ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
-## buffer
+## basic buffer
 ddbs_buffer(conn = conn, "argentina", distance = 1)
+
+## buffer with custom parameters
+ddbs_buffer(conn = conn, "argentina", distance = 1, 
+            num_triangles = 16, cap_style = "CAP_SQUARE")
 
 ## buffer without using a connection
 ddbs_buffer(argentina_ddbs, distance = 1)

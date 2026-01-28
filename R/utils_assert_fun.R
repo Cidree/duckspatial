@@ -42,11 +42,33 @@ assert_name <- function(name = parent.frame()$name) { # nocov start
 
  } # nocov end
 
+
+assert_character_scalar <- function(arg, ref) { # nocov start
+
+    if (!is.character(arg) || length(arg) != 1) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single character string.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
 assert_numeric <- function(arg, ref) { # nocov start
 
     if (!is.numeric(arg) || length(arg) != 1) {
         cli::cli_abort(
             "{.arg {ref}} must be a single numeric value.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
+
+assert_integer_scalar <- function(arg, ref) { # nocov start
+
+    if (!is.numeric(arg) || length(arg) != 1 || arg != as.integer(arg)) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single integer value.",
             .frame = parent.frame()
         )
     }

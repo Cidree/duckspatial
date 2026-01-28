@@ -2,7 +2,7 @@
 
 ## MAJOR CHANGES
 
-* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (#55).
+* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized. Every function now accepts this class as input, and it's the returned class by default. If the user is interested in returning a different class, there's a convinient `output` argument (#55, #63).
 
 * `ddbs_union()`: is spplited into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
 
@@ -11,6 +11,11 @@
 * `ddbs_as_spatial()`: converts a table with coordinates into a spatial object (#75).
 
 * `ddbs_geometry_type()`: returns the geometry type of an object (#76).
+
+## MINOR CHANGES
+
+* `ddbs_buffer()`: now has four new arguments: `num_triangles`, `cap_style`, `join_style`, and `mitre_limit` (#72).
+
 
 
 

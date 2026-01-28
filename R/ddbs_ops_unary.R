@@ -9,6 +9,16 @@
 #' @template x
 #' @param distance a numeric value specifying the buffer distance. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
+#' @param num_triangles an integer representing how many triangles will be produced to 
+#' approximate a quarter circle. The larger the number, the smoother the resulting geometry. 
+#' Default is 8.
+#' @param cap_style a character string specifying the cap style. Must be one of 
+#' "CAP_ROUND" (default), "CAP_FLAT", or "CAP_SQUARE". Case-insensitive.
+#' @param join_style a character string specifying the join style. Must be one of 
+#' "JOIN_ROUND" (default), "JOIN_MITRE", or "JOIN_BEVEL". Case-insensitive.
+#' @param mitre_limit a numeric value specifying the mitre limit ratio. Only applies when 
+#' \code{join_style} is "JOIN_MITRE". It is the ratio of the distance from the corner to 
+#' the mitre point to the corner radius. Default is 1.0.
 #' @template conn_null
 #' @template name
 #' @template crs
@@ -36,8 +46,12 @@
 #' ## store in duckdb
 #' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
-#' ## buffer
+#' ## basic buffer
 #' ddbs_buffer(conn = conn, "argentina", distance = 1)
+#'
+#' ## buffer with custom parameters
+#' ddbs_buffer(conn = conn, "argentina", distance = 1, 
+#'             num_triangles = 16, cap_style = "CAP_SQUARE")
 #'
 #' ## buffer without using a connection
 #' ddbs_buffer(argentina_ddbs, distance = 1)
@@ -45,6 +59,10 @@
 ddbs_buffer <- function(
     x,
     distance,
+    num_triangles = 8L,
+    cap_style = "CAP_ROUND",
+    join_style = "JOIN_ROUND",
+    mitre_limit = 1.0,
     conn = NULL,
     name = NULL,
     crs = NULL,
@@ -59,9 +77,32 @@ ddbs_buffer <- function(
     assert_xy(x, "x")
     assert_name(name)
     assert_numeric(distance, "distance")
+    assert_integer_scalar(num_triangles, "num_triangles")
+    assert_character_scalar(cap_style, "cap_style")
+    assert_character_scalar(join_style, "join_style")
+    assert_numeric(mitre_limit, "mitre_limit")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     assert_conn_character(conn, x)
+  
+    ## Validate cap_style
+    valid_cap_styles <- c("CAP_ROUND", "CAP_FLAT", "CAP_SQUARE")
+    if (!toupper(cap_style) %in% valid_cap_styles) {
+        cli::cli_abort("{.arg cap_style} must be one of: {.val {paste0(valid_cap_styles, collapse = ', ')}}.")
+    }
+    
+    ## Validate join_style
+    valid_join_styles <- c("JOIN_ROUND", "JOIN_MITRE", "JOIN_BEVEL")
+    if (!toupper(join_style) %in% valid_join_styles) {
+        cli::cli_abort("{.arg join_style} must be one of: {.val {paste0(valid_join_styles, collapse = ', ')}}.")
+    }
+    
+    ## Check num_triangles is positive
+    if (num_triangles < 1) cli::cli_abort("{.arg num_triangles} must be a positive integer")
+    
+    ## Check mitre_limit is striclty positive
+    if (mitre_limit <= 0) cli::cli_abort("{.arg mitre_limit} must be a positive number")
+    
 
     # 1. Manage connection to DB
 
@@ -98,6 +139,16 @@ ddbs_buffer <- function(
     ## 3.2. Get names of the rest of the columns
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
+    ## 3.3. Build ST_Buffer parameters string
+    buffer_params <- sprintf(
+        "%s, %s, %d, '%s', '%s', %s",
+        x_geom,
+        distance,
+        as.integer(num_triangles),
+        toupper(cap_style),
+        toupper(join_style),
+        mitre_limit
+    )
 
     # 4. if name is not NULL
     if (!is.null(name)) {
@@ -111,7 +162,7 @@ ddbs_buffer <- function(
         ## create query
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest} ST_Buffer({x_geom}, {distance}) as {x_geom} 
+            SELECT {x_rest} ST_Buffer({buffer_params}) as {x_geom} 
             FROM {x_list$query_name};
         ")
         ## execute intersection query
@@ -126,7 +177,7 @@ ddbs_buffer <- function(
     ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest} 
-        ST_AsWKB(ST_Buffer({x_geom}, {distance})) as {x_geom} 
+        ST_AsWKB(ST_Buffer({buffer_params})) as {x_geom} 
         FROM {x_list$query_name};
     ")
 
