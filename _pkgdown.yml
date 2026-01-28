@@ -75,6 +75,7 @@ reference:
 - title: Geometry Processing
   desc: Modify and process individual geometries
   contents:
+  - ddbs_as_spatial
   - ddbs_buffer
   - ddbs_centroid
   - ddbs_combine
@@ -88,10 +89,12 @@ reference:
   - ddbs_transform
   - ddbs_quadkey
   - ddbs_union
+  - ddbs_union_agg
 
 - title: Geometry Validation
   desc: Check geometry validity
   contents:
+  - ddbs_geometry_type
   - ddbs_is_simple
   - ddbs_is_valid
 

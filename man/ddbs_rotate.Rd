@@ -15,6 +15,7 @@ ddbs_rotate(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -58,6 +59,17 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
+\item{output}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+\item \code{"tibble"}: Eagerly collected tibble without geometry
+\item \code{"raw"}: Eagerly collected tibble with WKB geometry (list of raw vectors)
+\item \code{"geoarrow"}: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)
+}
+Can be set globally via \code{\link{ddbs_options}(output_type = "...")} or
+per-function via this argument. Per-function overrides global setting.}
+
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
@@ -65,7 +77,15 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-an \code{sf} object or \code{TRUE} (invisibly) for table creation
+Depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+\itemize{
+\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected \code{sf} object in R memory.
+\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
+\item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
+\item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
+}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Rotates geometries from from a \code{sf} object or a DuckDB table. Returns the
@@ -75,16 +95,18 @@ result as an \code{sf} object or creates a new table in the database.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## rotate 45 degrees
 ddbs_rotate(conn = conn, "argentina", angle = 45)
@@ -93,6 +115,6 @@ ddbs_rotate(conn = conn, "argentina", angle = 45)
 ddbs_rotate(conn = conn, "argentina", angle = 90, center_x = -64, center_y = -34)
 
 ## rotate without using a connection
-ddbs_rotate(argentina_sf, angle = 45)
+ddbs_rotate(argentina_ddbs, angle = 45)
 }
 }

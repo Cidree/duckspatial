@@ -108,7 +108,8 @@ test_that("auto-detects from standard extensions", {
   ds <- ddbs_open_dataset(system.file("spatial/countries.geojson", package = "duckspatial"), conn = conn)
   
   # Test various extensions
-  extensions <- c("geojson", "shp", "fgb")
+  ## fgb: it's not deleted on exit, raises a CRAN note of detritus
+  extensions <- c("geojson", "shp")
   
   for (ext in extensions) {
     tmp_file <- tempfile(fileext = paste0(".", ext))

@@ -15,6 +15,7 @@
 #'        Data is returned from this object.
 #' @template predicate
 #' @template conn_null
+#' @template conn_x_conn_y
 #' @template predicate_args
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
@@ -62,7 +63,7 @@
 #'   - the values of `id_x` if provided.
 #'
 #' If there's no match between `x` and `y` it returns `NULL`
-#'
+#' 
 #' @export
 #'
 #' @examples
@@ -70,82 +71,154 @@
 #' ## Load packages
 #' library(duckspatial)
 #' library(dplyr)
-#' library(sf)
-#'
+#' 
 #' ## create in-memory DuckDB database
 #' conn <- ddbs_create_conn(dbdir = "memory")
-#'
+#' 
 #' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' ) |>
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
+#' 
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson", 
+#'   package = "duckspatial")
+#' ) |>
+#'   ddbs_transform(ddbs_crs(countries_ddbs))
+#' 
 #' ## Store in DuckDB
-#' ddbs_write_vector(conn, countries_sf, "countries")
-#' ddbs_write_vector(conn, rivers_sf, "rivers")
-#'
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_vector(conn, rivers_ddbs, "rivers")
+#' 
 #' ## Example 1: Check which rivers intersect each country
-#' ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
-#'
+#' ddbs_predicate(countries_ddbs, rivers_ddbs, predicate = "intersects")
+#' ddbs_intersects(countries_ddbs, rivers_ddbs)
+#' 
 #' ## Example 2: Find neighboring countries
-#' ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
-#'                id_x = "NAME_ENGL", id_y = "NAME_ENGL")
-#'
+#' ddbs_predicate(
+#'   countries_ddbs, 
+#'   countries_ddbs, 
+#'   predicate = "touches",
+#'   id_x = "NAME_ENGL", 
+#'   id_y = "NAME_ENGL"
+#' )
+#' 
+#' ddbs_touches(
+#'   countries_ddbs, 
+#'   countries_ddbs, 
+#'   id_x = "NAME_ENGL", 
+#'   id_y = "NAME_ENGL"
+#' )
+#' 
 #' ## Example 3: Find rivers that don't intersect countries
-#' ddbs_predicate(countries_sf, rivers_sf, predicate = "disjoint",
-#'                id_x = "NAME_ENGL", id_y = "RIVER_NAME")
-#'
+#' ddbs_predicate(
+#'   countries_ddbs, 
+#'   rivers_ddbs, 
+#'   predicate = "disjoint",
+#'   id_x = "NAME_ENGL", 
+#'   id_y = "RIVER_NAME"
+#' )
+#' 
 #' ## Example 4: Use table names inside duckdb
-#' ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
+#' ddbs_predicate("countries", "rivers", predicate = "within", conn, id_x = "NAME_ENGL")
+#' ddbs_within("countries", "rivers", conn,  id_x = "NAME_ENGL")
 #' }
+#' @name ddbs_predicate
+#' @rdname ddbs_predicate
+NULL
+
+
+
+#' @rdname ddbs_predicate
 ddbs_predicate <- function(
   x,
   y,
   predicate = "intersects",
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
   quiet = FALSE) {
 
+  
   ## 0. Handle errors
   assert_xy(x, "x")
   assert_xy(y, "y")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x, y)
+  assert_logic(sparse, "sparse")
 
-  # 1. Manage connection to DB
-  ## 1.1. check if connection is provided, otherwise create a temporary connection
-  is_duckdb_conn <- dbConnCheck(conn)
-  if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-  }
-  ## 1.2. get query list of table names
-  x_list <- get_query_list(x, conn)
-  on.exit(x_list$cleanup(), add = TRUE)
-  y_list <- get_query_list(y, conn)
-  on.exit(y_list$cleanup(), add = TRUE)
-  assert_crs(conn, x_list$query_name, y_list$query_name)
-
-  ## 2. get name of geometry columns
-  x_geom <- get_geom_name(conn, x_list$query_name)
-  assert_geometry_column(x_geom, x_list)
-
-  y_geom <- get_geom_name(conn, y_list$query_name)
-  assert_geometry_column(y_geom, y_list)
-
-  ## check if id column name exists in x or y
-  assert_predicate_id(id_x, conn, x_list$query_name)
-  assert_predicate_id(id_y, conn, y_list$query_name)
-
-  ## get predicate
+  ## Validate predicate early (it aborts on invalid)
   st_predicate <- get_st_predicate(predicate)
 
-  # 3. Get data frame
-  ## 3.1. create query
+
+  # 1. Manage connection to DB
+
+  ## 1.1. Pre-extract attributes (CRS and geometry column name)
+  ## this step should be before normalize_spatial_input()
+  crs_x <- detect_crs(x)
+  crs_y <- detect_crs(y)
+  sf_col_x <- attr(x, "sf_column")
+  sf_col_y <- attr(y, "sf_column")
+
+  ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
+  if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+  if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+  ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn_x)
+  y <- normalize_spatial_input(y, conn_y)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  y            <- resolve_conn$y
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+  y_list <- get_query_list(y, target_conn)
+  on.exit(y_list$cleanup(), add = TRUE)
+
+  ## check if id column name exists in x or y
+  assert_predicate_id(id_x, target_conn, x_list$query_name)
+  assert_predicate_id(id_y, target_conn, y_list$query_name)
+
+  ## CRS already extracted at start of function
+  if (!is.null(crs_x) && !is.null(crs_y)) {
+      if (!crs_equal(crs_x, crs_y)) {
+        cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
+      }
+  } else {
+      assert_crs(target_conn, x_list$query_name, y_list$query_name)
+  }
+
+
+  # 3. Prepare parameters for the query
+
+  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+  assert_geometry_column(y_geom, y_list)
+
+  ## 3.2. Get names of the rest of the columns
+  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+  
+  # 4. Get data frame
+  ## 4.1. create query
   if (st_predicate == "ST_DWithin") {
 
     ## if distance is not specified, it will use ST_Within
@@ -167,12 +240,12 @@ ddbs_predicate <- function(
       CROSS JOIN {y_list$query_name} y
     ")
   }
-  ## 3.2. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  ## 4.2. retrieve results from the query
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  # 4. Reframe data
+  # 5. Reframe data
   result_lst <- reframe_predicate_data(
-    conn   = conn,
+    conn   = target_conn,
     data   = data_tbl,
     x_list = x_list,
     y_list = y_list,
@@ -183,55 +256,19 @@ ddbs_predicate <- function(
 
   feedback_query(quiet)
   return(result_lst)
-  }
+}
 
 
 
 
 
-#' Spatial intersects predicate
-#'
-#' Tests if geometries in `x` intersect geometries in `y`. Returns `TRUE` if
-#' geometries share at least one point in common.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "intersects"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' intersect the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_intersects(countries_sf, rivers_sf, id_x = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_intersects <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -242,6 +279,8 @@ ddbs_intersects <- function(
     y         = y,
     predicate = "intersects",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -254,49 +293,13 @@ ddbs_intersects <- function(
 
 
 
-#' Spatial covers predicate
-#'
-#' Tests if geometries in `x` cover geometries in `y`. Returns `TRUE` if
-#' geometry `x` completely covers geometry `y` (no point of `y` lies outside `x`).
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "covers"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' are covered by the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_covers(countries_sf, rivers_sf, id_x = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_covers <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -307,6 +310,8 @@ ddbs_covers <- function(
     y         = y,
     predicate = "covers",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -319,48 +324,13 @@ ddbs_covers <- function(
 
 
 
-#' Spatial touches predicate
-#'
-#' Tests if geometries in `x` touch geometries in `y`. Returns `TRUE` if
-#' geometries share a boundary but their interiors do not intersect.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "touches"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' touch the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial"))
-#' countries_filter_sf <- countries_sf |> filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#'
-#' # Find neighboring countries
-#' ddbs_touches(countries_filter_sf, countries_sf, id_x = "NAME_ENGL", id_y = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_touches <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -371,6 +341,8 @@ ddbs_touches <- function(
     y         = y,
     predicate = "touches",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -383,52 +355,14 @@ ddbs_touches <- function(
 
 
 
-
-#' Within Distance predicate
-#'
-#' Tests if geometries in `x` are within a specified distance of `y`. Returns
-#' `TRUE` if geometries are within the distance.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
-#' the coordinate system of the geometry (e.g. degrees or meters)
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "dwithin"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' touch the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial"))
-#' countries_filter_sf <- countries_sf |> filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#'
-#' ## check countries within 1 degree of distance
-#' ddbs_is_within_distance(countries_filter_sf, countries_sf, 1)
-#' }
+#' @rdname ddbs_predicate
 ddbs_is_within_distance <- function(
   x,
   y,
   distance = NULL,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -439,6 +373,8 @@ ddbs_is_within_distance <- function(
     y         = y,
     predicate = "dwithin",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y,
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -452,55 +388,30 @@ ddbs_is_within_distance <- function(
 
 
 
-#' Spatial disjoint predicate
-#'
-#' Tests if geometries in `x` are disjoint from geometries in `y`. Returns `TRUE`
-#' if geometries have no points in common.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "disjoint"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' are disjoint from the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_disjoint(countries_sf, rivers_sf, id_x = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_disjoint <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   quiet = FALSE) {
 
-  ddbs_predicate(x, y, "disjoint", conn, id_x, id_y, sparse, quiet)
+  ddbs_predicate(
+    x         = x, 
+    y         = y, 
+    predicate = "disjoint", 
+    conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
+    id_x      = id_x, 
+    id_y      = id_y, 
+    sparse    = sparse, 
+    quiet     = quiet
+  )
 
 }
 
@@ -508,49 +419,13 @@ ddbs_disjoint <- function(
 
 
 
-#' Spatial within predicate
-#'
-#' Tests if geometries in `x` are within geometries in `y`. Returns `TRUE` if
-#' geometry `x` is completely inside geometry `y`.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "within"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' contain the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_within(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_within <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -561,6 +436,8 @@ ddbs_within <- function(
     y         = y,
     predicate = "within",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -573,49 +450,13 @@ ddbs_within <- function(
 
 
 
-#' Spatial contains predicate
-#'
-#' Tests if geometries in `x` contain geometries in `y`. Returns `TRUE` if
-#' geometry `x` completely contains geometry `y`.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "contains"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' are contained by the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_contains(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
-#' }
+#' @rdname ddbs_predicate
 ddbs_contains <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -626,6 +467,8 @@ ddbs_contains <- function(
     y         = y,
     predicate = "contains",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -638,51 +481,13 @@ ddbs_contains <- function(
 
 
 
-#' Spatial overlaps predicate
-#'
-#' Tests if geometries in `x` overlap geometries in `y`. Returns `TRUE` if
-#' geometries share some but not all points, and the intersection has the same
-#' dimension as the geometries.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "overlaps"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' overlap the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#'
-#' spain_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "FI"))
-#'
-#' ddbs_overlaps(countries_sf, spain_sf)
-#' }
+#' @rdname ddbs_predicate
 ddbs_overlaps <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -693,6 +498,8 @@ ddbs_overlaps <- function(
     y         = y,
     predicate = "overlaps",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -705,49 +512,13 @@ ddbs_overlaps <- function(
 
 
 
-#' Spatial crosses predicate
-#'
-#' Tests if geometries in `x` cross geometries in `y`. Returns `TRUE` if
-#' geometries have some but not all interior points in common.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "crosses"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' cross the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_crosses(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_crosses <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -758,6 +529,8 @@ ddbs_crosses <- function(
     y         = y,
     predicate = "crosses",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -770,47 +543,13 @@ ddbs_crosses <- function(
 
 
 
-#' Spatial equals predicate
-#'
-#' Tests if geometries in `x` are spatially equal to geometries in `y`. Returns
-#' `TRUE` if geometries are topologically equivalent (same shape and location).
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "equals"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' are equal to the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#'
-#' ddbs_equals(countries_sf, countries_sf, id_x = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_equals <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -821,6 +560,8 @@ ddbs_equals <- function(
     y         = y,
     predicate = "equals",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -833,50 +574,13 @@ ddbs_equals <- function(
 
 
 
-#' Spatial covered by predicate
-#'
-#' Tests if geometries in `x` are covered by geometries in `y`. Returns `TRUE` if
-#' geometry `x` is completely covered by geometry `y` (no point of `x` lies
-#' outside `y`).
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "covered_by"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' cover the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_covered_by(rivers_sf, countries_sf, id_x = "RIVER_NAME", id_y = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_covered_by <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -887,6 +591,8 @@ ddbs_covered_by <- function(
     y         = y,
     predicate = "covered_by",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -899,52 +605,13 @@ ddbs_covered_by <- function(
 
 
 
-#' Spatial intersects extent predicate
-#'
-#' Tests if the bounding box of geometries in `x` intersect the bounding box of
-#' geometries in `y`. Returns `TRUE` if the extents (bounding boxes) overlap.
-#' This is faster than full geometry intersection but less precise.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "intersects_extent"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` whose
-#' bounding box intersects the bounding box of the corresponding geometry in `x`.
-#' See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' # Fast bounding box intersection check
-#' ddbs_intersects_extent(countries_sf, rivers_sf, id_x = "NAME_ENGL")
-#' }
+#' @rdname ddbs_predicate
 ddbs_intersects_extent <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -955,6 +622,8 @@ ddbs_intersects_extent <- function(
     y         = y,
     predicate = "intersects_extent",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -967,50 +636,13 @@ ddbs_intersects_extent <- function(
 
 
 
-#' Spatial contains properly predicate
-#'
-#' Tests if geometries in `x` properly contain geometries in `y`. Returns `TRUE`
-#' if geometry `y` is completely inside geometry `x` and does not touch its
-#' boundary.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "contains_properly"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' are properly contained by the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_contains_properly(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
-#' }
+#' @rdname ddbs_predicate
 ddbs_contains_properly <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -1021,6 +653,8 @@ ddbs_contains_properly <- function(
     y         = y,
     predicate = "contains_properly",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,
@@ -1033,50 +667,13 @@ ddbs_contains_properly <- function(
 
 
 
-#' Spatial within properly predicate
-#'
-#' Tests if geometries in `x` are properly within geometries in `y`. Returns
-#' `TRUE` if geometry `x` is completely inside geometry `y` and does not touch
-#' its boundary.
-#'
-#' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#' @template conn_null
-#' @template predicate_args
-#' @template quiet
-#'
-#' @details
-#' This is a convenience wrapper around [`ddbs_predicate()`] with
-#' `predicate = "within_properly"`.
-#'
-#' @returns
-#' A list where each element contains indices (or IDs) of geometries in `y` that
-#' properly contain the corresponding geometry in `x`. See [`ddbs_predicate()`] for details.
-#'
-#' @seealso [ddbs_predicate()] for other spatial predicates.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(dplyr)
-#' library(duckspatial)
-#' library(sf)
-#'
-#' ## read countries data, and rivers
-#' countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
-#'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-#' rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-#'   st_transform(st_crs(countries_sf))
-#'
-#' ddbs_within_properly(countries_sf, rivers_sf, id_x = "NAME_ENGL", id_y = "RIVER_NAME")
-#' }
+#' @rdname ddbs_predicate
 ddbs_within_properly <- function(
   x,
   y,
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
@@ -1087,6 +684,8 @@ ddbs_within_properly <- function(
     y         = y,
     predicate = "within_properly",
     conn      = conn,
+    conn_x    = conn_x,
+    conn_y    = conn_y, 
     id_x      = id_x,
     id_y      = id_y,
     sparse    = sparse,

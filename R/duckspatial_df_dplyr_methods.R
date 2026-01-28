@@ -296,6 +296,41 @@ head.duckspatial_df <- function(x, n = 6L, ...) {
   result
 }
 
+
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr glimpse
+glimpse.duckspatial_df <- function(x, width = NULL, ...) {
+  # Preserve spatial metadata
+  crs <- attr(x, "crs")
+  geom_col <- attr(x, "sf_column")
+  bbox <- st_bbox(x)
+  geomtype <- ddbs_geometry_type(x, by_feature = FALSE, quiet = TRUE) |> 
+    as.character()
+  
+  # Strip class to delegate to dplyr's glimpse.tbl_lazy
+  class(x) <- setdiff(class(x), "duckspatial_df")
+
+  # Add spatial metadata info to output
+  ## metadata with icons/symbols
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf CRS:"), cli::col_silver(ddbs_format_crs(crs)), "\n")
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf Geometry column:"), cli::col_silver(geom_col), "\n")
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf Geometry type:"), cli::col_silver(geomtype), "\n")
+  cat(cli::col_silver("#"), cli::col_blue("\u25cf Bounding box:"), 
+      cli::col_silver(sprintf("xmin: %.5g ymin: %.5g xmax: %.5g ymax: %.5g", 
+                              bbox["xmin"], bbox["ymin"], bbox["xmax"], bbox["ymax"])), "\n")
+
+  # Execute via dplyr
+  dplyr::glimpse(x, width = width, ...)
+
+  
+  
+  # Return invisibly (following glimpse convention)
+  invisible(x)
+}
+
+
 # =============================================================================
 # compute - Force execution while staying lazy
 # =============================================================================

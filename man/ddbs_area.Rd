@@ -62,7 +62,16 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-a vector, an \code{sf} object or \code{TRUE} (invisibly) for table creation
+When \code{new_column = NULL} it returns a logical vector. When \code{new_column} is not NULL, the
+output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+\itemize{
+\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected \code{sf} object in R memory.
+\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
+\item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
+\item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
+}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Calculates the area of geometries from a DuckDB table or a \code{sf} object
@@ -74,17 +83,19 @@ or degrees for geographic CRS).
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |>
-    st_transform("EPSG:3857")
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+) |>
+  ddbs_transform("EPSG:3857")
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## calculate area (returns sf object with area column)
 ddbs_area("argentina", conn)
@@ -93,9 +104,9 @@ ddbs_area("argentina", conn)
 ddbs_area("argentina", conn, new_column = "area_sqm")
 
 ## create a new table with area calculations
-ddbs_area("argentina", conn, name = "argentina_with_area")
+ddbs_area("argentina", conn, name = "argentina_with_area", new_column = "area_sqm")
 
 ## calculate area in a sf object
-ddbs_area(argentina_sf)
+ddbs_area(argentina_ddbs)
 }
 }

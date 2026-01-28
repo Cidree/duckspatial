@@ -70,7 +70,8 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE, extension = "spat
 #' @returns TRUE (invisibly) for successful installation
 #' @export
 #'
-#' @examplesIf interactive()
+#' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(duckdb)
@@ -84,6 +85,7 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE, extension = "spat
 #'
 #' ## disconnect from db
 #' duckdb::dbDisconnect(conn)
+#' }
 ddbs_load <- function(conn, quiet = FALSE, extension = "spatial") {
 
     # 1. Get extensions list

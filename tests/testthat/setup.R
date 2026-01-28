@@ -4,12 +4,18 @@
 testthat::skip_if_not_installed("duckdb")
 
 # read polygons data from duckspatial package
-countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
+    sf::st_transform("EPSG:4326")
 countries_sf <- subset(countries_sf, CNTR_ID %in% c("AR", "BR", "BO", "PE", "PY", "UY", "CL"))
-argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_sf <- sf::st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |> 
+    sf::st_transform("EPSG:4326")
+argentina_ddbs <- duckspatial::as_duckspatial_df(argentina_sf)
+countries_ddbs <- duckspatial::as_duckspatial_df(countries_sf)
 
 # read lines data
-rivers_sf <- sf::st_read(system.file("spatial/rivers.geojson", package = "duckspatial"))
+rivers_sf <- sf::st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |> 
+    sf::st_transform("EPSG:3035")
+rivers_ddbs <- duckspatial::ddbs_open_dataset(system.file("spatial/rivers.geojson", package = "duckspatial"))
 
 ## create points data
 set.seed(42)
@@ -20,6 +26,8 @@ points_sf <- data.frame(
     y = runif(n, min = -90, max = 90)
 ) |>
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+
+points_ddbs <- duckspatial::as_duckspatial_df(points_sf)
 
 # North Carolina data from sf package - used by duckspatial_df tests
 nc_sf   <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)

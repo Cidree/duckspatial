@@ -21,7 +21,7 @@ TRUE (invisibly) for successful installation
 Checks if a spatial extension is installed, and loads it in a DuckDB database
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 ## load packages
 library(duckspatial)
 library(duckdb)
@@ -35,5 +35,5 @@ ddbs_load(conn)
 
 ## disconnect from db
 duckdb::dbDisconnect(conn)
-\dontshow{\}) # examplesIf}
+}
 }

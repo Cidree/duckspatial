@@ -21,7 +21,7 @@ It creates a DuckDB connection, and then it installs and loads the
 spatial extension
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 # load packages
 library(duckspatial)
 
@@ -34,5 +34,5 @@ conn <- ddbs_create_conn(dbdir = "tempdir")
 # create a connection with 1 thread and 2GB memory limit
 conn <- ddbs_create_conn(threads = 1, memory_limit_gb = 2)
 ddbs_stop_conn(conn)
-\dontshow{\}) # examplesIf}
+}
 }

@@ -4,6 +4,15 @@
 
 * `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (#55).
 
+* `ddbs_union()`: is spplited into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
+
+## NEW FEATURES
+
+* `ddbs_as_spatial()`: converts a table with coordinates into a spatial object (#75).
+
+* `ddbs_geometry_type()`: returns the geometry type of an object (#76).
+
+
 
 # duckspatial 0.9.0
 

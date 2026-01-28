@@ -40,21 +40,23 @@ vector of bytes.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## convert geometries to WKB
 wkb_list <- ddbs_as_wkb(conn = conn, "argentina")
 
 ## convert without using a connection
-wkb_list <- ddbs_as_wkb(argentina_sf)
+wkb_list <- ddbs_as_wkb(argentina_ddbs)
 }
 }

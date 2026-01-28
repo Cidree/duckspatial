@@ -17,7 +17,8 @@ ddbs_glimpse(
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names.}
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
 
 \item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
@@ -30,25 +31,26 @@ Set to \code{NULL} if absent.}
 Defaults to \code{FALSE}.}
 }
 \value{
-\code{sf} object
+Invisibly \code{duckspatial_df} object
 }
 \description{
-Check first rows of the data
+Prints a transposed table of the first rows of a DuckDB table, similarly
+as the S3 \link[dplyr:glimpse]{dplyr::glimpse} method.
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_sf <- ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
 
 ## store in duckdb
 ddbs_write_vector(conn, argentina_sf, "argentina")
 
+## glimpse the inserted table
 ddbs_glimpse(conn, "argentina")
-\dontshow{\}) # examplesIf}
+}
 }

@@ -4,7 +4,15 @@
 \alias{ddbs_distance}
 \title{Returns the distance between two geometries}
 \usage{
-ddbs_distance(x, y, dist_type = "haversine", conn = NULL, quiet = FALSE)
+ddbs_distance(
+  x,
+  y,
+  dist_type = "haversine",
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -29,6 +37,12 @@ of the input.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
+
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
 }
@@ -43,7 +57,6 @@ a \code{data.frame} object or creates a new table in a DuckDB database.
 \dontrun{
 # load packages
 library(duckspatial)
-library(sf)
 
 # create points data
 n <- 10
@@ -52,7 +65,7 @@ points_sf <- data.frame(
     x = runif(n, min = -180, max = 180),
     y = runif(n, min = -90, max = 90)
 ) |>
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+    ddbs_as_spatial(coords = c("x", "y"), crs = "EPSG:4326")
 
 # option 1: passing sf objects
 output1 <- duckspatial::ddbs_distance(

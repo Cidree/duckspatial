@@ -16,7 +16,8 @@
 #' @returns an sf object
 #' @export
 #'
-#' @examplesIf interactive()
+#' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(sf)
@@ -44,6 +45,7 @@
 #'
 #' ## disconnect from db
 #' ddbs_stop_conn(conn)
+#' }
 ddbs_read_vector <- function(
     conn,
     name,

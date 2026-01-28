@@ -17,17 +17,14 @@ If not specified (\code{conn = NULL}), uses the default connection created with 
 Get list of GDAL drivers and file formats
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-## load packages
-library(duckdb)
+\dontrun{
+## load package
 library(duckspatial)
 
 ## database setup
-conn <- dbConnect(duckdb())
-ddbs_install(conn)
-ddbs_load(conn)
+conn <- ddbs_create_conn()
 
 ## check drivers
 ddbs_drivers(conn)
-\dontshow{\}) # examplesIf}
+}
 }

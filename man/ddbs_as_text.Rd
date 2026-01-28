@@ -38,21 +38,23 @@ portable text format that can be used with other spatial tools and databases.
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## convert geometries to WKT
 wkt_text <- ddbs_as_text(conn = conn, "argentina")
 
 ## convert without using a connection
-wkt_text <- ddbs_as_text(argentina_sf)
+wkt_text <- ddbs_as_text(argentina_ddbs)
 }
 }

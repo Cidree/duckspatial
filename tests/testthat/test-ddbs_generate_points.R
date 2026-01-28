@@ -1,120 +1,74 @@
 
+# 0. Set up --------------------------------------------------------------
 
 # skip tests on CRAN
 skip_if(Sys.getenv("TEST_ONE") != "")
 testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
-# helpers --------------------------------------------------------------
-
 ## create duckdb connection
 conn_test <- duckspatial::ddbs_create_conn()
 
-## store countries
-duckspatial::ddbs_write_vector(conn_test, countries_sf, "countries")
+## write data
+duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina")
 
-# expected behavior --------------------------------------------------------------
 
-testthat::test_that("generate points as SF", {
+# 1. ddbs_generate_points() ----------------------------------------------
+
+## 1.1. Expected behaviour -------------------
+
+## expected behaviour
+## - CHECK 1.1: works on all formats, n works, and seed works
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.3: messages work
+## - CHECK 1.4: writting a table works
+## - CHECK 1.5: check different seeds
+testthat::test_that("ddbs_generate_points(): expected behavior", {
+  
+  ## CHECK 1.1
+  output_ddbs <- ddbs_generate_points(argentina_ddbs, 50, seed = 123)
+  output_sf   <- ddbs_generate_points(argentina_sf, 50, seed = 123)
+  output_conn <- ddbs_generate_points("argentina", 50, conn = conn_test, seed = 123)
+
+  testthat::expect_s3_class(output_ddbs, "duckspatial_df")
+  testthat::expect_equal(nrow(ddbs_collect(output_ddbs)), 50)
+  testthat::expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+  testthat::expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+  
+
+  ## CHECK 1.2
+  output_geoarrow_fmt <- ddbs_generate_points(argentina_ddbs, 10, output = "geoarrow")
+  output_sf_fmt       <- ddbs_generate_points(argentina_ddbs, 10, output = "sf")
+  output_raw_fmt      <- ddbs_generate_points(argentina_ddbs, 10, output = "raw")
+
+  testthat::expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+  testthat::expect_s3_class(output_sf_fmt, "sf")
+  testthat::expect_s3_class(output_raw_fmt, "tbl_df")
+
+
+  ## CHECK 1.3
+  testthat::expect_message(ddbs_generate_points(argentina_ddbs, 10))
+  testthat::expect_message(ddbs_generate_points("argentina", 50, conn = conn_test, name = "generate_points"))
+  testthat::expect_message(ddbs_generate_points("argentina", 50, conn = conn_test, name = "generate_points", overwrite = TRUE))
+  testthat::expect_true(ddbs_generate_points("argentina", 50, conn = conn_test, name = "generate_points2"))
+
+  testthat::expect_no_message(ddbs_generate_points(argentina_ddbs, 50, quiet = TRUE))
+  testthat::expect_no_message(ddbs_generate_points("argentina", 50, seed = 123, conn = conn_test, name = "generate_points", overwrite = TRUE, quiet = TRUE))
+
+
+  ## CHECK 1.4
+  output_tbl <- ddbs_read_vector(conn_test, "generate_points")
+  testthat::expect_equal(
+    ddbs_collect(output_ddbs)$geometry,
+    output_tbl$geometry
+  )
+
+
+  ## CHECK 1.5
+  output_ddbs_2 <- ddbs_generate_points(argentina_ddbs, 50, seed = 678)
+
+  testthat::expect_false(
+    identical(ddbs_collect(output_ddbs), ddbs_collect(output_ddbs_2))
+  )
     
-    ## create from sf
-    generated_pts_sf <- duckspatial::ddbs_generate_points(
-      x = argentina_sf,
-      n = 33
-    )
-  
-    ## create from DuckDB table
-    generated_pts_tbl_sf <- duckspatial::ddbs_generate_points(
-        x     = "countries",
-        n     = 58,
-        conn  = conn_test,
-        quiet = TRUE
-    )
-
-    ## checks
-    testthat::expect_equal(nrow(generated_pts_sf), 33)
-    testthat::expect_equal(nrow(generated_pts_tbl_sf), 58)
-    testthat::expect_s3_class(generated_pts_tbl_sf, "sf")
-
 })
-
-
-testthat::test_that("generate points as DuckDB table", {
-  
-  ## create from sf
-  generated_pts_msg <- duckspatial::ddbs_generate_points(
-    x = countries_sf,
-    n = 33,
-    conn = conn_test,
-    name = "generated_pts"
-  )
-
-  ## create from DuckDB table
-  generated_pts_tbl_msg <- duckspatial::ddbs_generate_points(
-    x    = "countries",
-    n    = 33,
-    conn = conn_test,
-    name = "generated_pts_tbl",
-    quiet = TRUE
-  )
-
-  ## read the data
-  generated_pts_tbl_sf <- duckspatial::ddbs_read_vector(
-    conn = conn_test,
-    name = "generated_pts_tbl"
-  )
-
-  ## checks
-  testthat::expect_true(generated_pts_msg)
-  testthat::expect_true(generated_pts_tbl_msg)
-  testthat::expect_equal(nrow(generated_pts_tbl_sf), 33)
-
-  ## overwrite table
-  generated_pts_tbl_msg_overwrite <- duckspatial::ddbs_generate_points(
-    x         = "countries",
-    n         = 55,
-    conn      = conn_test,
-    name      = "generated_pts_tbl",
-    overwrite = TRUE
-  )
-
-  generated_pts_tbl_msg_overwrite_sf <- duckspatial::ddbs_read_vector(
-    conn = conn_test,
-    name = "generated_pts_tbl"
-  )
-  
-  ## checks
-  testthat::expect_true(generated_pts_tbl_msg_overwrite)
-  testthat::expect_equal(nrow(generated_pts_tbl_msg_overwrite_sf), 55)
-
-  ## check overwrite = FALSE throws an error when tbl exists
-  testthat::expect_error(
-    duckspatial::ddbs_generate_points(
-      x         = "countries",
-      n         = 55,
-      conn      = conn_test,
-      name      = "generated_pts_tbl",
-      overwrite = FALSE
-    )
-  )
-
-
-})
-
-
-# expected errors --------------------------------------------------------------
-
-testthat::test_that("errors with incorrect input", {
-
-    testthat::expect_error(duckspatial::ddbs_generate_points(x = 999))
-    testthat::expect_error(duckspatial::ddbs_generate_points(conn = 999))
-    testthat::expect_error(duckspatial::ddbs_generate_points(overwrite = 999))
-    testthat::expect_error(duckspatial::ddbs_generate_points(quiet = 999))
-
-    testthat::expect_error(duckspatial::ddbs_generate_points(x = "999", conn = conn_test))
-
-    testthat::expect_error(duckspatial::ddbs_generate_points(conn = conn_test, name = c('banana', 'banana')))
-
-
-})
-

@@ -2,6 +2,20 @@
 % Please edit documentation in R/ddbs_predicates.R
 \name{ddbs_predicate}
 \alias{ddbs_predicate}
+\alias{ddbs_intersects}
+\alias{ddbs_covers}
+\alias{ddbs_touches}
+\alias{ddbs_is_within_distance}
+\alias{ddbs_disjoint}
+\alias{ddbs_within}
+\alias{ddbs_contains}
+\alias{ddbs_overlaps}
+\alias{ddbs_crosses}
+\alias{ddbs_equals}
+\alias{ddbs_covered_by}
+\alias{ddbs_intersects_extent}
+\alias{ddbs_contains_properly}
+\alias{ddbs_within_properly}
 \title{Spatial predicate operations}
 \usage{
 ddbs_predicate(
@@ -9,10 +23,181 @@ ddbs_predicate(
   y,
   predicate = "intersects",
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
+  quiet = FALSE
+)
+
+ddbs_intersects(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_covers(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_touches(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_is_within_distance(
+  x,
+  y,
+  distance = NULL,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_disjoint(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_within(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_contains(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_overlaps(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_crosses(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_equals(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_covered_by(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_intersects_extent(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_contains_properly(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
+  quiet = FALSE
+)
+
+ddbs_within_properly(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  sparse = TRUE,
   quiet = FALSE
 )
 }
@@ -35,6 +220,12 @@ a wrapper of \code{ST_Intersects}. See details for other options.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
+
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
 
 \item{id_x}{Character; optional name of the column in \code{x} whose values will
 be used to name the list elements. If \code{NULL}, integer row numbers of \code{x} are used.}
@@ -109,33 +300,58 @@ values of an identifier column in \code{x} or \code{y}, respectively.
 ## Load packages
 library(duckspatial)
 library(dplyr)
-library(sf)
 
 ## create in-memory DuckDB database
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-  st_transform(st_crs(countries_sf))
+
+rivers_ddbs <- ddbs_open_dataset(
+  system.file("spatial/rivers.geojson", 
+  package = "duckspatial")
+) |>
+  ddbs_transform(ddbs_crs(countries_ddbs))
 
 ## Store in DuckDB
-ddbs_write_vector(conn, countries_sf, "countries")
-ddbs_write_vector(conn, rivers_sf, "rivers")
+ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_vector(conn, rivers_ddbs, "rivers")
 
 ## Example 1: Check which rivers intersect each country
-ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
+ddbs_predicate(countries_ddbs, rivers_ddbs, predicate = "intersects")
+ddbs_intersects(countries_ddbs, rivers_ddbs)
 
 ## Example 2: Find neighboring countries
-ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
-               id_x = "NAME_ENGL", id_y = "NAME_ENGL")
+ddbs_predicate(
+  countries_ddbs, 
+  countries_ddbs, 
+  predicate = "touches",
+  id_x = "NAME_ENGL", 
+  id_y = "NAME_ENGL"
+)
+
+ddbs_touches(
+  countries_ddbs, 
+  countries_ddbs, 
+  id_x = "NAME_ENGL", 
+  id_y = "NAME_ENGL"
+)
 
 ## Example 3: Find rivers that don't intersect countries
-ddbs_predicate(countries_sf, rivers_sf, predicate = "disjoint",
-               id_x = "NAME_ENGL", id_y = "RIVER_NAME")
+ddbs_predicate(
+  countries_ddbs, 
+  rivers_ddbs, 
+  predicate = "disjoint",
+  id_x = "NAME_ENGL", 
+  id_y = "RIVER_NAME"
+)
 
 ## Example 4: Use table names inside duckdb
-ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
+ddbs_predicate("countries", "rivers", predicate = "within", conn, id_x = "NAME_ENGL")
+ddbs_within("countries", "rivers", conn,  id_x = "NAME_ENGL")
 }
 }

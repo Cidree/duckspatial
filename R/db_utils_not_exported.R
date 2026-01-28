@@ -494,6 +494,32 @@ get_query_list <- function(x, conn) {
     
     x_list <- get_query_name(temp_view_name)
 
+  } else if (inherits(x, "data.frame")) {
+
+    ## generate a unique temporary view name
+    temp_view_name <- paste0(
+      "temp_view_",
+      gsub("-", "_", uuid::UUIDgenerate())
+    )
+
+    ## register the view
+    duckdb::duckdb_register(conn, temp_view_name, x)
+
+    cleanup <- function() {
+      # Try DROP VIEW first
+      tryCatch(
+        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+        error = function(e) NULL
+      )
+      # Also try unregistering arrow (needed for temp_view=TRUE from ddbs_write_vector)
+      tryCatch(
+        duckdb::duckdb_unregister_arrow(conn, temp_view_name),
+        error = function(e) NULL
+      )
+    }
+
+    x_list <- get_query_name(temp_view_name)
+
   } else {
     x_list <- get_query_name(x)
   }

@@ -40,7 +40,7 @@ This function writes a Simple Features (SF) object into a DuckDB database as a n
 The table is created in the specified schema of the DuckDB database.
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -66,5 +66,5 @@ ddbs_read_vector(conn, "points", crs = 4326)
 
 ## disconnect from db
 dbDisconnect(conn)
-\dontshow{\}) # examplesIf}
+}
 }
