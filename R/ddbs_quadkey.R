@@ -8,10 +8,9 @@
 #' @template x
 #' @param level An integer specifying the zoom level for QuadKey generation (1-23).
 #' Higher values provide finer spatial resolution. Default is 10.
-#' @param field Character string specifying the field name for raster output.
-#' Only used when \code{output = "raster"}
-#' @param fun summarizing function for when there are multiple geometries in one cell (e.g. "mean",
-#' "min", "max", "sum"). Only used when \code{output = "raster"}
+#' @param field Character string specifying the field name for aggregation.
+#' @param fun aggregation function for when there are multiple quadkeys (e.g. "mean",
+#' "min", "max", "sum").
 #' @param background numeric. Default value in raster cells without values. Only used when 
 #' \code{output = "raster"}
 #' @template conn_null
@@ -98,6 +97,9 @@ ddbs_quadkey <- function(
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
   assert_conn_character(conn, x)
+
+  ## valid outputs
+  if (!output %in% c("polygon", "raster", "tilexy")) cli::cli_abort("{.arg output} must be one of: {.val {c('polygon', 'raster', 'tilexy')}}")
 
   ## suggested packages
   rlang::check_installed(
@@ -201,15 +203,40 @@ ddbs_quadkey <- function(
   ## 5. convert to SF and return result
   if (output == "polygon") {
 
-    prep_data <- quadkeyr::quadkey_df_to_polygon(data_tbl) |> 
-      as_duckspatial_df()
+    ## get 1 quadkey per row
+    data_sf <- quadkeyr::quadkey_df_to_polygon(data_tbl)
+
+    ## if field is specified, aggregate the data
+    if (!is.null(field)) {
+      data_sf <- data_sf |>
+        dplyr::group_by(quadkey) |>
+        dplyr::summarise(
+          value    = match.fun(fun)(.data[[field]], na.rm = TRUE),
+          geometry = sf::st_union(geometry),
+          .groups  = "drop"
+        )
+        
+    }
+
+    ## convert to duckspatial_df
+    prep_data <- as_duckspatial_df(data_sf)
 
   } else if (tolower(output) == "tilexy") {
 
+    ## convert to tibble
     prep_data <- dplyr::bind_cols(
       dplyr::bind_rows(lapply(data_tbl$quadkey, quadkeyr::quadkey_to_tileXY)),
       data_tbl |> dplyr::select(-dplyr::all_of("quadkey"))
     )
+
+    ## aggregate if field is not null
+    if (!is.null(field)) {
+      prep_data <- prep_data |> 
+        dplyr::summarise(
+          value    = match.fun(fun)(.data[[field]], na.rm = TRUE),
+          .by  = c(tileX, tileY, zoom)
+        )
+    }
 
   } else if (output == "raster") {
 

@@ -16,6 +16,8 @@
 
 * `ddbs_buffer()`: now has four new arguments: `num_triangles`, `cap_style`, `join_style`, and `mitre_limit` (#72).
 
+* `ddbs_quadkey()`: can aggregate by `field` when output is `polygon` and `tilexy` (#78).
+
 
 
 

@@ -32,11 +32,10 @@ Data is returned from this object.}
 \item{level}{An integer specifying the zoom level for QuadKey generation (1-23).
 Higher values provide finer spatial resolution. Default is 10.}
 
-\item{field}{Character string specifying the field name for raster output.
-Only used when \code{output = "raster"}}
+\item{field}{Character string specifying the field name for aggregation.}
 
-\item{fun}{summarizing function for when there are multiple geometries in one cell (e.g. "mean",
-"min", "max", "sum"). Only used when \code{output = "raster"}}
+\item{fun}{aggregation function for when there are multiple quadkeys (e.g. "mean",
+"min", "max", "sum").}
 
 \item{background}{numeric. Default value in raster cells without values. Only used when
 \code{output = "raster"}}
