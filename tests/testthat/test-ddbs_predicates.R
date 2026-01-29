@@ -275,11 +275,11 @@ describe("ddbs_predicate()", {
     })
 
     it("validates conn_x argument type", {
-      expect_error(ddbs_predicate(argentina_ddbs, points_sf, conn_y = 999))
+      expect_error(ddbs_predicate(argentina_ddbs, "points", conn_y = 999))
     })
 
     it("validates conn_y argument type", {
-      expect_error(ddbs_predicate(argentina_ddbs, points_ddbs, conn_x = 999))
+      expect_error(ddbs_predicate("argentina", points_sf, conn_x = 999))
     })
     
     it("validates overwrite argument type", {
