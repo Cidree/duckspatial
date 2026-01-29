@@ -27,149 +27,274 @@ ddbs_write_vector(conn_test_2, argentina_ddbs, "argentina")
 ## - CHECK 1.4: sparse returns a matrix
 ## - CHECK 1.5: returns same as SF
 ## - CHECK 1.6: id_x and id_y work
-testthat::test_that("ddbs_predicate(): expected behavior", {
+## - CHECK 2.1: Combination of inputs / missing arguments
+## - CHECK 2.2: other errors
+describe("ddbs_predicate()", {
   
-  ## CHECK 1.1
-  output_1 <- ddbs_predicate(points_sf, argentina_sf)
-  output_2 <- ddbs_predicate(points_ddbs, argentina_sf)
-  output_3 <- ddbs_predicate(points_sf, argentina_ddbs)
-  output_4 <- ddbs_predicate(points_ddbs, argentina_ddbs)  
-  testthat::expect_warning(ddbs_predicate("points", argentina_ddbs, conn = conn_test))
-  output_6 <- ddbs_predicate("points", argentina_sf, conn = conn_test)
-  output_7 <- ddbs_predicate(points_sf, "argentina", conn = conn_test)
-  testthat::expect_warning(ddbs_predicate(points_ddbs, "argentina", conn = conn_test))
-  output_9 <- ddbs_predicate("points", "argentina", conn = conn_test)
-
-  testthat::expect_type(output_1, "list")
-
-  testthat::expect_equal(output_1, output_2)
-  testthat::expect_equal(output_1, output_3)
-  testthat::expect_equal(output_1, output_4)
-  testthat::expect_equal(output_1, output_6)
-  testthat::expect_equal(output_1, output_7)
-  testthat::expect_equal(output_1, output_9)
-
-  ## CHECK 1.2
-  intersects_ddbs <- ddbs_predicate(countries_sf, argentina_sf)
-  covers_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "covers")
-  touches_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "touches")
-  disjoint_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "disjoint")
-  within_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "within")
-  contains_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "contains")
-  overlaps_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "overlaps")
-  covered_by_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "covered_by")
-  intersects_extent_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "intersects_extent")
-  contains_properly_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "contains_properly")
-  within_properly_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "within_properly")
-  dwithin_ddbs <- ddbs_predicate(countries_sf, argentina_sf, predicate = "dwithin", distance = 100)
-
-  covers_ddbs_2 <- ddbs_covers(countries_sf, argentina_sf)
-  touches_ddbs_2 <- ddbs_touches(countries_sf, argentina_sf)
-  disjoint_ddbs_2 <- ddbs_disjoint(countries_sf, argentina_sf)
-  within_ddbs_2 <- ddbs_within(countries_sf, argentina_sf)
-  contains_ddbs_2 <- ddbs_contains(countries_sf, argentina_sf)
-  overlaps_ddbs_2 <- ddbs_overlaps(countries_sf, argentina_sf)
-  covered_by_ddbs_2 <- ddbs_covered_by(countries_sf, argentina_sf)
-  intersects_extent_ddbs_2 <- ddbs_intersects_extent(countries_sf, argentina_sf)
-  contains_properly_ddbs_2 <- ddbs_contains_properly(countries_sf, argentina_sf)
-  within_properly_ddbs_2 <- ddbs_within_properly(countries_sf, argentina_sf)
-  dwithin_ddbs_2 <- ddbs_is_within_distance(countries_sf, argentina_sf, 10)
+  ### EXPECTED BEHAVIOUR
   
-  testthat::expect_equal(covers_ddbs, covers_ddbs_2)
-  testthat::expect_equal(touches_ddbs, touches_ddbs_2)
-  testthat::expect_equal(disjoint_ddbs, disjoint_ddbs_2)
-  testthat::expect_equal(within_ddbs, within_ddbs_2)
-  testthat::expect_equal(contains_ddbs, contains_ddbs_2)
-  testthat::expect_equal(overlaps_ddbs, overlaps_ddbs_2)
-  testthat::expect_equal(covered_by_ddbs, covered_by_ddbs_2)
-  testthat::expect_equal(intersects_extent_ddbs, intersects_extent_ddbs_2)
-  testthat::expect_equal(contains_properly_ddbs, contains_properly_ddbs_2)
-  testthat::expect_equal(within_properly_ddbs, within_properly_ddbs_2)
-  testthat::expect_equal(dwithin_ddbs, dwithin_ddbs_2)
-  
-
-  ## CHECK 1.3
-  testthat::expect_warning(ddbs_predicate("points", "argentina", conn_x = conn_test, conn_y = conn_test_2))
-  output_10 <- suppressWarnings(ddbs_predicate("points", "argentina", conn_x = conn_test, conn_y = conn_test_2))
-  testthat::expect_equal(output_1, output_10)
-
-
-  ## CHECK 1.4
-  output_11 <- ddbs_predicate(points_ddbs, argentina_ddbs, sparse = FALSE)
-  testthat::expect_true(inherits(output_11, "matrix"))
-
-
-  ## CHECK 1.5
-  covers_ddbs_sparse <- ddbs_covers(countries_sf, argentina_sf, sparse = FALSE)
-  touches_ddbs_sparse <- ddbs_touches(countries_sf, argentina_sf, sparse = FALSE)
-  disjoint_ddbs_sparse <- ddbs_disjoint(countries_sf, argentina_sf, sparse = FALSE)
-  within_ddbs_sparse <- ddbs_within(countries_sf, argentina_sf, sparse = FALSE)
-  contains_ddbs_sparse <- ddbs_contains(countries_sf, argentina_sf, sparse = FALSE)
-  overlaps_ddbs_sparse <- ddbs_overlaps(countries_sf, argentina_sf, sparse = FALSE)
-  covered_by_ddbs_sparse <- ddbs_covered_by(countries_sf, argentina_sf, sparse = FALSE)
-  intersects_extent_ddbs_sparse <- ddbs_intersects_extent(countries_sf, argentina_sf, sparse = FALSE)
-  contains_properly_ddbs_sparse <- ddbs_contains_properly(countries_sf, argentina_sf, sparse = FALSE)
-
-
-  covers_sf <- sf::st_covers(countries_sf, argentina_sf, sparse = FALSE)
-  touches_sf <- sf::st_touches(countries_sf, argentina_sf, sparse = FALSE)
-  disjoint_sf <- sf::st_disjoint(countries_sf, argentina_sf, sparse = FALSE)
-  within_sf <- sf::st_within(countries_sf, argentina_sf, sparse = FALSE)
-  contains_sf <- sf::st_contains(countries_sf, argentina_sf, sparse = FALSE)
-  overlaps_sf <- sf::st_overlaps(countries_sf, argentina_sf, sparse = FALSE)
-  covered_by_sf <- sf::st_covered_by(countries_sf, argentina_sf, sparse = FALSE)
-  intersects_extent_sf <- sf::st_intersects(countries_sf, argentina_sf, sparse = FALSE)
-  contains_properly_sf <- sf::st_contains_properly(countries_sf, argentina_sf, sparse = FALSE)
-
-
-  testthat::expect_equal(covers_ddbs_sparse, covers_sf)
-  testthat::expect_equal(touches_ddbs_sparse, touches_sf)
-  testthat::expect_equal(disjoint_ddbs_sparse, disjoint_sf)
-  testthat::expect_equal(within_ddbs_sparse, within_sf)
-  testthat::expect_equal(contains_ddbs_sparse, contains_sf)
-  testthat::expect_equal(overlaps_ddbs_sparse, overlaps_sf)
-  testthat::expect_equal(covered_by_ddbs_sparse, covered_by_sf)
-  testthat::expect_equal(intersects_extent_ddbs_sparse, intersects_extent_sf)
-  testthat::expect_equal(contains_properly_ddbs_sparse, contains_properly_sf)
-
-  ## CHECK 1.6
-  output_idx <- ddbs_predicate(countries_sf, argentina_sf, "touches", id_x = "CNTR_ID")
-  testthat::expect_equal(names(output_idx), countries_sf$CNTR_ID)
-  testthat::expect_equal(output_idx[[2]], 1)
-
-  output_idy <- ddbs_predicate(countries_sf, argentina_sf, "touches", id_y = "CNTR_ID")
-  testthat::expect_null(names(output_idy))
-  testthat::expect_equal(output_idy[[2]], "AR")
-
-  output_idx_idy <- ddbs_predicate(countries_sf, argentina_sf, "touches", id_x = "CNTR_ID", id_y = "CNTR_ID")
-  testthat::expect_equal(names(output_idx_idy), countries_sf$CNTR_ID)
-  testthat::expect_equal(output_idy[[2]], "AR")
+  describe("expected behavior", {
     
+    it("works on all format combinations (sf, duckspatial_df, DuckDB table)", {
+      output_sf_sf       <- ddbs_predicate(points_sf, argentina_sf)
+      output_ddbs_sf     <- ddbs_predicate(points_ddbs, argentina_sf)
+      output_sf_ddbs     <- ddbs_predicate(points_sf, argentina_ddbs)
+      output_ddbs_ddbs   <- ddbs_predicate(points_ddbs, argentina_ddbs)
+      output_conn_sf     <- ddbs_predicate("points", argentina_sf, conn = conn_test)
+      output_sf_conn     <- ddbs_predicate(points_sf, "argentina", conn = conn_test)
+      output_conn_conn   <- ddbs_predicate("points", "argentina", conn = conn_test)
+      
+      expect_type(output_sf_sf, "list")
+      expect_equal(output_sf_sf, output_ddbs_sf)
+      expect_equal(output_sf_sf, output_sf_ddbs)
+      expect_equal(output_sf_sf, output_ddbs_ddbs)
+      expect_equal(output_sf_sf, output_conn_sf)
+      expect_equal(output_sf_sf, output_sf_conn)
+      expect_equal(output_sf_sf, output_conn_conn)
+    })
+    
+    it("warns when mixing DuckDB table with duckspatial_df from different connections", {
+      expect_warning(ddbs_predicate("points", argentina_ddbs, conn = conn_test))
+      expect_warning(ddbs_predicate(points_ddbs, "argentina", conn = conn_test))
+    })
+    
+    it("works with intersects predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "intersects")
+      expect_type(output_predicate, "list")
+    })
+    
+    it("works with covers predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "covers")
+      output_function  <- ddbs_covers(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with touches predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "touches")
+      output_function  <- ddbs_touches(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with disjoint predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "disjoint")
+      output_function  <- ddbs_disjoint(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with within predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "within")
+      output_function  <- ddbs_within(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with contains predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "contains")
+      output_function  <- ddbs_contains(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with overlaps predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "overlaps")
+      output_function  <- ddbs_overlaps(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with covered_by predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "covered_by")
+      output_function  <- ddbs_covered_by(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with intersects_extent predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "intersects_extent")
+      output_function  <- ddbs_intersects_extent(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with contains_properly predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "contains_properly")
+      output_function  <- ddbs_contains_properly(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with within_properly predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "within_properly")
+      output_function  <- ddbs_within_properly(countries_sf, argentina_sf)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("works with dwithin predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "dwithin", distance = 100)
+      output_function  <- ddbs_is_within_distance(countries_sf, argentina_sf, 10)
+      
+      expect_equal(output_predicate, output_function)
+    })
+    
+    it("supports conn_x and conn_y for different connections", {
+      expect_warning(ddbs_predicate("points", "argentina", conn_x = conn_test, conn_y = conn_test_2))
+      
+      output_different_conn <- suppressWarnings(ddbs_predicate("points", "argentina", conn_x = conn_test, conn_y = conn_test_2))
+      output_same_result    <- ddbs_predicate(points_sf, argentina_sf)
+      
+      expect_equal(output_different_conn, output_same_result)
+    })
+    
+    it("returns matrix when sparse = FALSE", {
+      output_sparse <- ddbs_predicate(points_ddbs, argentina_ddbs, sparse = FALSE)
+      
+      expect_true(inherits(output_sparse, "matrix"))
+    })
+    
+    it("returns same results as sf when sparse = FALSE for covers", {
+      output_ddbs <- ddbs_covers(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_covers(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for touches", {
+      output_ddbs <- ddbs_touches(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_touches(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for disjoint", {
+      output_ddbs <- ddbs_disjoint(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_disjoint(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for within", {
+      output_ddbs <- ddbs_within(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_within(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for contains", {
+      output_ddbs <- ddbs_contains(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_contains(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for overlaps", {
+      output_ddbs <- ddbs_overlaps(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_overlaps(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for covered_by", {
+      output_ddbs <- ddbs_covered_by(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_covered_by(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for intersects_extent", {
+      output_ddbs <- ddbs_intersects_extent(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_intersects(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("returns same results as sf when sparse = FALSE for contains_properly", {
+      output_ddbs <- ddbs_contains_properly(countries_sf, argentina_sf, sparse = FALSE)
+      output_sf   <- sf::st_contains_properly(countries_sf, argentina_sf, sparse = FALSE)
+      
+      expect_equal(output_ddbs, output_sf)
+    })
+    
+    it("supports id_x parameter to name output list elements", {
+      output <- ddbs_predicate(countries_sf, argentina_sf, "touches", id_x = "CNTR_ID")
+      
+      expect_equal(names(output), countries_sf$CNTR_ID)
+      expect_equal(output[[2]], 1)
+    })
+    
+    it("supports id_y parameter to use custom IDs in results", {
+      output <- ddbs_predicate(countries_sf, argentina_sf, "touches", id_y = "CNTR_ID")
+      
+      expect_null(names(output))
+      expect_equal(output[[2]], "AR")
+    })
+    
+    it("supports both id_x and id_y parameters together", {
+      output <- ddbs_predicate(countries_sf, argentina_sf, "touches", id_x = "CNTR_ID", id_y = "CNTR_ID")
+      
+      expect_equal(names(output), countries_sf$CNTR_ID)
+      expect_equal(output[[2]], "AR")
+    })
+  })
+  
+  ### EXPECTED ERRORS
+  
+  describe("errors", {
+    
+    it("requires both x and y arguments", {
+      expect_error(ddbs_predicate(argentina_ddbs))
+      expect_error(ddbs_predicate(y = argentina_ddbs))
+    })
+    
+    it("requires connection when using table names", {
+      expect_error(ddbs_predicate("argentina", conn = NULL))
+    })
+    
+    it("validates predicate argument", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_sf, predicate = "intersect_this"))
+    })
+    
+    it("validates sparse argument type", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_sf, sparse = "TRUE"))
+    })
+    
+    it("validates distance argument type for dwithin", {
+      expect_error(ddbs_is_within_distance(argentina_ddbs, distance = "many kilometers"))
+    })
+    
+    it("validates x argument type", {
+      expect_error(ddbs_predicate(x = 999))
+      expect_error(ddbs_predicate(x = "999", points_sf, conn = conn_test))
+    })
+    
+    it("validates conn argument type", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_sf, conn = 999))
+    })
+
+    it("validates conn_x argument type", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_sf, conn_y = 999))
+    })
+
+    it("validates conn_y argument type", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_ddbs, conn_x = 999))
+    })
+    
+    it("validates overwrite argument type", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_sf, overwrite = 999))
+    })
+    
+    it("validates quiet argument type", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_sf, quiet = 999))
+    })
+    
+    it("requires name to be single character string", {
+      expect_error(ddbs_predicate(argentina_ddbs, points_sf, conn = conn_test, name = c('banana', 'banana')))
+    })
+  })
 })
 
-
-
-
-## 1.2. Errors -------------------------
-
-## CHECK 2.1: Combination of inputs / missing arguments
-## CHECK 2.2: other errors
-testthat::test_that("ddbs_predicate(): errors work", {
-  
-    ## CHECK 2.1
-    testthat::expect_error(ddbs_predicate(argentina_ddbs))
-    testthat::expect_error(ddbs_predicate(y = argentina_ddbs))
-    testthat::expect_error(ddbs_predicate(argentina_ddbs, points_sf, predicate = "intersect_this"))
-    testthat::expect_error(ddbs_predicate(argentina_ddbs, points_sf, sparse = "TRUE"))
-    testthat::expect_error(ddbs_is_within_distance(argentina_ddbs, distance = "many kilometers"))
-    testthat::expect_error(ddbs_predicate("argentina", conn = NULL))
-  
-    ## CHECK 2.2.
-    testthat::expect_error(ddbs_predicate(x = 999))
-    testthat::expect_error(ddbs_predicate(argentina_ddbs, points_sf, conn = 999))
-    testthat::expect_error(ddbs_predicate(argentina_ddbs, points_sf, overwrite = 999))
-    testthat::expect_error(ddbs_predicate(argentina_ddbs, points_sf, quiet = 999))
-    testthat::expect_error(ddbs_predicate(x = "999", points_sf, conn = conn_test))
-    testthat::expect_error(ddbs_predicate(argentina_ddbs, points_sf, conn = conn_test, name = c('banana', 'banana')))
-  
-})
+## stop connection
+ddbs_stop_conn(conn_test)
