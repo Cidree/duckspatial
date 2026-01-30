@@ -89,14 +89,14 @@ ddbs_quadkey <- function(
   
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_name(name)
-  assert_name(output)
-  assert_name(fun)
-  assert_name(field)
   assert_numeric(level, "level")
+  assert_name(field, "field")
+  assert_character_scalar(fun, "fun")
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(output, "output")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
 
   ## valid outputs
   if (!output %in% c("polygon", "raster", "tilexy")) cli::cli_abort("{.arg output} must be one of: {.val {c('polygon', 'raster', 'tilexy')}}")
@@ -175,13 +175,25 @@ ddbs_quadkey <- function(
       ## handle overwrite
       overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
-      ## create query (no st_as_text)
-      tmp.query <- glue::glue("
-        CREATE TABLE {name_list$query_name} AS
-        SELECT {x_rest}
-        ST_QuadKey({x_geom}, {level}) as quadkey 
-        FROM {x_list$query_name};
-      ")
+      ## create query with optional aggregation
+      if (!is.null(field)) {
+        tmp.query <- glue::glue("
+          CREATE TABLE {name_list$query_name} AS
+          SELECT 
+            ST_QuadKey({x_geom}, {level}) as quadkey,
+            {fun}({field}) as {field},
+            {crs_column}
+          FROM {x_list$query_name}
+          GROUP BY quadkey, {crs_column};
+        ")
+      } else {
+        tmp.query <- glue::glue("
+          CREATE TABLE {name_list$query_name} AS
+          SELECT {x_rest}
+          ST_QuadKey({x_geom}, {level}) as quadkey 
+          FROM {x_list$query_name};
+        ")
+      }
       ## execute intersection query
       DBI::dbExecute(target_conn, tmp.query)
       feedback_query(quiet)
@@ -189,34 +201,34 @@ ddbs_quadkey <- function(
   }
 
 
-  # 5. Get data frame
-  ## 5.1. create query
-  tmp.query <- glue::glue("
-    SELECT {x_rest}
-    ST_QuadKey({x_geom}, {level}) as quadkey 
-    FROM {x_list$query_name};
-  ")
-  ## 4.2. retrieve results from the query
+  # 5. Get data frame with query-level aggregation
+  ## 5.1. create query with aggregation if field is specified
+  if (!is.null(field)) {
+    tmp.query <- glue::glue("
+      SELECT 
+        ST_QuadKey({x_geom}, {level}) as quadkey,
+        {fun}({field}) as {field},
+        {crs_column}
+      FROM {x_list$query_name}
+      GROUP BY quadkey, {crs_column};
+    ")
+  } else {
+    tmp.query <- glue::glue("
+      SELECT {x_rest}
+      ST_QuadKey({x_geom}, {level}) as quadkey 
+      FROM {x_list$query_name};
+    ")
+  }
+  
+  ## 5.2. retrieve results from the query
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
   data_tbl <- dplyr::select(data_tbl, -dplyr::all_of(crs_column))
 
-  ## 5. convert to SF and return result
+  ## 6. convert to desired output format
   if (output == "polygon") {
 
-    ## get 1 quadkey per row
+    ## get 1 quadkey per row (already aggregated if field was specified)
     data_sf <- quadkeyr::quadkey_df_to_polygon(data_tbl)
-
-    ## if field is specified, aggregate the data
-    if (!is.null(field)) {
-      data_sf <- data_sf |>
-        dplyr::group_by(quadkey) |>
-        dplyr::summarise(
-          value    = match.fun(fun)(.data[[field]], na.rm = TRUE),
-          geometry = sf::st_union(geometry),
-          .groups  = "drop"
-        )
-        
-    }
 
     ## convert to duckspatial_df
     prep_data <- as_duckspatial_df(data_sf)
@@ -228,15 +240,6 @@ ddbs_quadkey <- function(
       dplyr::bind_rows(lapply(data_tbl$quadkey, quadkeyr::quadkey_to_tileXY)),
       data_tbl |> dplyr::select(-dplyr::all_of("quadkey"))
     )
-
-    ## aggregate if field is not null
-    if (!is.null(field)) {
-      prep_data <- prep_data |> 
-        dplyr::summarise(
-          value    = match.fun(fun)(.data[[field]], na.rm = TRUE),
-          .by  = c(tileX, tileY, zoom)
-        )
-    }
 
   } else if (output == "raster") {
 

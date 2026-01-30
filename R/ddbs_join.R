@@ -100,6 +100,7 @@ ddbs_join <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     

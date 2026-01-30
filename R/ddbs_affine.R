@@ -71,13 +71,14 @@ ddbs_rotate <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_numeric(angle, "angle")
     units <- match.arg(units)
     assert_logic(by_feature, "by_feature")
+    assert_name(name)
+    assert_conn_character(conn, x)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     ## validate center coordinates
     if (!is.null(center_x) && !is.numeric(center_x)) {
@@ -303,12 +304,14 @@ ddbs_rotate_3d <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_numeric(angle, "angle")
     units <- match.arg(units)
+    assert_name(units, "units")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -469,12 +472,13 @@ ddbs_shift <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_numeric(dx, "dx")
     assert_numeric(dy, "dy")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
   
     # 1. Manage connection to DB
@@ -633,12 +637,14 @@ ddbs_flip <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     direction <- match.arg(direction)
+    assert_name(direction, "direction")
     assert_logic(by_feature, "by_feature")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
   
     # 1. Manage connection to DB
@@ -851,13 +857,14 @@ ddbs_scale <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_numeric(x_scale, "x_scale")
     assert_numeric(y_scale, "y_scale")
     assert_logic(by_feature, "by_feature")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
   
     # 1. Manage connection to DB
@@ -1048,13 +1055,14 @@ ddbs_shear <- function(
 
     # 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_numeric(x_shear, "x_shear")
     assert_numeric(y_shear, "y_shear")
     assert_logic(by_feature, "by_feature")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
   
     # 1. Manage connection to DB

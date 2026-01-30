@@ -102,11 +102,11 @@ ddbs_union <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_name(name)
-  assert_logic(overwrite, "overwrite")
   assert_logic(by_feature, "by_feature")
+  assert_name(name)
+  assert_name(output, "output")
+  assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
   if (isTRUE(by_feature) & is.null(y)) cli::cli_warn("When {.arg y} is NULL, {.arg by_feature = TRUE} is ignored.")
 
   ## Pre-extract `x` attributes (CRS and geometry column name)
@@ -360,10 +360,11 @@ ddbs_combine <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
   
 
     # 1. Manage connection to DB
@@ -474,10 +475,11 @@ ddbs_union_agg <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
+  assert_conn_character(conn, x)
   assert_name(name)
+  assert_name(output, "output")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
 
 
   # 1. Manage connection to DB

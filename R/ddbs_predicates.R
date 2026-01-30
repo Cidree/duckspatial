@@ -149,8 +149,10 @@ ddbs_predicate <- function(
   ## 0. Handle errors
   assert_xy(x, "x")
   assert_xy(y, "y")
-  assert_logic(quiet, "quiet")
+  assert_name(id_x, "id_x")
+  assert_name(id_y, "id_y")
   assert_logic(sparse, "sparse")
+  assert_logic(quiet, "quiet")
 
   ## Validate predicate early (it aborts on invalid)
   st_predicate <- get_st_predicate(predicate)

@@ -74,10 +74,12 @@ ddbs_area <- function(
 
     # 0. Validate inputs
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(new_column, "new_column")
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
     
     if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
 
@@ -255,10 +257,12 @@ ddbs_length <- function(
 
   # 0. Validate inputs
   assert_xy(x, "x")
+  assert_conn_character(conn, x)  
   assert_name(name)
+  assert_name(new_column, "new_column")
+  assert_name(output, "output")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)  
   if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
     
   # 1. Manage connection to DB
@@ -437,9 +441,8 @@ ddbs_distance <- function(
     # 0. Handle errors
     assert_xy(x, "x")
     assert_xy(y, "y")
-    assert_name(dist_type)
+    assert_name(dist_type, "dist_type")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x, y)
 
     ## get predicate
     st_predicate <- switch(dist_type,

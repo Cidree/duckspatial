@@ -49,10 +49,11 @@ ddbs_boundary <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -213,11 +214,12 @@ ddbs_envelope <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_logic(by_feature, "by_feature")
+    assert_name(name)
+    assert_conn_character(conn, x)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -393,8 +395,9 @@ ddbs_bbox <- function(
 
     # 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_logic(by_feature, "by_feature")
+    assert_conn_character(conn, x)
+    assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     assert_connflict(conn, xy = x, ref = "x")

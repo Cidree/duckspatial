@@ -75,15 +75,16 @@ ddbs_buffer <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_numeric(distance, "distance")
     assert_integer_scalar(num_triangles, "num_triangles")
     assert_character_scalar(cap_style, "cap_style")
     assert_character_scalar(join_style, "join_style")
     assert_numeric(mitre_limit, "mitre_limit")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
   
     ## Validate cap_style
     valid_cap_styles <- c("CAP_ROUND", "CAP_FLAT", "CAP_SQUARE")
@@ -255,10 +256,11 @@ ddbs_centroid <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -415,10 +417,12 @@ ddbs_is_valid <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(new_column, "new_column")
+    assert_conn_character(conn, x)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
 
@@ -580,10 +584,11 @@ ddbs_make_valid <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -741,10 +746,12 @@ ddbs_is_simple <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(new_column, "new_column")
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
 
@@ -908,11 +915,12 @@ ddbs_simplify <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_positive_numeric(tolerance, "tolerance")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-    if (missing(tolerance)) cli::cli_abort("tolerance parameter is required")
 
     
     # 1. Manage connection to DB
@@ -1063,10 +1071,11 @@ ddbs_exterior_ring <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1214,10 +1223,11 @@ ddbs_make_polygon <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
   
     # 1. Manage connection to DB
@@ -1390,10 +1400,11 @@ ddbs_concave_hull <- function(
     assert_xy(x, "x")
     assert_numeric_interval(ratio, 0, 1, "ratio")
     assert_logic(allow_holes, "allow_holes")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1550,10 +1561,11 @@ ddbs_convex_hull <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1715,9 +1727,9 @@ ddbs_transform <- function(
     ## 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1884,9 +1896,9 @@ ddbs_geometry_type <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_logic(quiet, "quiet")
   assert_conn_character(conn, x)
   assert_logic(by_feature, "by_feature")
+  assert_logic(quiet, "quiet")
   
 
   # 1. Manage connection to DB
