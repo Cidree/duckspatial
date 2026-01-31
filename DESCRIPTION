@@ -45,6 +45,7 @@ Imports:
     rlang,
     sf,
     tibble,
+    units,
     uuid,
     withr,
     wk
