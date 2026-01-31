@@ -83,13 +83,13 @@
 #' union_countries_rivers_ddbs <- ddbs_union(countries_ddbs, rivers_ddbs)
 #' }
 #'
-#' @name ddbs_union
-#' @rdname ddbs_union
+#' @name ddbs_union_funs
+#' @rdname ddbs_union_funs
 NULL
 
 
 
-#' @rdname ddbs_union
+#' @rdname ddbs_union_funs
 #' @export
 ddbs_union <- function(
   x,
@@ -351,7 +351,7 @@ ddbs_union <- function(
 
 
 
-#' @rdname ddbs_union
+#' @rdname ddbs_union_funs
 #' @export
 ddbs_combine <- function(
     x,
@@ -465,7 +465,7 @@ ddbs_combine <- function(
 
 
 
-#' @rdname ddbs_union
+#' @rdname ddbs_union_funs
 #' @export
 ddbs_union_agg <- function(
   x,
