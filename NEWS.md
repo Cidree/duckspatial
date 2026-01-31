@@ -14,6 +14,8 @@
 
 * `ddbs_geometry_type()`: returns the geometry type of an object (#76).
 
+* `ddbs_as_geojson()`: converts the geometry to geojson format (#84).
+
 ## MINOR CHANGES
 
 * `ddbs_buffer()`: now has four new arguments: `num_triangles`, `cap_style`, `join_style`, and `mitre_limit` (#72).
