@@ -10,9 +10,7 @@
 #'
 #'
 #' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#'        Data is returned from this object.
+#' @template y
 #' @template predicate
 #' @template conn_null
 #' @template conn_x_conn_y

@@ -8,8 +8,15 @@
 #' * `ddbs_union_agg()` - Union geometries grouped by one or more columns
 #' * `ddbs_combine()` - Combine geometries into a MULTI-geometry without dissolving boundaries
 #'
-#' @param x A spatial dataset (duckdb table/view)
-#' @param y A second spatial dataset for pairwise union operations. Default is `NULL`
+#' @template x
+#' @param y Input spatial data. Can be:
+#'   \itemize{
+#'    \item \code{NULL} (default): performs only the union of `x`
+#'     \item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+#'     \item An \code{sf} object
+#'     \item A \code{tbl_lazy} from dbplyr
+#'     \item A character string naming a table/view in \code{conn}
+#'   }
 #' @param by_feature Logical. When `y` is provided:
 #'   * `FALSE` (default) - Union all geometries from both `x` and `y` into a single geometry
 #'   * `TRUE` - Perform row-by-row union between matching features from `x` and `y` (requires same number of rows)

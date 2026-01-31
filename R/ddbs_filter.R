@@ -7,7 +7,7 @@
 #' Filters data spatially based on a spatial predicate
 #'
 #' @template x
-#' @param y Y table with geometry column within the DuckDB database
+#' @template y
 #' @template predicate
 #' @template conn_null
 #' @template conn_x_conn_y

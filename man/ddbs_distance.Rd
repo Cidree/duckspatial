@@ -30,8 +30,7 @@ Data is returned from this object.}
 \item An \code{sf} object
 \item A \code{tbl_lazy} from dbplyr
 \item A character string naming a table/view in \code{conn}
-}
-Data is returned from this object.}
+}}
 
 \item{dist_type}{Character. Distance type to be calculated. By the default it uses
 the best option for the input CRS (see details).}

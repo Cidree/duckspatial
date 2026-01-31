@@ -4,17 +4,12 @@
 #' or creates a new table in a DuckDB database.
 #'
 #' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
+#' @template y
 #' @param join A geometry predicate function. Defaults to `"intersects"`. See
 #'        the details for other options.
 #' @template conn_null
 #' @template conn_x_conn_y
-#'
-#' @param name A character string of length one specifying the name of the table,
-#'        or a character string of length two specifying the schema and table
-#'        names. If it's `NULL` (the default), it will return the result as an
-#'        \code{sf} object.
+#' @template name
 #' @template crs
 #' @template output
 #' @template overwrite

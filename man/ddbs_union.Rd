@@ -45,9 +45,23 @@ ddbs_union_agg(
 )
 }
 \arguments{
-\item{x}{A spatial dataset (duckdb table/view)}
+\item{x}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}
+Data is returned from this object.}
 
-\item{y}{A second spatial dataset for pairwise union operations. Default is \code{NULL}}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item \code{NULL} (default): performs only the union of \code{x}
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
 \item{by_feature}{Logical. When \code{y} is provided:
 \itemize{

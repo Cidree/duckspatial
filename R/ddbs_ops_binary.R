@@ -5,7 +5,7 @@
 #' or creates a new table
 #'
 #' @template x
-#' @param y A table with geometry column within the DuckDB database
+#' @template y
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
@@ -198,7 +198,7 @@ ddbs_intersection <- function(
 #' object or creates a new table
 #'
 #' @template x
-#' @param y A table with geometry column within the DuckDB database
+#' @template y
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
