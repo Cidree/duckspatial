@@ -6,7 +6,7 @@
 
 * `ddbs_union()`: is spplited into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
 
-* `ddbs_length`, `ddbs_area` and `ddbs_distance`: now use by default the best DuckDB function (e.g. `ST_Area` or `ST_Area_Spheroid`) depending on the input's CRS. Additionally, they return an `units` object (#80, #82).
+* `ddbs_length()`, `ddbs_area()` and `ddbs_distance()`: now use by default the best DuckDB function (e.g. `ST_Area()` or `ST_Area_Spheroid()`) depending on the input's CRS. Additionally, they return an `units` object (#80, #82).
 
 ## NEW FEATURES
 
@@ -24,9 +24,11 @@
 
 * `ddbs_quadkey()`: can aggregate by `field` when output is `polygon` and `tilexy` (#78).
 
+* `ddbs_crs()`: accepts CRS codes and `crs` objects as inputs (#87).
+
 ## BUG FIXES
 
-* `ddbs_length`, `ddbs_area` and `ddbs_distance` were calculating the wrong measure when the CRS was geographic (#82).
+* `ddbs_length()`, `ddbs_area()` and `ddbs_distance()` were calculating the wrong measure when the CRS was geographic (#82).
 
 
 # duckspatial 0.9.0
