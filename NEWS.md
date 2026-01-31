@@ -22,6 +22,8 @@
 
 * `ddbs_buffer()`: now has four new arguments: `num_triangles`, `cap_style`, `join_style`, and `mitre_limit` (#72).
 
+* `ddbs_buffer()`: warns if the input CRS is not a projected CRS, as the distance uses its units.
+
 * `ddbs_quadkey()`: can aggregate by `field` when output is `polygon` and `tilexy` (#78).
 
 * `ddbs_crs()`: accepts CRS codes and `crs` objects as inputs (#87).

@@ -101,7 +101,7 @@ ddbs_rotate <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -316,7 +316,7 @@ ddbs_rotate_3d <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -483,7 +483,7 @@ ddbs_shift <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -649,7 +649,7 @@ ddbs_flip <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -870,7 +870,7 @@ ddbs_scale <- function(
   
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -1069,7 +1069,7 @@ ddbs_shear <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 

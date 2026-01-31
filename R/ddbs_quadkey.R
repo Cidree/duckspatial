@@ -118,7 +118,7 @@ ddbs_quadkey <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -151,14 +151,13 @@ ddbs_quadkey <- function(
   
 
   ## 3.3. check CRS (we need EPSG:4326 for quadkeys)
-  data_crs <- ddbs_crs(target_conn, x_list$query_name, crs_column = crs_column)
-  if (data_crs$input != "EPSG:4326") {
+  if (crs_x$input != "EPSG:4326") {
     if (!quiet) cli::cli_alert_info("Transforming {.arg x} crs to {.val EPSG:4326}")
     ## query
     tmp.query <- glue::glue("
       CREATE OR REPLACE TABLE {x_list$query_name} AS
       SELECT {x_rest}
-      ST_Transform({x_geom}, '{data_crs$input}', 'EPSG:4326') as {x_geom} 
+      ST_Transform({x_geom}, '{crs_x$input}', 'EPSG:4326') as {x_geom} 
       FROM {x_list$query_name};
     ")
     ## execute

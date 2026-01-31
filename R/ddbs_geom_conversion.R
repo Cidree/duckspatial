@@ -69,7 +69,7 @@ ddbs_as_text <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -136,7 +136,7 @@ ddbs_as_wkb <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -203,7 +203,7 @@ ddbs_as_hexwkb <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -278,7 +278,7 @@ ddbs_as_geojson <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 

@@ -95,8 +95,8 @@ ddbs_filter <- function(
     # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
     
     # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
-    crs_x <- detect_crs(x)
-    crs_y <- detect_crs(y)
+    crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
+    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
     sf_col_x <- attr(x, "sf_column")
     sf_col_y <- attr(y, "sf_column")
 

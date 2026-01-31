@@ -117,7 +117,7 @@ ddbs_union <- function(
   if (isTRUE(by_feature) & is.null(y)) cli::cli_warn("When {.arg y} is NULL, {.arg by_feature = TRUE} is ignored.")
 
   ## Pre-extract `x` attributes (CRS and geometry column name)
-  crs_x <- detect_crs(x)
+  crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
   sf_col_x <- attr(x, "sf_column")
 
 
@@ -129,7 +129,7 @@ ddbs_union <- function(
     assert_conn_character(conn, y)
   
     ## 1.1. Pre-extract `y` attributes
-    crs_y    <- detect_crs(y)
+    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
     sf_col_y <- attr(y, "sf_column")
   
     ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
@@ -378,7 +378,7 @@ ddbs_combine <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -493,7 +493,7 @@ ddbs_union_agg <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
