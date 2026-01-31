@@ -2,7 +2,7 @@
 
 ## MAJOR CHANGES
 
-* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized. Every function now accepts this class as input, and it's the returned class by default. If the user is interested in returning a different class, there's a convinient `output` argument (#55, #63).
+* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (with `ddbs_collect()` or `st_as_sf()`). Every function now accepts this class as input, and it's the returned class by default. If the user is interested in returning a different class, there's a convenient `output` argument (#55, #63).
 
 * `ddbs_union()`: is spplited into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
 
