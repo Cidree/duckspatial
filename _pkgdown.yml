@@ -124,6 +124,7 @@ reference:
   - ddbs_area
   - ddbs_distance
   - ddbs_length
+  - ddbs_perimeter
 
 - title: Database Utilities
   desc: Helper functions for database management

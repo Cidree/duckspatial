@@ -22,6 +22,8 @@
 
 * `ddbs_as_geojson()`: converts the geometry to geojson format (#84).
 
+* `ddbs_perimeter()`: calculates the perimeter of polygons (#89).
+
 ## MINOR CHANGES
 
 * Improve the documentation of the functions (#85).

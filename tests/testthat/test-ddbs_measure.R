@@ -775,5 +775,269 @@ describe("ddbs_distance()", {
   })
 })
 
+
+# 4. ddbs_perimeter ------------------------------------------------------
+
+describe("ddbs_perimeter()", {
+  
+  ### EXPECTED BEHAVIOUR - SF INPUT
+  
+  describe("expected behavior on sf input", {
+    
+    it("returns a units vector by default", {
+      output <- ddbs_perimeter(nc_4326_sf)
+      expect_s3_class(output, "units")
+    })
+    
+    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
+      output_ddbs     <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = NULL)
+      output_geoarrow <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = "geoarrow")
+      output_sf       <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = "sf")
+      output_raw      <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = "raw")
+      
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      expect_s3_class(output_sf, "sf")
+      expect_s3_class(output_raw, "tbl_df")
+    })
+    
+    it("writes tables to the database", {
+      output <- ddbs_perimeter(nc_4326_sf, conn = conn_test, name = "perimeter_tbl", new_column = "perimeter_calc")
+      expect_true(output)
+    })
+    
+    it("shows and suppresses messages correctly", {
+      expect_message(ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc"))
+      expect_message(ddbs_perimeter(nc_4326_sf, conn = conn_test, name = "perimeter_tbl2", new_column = "perimeter_calc"))
+      
+      expect_no_message(ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", quiet = TRUE))
+      # expect_no_message(ddbs_perimeter(nc_4326_sf, conn = conn_test, name = "perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE))
+    })
+    
+    it("calculates perimeter correctly on projected CRS", {
+      argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
+      perimeter_ddbs <- ddbs_perimeter(argentina_3857_sf)
+      perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
+      
+      expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
+    })
+
+    it("calculates perimeter correctly on geographic CRS", {
+      perimeter_ddbs <- ddbs_perimeter(argentina_sf)
+      perimeter_sf   <- sf::st_perimeter(argentina_sf)
+      
+      expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
+    })
+    
+    it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
+      output_with_column <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = NULL)
+      
+      output_sf      <- output_with_column |> st_as_sf()
+      output_collect <- output_with_column |> collect()
+      output_ddbs    <- output_with_column |> ddbs_collect()
+      
+      expect_identical(output_sf, output_collect)
+      expect_identical(output_collect, output_ddbs)
+      expect_s3_class(output_sf, "sf")
+    })
+    
+    it("produces identical results for vector and column outputs", {
+      output_vector <- ddbs_perimeter(nc_4326_sf) |> as.numeric()
+      output_column <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = NULL) |> st_as_sf()
+      
+      expect_identical(output_vector, output_column$perimeter_calc)
+    })
+  })
+  
+  ### EXPECTED BEHAVIOUR - DUCKSPATIAL_DF INPUT
+  
+  describe("expected behavior on duckspatial_df input", {
+    
+    it("returns a units vector by default", {
+      output <- ddbs_perimeter(nc_ddbs)
+      expect_s3_class(output, "units")
+    })
+    
+    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
+      output_ddbs     <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = NULL)
+      output_geoarrow <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = "geoarrow")
+      output_sf       <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = "sf")
+      output_raw      <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = "raw")
+      
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      expect_s3_class(output_sf, "sf")
+      expect_s3_class(output_raw, "tbl_df")
+    })
+    
+    it("writes tables to the database", {
+      output <- ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl", new_column = "perimeter_calc") |> 
+        suppressWarnings()
+      expect_true(output)
+    })
+    
+    it("shows and suppresses messages correctly", {
+      expect_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc"))
+      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl2", new_column = "perimeter_calc") |> suppressWarnings())
+      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE) |> suppressWarnings())
+      
+      expect_no_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", quiet = TRUE))
+    })
+
+    it("calculates perimeter correctly on geographic CRS", {
+      perimeter_ddbs <- ddbs_perimeter(argentina_sf)
+      perimeter_sf   <- sf::st_perimeter(argentina_sf)
+      
+      expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
+    })
+    
+    it("calculates perimeter correctly on projected CRS", {
+      argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
+      perimeter_ddbs <- ddbs_perimeter(argentina_3857_sf)
+      perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
+      
+      expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
+    })
+    
+    it("warns when creating table from different connections", {
+      expect_warning(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl4", new_column = "perimeter_calc"))
+    })
+    
+    it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
+      output_with_column <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = NULL)
+      
+      output_sf      <- output_with_column |> st_as_sf()
+      output_collect <- output_with_column |> collect()
+      output_ddbs    <- output_with_column |> ddbs_collect()
+      
+      expect_identical(output_sf, output_collect)
+      expect_identical(output_collect, output_ddbs)
+      expect_s3_class(output_sf, "sf")
+    })
+    
+    it("produces identical results for vector and column outputs", {
+      output_vector <- ddbs_perimeter(nc_ddbs) |> as.numeric()
+      output_column <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = NULL) |> st_as_sf()
+      
+      expect_identical(output_vector, output_column$perimeter_calc)
+    })
+  })
+  
+  ### EXPECTED BEHAVIOUR - DUCKDB TABLE INPUT
+  
+  describe("expected behavior on DuckDB table input", {
+    
+    it("returns a units vector by default", {
+      output <- ddbs_perimeter("nc", conn = conn_test)
+      expect_s3_class(output, "units")
+    })
+    
+    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
+      output_ddbs     <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = NULL)
+      output_geoarrow <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = "geoarrow")
+      output_sf       <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = "sf")
+      output_raw      <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = "raw")
+      
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      expect_s3_class(output_sf, "sf")
+      expect_s3_class(output_raw, "tbl_df")
+    })
+    
+    it("writes tables to the database", {
+      output <- ddbs_perimeter("nc", conn = conn_test, name = "conn_perimeter_tbl", new_column = "perimeter_calc")
+      expect_true(output)
+    })
+    
+    it("shows and suppresses messages correctly", {
+      expect_message(ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc"))
+      expect_message(ddbs_perimeter("nc", conn = conn_test, name = "conn_perimeter_tbl2", new_column = "perimeter_calc"))
+      
+      expect_no_message(ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", quiet = TRUE))
+      expect_no_message(ddbs_perimeter("nc", conn = conn_test, name = "conn_perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE))
+    })
+
+    it("calculates perimeter correctly on geographic CRS", {
+      duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina", overwrite = TRUE)
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test)
+      perimeter_sf   <- sf::st_perimeter(argentina_sf)
+      
+      expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
+    })
+    
+    it("calculates perimeter correctly on projected CRS", {
+      argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
+      duckspatial::ddbs_write_vector(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test)
+      perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
+      
+      expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
+    })
+    
+    it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
+      output_with_column <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = NULL)
+      
+      output_sf      <- output_with_column |> st_as_sf()
+      output_collect <- output_with_column |> collect()
+      output_ddbs    <- output_with_column |> ddbs_collect()
+      
+      expect_identical(output_sf, output_collect)
+      expect_identical(output_collect, output_ddbs)
+      expect_s3_class(output_sf, "sf")
+    })
+    
+    it("produces identical results for vector and column outputs", {
+      output_vector <- ddbs_perimeter("nc", conn = conn_test) |> as.numeric()
+      output_column <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = NULL) |> st_as_sf()
+      
+      expect_identical(output_vector, output_column$perimeter_calc)
+    })
+  })
+  
+  ### EXPECTED ERRORS
+  
+  describe("errors", {
+    
+    it("requires connection when using table names", {
+      expect_error(ddbs_perimeter(x = "nc", conn = NULL))
+    })
+    
+    it("requires new_column when name is specified", {
+      expect_error(ddbs_perimeter(nc_4326_sf, name = "new_tbl"))
+    })
+    
+    it("prevents overwriting existing tables without overwrite = TRUE", {
+      expect_error(ddbs_perimeter(nc_4326_sf, conn = conn_test, name = "countries", new_column = "perimeter_calc"))
+    })
+    
+    it("validates x argument type", {
+      expect_error(ddbs_perimeter(x = 999))
+      expect_error(ddbs_perimeter(x = "999", conn = conn_test))
+    })
+    
+    it("validates conn argument type", {
+      expect_error(ddbs_perimeter(nc_4326_sf, conn = 999))
+    })
+    
+    it("validates new_column argument type", {
+      expect_error(ddbs_perimeter(nc_4326_sf, new_column = 999))
+    })
+    
+    it("validates overwrite argument type", {
+      expect_error(ddbs_perimeter(nc_4326_sf, overwrite = 999))
+    })
+    
+    it("validates quiet argument type", {
+      expect_error(ddbs_perimeter(nc_4326_sf, quiet = 999))
+    })
+    
+    it("requires name to be single character string", {
+      expect_error(ddbs_perimeter(nc_4326_sf, conn = conn_test, name = c('banana', 'banana')))
+    })
+  })
+})
+
+
+
 ## stop connection
 ddbs_stop_conn(conn_test)

@@ -677,3 +677,218 @@ ddbs_distance <- function(
     return(dist_mat)
   
 }
+
+
+
+
+
+#' Calculate the perimeter of geometries
+#'
+#' Computes the perimeter of polygon geometries in meters.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template new_column
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @returns When `new_column = NULL` it returns a `units` vector in \eqn{m}. When `new_column` is not NULL, the
+#' output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+#'   \itemize{
+#'     \item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+#'     \item \code{sf}: An eagerly collected \code{sf} object in R memory.
+#'     \item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
+#'     \item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
+#'     \item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
+#'   }
+#'   When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
+#' 
+#' @details
+#' When the input geometry is in `EPSG:4326`, the function uses `ST_Perimeter_Spheroid`, which
+#' uses the GeographicLib library for calculating the perimeter using an ellipsoidal model of the
+#' earth. This method is highly accurate for calculating the perimeter of a polygon geometry considering
+#' the curvature of the earth, but it's also the slowest.
+#' 
+#' If the input geometry is in a projected CRS, the function will use `ST_Perimeter` to calculate the
+#' perimeter in meters.
+#' 
+#' In other cases, the function will use `ST_Perimeter_Spheroid` and display a warning.
+#'
+#' @export
+#' @references \url{https://geographiclib.sourceforge.io/}
+#' 
+#' @examples
+#' \dontrun{
+#' ## load packages
+#' library(duckspatial)
+#'
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' ) |>
+#'   ddbs_transform("EPSG:3857")
+#'
+#' ## store in duckdb
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#'
+#' ## calculate perimeter (returns sf object with perimeter column)
+#' ddbs_perimeter("argentina", conn)
+#'
+#' ## calculate perimeter with custom column name
+#' ddbs_perimeter("argentina", conn, new_column = "perimeter_m")
+#'
+#' ## create a new table with perimeter calculations
+#' ddbs_perimeter("argentina", conn, name = "argentina_with_perimeter", new_column = "perimeter_m")
+#'
+#' ## calculate perimeter in a sf object
+#' ddbs_perimeter(argentina_ddbs)
+#' }
+ddbs_perimeter <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    new_column = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
+
+    # 0. Validate inputs
+    assert_xy(x, "x")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(new_column, "new_column")
+    assert_name(output, "output")
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    
+    if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
+
+    # 1. Manage connection to DB
+
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- ddbs_crs(x, conn)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Extract units, and warn if they aren't meters or EPSG:4326
+    ## for EPSG:4326, we can use ST_Perimeter_Spheroid to get the perimeter in meters
+    ## so that will be an exception
+    crs_units <- crs_x$units_gdal
+
+    if (crs_units != "metre" && "EPSG:4326" != crs_x$input) {
+        cli::cli_warn(
+          "Input is in {.val {crs_x$input}}, not {.val EPSG:4326}. Perimeter calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
+        )
+    }
+
+    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+    assert_geometry_column(x_geom, x_list)
+
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+
+    ## 3.3. Use the right function depending on the CRS
+    st_perimeter_fun <- if (crs_units == "metre") {
+      glue::glue("ST_Perimeter({x_geom})")
+    } else {
+      glue::glue("ST_Perimeter_Spheroid(ST_FlipCoordinates({x_geom}))")
+    }
+
+
+    # 4. Handle new column = NULL
+    if (is.null(new_column)) {
+        tmp.query <- glue::glue("
+            SELECT {st_perimeter_fun} as perimeter,
+            FROM {x_list$query_name};
+        ")
+        
+        data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
+        feedback_query(quiet)
+    
+        ## get vector, and convert it to units
+        data_units <- units::as_units(data_vec[, 1], "m")
+    
+        return(data_units)
+    }
+
+
+    # 5. if name is not NULL (i.e. no data frame returned)
+    if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
+        ## handle overwrite
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
+
+        ## create query
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {x_rest}
+            {st_perimeter_fun} AS {new_column},
+            {x_geom}
+            FROM {x_list$query_name};
+        ")
+        ## execute perimeter query
+        DBI::dbExecute(target_conn, tmp.query)
+        feedback_query(quiet)
+        return(invisible(TRUE))
+    }
+
+    # 6. Get data frame
+    ## 6.1. create query
+    tmp.query <- glue::glue("
+        SELECT {x_rest}
+        {st_perimeter_fun} AS {new_column},
+        ST_AsWKB({x_geom}) as {x_geom}
+        FROM {x_list$query_name}
+    ")
+    ## 6.2. retrieve results of the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+
+    ## 6.3. convert to target output
+    data_sf <- ddbs_handle_output(
+        data       = data_tbl,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
+
+    feedback_query(quiet)
+    return(data_sf)
+}
