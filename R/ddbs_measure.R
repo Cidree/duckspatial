@@ -1,10 +1,8 @@
 
 
-#' Calculates the area of geometries
+#' Calculate the area of geometries
 #'
-#' Calculates the area of geometries (in \eqn{m^2}) from a DuckDB table or a `sf` object
-#' Returns the result as an \code{sf} object with an area column or creates a 
-#' new table in the database.
+#' Computes the area of polygon geometries in square meters.
 #'
 #' @template x
 #' @template conn_null
@@ -218,11 +216,9 @@ ddbs_area <- function(
 
 
 
-#' Calculates the length of geometries
+#' Calculate the length of geometries
 #'
-#' Calculates the length of geometries (in meters) from a DuckDB table or a `sf` object
-#' Returns the result as an \code{sf} object with a length column or creates 
-#' a new table in the database.
+#' Computes the length of linear geometries, typically in meters.
 #'
 #' @template x
 #' @template conn_null
@@ -435,11 +431,10 @@ ddbs_length <- function(
 
 
 
-#' Returns the distance between two geometries
+#' Calculate the distance between geometries
 #'
-#' Returns the distance between two geometries as an units matrix. The function
-#' will automatically use the best distance for the input Coordinates Reference
-#' System and geometry type.
+#' Computes the distance between two geometries, automatically using an appropriate 
+#' measurement based on their coordinate reference system and geometry type.
 #'
 #' @template x
 #' @template y

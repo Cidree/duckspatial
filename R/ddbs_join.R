@@ -1,7 +1,7 @@
-#' Performs spatial joins of two geometries
+#' Perform a spatial join of two geometries
 #'
-#' Performs spatial joins of two geometries, and returns a \code{sf} object
-#' or creates a new table in a DuckDB database.
+#' Combines two sets of geometries based on spatial relationships, such as 
+#' intersection or containment, attaching attributes from one set to the other.
 #'
 #' @template x
 #' @template y

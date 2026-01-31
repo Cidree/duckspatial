@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_measure.R
 \name{ddbs_length}
 \alias{ddbs_length}
-\title{Calculates the length of geometries}
+\title{Calculate the length of geometries}
 \usage{
 ddbs_length(
   x,
@@ -74,9 +74,7 @@ output depends on the \code{output} argument (or global preference set by \code{
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the length of geometries (in meters) from a DuckDB table or a \code{sf} object
-Returns the result as an \code{sf} object with a length column or creates
-a new table in the database.
+Computes the length of linear geometries, typically in meters.
 }
 \details{
 When the input geometry is in \code{EPSG:4326}, the function uses \code{ST_Length_Spheroid}, which

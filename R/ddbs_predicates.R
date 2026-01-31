@@ -1,13 +1,11 @@
 
 
 
-#' Spatial predicate operations
+#' Evaluate spatial predicates between geometries
 #'
-#' Computes spatial relationships between two geometry datasets using DuckDB's
-#' spatial extension. Returns a list where each element corresponds to a row of
-#' `x`, containing the indices (or IDs) of rows in `y` that satisfy the specified
-#' spatial predicate.
-#'
+#' Determines which geometries in one dataset satisfy a specified spatial 
+#' relationship with geometries in another dataset, such as intersection, 
+#' containment, or touching.
 #'
 #' @template x
 #' @template y

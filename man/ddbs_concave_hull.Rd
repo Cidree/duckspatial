@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_concave_hull}
 \alias{ddbs_concave_hull}
-\title{Returns the concave hull enclosing the geometry}
+\title{Compute the concave hull of geometries}
 \usage{
 ddbs_concave_hull(
   x,
@@ -78,9 +78,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Returns the concave hull enclosing the geometry from an \code{sf} object or
-from a DuckDB table using the spatial extension. Returns the result as an
-\code{sf} object or creates a new table in the database.
+Returns the concave hull that tightly encloses the geometry, capturing its overall
+shape more closely than a convex hull.
 }
 \examples{
 \dontrun{

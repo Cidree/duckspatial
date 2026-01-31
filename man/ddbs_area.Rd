@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_measure.R
 \name{ddbs_area}
 \alias{ddbs_area}
-\title{Calculates the area of geometries}
+\title{Calculate the area of geometries}
 \usage{
 ddbs_area(
   x,
@@ -74,9 +74,7 @@ output depends on the \code{output} argument (or global preference set by \code{
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the area of geometries (in \eqn{m^2}) from a DuckDB table or a \code{sf} object
-Returns the result as an \code{sf} object with an area column or creates a
-new table in the database.
+Computes the area of polygon geometries in square meters.
 }
 \details{
 When the input geometry is in \code{EPSG:4326}, the function uses \code{ST_Area_Spheroid}, which

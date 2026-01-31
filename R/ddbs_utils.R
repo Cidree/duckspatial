@@ -525,7 +525,7 @@ ddbs_drivers <- function(conn = NULL) {
     ")
 }
 
-#' Close a duckdb connection
+#' Close a DuckDB connection
 #'
 #' @template conn
 #'

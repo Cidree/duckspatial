@@ -1,10 +1,8 @@
 
-
-#' Generate random points within geometries
+#' Generate random points within bounding boxes of geometries
 #'
-#' Generates random points within geometries from a DuckDB table using the spatial extension.
-#' Works similarly to generating random points within polygons in \code{sf}.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Creates random points within the bounding box of each geometry, which may 
+#' fall outside the geometry itself.
 #'
 #' @template x
 #' @param n Number of random points to generate within each geometry

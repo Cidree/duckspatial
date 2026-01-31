@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_measure.R
 \name{ddbs_distance}
 \alias{ddbs_distance}
-\title{Returns the distance between two geometries}
+\title{Calculate the distance between geometries}
 \usage{
 ddbs_distance(
   x,
@@ -51,9 +51,8 @@ Defaults to \code{FALSE}.}
 A \code{units} matrix in meters
 }
 \description{
-Returns the distance between two geometries as an units matrix. The function
-will automatically use the best distance for the input Coordinates Reference
-System and geometry type.
+Computes the distance between two geometries, automatically using an appropriate
+measurement based on their coordinate reference system and geometry type.
 }
 \details{
 The \code{dist_type} argument can take any of the following values:

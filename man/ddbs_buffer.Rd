@@ -91,15 +91,15 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the buffer of geometries from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Computes a polygon that represents all locations within a specified distance from the
+original geometry
 }
 \examples{
 \dontrun{
 ## load package
 library(duckspatial)
 
-# create a duckdb database in memory (with spatial extension)
+## create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data

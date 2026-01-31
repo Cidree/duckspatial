@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_transform}
 \alias{ddbs_transform}
-\title{Transform coordinate reference system of geometries}
+\title{Transform the coordinate reference system of geometries}
 \usage{
 ddbs_transform(
   x,
@@ -85,9 +85,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Transforms geometries from a DuckDB table to a different coordinate reference system
-using the spatial extension. Works similarly to \code{sf::st_transform()}.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Converts geometries to a different coordinate reference system (CRS), updating
+their coordinates accordingly.
 }
 \examples{
 \dontrun{

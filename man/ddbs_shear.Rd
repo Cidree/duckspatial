@@ -82,9 +82,10 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Applies a shear transformation to geometries from a \code{sf} object or a DuckDB
-table. Returns the result as an \code{sf} object or creates a new table in the
-database. Shearing skews the geometry by shifting coordinates proportionally.
+Applies a shear transformation to geometries, shifting coordinates proportionally
+in the X and Y directions. By default, shearing is applied relative to the centroid
+of all geometries; if \code{by_feature = TRUE}, each geometry is sheared relative to its
+own centroid.
 }
 \examples{
 \dontrun{

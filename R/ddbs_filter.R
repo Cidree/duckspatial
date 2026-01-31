@@ -2,9 +2,10 @@
 
 
 
-#' Performs spatial filter of two geometries
+#' Perform a spatial filter
 #'
-#' Filters data spatially based on a spatial predicate
+#' Filters geometries based on a spatial relationship with another geometry, 
+#' such as intersection, containment, or proximity.
 #'
 #' @template x
 #' @template y

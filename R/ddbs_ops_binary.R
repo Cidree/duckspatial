@@ -1,8 +1,8 @@
 
-#' Calculates the intersection of two geometries
+#' Calculate the intersection of geometries
 #'
-#' Calculates the intersection of two geometries, and return a \code{sf} object
-#' or creates a new table
+#' Returns the geometric intersection of two sets of geometries, producing the area, 
+#' line, or point shared by both.
 #'
 #' @template x
 #' @template y
@@ -192,10 +192,10 @@ ddbs_intersection <- function(
 
 
 
-#' Calculates the difference of two geometries
+#' Calculate the difference of geometries
 #'
-#' Calculates the geometric difference of two geometries, and returns a \code{sf}
-#' object or creates a new table
+#' Returns the portion of the first geometry that does not overlap with 
+#' the second geometry.
 #'
 #' @template x
 #' @template y

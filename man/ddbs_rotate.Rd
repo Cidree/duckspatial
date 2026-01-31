@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_affine.R
 \name{ddbs_rotate}
 \alias{ddbs_rotate}
-\title{Rotate geometries around centroid}
+\title{Rotate geometries around their centroid}
 \usage{
 ddbs_rotate(
   x,
@@ -88,8 +88,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Rotates geometries from from a \code{sf} object or a DuckDB table. Returns the
-result as an \code{sf} object or creates a new table in the database.
+Rotates geometries by a specified angle around their centroid (or another center),
+preserving their shape.
 }
 \examples{
 \dontrun{

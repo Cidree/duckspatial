@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_extent_funs.R
 \name{ddbs_envelope}
 \alias{ddbs_envelope}
-\title{Returns the envelope (bounding box) of geometries}
+\title{Get the envelope (bounding box) of geometries}
 \usage{
 ddbs_envelope(
   x,
@@ -73,9 +73,7 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Returns the minimum bounding rectangle (envelope) of geometries from a \code{sf}
-object or a DuckDB table. Returns the result as an \code{sf} object or creates
-a new table in the database.
+Returns the minimum axis-aligned rectangle that fully contains the geometry.
 }
 \details{
 ST_Envelope returns the minimum bounding rectangle (MBR) of a geometry as a

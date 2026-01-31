@@ -3,10 +3,10 @@
 
 
 
-#' Rotate geometries around centroid
+#' Rotate geometries around their centroid
 #'
-#' Rotates geometries from from a `sf` object or a DuckDB table. Returns the
-#' result as an \code{sf} object or creates a new table in the database.
+#' Rotates geometries by a specified angle around their centroid (or another center), 
+#' preserving their shape.
 #'
 #' @template x
 #' @param angle a numeric value specifying the rotation angle
@@ -237,9 +237,8 @@ ddbs_rotate <- function(
 
 #' Rotate 3D geometries around an axis
 #'
-#' Rotates 3D geometries from from a `sf` object or a DuckDB table around the X,
-#' Y, or Z axis. Returns the result as an \code{sf} object or creates a new table
-#' in the database.
+#' Rotates 3D geometries by a specified angle around the X, Y, or Z axis, 
+#' preserving their shape.
 #'
 #' @template x
 #' @param angle a numeric value specifying the rotation angle
@@ -416,9 +415,8 @@ ddbs_rotate_3d <- function(
 
 #' Shift geometries by X and Y offsets
 #'
-#' Shifts (translates) geometries from a `sf` object or a DuckDB table. Returns
-#' the result as an \code{sf} object or creates a new  table in the database.
-#' This function is equivalent to \code{terra::shift()}.
+#' Translates geometries by specified X and Y distances, moving 
+#' them without altering their shape or orientation.
 #'
 #' @template x
 #' @param dx numeric value specifying the shift in the X direction (longitude/easting)
@@ -576,9 +574,9 @@ ddbs_shift <- function(
 
 #' Flip geometries horizontally or vertically
 #'
-#' Flips (reflects) geometries around the centroid. Returns the result as an
-#' \code{sf} object or creates a new table in the database. This function is
-#' equivalent to \code{terra::flip()}.
+#' Reflects geometries across their centroid. By default, flipping is applied 
+#' relative to the centroid of all geometries; if `by_feature = TRUE`, each 
+#' geometry is flipped relative to its own centroid.
 #'
 #' @template x
 #' @param direction character string specifying the flip direction: "horizontal" (default)
@@ -791,8 +789,9 @@ ddbs_flip <- function(
 
 #' Scale geometries by X and Y factors
 #'
-#' Scales geometries around the centroid of the geometry. Returns the result as
-#' an \code{sf} object or creates a new table in the database.
+#' Resizes geometries by specified X and Y scale factors. By default, scaling is 
+#' performed relative to the centroid of all geometries; if `by_feature = TRUE`, 
+#' each geometry is scaled relative to its own centroid.
 #'
 #' @template x
 #' @param x_scale numeric value specifying the scaling factor in the X direction (default = 1)
@@ -987,9 +986,10 @@ ddbs_scale <- function(
 
 #' Shear geometries
 #'
-#' Applies a shear transformation to geometries from a `sf` object or a DuckDB
-#' table. Returns the result as an \code{sf} object or creates a new table in the
-#' database. Shearing skews the geometry by shifting coordinates proportionally.
+#' Applies a shear transformation to geometries, shifting coordinates proportionally 
+#' in the X and Y directions. By default, shearing is applied relative to the centroid 
+#' of all geometries; if `by_feature = TRUE`, each geometry is sheared relative to its 
+#' own centroid.
 #'
 #' @template x
 #' @param x_shear numeric value specifying the shear factor in the X direction (default = 0).

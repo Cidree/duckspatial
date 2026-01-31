@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_join.R
 \name{ddbs_join}
 \alias{ddbs_join}
-\title{Performs spatial joins of two geometries}
+\title{Perform a spatial join of two geometries}
 \usage{
 ddbs_join(
   x,
@@ -90,8 +90,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Performs spatial joins of two geometries, and returns a \code{sf} object
-or creates a new table in a DuckDB database.
+Combines two sets of geometries based on spatial relationships, such as
+intersection or containment, attaching attributes from one set to the other.
 }
 \details{
 Spatial Join Predicates:

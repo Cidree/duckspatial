@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_binary.R
 \name{ddbs_difference}
 \alias{ddbs_difference}
-\title{Calculates the difference of two geometries}
+\title{Calculate the difference of geometries}
 \usage{
 ddbs_difference(
   x,
@@ -86,8 +86,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the geometric difference of two geometries, and returns a \code{sf}
-object or creates a new table
+Returns the portion of the first geometry that does not overlap with
+the second geometry.
 }
 \examples{
 \dontrun{

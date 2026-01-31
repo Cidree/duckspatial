@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_binary.R
 \name{ddbs_intersection}
 \alias{ddbs_intersection}
-\title{Calculates the intersection of two geometries}
+\title{Calculate the intersection of geometries}
 \usage{
 ddbs_intersection(
   x,
@@ -86,8 +86,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the intersection of two geometries, and return a \code{sf} object
-or creates a new table
+Returns the geometric intersection of two sets of geometries, producing the area,
+line, or point shared by both.
 }
 \examples{
 \dontrun{

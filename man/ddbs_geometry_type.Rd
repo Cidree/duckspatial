@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_geometry_type}
 \alias{ddbs_geometry_type}
-\title{Returns the geometry type of input features}
+\title{Get the geometry type of features}
 \usage{
 ddbs_geometry_type(x, conn = NULL, by_feature = TRUE, quiet = FALSE)
 }
@@ -30,7 +30,8 @@ Defaults to \code{FALSE}.}
 A factor with geometry type(s)
 }
 \description{
-Returns the geometry type(s) from a \code{sf} object or a DuckDB table.
+Returns the type of each geometry (e.g., POINT, LINESTRING, POLYGON) in the
+input features.
 }
 \examples{
 \dontrun{

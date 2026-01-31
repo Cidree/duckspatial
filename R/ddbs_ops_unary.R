@@ -3,8 +3,8 @@
 
 #' Creates a buffer around geometries
 #'
-#' Calculates the buffer of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Computes a polygon that represents all locations within a specified distance from the
+#' original geometry
 #'
 #' @template x
 #' @param distance a numeric value specifying the buffer distance. Units correspond to
@@ -34,7 +34,7 @@
 #' ## load package
 #' library(duckspatial)
 #'
-#' # create a duckdb database in memory (with spatial extension)
+#' ## create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
@@ -109,12 +109,16 @@ ddbs_buffer <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Warns if the CRS is not in meters
+    crs_units <- crs_x$units_gdal
+    if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
 
 
     # 2. Manage connection to DB
@@ -205,8 +209,8 @@ ddbs_buffer <- function(
 
 #' Calculates the centroid of geometries
 #'
-#' Calculates the centroids of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Returns the geometric center (centroid) of a geometry as a point, 
+#' representing its average position.
 #'
 #' @template x
 #' @template conn_null
@@ -353,9 +357,9 @@ ddbs_centroid <- function(
 
 #' Check if geometries are valid
 #'
-#' Checks the validity of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean validity column or creates
-#' a new table in the database.
+#' Determines whether geometries are valid. That is, whether they follow the rules 
+#' of well-formed geometries (no self-intersections, proper ring orientation, etc.)
+#' and returns a boolean indicator of validity.
 #'
 #' @template x
 #' @template conn_null
@@ -533,8 +537,9 @@ ddbs_is_valid <- function(
 
 #' Make invalid geometries valid
 #'
-#' Attempts to make invalid geometries valid from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Attempts to correct invalid geometries so they conform to the rules of well-formed 
+#' geometries (e.g., fixing self-intersections or improper rings) and returns the 
+#' corrected geometries.
 #'
 #' @template x
 #' @template conn_null
@@ -682,9 +687,8 @@ ddbs_make_valid <- function(
 
 #' Check if geometries are simple
 #'
-#' Checks if geometries are simple (no self-intersections) from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean simplicity column or creates
-#' a new table in the database.
+#' Determines whether geometries are simple. That is, free of self-intersections and 
+#' returns a boolean indicator of simplicity.
 #'
 #' @template x
 #' @template conn_null
@@ -862,13 +866,14 @@ ddbs_is_simple <- function(
 
 #' Simplify geometries
 #'
-#' Simplifies geometries from a DuckDB table using the Douglas-Peucker algorithm via the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Reduces the complexity of geometries by removing unnecessary vertices while preserving 
+#' the overall shape.
 #'
 #' @template x
+#' @param tolerance Tolerance distance for simplification. Larger values result in more 
+#' simplified geometries.
 #' @template conn_null
 #' @template name
-#' @param tolerance Tolerance distance for simplification. Larger values result in more simplified geometries.
 #' @template crs
 #' @template output
 #' @template overwrite
@@ -1016,12 +1021,10 @@ ddbs_simplify <- function(
 
 
 
-#' Extracts the exterior ring of polygon geometries
+#' Extract the exterior ring of polygons
 #'
-#' Returns the exterior ring (outer boundary) of polygon geometries from a DuckDB table 
-#' using the spatial extension. For multi-polygons, returns the exterior ring of each 
-#' polygon component. Returns the result as an \code{sf} object or creates a new table 
-#' in the database.
+#' Returns the outer boundary (exterior ring) of polygon geometries. For multi-polygons, 
+#' returns the exterior ring of each individual polygon.
 #'
 #' @template x
 #' @template conn_null
@@ -1167,12 +1170,10 @@ ddbs_exterior_ring <- function(
 
 
 
-#' Creates polygons from linestring geometries
+#' Create polygons from linestrings
 #'
-#' Constructs polygon geometries from linestring geometries in a DuckDB table using 
-#' the spatial extension. The input linestrings must be closed (first and last points 
-#' must be identical). Returns the result as an \code{sf} object or creates a new table 
-#' in the database.
+#' Constructs polygon geometries from linestrings. Input linestrings must be closed 
+#' (first and last points identical) to form valid polygons.
 #'
 #' @template x
 #' @template conn_null
@@ -1320,11 +1321,10 @@ ddbs_make_polygon <- function(
 
 
 
-#' Returns the concave hull enclosing the geometry
+#' Compute the concave hull of geometries
 #'
-#' Returns the concave hull enclosing the geometry from an \code{sf} object or
-#' from a DuckDB table using the spatial extension. Returns the result as an
-#' \code{sf} object or creates a new table in the database.
+#' Returns the concave hull that tightly encloses the geometry, capturing its overall 
+#' shape more closely than a convex hull.
 #'
 #' @template x
 #' @param ratio Numeric. The ratio parameter dictates the level of concavity; `1`
@@ -1493,11 +1493,10 @@ ddbs_concave_hull <- function(
 
 
 
-#' Returns the convex hull enclosing the geometry
+#' Compute the convex hull of geometries
 #'
-#' Returns the convex hull enclosing the geometry from an \code{sf} object or
-#' from a DuckDB table using the spatial extension. Returns the result as an
-#' \code{sf} object or creates a new table in the database.
+#' Returns the convex hull that encloses the geometry, forming the smallest convex 
+#' polygon that contains all points of the geometry.
 #'
 #' @template x
 #' @template conn_null
@@ -1654,11 +1653,10 @@ ddbs_convex_hull <- function(
 
 
 
-#' Transform coordinate reference system of geometries
+#' Transform the coordinate reference system of geometries
 #'
-#' Transforms geometries from a DuckDB table to a different coordinate reference system
-#' using the spatial extension. Works similarly to \code{sf::st_transform()}.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Converts geometries to a different coordinate reference system (CRS), updating 
+#' their coordinates accordingly.
 #'
 #' @template x
 #' @param y Target CRS. Can be:
@@ -1856,9 +1854,10 @@ ddbs_transform <- function(
 
 
 
-#' Returns the geometry type of input features
+#' Get the geometry type of features
 #'
-#' Returns the geometry type(s) from a `sf` object or a DuckDB table. 
+#' Returns the type of each geometry (e.g., POINT, LINESTRING, POLYGON) in the 
+#' input features.
 #'
 #' @template x
 #' @template conn_null

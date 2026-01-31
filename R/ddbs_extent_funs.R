@@ -1,8 +1,7 @@
-#' Returns the boundary of geometries
+#' Get the boundary of geometries
 #'
-#' Returns the boundary of geometries from a `sf` object or a DuckDB table.
-#' Returns the result as an \code{sf} object or creates a new table in the
-#' database.
+#' Returns the boundary of geometries as a new geometry, e.g., the edges of polygons 
+#' or the start/end points of lines.
 #'
 #' @template x
 #' @template conn_null
@@ -142,11 +141,9 @@ ddbs_boundary <- function(
 
 
 
-#' Returns the envelope (bounding box) of geometries
+#' Get the envelope (bounding box) of geometries
 #'
-#' Returns the minimum bounding rectangle (envelope) of geometries from a `sf`
-#' object or a DuckDB table. Returns the result as an \code{sf} object or creates
-#' a new table in the database.
+#' Returns the minimum axis-aligned rectangle that fully contains the geometry.
 #'
 #' @template x
 #' @param by_feature Logical. If \code{TRUE}, returns one envelope per feature.
@@ -333,11 +330,10 @@ ddbs_envelope <- function(
 
 
 
-#' Returns the minimal bounding box enclosing the input geometry
+#' Get the bounding box of geometries
 #'
-#' Returns the minimal bounding box enclosing the input geometry from a `sf` object
-#' or a DuckDB table. Returns the result as an \code{sf} object or creates a new
-#' table in the database.
+#' Returns the minimal rectangle that encloses the geometry, typically used 
+#' to summarize its spatial extent.
 #'
 #' @template x
 #' @param by_feature Boolean. The function defaults to `FALSE`, and returns a
@@ -349,7 +345,7 @@ ddbs_envelope <- function(
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @returns A data frame or \code{TRUE} (invisibly) for table creation when name is not NULL.
 #' @export
 #'
 #' @examples

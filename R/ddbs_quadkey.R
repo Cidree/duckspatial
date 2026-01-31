@@ -1,10 +1,10 @@
 
 
-#' Convert geometries to QuadKey tiles
+#' Convert point geometries to QuadKey tiles
 #'
-#' Converts POINT geometries to QuadKey tile representations at a specified zoom level.
-#' QuadKeys are a hierarchical spatial indexing system used by mapping services like Bing Maps.
-#'
+#' Transforms point geometries into QuadKey identifiers at a specified zoom level, 
+#' a hierarchical spatial indexing system used by mapping services.
+#' 
 #' @template x
 #' @param level An integer specifying the zoom level for QuadKey generation (1-23).
 #' Higher values provide finer spatial resolution. Default is 10.

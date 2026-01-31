@@ -1,9 +1,7 @@
 
-#' Convert a table with coordinates to spatial data
+#' Generate point geometries from coordinates
 #'
-#' Converts a data frame or DuckDB table with coordinate columns into spatial 
-#' points. This function replicates the functionality \code{sf::st_as_sf()} for 
-#' DuckDB spatial operations.
+#' Converts a data frame with coordinate columns into spatial point geometries.
 #'
 #' @template x
 #' @param coords Character vector of length 2 specifying the names of the 
