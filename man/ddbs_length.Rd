@@ -62,7 +62,7 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-When \code{new_column = NULL} it returns a logical vector. When \code{new_column} is not NULL, the
+When \code{new_column = NULL} it returns a numeric vector with units. When \code{new_column} is not NULL, the
 output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
 \itemize{
 \item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
@@ -75,9 +75,19 @@ When \code{name} is provided, the result is also written as a table or view in D
 }
 \description{
 Calculates the length of geometries from a DuckDB table or a \code{sf} object
-Returns the result as an \code{sf} object with a length column or creates a new table in the database.
-Note: Length units depend on the CRS of the input geometries (e.g., meters for projected CRS,
-or degrees for geographic CRS).
+Returns the result as an \code{sf} object with a length column or creates
+a new table in the database.
+}
+\details{
+When the input geometry is in \code{EPSG:4326}, the function uses \code{ST_Length_Spheroid}, which
+use the GeographicLib library for calculating the length using an ellipsoidal model of the
+earth. This method is highly accurate for calculating the length of a line geometry considering
+the curvature of the earth, but it's also the slowest.
+
+If the input geometry is in a projected CRS, the function will use \code{ST_Length} to calculate the
+length in meters.
+
+In other cases, the function will display a warning if the CRS is not in meters.
 }
 \examples{
 \dontrun{
@@ -108,4 +118,7 @@ ddbs_length("rivers", conn, name = "rivers_with_length", new_column = "length_me
 ## calculate length in a sf object (without a connection)
 ddbs_length(rivers_ddbs)
 }
+}
+\references{
+\url{https://geographiclib.sourceforge.io/}
 }
