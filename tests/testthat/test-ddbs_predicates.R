@@ -134,8 +134,9 @@ describe("ddbs_predicate()", {
     })
     
     it("works with dwithin predicate", {
-      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "dwithin", distance = 100)
-      output_function  <- ddbs_is_within_distance(countries_sf, argentina_sf, 10)
+      point_sf <- ddbs_collect(points_ddbs)[1, ]
+      output_predicate <- ddbs_predicate(point_sf, points_ddbs, predicate = "dwithin", distance = 100)
+      output_function  <- ddbs_is_within_distance(point_sf, points_ddbs, distance = 100)
       
       expect_equal(output_predicate, output_function)
     })
@@ -243,6 +244,15 @@ describe("ddbs_predicate()", {
   ### EXPECTED ERRORS
   
   describe("errors", {
+
+    it("requires x and y to be points", {
+      expect_error(
+        ddbs_predicate(points_sf, argentina_ddbs, predicate = "dwithin", distance = 100)
+      )
+      expect_error(
+        ddbs_predicate(points_sf, ddbs_transform(rivers_ddbs, 4326), predicate = "dwithin", distance = 100)
+      )
+    })
     
     it("requires both x and y arguments", {
       expect_error(ddbs_predicate(argentina_ddbs))

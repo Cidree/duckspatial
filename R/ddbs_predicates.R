@@ -219,6 +219,19 @@ ddbs_predicate <- function(
   ## 4.1. create query
   if (st_predicate == "ST_DWithin") {
 
+    ## check the CRS units to use the right function
+    crs_units <- crs_x$units_gdal
+    if (crs_units != "metre") {
+      st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
+      if (crs_x$input != "EPSG:4326") {
+        cli::cli_warn(
+          "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
+        )
+      }
+    } else {
+      st_predicate <- glue::glue("ST_DWithin(x.{x_geom}, y.{y_geom}, {distance})")
+    }
+
     ## if distance is not specified, it will use ST_Within
     if (is.null(distance)) {
       cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
@@ -226,7 +239,7 @@ ddbs_predicate <- function(
     }
 
     tmp.query <- glue::glue("
-      SELECT {st_predicate}(x.{x_geom}, y.{y_geom}, {distance}) as predicate
+      SELECT {st_predicate} as predicate
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
     ")

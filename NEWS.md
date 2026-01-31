@@ -32,6 +32,8 @@
 
 * `ddbs_length()`, `ddbs_area()` and `ddbs_distance()` were calculating the wrong measure when the CRS was geographic (#82).
 
+* `ddbs_filter(predicate = "dwithin")` and `ddbs_is_within_distance` were calculating wrong distances for geographic CRS (#88).
+
 
 # duckspatial 0.9.0
 

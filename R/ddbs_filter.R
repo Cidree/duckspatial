@@ -171,6 +171,19 @@ ddbs_filter <- function(
         ## if distance is not specified, it will use ST_Within
         if (sel_pred == "ST_DWithin") {
 
+            ## check the CRS units to use the right function
+            crs_units <- crs_x$units_gdal
+            if (crs_units != "metre") {
+                st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(v1.{x_geom}), ST_FlipCoordinates(v2.{y_geom}), {distance})")
+                if (crs_x$input != "EPSG:4326") {
+                    cli::cli_warn(
+                    "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
+                    )
+                }
+            } else {
+                st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
+            }
+
             if (is.null(distance)) {
                 cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
                 distance <- 0
@@ -185,7 +198,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
+                    {st_predicate}
             ")
 
         } else {
@@ -211,6 +224,19 @@ ddbs_filter <- function(
     ## 6. Get data frame
     if (sel_pred == "ST_DWithin") {
 
+        ## check the CRS units to use the right function
+        crs_units <- crs_x$units_gdal
+        if (crs_units != "metre") {
+            st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(v1.{x_geom}), ST_FlipCoordinates(v2.{y_geom}), {distance})")
+            if (crs_x$input != "EPSG:4326") {
+                cli::cli_warn(
+                "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
+                )
+            }
+        } else {
+            st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
+        }
+
         ## if distance is not specified, it will use ST_Within
         if (is.null(distance)) {
             cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
@@ -226,7 +252,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
+                    {st_predicate}
             ")
         )
 
