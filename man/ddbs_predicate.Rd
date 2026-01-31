@@ -16,7 +16,7 @@
 \alias{ddbs_intersects_extent}
 \alias{ddbs_contains_properly}
 \alias{ddbs_within_properly}
-\title{Spatial predicate operations}
+\title{Evaluate spatial predicates between geometries}
 \usage{
 ddbs_predicate(
   x,
@@ -211,9 +211,13 @@ ddbs_within_properly(
 }
 Data is returned from this object.}
 
-\item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
-Data is returned from this object.}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
 \item{predicate}{A geometry predicate function. Defaults to \code{intersects},
 a wrapper of \code{ST_Intersects}. See details for other options.}
@@ -261,10 +265,9 @@ the corresponding geometry of \code{x}, or
 If there's no match between \code{x} and \code{y} it returns \code{NULL}
 }
 \description{
-Computes spatial relationships between two geometry datasets using DuckDB's
-spatial extension. Returns a list where each element corresponds to a row of
-\code{x}, containing the indices (or IDs) of rows in \code{y} that satisfy the specified
-spatial predicate.
+Determines which geometries in one dataset satisfy a specified spatial
+relationship with geometries in another dataset, such as intersection,
+containment, or touching.
 }
 \details{
 This function provides a unified interface to all spatial predicate operations

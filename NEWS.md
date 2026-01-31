@@ -2,9 +2,11 @@
 
 ## MAJOR CHANGES
 
-* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (#55).
+* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (with `ddbs_collect()` or `st_as_sf()`). Every function now accepts this class as input, and it's the returned class by default. If the user is interested in returning a different class, there's a convenient `output` argument (#55, #63).
 
 * `ddbs_union()`: is spplited into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
+
+* `ddbs_length`, `ddbs_area` and `ddbs_distance`: now use by default the best DuckDB function (e.g. `ST_Area` or `ST_Area_Spheroid`) depending on the input's CRS. Additionally, they return an `units` object (#80, #82).
 
 ## NEW FEATURES
 
@@ -12,6 +14,19 @@
 
 * `ddbs_geometry_type()`: returns the geometry type of an object (#76).
 
+* `ddbs_as_geojson()`: converts the geometry to geojson format (#84).
+
+## MINOR CHANGES
+
+* Improve the documentation of the functions (#85).
+
+* `ddbs_buffer()`: now has four new arguments: `num_triangles`, `cap_style`, `join_style`, and `mitre_limit` (#72).
+
+* `ddbs_quadkey()`: can aggregate by `field` when output is `polygon` and `tilexy` (#78).
+
+## BUG FIXES
+
+* `ddbs_length`, `ddbs_area` and `ddbs_distance` were calculating the wrong measure when the CRS was geographic (#82).
 
 
 # duckspatial 0.9.0

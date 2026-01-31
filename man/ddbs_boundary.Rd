@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_extent_funs.R
 \name{ddbs_boundary}
 \alias{ddbs_boundary}
-\title{Returns the boundary of geometries}
+\title{Get the boundary of geometries}
 \usage{
 ddbs_boundary(
   x,
@@ -69,9 +69,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Returns the boundary of geometries from a \code{sf} object or a DuckDB table.
-Returns the result as an \code{sf} object or creates a new table in the
-database.
+Returns the boundary of geometries as a new geometry, e.g., the edges of polygons
+or the start/end points of lines.
 }
 \examples{
 \dontrun{

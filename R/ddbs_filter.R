@@ -2,12 +2,13 @@
 
 
 
-#' Performs spatial filter of two geometries
+#' Perform a spatial filter
 #'
-#' Filters data spatially based on a spatial predicate
+#' Filters geometries based on a spatial relationship with another geometry, 
+#' such as intersection, containment, or proximity.
 #'
 #' @template x
-#' @param y Y table with geometry column within the DuckDB database
+#' @template y
 #' @template predicate
 #' @template conn_null
 #' @template conn_x_conn_y
@@ -84,6 +85,7 @@ ddbs_filter <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     

@@ -69,8 +69,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the centroids of geometries from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Returns the geometric center (centroid) of a geometry as a point,
+representing its average position.
 }
 \examples{
 \dontrun{

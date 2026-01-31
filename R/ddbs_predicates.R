@@ -1,18 +1,14 @@
 
 
 
-#' Spatial predicate operations
+#' Evaluate spatial predicates between geometries
 #'
-#' Computes spatial relationships between two geometry datasets using DuckDB's
-#' spatial extension. Returns a list where each element corresponds to a row of
-#' `x`, containing the indices (or IDs) of rows in `y` that satisfy the specified
-#' spatial predicate.
-#'
+#' Determines which geometries in one dataset satisfy a specified spatial 
+#' relationship with geometries in another dataset, such as intersection, 
+#' containment, or touching.
 #'
 #' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#'        Data is returned from this object.
+#' @template y
 #' @template predicate
 #' @template conn_null
 #' @template conn_x_conn_y
@@ -149,8 +145,10 @@ ddbs_predicate <- function(
   ## 0. Handle errors
   assert_xy(x, "x")
   assert_xy(y, "y")
-  assert_logic(quiet, "quiet")
+  assert_name(id_x, "id_x")
+  assert_name(id_y, "id_y")
   assert_logic(sparse, "sparse")
+  assert_logic(quiet, "quiet")
 
   ## Validate predicate early (it aborts on invalid)
   st_predicate <- get_st_predicate(predicate)

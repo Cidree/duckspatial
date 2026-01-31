@@ -74,9 +74,9 @@ output depends on the \code{output} argument (or global preference set by \code{
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Checks the validity of geometries from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object with a boolean validity column or creates
-a new table in the database.
+Determines whether geometries are valid. That is, whether they follow the rules
+of well-formed geometries (no self-intersections, proper ring orientation, etc.)
+and returns a boolean indicator of validity.
 }
 \examples{
 \dontrun{

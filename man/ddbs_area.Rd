@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_measure.R
 \name{ddbs_area}
 \alias{ddbs_area}
-\title{Calculates the area of geometries}
+\title{Calculate the area of geometries}
 \usage{
 ddbs_area(
   x,
@@ -62,7 +62,7 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-When \code{new_column = NULL} it returns a logical vector. When \code{new_column} is not NULL, the
+When \code{new_column = NULL} it returns a \code{units} vector in \eqn{m^2}. When \code{new_column} is not NULL, the
 output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
 \itemize{
 \item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
@@ -74,10 +74,18 @@ output depends on the \code{output} argument (or global preference set by \code{
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the area of geometries from a DuckDB table or a \code{sf} object
-Returns the result as an \code{sf} object with an area column or creates a new table in the database.
-Note: Area units depend on the CRS of the input geometries (e.g., square meters for projected CRS,
-or degrees for geographic CRS).
+Computes the area of polygon geometries in square meters.
+}
+\details{
+When the input geometry is in \code{EPSG:4326}, the function uses \code{ST_Area_Spheroid}, which
+use the GeographicLib library for calculating the area using an ellipsoidal model of the
+earth. This method is highly accurate for calculating the area of a line geometry considering
+the curvature of the earth, but it's also the slowest.
+
+If the input geometry is in a projected CRS, the function will use \code{ST_Area} to calculate the
+area in squared meters.
+
+In other cases, the function will use \code{ST_Area_Spheroid} and display a warning.
 }
 \examples{
 \dontrun{
@@ -109,4 +117,7 @@ ddbs_area("argentina", conn, name = "argentina_with_area", new_column = "area_sq
 ## calculate area in a sf object
 ddbs_area(argentina_ddbs)
 }
+}
+\references{
+\url{https://geographiclib.sourceforge.io/}
 }

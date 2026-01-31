@@ -1,10 +1,8 @@
 
-
-#' Generate random points within geometries
+#' Generate random points within bounding boxes of geometries
 #'
-#' Generates random points within geometries from a DuckDB table using the spatial extension.
-#' Works similarly to generating random points within polygons in \code{sf}.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Creates random points within the bounding box of each geometry, which may 
+#' fall outside the geometry itself.
 #'
 #' @template x
 #' @param n Number of random points to generate within each geometry
@@ -59,11 +57,12 @@ ddbs_generate_points <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_name(name)
   assert_numeric(n, "n")
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(output, "output")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
 
   # 1. Manage connection to DB
 

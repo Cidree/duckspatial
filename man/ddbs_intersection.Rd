@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_binary.R
 \name{ddbs_intersection}
 \alias{ddbs_intersection}
-\title{Calculates the intersection of two geometries}
+\title{Calculate the intersection of geometries}
 \usage{
 ddbs_intersection(
   x,
@@ -28,7 +28,13 @@ ddbs_intersection(
 }
 Data is returned from this object.}
 
-\item{y}{A table with geometry column within the DuckDB database}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -80,8 +86,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the intersection of two geometries, and return a \code{sf} object
-or creates a new table
+Returns the geometric intersection of two sets of geometries, producing the area,
+line, or point shared by both.
 }
 \examples{
 \dontrun{

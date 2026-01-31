@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_make_polygon}
 \alias{ddbs_make_polygon}
-\title{Creates polygons from linestring geometries}
+\title{Create polygons from linestrings}
 \usage{
 ddbs_make_polygon(
   x,
@@ -69,10 +69,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Constructs polygon geometries from linestring geometries in a DuckDB table using
-the spatial extension. The input linestrings must be closed (first and last points
-must be identical). Returns the result as an \code{sf} object or creates a new table
-in the database.
+Constructs polygon geometries from linestrings. Input linestrings must be closed
+(first and last points identical) to form valid polygons.
 }
 \examples{
 \dontrun{

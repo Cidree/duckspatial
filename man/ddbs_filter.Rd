@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_filter.R
 \name{ddbs_filter}
 \alias{ddbs_filter}
-\title{Performs spatial filter of two geometries}
+\title{Perform a spatial filter}
 \usage{
 ddbs_filter(
   x,
@@ -30,7 +30,13 @@ ddbs_filter(
 }
 Data is returned from this object.}
 
-\item{y}{Y table with geometry column within the DuckDB database}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
 \item{predicate}{A geometry predicate function. Defaults to \code{intersects},
 a wrapper of \code{ST_Intersects}. See details for other options.}
@@ -88,7 +94,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Filters data spatially based on a spatial predicate
+Filters geometries based on a spatial relationship with another geometry,
+such as intersection, containment, or proximity.
 }
 \details{
 Spatial Join Predicates:

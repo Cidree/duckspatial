@@ -1,11 +1,11 @@
 
-#' Calculates the intersection of two geometries
+#' Calculate the intersection of geometries
 #'
-#' Calculates the intersection of two geometries, and return a \code{sf} object
-#' or creates a new table
+#' Returns the geometric intersection of two sets of geometries, producing the area, 
+#' line, or point shared by both.
 #'
 #' @template x
-#' @param y A table with geometry column within the DuckDB database
+#' @template y
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
@@ -65,6 +65,7 @@ ddbs_intersection <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -191,13 +192,13 @@ ddbs_intersection <- function(
 
 
 
-#' Calculates the difference of two geometries
+#' Calculate the difference of geometries
 #'
-#' Calculates the geometric difference of two geometries, and returns a \code{sf}
-#' object or creates a new table
+#' Returns the portion of the first geometry that does not overlap with 
+#' the second geometry.
 #'
 #' @template x
-#' @param y A table with geometry column within the DuckDB database
+#' @template y
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
@@ -257,6 +258,7 @@ ddbs_difference <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 

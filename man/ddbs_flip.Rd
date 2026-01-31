@@ -79,9 +79,9 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Flips (reflects) geometries around the centroid. Returns the result as an
-\code{sf} object or creates a new table in the database. This function is
-equivalent to \code{terra::flip()}.
+Reflects geometries across their centroid. By default, flipping is applied
+relative to the centroid of all geometries; if \code{by_feature = TRUE}, each
+geometry is flipped relative to its own centroid.
 }
 \examples{
 \dontrun{

@@ -30,6 +30,8 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
+    assert_name(name)
+    assert_logic(quiet, "quiet")
     ## Check if schema already exists
     namechar  <- DBI::dbQuoteString(conn,name)
     tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = ",
@@ -523,7 +525,7 @@ ddbs_drivers <- function(conn = NULL) {
     ")
 }
 
-#' Close a duckdb connection
+#' Close a DuckDB connection
 #'
 #' @template conn
 #'

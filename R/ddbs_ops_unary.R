@@ -3,12 +3,22 @@
 
 #' Creates a buffer around geometries
 #'
-#' Calculates the buffer of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Computes a polygon that represents all locations within a specified distance from the
+#' original geometry
 #'
 #' @template x
 #' @param distance a numeric value specifying the buffer distance. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
+#' @param num_triangles an integer representing how many triangles will be produced to 
+#' approximate a quarter circle. The larger the number, the smoother the resulting geometry. 
+#' Default is 8.
+#' @param cap_style a character string specifying the cap style. Must be one of 
+#' "CAP_ROUND" (default), "CAP_FLAT", or "CAP_SQUARE". Case-insensitive.
+#' @param join_style a character string specifying the join style. Must be one of 
+#' "JOIN_ROUND" (default), "JOIN_MITRE", or "JOIN_BEVEL". Case-insensitive.
+#' @param mitre_limit a numeric value specifying the mitre limit ratio. Only applies when 
+#' \code{join_style} is "JOIN_MITRE". It is the ratio of the distance from the corner to 
+#' the mitre point to the corner radius. Default is 1.0.
 #' @template conn_null
 #' @template name
 #' @template crs
@@ -24,7 +34,7 @@
 #' ## load package
 #' library(duckspatial)
 #'
-#' # create a duckdb database in memory (with spatial extension)
+#' ## create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
@@ -36,8 +46,12 @@
 #' ## store in duckdb
 #' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
-#' ## buffer
+#' ## basic buffer
 #' ddbs_buffer(conn = conn, "argentina", distance = 1)
+#'
+#' ## buffer with custom parameters
+#' ddbs_buffer(conn = conn, "argentina", distance = 1, 
+#'             num_triangles = 16, cap_style = "CAP_SQUARE")
 #'
 #' ## buffer without using a connection
 #' ddbs_buffer(argentina_ddbs, distance = 1)
@@ -45,6 +59,10 @@
 ddbs_buffer <- function(
     x,
     distance,
+    num_triangles = 8L,
+    cap_style = "CAP_ROUND",
+    join_style = "JOIN_ROUND",
+    mitre_limit = 1.0,
     conn = NULL,
     name = NULL,
     crs = NULL,
@@ -57,22 +75,50 @@ ddbs_buffer <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_numeric(distance, "distance")
+    assert_integer_scalar(num_triangles, "num_triangles")
+    assert_character_scalar(cap_style, "cap_style")
+    assert_character_scalar(join_style, "join_style")
+    assert_numeric(mitre_limit, "mitre_limit")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
+  
+    ## Validate cap_style
+    valid_cap_styles <- c("CAP_ROUND", "CAP_FLAT", "CAP_SQUARE")
+    if (!toupper(cap_style) %in% valid_cap_styles) {
+        cli::cli_abort("{.arg cap_style} must be one of: {.val {paste0(valid_cap_styles, collapse = ', ')}}.")
+    }
+    
+    ## Validate join_style
+    valid_join_styles <- c("JOIN_ROUND", "JOIN_MITRE", "JOIN_BEVEL")
+    if (!toupper(join_style) %in% valid_join_styles) {
+        cli::cli_abort("{.arg join_style} must be one of: {.val {paste0(valid_join_styles, collapse = ', ')}}.")
+    }
+    
+    ## Check num_triangles is positive
+    if (num_triangles < 1) cli::cli_abort("{.arg num_triangles} must be a positive integer")
+    
+    ## Check mitre_limit is striclty positive
+    if (mitre_limit <= 0) cli::cli_abort("{.arg mitre_limit} must be a positive number")
+    
 
     # 1. Manage connection to DB
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Warns if the CRS is not in meters
+    crs_units <- crs_x$units_gdal
+    if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
 
 
     # 2. Manage connection to DB
@@ -98,6 +144,16 @@ ddbs_buffer <- function(
     ## 3.2. Get names of the rest of the columns
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
+    ## 3.3. Build ST_Buffer parameters string
+    buffer_params <- sprintf(
+        "%s, %s, %d, '%s', '%s', %s",
+        x_geom,
+        distance,
+        as.integer(num_triangles),
+        toupper(cap_style),
+        toupper(join_style),
+        mitre_limit
+    )
 
     # 4. if name is not NULL
     if (!is.null(name)) {
@@ -111,7 +167,7 @@ ddbs_buffer <- function(
         ## create query
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest} ST_Buffer({x_geom}, {distance}) as {x_geom} 
+            SELECT {x_rest} ST_Buffer({buffer_params}) as {x_geom} 
             FROM {x_list$query_name};
         ")
         ## execute intersection query
@@ -126,7 +182,7 @@ ddbs_buffer <- function(
     ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest} 
-        ST_AsWKB(ST_Buffer({x_geom}, {distance})) as {x_geom} 
+        ST_AsWKB(ST_Buffer({buffer_params})) as {x_geom} 
         FROM {x_list$query_name};
     ")
 
@@ -153,8 +209,8 @@ ddbs_buffer <- function(
 
 #' Calculates the centroid of geometries
 #'
-#' Calculates the centroids of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Returns the geometric center (centroid) of a geometry as a point, 
+#' representing its average position.
 #'
 #' @template x
 #' @template conn_null
@@ -204,10 +260,11 @@ ddbs_centroid <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -300,9 +357,9 @@ ddbs_centroid <- function(
 
 #' Check if geometries are valid
 #'
-#' Checks the validity of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean validity column or creates
-#' a new table in the database.
+#' Determines whether geometries are valid. That is, whether they follow the rules 
+#' of well-formed geometries (no self-intersections, proper ring orientation, etc.)
+#' and returns a boolean indicator of validity.
 #'
 #' @template x
 #' @template conn_null
@@ -364,10 +421,12 @@ ddbs_is_valid <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(new_column, "new_column")
+    assert_conn_character(conn, x)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
 
@@ -478,8 +537,9 @@ ddbs_is_valid <- function(
 
 #' Make invalid geometries valid
 #'
-#' Attempts to make invalid geometries valid from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Attempts to correct invalid geometries so they conform to the rules of well-formed 
+#' geometries (e.g., fixing self-intersections or improper rings) and returns the 
+#' corrected geometries.
 #'
 #' @template x
 #' @template conn_null
@@ -529,10 +589,11 @@ ddbs_make_valid <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -626,9 +687,8 @@ ddbs_make_valid <- function(
 
 #' Check if geometries are simple
 #'
-#' Checks if geometries are simple (no self-intersections) from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean simplicity column or creates
-#' a new table in the database.
+#' Determines whether geometries are simple. That is, free of self-intersections and 
+#' returns a boolean indicator of simplicity.
 #'
 #' @template x
 #' @template conn_null
@@ -690,10 +750,12 @@ ddbs_is_simple <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(new_column, "new_column")
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
 
@@ -804,13 +866,14 @@ ddbs_is_simple <- function(
 
 #' Simplify geometries
 #'
-#' Simplifies geometries from a DuckDB table using the Douglas-Peucker algorithm via the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Reduces the complexity of geometries by removing unnecessary vertices while preserving 
+#' the overall shape.
 #'
 #' @template x
+#' @param tolerance Tolerance distance for simplification. Larger values result in more 
+#' simplified geometries.
 #' @template conn_null
 #' @template name
-#' @param tolerance Tolerance distance for simplification. Larger values result in more simplified geometries.
 #' @template crs
 #' @template output
 #' @template overwrite
@@ -857,11 +920,12 @@ ddbs_simplify <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_positive_numeric(tolerance, "tolerance")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-    if (missing(tolerance)) cli::cli_abort("tolerance parameter is required")
 
     
     # 1. Manage connection to DB
@@ -957,12 +1021,10 @@ ddbs_simplify <- function(
 
 
 
-#' Extracts the exterior ring of polygon geometries
+#' Extract the exterior ring of polygons
 #'
-#' Returns the exterior ring (outer boundary) of polygon geometries from a DuckDB table 
-#' using the spatial extension. For multi-polygons, returns the exterior ring of each 
-#' polygon component. Returns the result as an \code{sf} object or creates a new table 
-#' in the database.
+#' Returns the outer boundary (exterior ring) of polygon geometries. For multi-polygons, 
+#' returns the exterior ring of each individual polygon.
 #'
 #' @template x
 #' @template conn_null
@@ -1012,10 +1074,11 @@ ddbs_exterior_ring <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1107,12 +1170,10 @@ ddbs_exterior_ring <- function(
 
 
 
-#' Creates polygons from linestring geometries
+#' Create polygons from linestrings
 #'
-#' Constructs polygon geometries from linestring geometries in a DuckDB table using 
-#' the spatial extension. The input linestrings must be closed (first and last points 
-#' must be identical). Returns the result as an \code{sf} object or creates a new table 
-#' in the database.
+#' Constructs polygon geometries from linestrings. Input linestrings must be closed 
+#' (first and last points identical) to form valid polygons.
 #'
 #' @template x
 #' @template conn_null
@@ -1163,10 +1224,11 @@ ddbs_make_polygon <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
   
     # 1. Manage connection to DB
@@ -1259,11 +1321,10 @@ ddbs_make_polygon <- function(
 
 
 
-#' Returns the concave hull enclosing the geometry
+#' Compute the concave hull of geometries
 #'
-#' Returns the concave hull enclosing the geometry from an \code{sf} object or
-#' from a DuckDB table using the spatial extension. Returns the result as an
-#' \code{sf} object or creates a new table in the database.
+#' Returns the concave hull that tightly encloses the geometry, capturing its overall 
+#' shape more closely than a convex hull.
 #'
 #' @template x
 #' @param ratio Numeric. The ratio parameter dictates the level of concavity; `1`
@@ -1339,10 +1400,11 @@ ddbs_concave_hull <- function(
     assert_xy(x, "x")
     assert_numeric_interval(ratio, 0, 1, "ratio")
     assert_logic(allow_holes, "allow_holes")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1431,11 +1493,10 @@ ddbs_concave_hull <- function(
 
 
 
-#' Returns the convex hull enclosing the geometry
+#' Compute the convex hull of geometries
 #'
-#' Returns the convex hull enclosing the geometry from an \code{sf} object or
-#' from a DuckDB table using the spatial extension. Returns the result as an
-#' \code{sf} object or creates a new table in the database.
+#' Returns the convex hull that encloses the geometry, forming the smallest convex 
+#' polygon that contains all points of the geometry.
 #'
 #' @template x
 #' @template conn_null
@@ -1499,10 +1560,11 @@ ddbs_convex_hull <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1591,11 +1653,10 @@ ddbs_convex_hull <- function(
 
 
 
-#' Transform coordinate reference system of geometries
+#' Transform the coordinate reference system of geometries
 #'
-#' Transforms geometries from a DuckDB table to a different coordinate reference system
-#' using the spatial extension. Works similarly to \code{sf::st_transform()}.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Converts geometries to a different coordinate reference system (CRS), updating 
+#' their coordinates accordingly.
 #'
 #' @template x
 #' @param y Target CRS. Can be:
@@ -1664,9 +1725,9 @@ ddbs_transform <- function(
     ## 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
@@ -1793,9 +1854,10 @@ ddbs_transform <- function(
 
 
 
-#' Returns the geometry type of input features
+#' Get the geometry type of features
 #'
-#' Returns the geometry type(s) from a `sf` object or a DuckDB table. 
+#' Returns the type of each geometry (e.g., POINT, LINESTRING, POLYGON) in the 
+#' input features.
 #'
 #' @template x
 #' @template conn_null
@@ -1833,9 +1895,9 @@ ddbs_geometry_type <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_logic(quiet, "quiet")
   assert_conn_character(conn, x)
   assert_logic(by_feature, "by_feature")
+  assert_logic(quiet, "quiet")
   
 
   # 1. Manage connection to DB

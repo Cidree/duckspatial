@@ -26,27 +26,63 @@ assert_xy <- function(xy, ref = "x") { # nocov start
     }
 } # nocov end
 
-assert_name <- function(name = parent.frame()$name) { # nocov start
+assert_name <- function(name = parent.frame()$name, ref = "name") { # nocov start
 
-    if (!any(is.character(name) | is.null(name))) {
-        cli::cli_abort("'name' must be a string character.",
-                       .frame = parent.frame()
-                       )
-        }
+    if (!is.null(name) && (!is.character(name) || length(name) != 1)) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single character string or NULL.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
 
-    if (length(name) > 1) {
-        cli::cli_abort("'name' must be a string character of length one",
-                       .frame = parent.frame()
-                       )
-        }
+assert_character_scalar <- function(arg, ref) { # nocov start
 
- } # nocov end
+    if (!is.character(arg) || length(arg) != 1) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single character string.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
 
 assert_numeric <- function(arg, ref) { # nocov start
 
     if (!is.numeric(arg) || length(arg) != 1) {
         cli::cli_abort(
             "{.arg {ref}} must be a single numeric value.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
+assert_strict_positive_numeric <- function(arg, ref) { # nocov start
+
+    if (!is.numeric(arg) || length(arg) != 1 || arg <= 0) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single positive numeric value (> 0).",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
+
+assert_positive_numeric <- function(arg, ref) { # nocov start
+
+    if (!is.numeric(arg) || length(arg) != 1 || arg < 0) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single positive numeric value (>= 0).",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
+
+assert_integer_scalar <- function(arg, ref) { # nocov start
+
+    if (!is.numeric(arg) || length(arg) != 1 || arg != as.integer(arg)) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single integer value.",
             .frame = parent.frame()
         )
     }

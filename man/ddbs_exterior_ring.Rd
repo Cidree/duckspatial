@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_exterior_ring}
 \alias{ddbs_exterior_ring}
-\title{Extracts the exterior ring of polygon geometries}
+\title{Extract the exterior ring of polygons}
 \usage{
 ddbs_exterior_ring(
   x,
@@ -69,10 +69,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Returns the exterior ring (outer boundary) of polygon geometries from a DuckDB table
-using the spatial extension. For multi-polygons, returns the exterior ring of each
-polygon component. Returns the result as an \code{sf} object or creates a new table
-in the database.
+Returns the outer boundary (exterior ring) of polygon geometries. For multi-polygons,
+returns the exterior ring of each individual polygon.
 }
 \examples{
 \dontrun{

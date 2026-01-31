@@ -74,9 +74,8 @@ output depends on the \code{output} argument (or global preference set by \code{
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Checks if geometries are simple (no self-intersections) from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object with a boolean simplicity column or creates
-a new table in the database.
+Determines whether geometries are simple. That is, free of self-intersections and
+returns a boolean indicator of simplicity.
 }
 \examples{
 \dontrun{
