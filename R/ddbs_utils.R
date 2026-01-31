@@ -282,17 +282,26 @@ ddbs_crs.duckdb_connection <- function(x, name, ...) {
 #' @export
 #' @rdname ddbs_crs
 ddbs_crs.numeric <- function(x, ...) {
-    # Convert numeric EPSG code to CRS
-    # Assumes EPSG authority by default
-    if (length(x) != 1) {
-        cli::cli_abort("Numeric CRS input must be a single value (EPSG code).")
-    }
-    
-    if (x < 1 || x != as.integer(x)) {
-        cli::cli_abort("CRS code must be a positive integer.")
-    }
-    
-    return(sf::st_crs(as.integer(x)))
+  # Convert numeric EPSG code to CRS
+  # Assumes EPSG authority by default
+  if (length(x) != 1) {
+      cli::cli_abort("Numeric CRS input must be a single value (EPSG code).")
+  }
+  
+  if (x < 1 || x != as.integer(x)) {
+      cli::cli_abort("CRS code must be a positive integer.")
+  }
+
+  # Extract the CRS
+  crs_x <- sf::st_crs(as.integer(x))
+  
+  # If the CRS doesn't exist, the previous function returns NA
+  if (is.na(crs_x)) {
+    cli::cli_abort("CRS code wasn't found.")
+  } else {
+    return(crs_x)
+  }
+
 }
 
 
