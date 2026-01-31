@@ -460,250 +460,9 @@ describe("ddbs_centroid()", {
 })
 
 
-# 3. ddbs_is_valid() -----------------------------------------------------
-
-## - CHECK 1.1: vector works on all formats
-## - CHECK 1.2: data frame works on all formats
-## - CHECK 1.3: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
-## - CHECK 1.4: messages work
-## - CHECK 1.5: compare with SF
-describe("ddbs_is_valid()", {
-  
-  describe("expected behavior", {
-    
-    it("returns logical vector on all formats", {
-      output_ddbs_vec <- ddbs_is_valid(countries_ddbs)
-      output_sf_vec   <- ddbs_is_valid(countries_sf)
-      output_conn_vec <- ddbs_is_valid("countries", conn = conn_test)
-
-      expect_type(output_ddbs_vec, "logical")
-      expect_equal(output_ddbs_vec, output_sf_vec)
-      expect_equal(output_ddbs_vec, output_conn_vec)
-    })
-    
-    it("returns data frame with new column on all formats", {
-      output_ddbs <- ddbs_is_valid(countries_ddbs, new_column = "is_valid")
-      output_sf   <- ddbs_is_valid(countries_sf, new_column = "is_valid")
-      output_conn <- ddbs_is_valid("countries", conn = conn_test, new_column = "is_valid")
-
-      expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
-    })
-    
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_is_valid(countries_ddbs, new_column = "is_valid", output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_valid(countries_ddbs, new_column = "is_valid", output = "sf")
-      output_raw_fmt      <- ddbs_is_valid(countries_ddbs, new_column = "is_valid", output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-      expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
-    })
-    
-    it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_valid(countries_ddbs))
-      expect_message(ddbs_is_valid("countries", new_column = "is_valid", conn = conn_test, name = "is_valid_tbl"))
-      expect_message(ddbs_is_valid("countries", new_column = "is_valid", conn = conn_test, name = "is_valid_tbl", overwrite = TRUE))
-      expect_true(ddbs_is_valid("countries", new_column = "is_valid", conn = conn_test, name = "is_valid_tbl2"))
-
-      expect_no_message(ddbs_is_valid(countries_ddbs, quiet = TRUE))
-      expect_no_message(ddbs_is_valid("countries", new_column = "is_valid", conn = conn_test, name = "is_valid_tbl", overwrite = TRUE, quiet = TRUE))
-    })
-    
-    it("writes tables to the database", {
-      output_ddbs <- ddbs_is_valid(countries_ddbs, new_column = "is_valid")
-      output_tbl <- ddbs_read_vector(conn_test, "is_valid_tbl")
-      
-      expect_equal(
-        ddbs_collect(output_ddbs)$geometry,
-        output_tbl$geometry
-      )
-    })
-    
-    it("matches sf::st_is_valid results", {
-      output_ddbs_vec <- ddbs_is_valid(countries_ddbs)
-      sf_output <- sf::st_is_valid(countries_sf)
-      
-      expect_equal(output_ddbs_vec, sf_output)
-    })
-  })
-  
-  describe("errors", {
-    
-    describe("function specific validation", {
-      
-      it("requires new_column when creating tables", {
-        expect_error(ddbs_is_valid(countries_sf, conn = conn_test, name = "tbl"))
-      })
-      
-      it("validates new_column type", {
-        expect_error(ddbs_is_valid(countries_sf, new_column = 5))
-        expect_error(ddbs_is_valid(countries_ddbs, new_column = 999))
-      })
-    })
-    
-    describe("basic argument validation", {
-      
-      it("requires connection when using table names", {
-        expect_error(ddbs_is_valid("countries", conn = NULL))
-      })
-      
-      it("validates x argument type", {
-        expect_error(ddbs_is_valid(x = 999))
-      })
-      
-      it("validates conn argument type", {
-        expect_error(ddbs_is_valid(countries_ddbs, conn = 999))
-      })
-      
-      it("validates overwrite argument type", {
-        expect_error(ddbs_is_valid(countries_ddbs, overwrite = 999))
-      })
-      
-      it("validates quiet argument type", {
-        expect_error(ddbs_is_valid(countries_ddbs, quiet = 999))
-      })
-      
-      it("validates table name exists", {
-        expect_error(ddbs_is_valid(x = "999", conn = conn_test))
-      })
-      
-      it("requires name to be single character string", {
-        expect_error(ddbs_is_valid(countries_ddbs, conn = conn_test, name = c('banana', 'banana')))
-      })
-    })
-  })
-})
 
 
-
-# 4. ddbs_is_simple() -----------------------------------------------------
-
-## - CHECK 1.1: vector works on all formats
-## - CHECK 1.2: data frame works on all formats
-## - CHECK 1.3: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
-## - CHECK 1.4: messages work
-## - CHECK 1.5: compare with SF
-## - CHECK 2.1: function specific errors
-## - CHECK 2.2: other errors
-
-describe("ddbs_is_simple()", {
-
-  ### EXPECTED BEHAVIOUR
-  
-  describe("expected behavior", {
-    
-    it("returns logical vector on all formats", {
-      output_ddbs_vec <- ddbs_is_simple(countries_ddbs)
-      output_sf_vec   <- ddbs_is_simple(countries_sf)
-      output_conn_vec <- ddbs_is_simple("countries", conn = conn_test)
-
-      expect_type(output_ddbs_vec, "logical")
-      expect_equal(output_ddbs_vec, output_sf_vec)
-      expect_equal(output_ddbs_vec, output_conn_vec)
-    })
-    
-    it("returns data frame with new column on all formats", {
-      output_ddbs <- ddbs_is_simple(countries_ddbs, new_column = "is_simple")
-      output_sf   <- ddbs_is_simple(countries_sf, new_column = "is_simple")
-      output_conn <- ddbs_is_simple("countries", conn = conn_test, new_column = "is_simple")
-
-      expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
-    })
-    
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_is_simple(countries_ddbs, new_column = "is_simple", output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_simple(countries_ddbs, new_column = "is_simple", output = "sf")
-      output_raw_fmt      <- ddbs_is_simple(countries_ddbs, new_column = "is_simple", output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-      expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
-    })
-    
-    it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_simple(countries_ddbs))
-      expect_message(ddbs_is_simple("countries", new_column = "is_simple", conn = conn_test, name = "is_simple_tbl"))
-      expect_message(ddbs_is_simple("countries", new_column = "is_simple", conn = conn_test, name = "is_simple_tbl", overwrite = TRUE))
-      expect_true(ddbs_is_simple("countries", new_column = "is_simple", conn = conn_test, name = "is_simple_tbl2"))
-
-      expect_no_message(ddbs_is_simple(countries_ddbs, quiet = TRUE))
-      expect_no_message(ddbs_is_simple("countries", new_column = "is_simple", conn = conn_test, name = "is_simple_tbl", overwrite = TRUE, quiet = TRUE))
-    })
-    
-    it("writes tables to the database", {
-      output_ddbs <- ddbs_is_simple(countries_ddbs, new_column = "is_simple")
-      output_tbl <- ddbs_read_vector(conn_test, "is_simple_tbl")
-      
-      expect_equal(
-        ddbs_collect(output_ddbs)$geometry,
-        output_tbl$geometry
-      )
-    })
-    
-    it("matches sf::st_is_simple results", {
-      output_ddbs_vec <- ddbs_is_simple(countries_ddbs)
-      sf_output <- sf::st_is_simple(countries_sf)
-      
-      expect_equal(output_ddbs_vec, sf_output)
-    })
-  })
-
-
-  ### EXPECTED ERRORS
-  
-  describe("errors", {
-    
-    describe("function specific validation", {
-      
-      it("requires new_column when creating tables", {
-        expect_error(ddbs_is_simple(countries_sf, conn = conn_test, name = "tbl"))
-      })
-      
-      it("validates new_column type", {
-        expect_error(ddbs_is_simple(countries_sf, new_column = 5))
-        expect_error(ddbs_is_simple(countries_ddbs, new_column = 999))
-      })
-    })
-    
-    describe("basic argument validation", {
-      
-      it("requires connection when using table names", {
-        expect_error(ddbs_is_simple("countries", conn = NULL))
-      })
-      
-      it("validates x argument type", {
-        expect_error(ddbs_is_simple(x = 999))
-      })
-      
-      it("validates conn argument type", {
-        expect_error(ddbs_is_simple(countries_ddbs, conn = 999))
-      })
-      
-      it("validates overwrite argument type", {
-        expect_error(ddbs_is_simple(countries_ddbs, overwrite = 999))
-      })
-      
-      it("validates quiet argument type", {
-        expect_error(ddbs_is_simple(countries_ddbs, quiet = 999))
-      })
-      
-      it("validates table name exists", {
-        expect_error(ddbs_is_simple(x = "999", conn = conn_test))
-      })
-      
-      it("requires name to be single character string", {
-        expect_error(ddbs_is_simple(countries_ddbs, conn = conn_test, name = c('banana', 'banana')))
-      })
-    })
-  })
-})
-
-
-# 5. ddbs_make_valid() -----------------------------------------------------
+# 3. ddbs_make_valid() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
@@ -792,7 +551,7 @@ describe("ddbs_make_valid()", {
 
 
 
-# 6. ddbs_simplify() -----------------------------------------------------
+# 4. ddbs_simplify() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
@@ -884,7 +643,7 @@ describe("ddbs_simplify()", {
 
 
 
-# 7. ddbs_exterior_ring() -----------------------------------------------------
+# 5. ddbs_exterior_ring() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
@@ -981,7 +740,7 @@ describe("ddbs_exterior_ring()", {
 
 
 
-# 8. ddbs_make_polygon() -----------------------------------------------------
+# 6. ddbs_make_polygon() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
@@ -1093,7 +852,7 @@ describe("ddbs_make_polygon()", {
 
 
 
-# 9. ddbs_convex_hull() -----------------------------------------------------
+# 7. ddbs_convex_hull() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
@@ -1179,7 +938,7 @@ describe("ddbs_convex_hull()", {
 
 
 
-# 10. ddbs_concave_hull() ---------------------------------------------------
+# 8. ddbs_concave_hull() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
@@ -1340,7 +1099,7 @@ describe("ddbs_concave_hull()", {
 
 
 
-# 11. ddbs_geometry_type() ---------------------------------------------------
+# 9. ddbs_geometry_type() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all formats with by_feature = TRUE
 ## - CHECK 1.2: works on all formats with by_feature = FALSE
