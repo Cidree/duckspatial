@@ -78,7 +78,6 @@ reference:
   - ddbs_as_spatial
   - ddbs_buffer
   - ddbs_centroid
-  - ddbs_combine
   - ddbs_concave_hull
   - ddbs_convex_hull
   - ddbs_exterior_ring
@@ -88,8 +87,7 @@ reference:
   - ddbs_simplify
   - ddbs_transform
   - ddbs_quadkey
-  - ddbs_union
-  - ddbs_union_agg
+  - ddbs_union_funs
 
 - title: Geometry Validation
   desc: Check geometry validity
@@ -101,9 +99,7 @@ reference:
 - title: Format Conversion
   desc: Convert geometries to standard spatial formats
   contents:
-  - ddbs_as_text
-  - ddbs_as_wkb
-  - ddbs_as_hexwkb
+  - ddbs_as_format
 
 - title: Spatial Extent and Boundaries
   desc: Extract geometry bounds and envelopes
