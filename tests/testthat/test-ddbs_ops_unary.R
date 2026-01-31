@@ -842,13 +842,15 @@ describe("ddbs_simplify()", {
         output_tbl$geometry
       )
     })
+
+    it("works with preserve_topology = TRUE", {
+      output_ddbs <- ddbs_simplify(argentina_ddbs, preserve_topology = TRUE)
+      expect_s3_class(output_ddbs, "duckspatial_df")
+    })
+
   })
   
   describe("errors", {
-    
-    it("requires tolerance argument", {
-      expect_error(ddbs_simplify(argentina_ddbs))
-    })
     
     it("requires connection when using table names", {
       expect_error(ddbs_simplify("argentina", conn = NULL))

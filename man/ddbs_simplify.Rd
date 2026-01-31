@@ -6,7 +6,8 @@
 \usage{
 ddbs_simplify(
   x,
-  tolerance,
+  tolerance = 0,
+  preserve_topology = FALSE,
   conn = NULL,
   name = NULL,
   crs = NULL,
@@ -28,6 +29,11 @@ Data is returned from this object.}
 
 \item{tolerance}{Tolerance distance for simplification. Larger values result in more
 simplified geometries.}
+
+\item{preserve_topology}{If FALSE, uses the Douglas-Peucker algorithm, which reduces
+the vertices by removing points that are within a given distance. If TRUE, uses a
+topology-preserving variant of Douglas-Peucker that guarantees the output geometry
+remains valid (slower).}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -94,7 +100,7 @@ countries_ddbs <- ddbs_open_dataset(
 ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## simplify with tolerance of 0.01
-ddbs_simplify("countries", tolerance = 0.01, conn)
+ddbs_simplify("countries", tolerance = 0.01, conn = conn)
 
 ## simplify without using a connection
 ddbs_simplify(countries_ddbs, tolerance = 0.01)
