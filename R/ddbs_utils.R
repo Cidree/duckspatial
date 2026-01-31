@@ -177,6 +177,12 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
 #' @param conn A DuckDB connection (required for character method)
 #' @param crs_column Column name storing CRS info (default: "crs_duckspatial")
 ddbs_crs.character <- function(x, conn, crs_column = "crs_duckspatial", ...) {
+
+    # 0. Check if x is in AUTH:CODE format (e.g., "EPSG:4326")
+    if (length(x) == 1 && grepl("^[A-Z]+:[0-9]+$", x)) {
+        return(sf::st_crs(x))
+    }
+  
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
@@ -271,6 +277,24 @@ ddbs_crs.duckdb_connection <- function(x, name, ...) {
   }
   ddbs_crs.character(name, conn = x, ...)
 }
+
+
+#' @export
+#' @rdname ddbs_crs
+ddbs_crs.numeric <- function(x, ...) {
+    # Convert numeric EPSG code to CRS
+    # Assumes EPSG authority by default
+    if (length(x) != 1) {
+        cli::cli_abort("Numeric CRS input must be a single value (EPSG code).")
+    }
+    
+    if (x < 1 || x != as.integer(x)) {
+        cli::cli_abort("CRS code must be a positive integer.")
+    }
+    
+    return(sf::st_crs(as.integer(x)))
+}
+
 
 #' @export
 #' @rdname ddbs_crs
