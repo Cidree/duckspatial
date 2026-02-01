@@ -75,7 +75,7 @@ ddbs_is_simple <- function(
   crs_column = "crs_duckspatial",
   quiet = FALSE) {
   
-  geometry_validation_helper(
+  template_geometry_validation(
     x = x,
     conn = conn,
     crs = crs,
@@ -99,7 +99,7 @@ ddbs_is_valid <- function(
   crs_column = "crs_duckspatial",
   quiet = FALSE) {
   
-  geometry_validation_helper(
+  template_geometry_validation(
     x = x,
     conn = conn,
     crs = crs,
@@ -122,7 +122,7 @@ ddbs_is_closed <- function(
   crs_column = "crs_duckspatial",
   quiet = FALSE) {
   
-  geometry_validation_helper(
+  template_geometry_validation(
     x = x,
     conn = conn,
     crs = crs,
@@ -145,7 +145,7 @@ ddbs_is_empty <- function(
   crs_column = "crs_duckspatial",
   quiet = FALSE) {
   
-  geometry_validation_helper(
+  template_geometry_validation(
     x = x,
     conn = conn,
     crs = crs,
@@ -169,7 +169,7 @@ ddbs_is_ring <- function(
   crs_column = "crs_duckspatial",
   quiet = FALSE) {
   
-  geometry_validation_helper(
+  template_geometry_validation(
     x = x,
     conn = conn,
     crs = crs,
