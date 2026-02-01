@@ -93,8 +93,7 @@ reference:
   desc: Check geometry validity
   contents:
   - ddbs_geometry_type
-  - ddbs_is_simple
-  - ddbs_is_valid
+  - ddbs_geom_validation_funs
 
 - title: Format Conversion
   desc: Convert geometries to standard spatial formats

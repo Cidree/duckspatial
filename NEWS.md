@@ -24,6 +24,8 @@
 
 * `ddbs_perimeter()`: calculates the perimeter of polygons (#89).
 
+* New geometry validation/check functions: `ddbs_is_empty()`, `ddbs_is_ring()` and `ddbs_is_closed()`.
+
 ## MINOR CHANGES
 
 * Improve the documentation of the functions (#85).
