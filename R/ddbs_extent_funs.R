@@ -53,7 +53,8 @@ ddbs_boundary <- function(
         output = output,
         overwrite = overwrite,
         quiet = quiet,
-        fun = "ST_Boundary"
+        fun = "ST_Boundary",
+        other_args = NULL
     )
     
 }

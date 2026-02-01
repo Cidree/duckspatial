@@ -299,113 +299,37 @@ ddbs_rotate_3d <- function(
     overwrite = FALSE,
     quiet = FALSE) {
 
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
+  
+    # 0. Handle function-specific errors
     assert_numeric(angle, "angle")
     units <- match.arg(units)
     assert_name(units, "units")
-    assert_conn_character(conn, x)
-    assert_name(name)
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
+    assert_name(axis, "axis")
   
   
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Convert angle to radians if needed
+    # 1. Build ST_Rotate parameters string
+    #  Convert angle to radians if needed
+  
     if (units == "degrees") {
-        angle_rad <- angle * pi / 180
+        rotate_3d_args <- angle * pi / 180
     } else {
-        angle_rad <- angle
+        rotate_3d_args <- angle
     }
-
-    ## 3.4. Build rotation expression
-    rotation_expr <- glue::glue("ST_Rotate{axis}({x_geom}, {angle_rad})")
-
   
-    # 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query 
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {rotation_expr} as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute rotation query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-  
-    # 5. Get data frame
-  
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({rotation_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-  
-    # 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-  
-    # 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
+    # 2. Pass to template
+    template_unary_ops(
+      x = x,
+      conn = conn,
+      name = name,
+      crs = crs,
+      crs_column = crs_column,
+      output = output,
+      overwrite = overwrite,
+      quiet = quiet,
+      fun = glue::glue("ST_Rotate{axis}"),
+      other_args = rotate_3d_args
     )
 
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -466,106 +390,32 @@ ddbs_shift <- function(
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
+    # 0. Handle function-specific errors
     assert_numeric(dx, "dx")
     assert_numeric(dy, "dy")
-    assert_conn_character(conn, x)
-    assert_name(name)
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-
   
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Build shift expression using ST_Affine
+  
+    # 1. Build shift expression using ST_Affine
     # Identity matrix (no rotation/scaling) with translation offsets
-    shift_expr <- glue::glue("ST_Affine({x_geom}, 1, 0, 0, 1, {dx}, {dy})")
-
+    shift_args <- glue::glue("1, 0, 0, 1, {dx}, {dy}")
   
-    # 4. if name is not NULL
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query 
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {shift_expr} as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute shift query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
   
-    # 5. Get data frame
-  
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({shift_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-  
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    # 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
+    # 2. Pass to template
+    template_unary_ops(
+      x = x,
+      conn = conn,
+      name = name,
+      crs = crs,
+      crs_column = crs_column,
+      output = output,
+      overwrite = overwrite,
+      quiet = quiet,
+      fun = "ST_Affine",
+      other_args = shift_args
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+  
 }
 
 

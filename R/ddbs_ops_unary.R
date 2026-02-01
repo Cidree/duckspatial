@@ -57,150 +57,65 @@
 #' ddbs_buffer(argentina_ddbs, distance = 1)
 #' }
 ddbs_buffer <- function(
-    x,
-    distance,
-    num_triangles = 8L,
-    cap_style = "CAP_ROUND",
-    join_style = "JOIN_ROUND",
-    mitre_limit = 1.0,
-    conn = NULL,
-    name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
-    output = NULL,
-    overwrite = FALSE,
-    quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
+  x,
+  distance,
+  num_triangles = 8L,
+  cap_style = "CAP_ROUND",
+  join_style = "JOIN_ROUND",
+  mitre_limit = 1.0,
+  conn = NULL,
+  name = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_numeric(distance, "distance")
-    assert_integer_scalar(num_triangles, "num_triangles")
-    assert_character_scalar(cap_style, "cap_style")
-    assert_character_scalar(join_style, "join_style")
-    assert_numeric(mitre_limit, "mitre_limit")
-    assert_conn_character(conn, x)
-    assert_name(name)
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
   
-    ## Validate cap_style
-    valid_cap_styles <- c("CAP_ROUND", "CAP_FLAT", "CAP_SQUARE")
-    if (!toupper(cap_style) %in% valid_cap_styles) {
-        cli::cli_abort("{.arg cap_style} must be one of: {.val {paste0(valid_cap_styles, collapse = ', ')}}.")
-    }
-    
-    ## Validate join_style
-    valid_join_styles <- c("JOIN_ROUND", "JOIN_MITRE", "JOIN_BEVEL")
-    if (!toupper(join_style) %in% valid_join_styles) {
-        cli::cli_abort("{.arg join_style} must be one of: {.val {paste0(valid_join_styles, collapse = ', ')}}.")
-    }
-    
-    ## Check num_triangles is positive
-    if (num_triangles < 1) cli::cli_abort("{.arg num_triangles} must be a positive integer")
-    
-    ## Check mitre_limit is striclty positive
-    if (mitre_limit <= 0) cli::cli_abort("{.arg mitre_limit} must be a positive number")
-    
+  # 0. Handle function-specific errors
+  assert_numeric(distance, "distance")
+  assert_integer_scalar(num_triangles, "num_triangles")
+  assert_character_scalar(cap_style, "cap_style")
+  assert_character_scalar(join_style, "join_style")
+  assert_numeric(mitre_limit, "mitre_limit")
 
-    # 1. Manage connection to DB
+  ## Validate cap_style
+  valid_cap_styles <- c("CAP_ROUND", "CAP_FLAT", "CAP_SQUARE")
+  if (!toupper(cap_style) %in% valid_cap_styles) {
+      cli::cli_abort("{.arg cap_style} must be one of: {.val {paste0(valid_cap_styles, collapse = ', ')}}.")
+  }
+  
+  ## Validate join_style
+  valid_join_styles <- c("JOIN_ROUND", "JOIN_MITRE", "JOIN_BEVEL")
+  if (!toupper(join_style) %in% valid_join_styles) {
+      cli::cli_abort("{.arg join_style} must be one of: {.val {paste0(valid_join_styles, collapse = ', ')}}.")
+  }
+  
+  ## Check num_triangles is positive
+  if (num_triangles < 1) cli::cli_abort("{.arg num_triangles} must be a positive integer")
+  
+  ## Check mitre_limit is striclty positive
+  if (mitre_limit <= 0) cli::cli_abort("{.arg mitre_limit} must be a positive number")
+  
 
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
+  # 1. Build ST_Buffer parameters string
+  buffer_args <- glue::glue("{distance}, {as.integer(num_triangles)}, '{toupper(cap_style)}', '{toupper(join_style)}', {mitre_limit}")
+  
 
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
+  # 2. Pass to template
+  template_unary_ops(
+    x = x,
+    conn = conn,
+    name = name,
+    crs = crs,
+    crs_column = crs_column,
+    output = output,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Buffer",
+    other_args = buffer_args
+  )
 
-    ## 1.3. Warns if the CRS is not in meters
-    crs_units <- crs_x$units_gdal
-    if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Build ST_Buffer parameters string
-    buffer_params <- sprintf(
-        "%s, %s, %d, '%s', '%s', %s",
-        x_geom,
-        distance,
-        as.integer(num_triangles),
-        toupper(cap_style),
-        toupper(join_style),
-        mitre_limit
-    )
-
-    # 4. if name is not NULL
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest} ST_Buffer({buffer_params}) as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-
-    # 5. Get data frame
-
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest} 
-        ST_AsWKB(ST_Buffer({buffer_params})) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -265,7 +180,8 @@ ddbs_centroid <- function(
         output = output,
         overwrite = overwrite,
         quiet = quiet,
-        fun = "ST_Centroid"
+        fun = "ST_Centroid",
+        other_args = NULL
     )
 
 }
@@ -333,7 +249,8 @@ ddbs_make_valid <- function(
         output = output,
         overwrite = overwrite,
         quiet = quiet,
-        fun = "ST_MakeValid"
+        fun = "ST_MakeValid",
+        other_args = NULL
     )
     
 }
@@ -400,108 +317,35 @@ ddbs_simplify <- function(
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
+    # 0. Handle function-specific errors
     assert_positive_numeric(tolerance, "tolerance")
     assert_logic(preserve_topology, "preserve_topology")
-    assert_conn_character(conn, x)
-    assert_name(name)
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-
+  
     
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Choose the right function
+    # 1. Build ST_Simplify parameters string
+  
+    ## 1.1. Choose the right function
     st_simplify_fun <- 
         if (isTRUE(preserve_topology)) "ST_SimplifyPreserveTopology" else "ST_Simplify"
-
-    # 4. if name is not NULL
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {st_simplify_fun}({x_geom}, {tolerance}) as {x_geom}
-            FROM {x_list$query_name};
-        ")
-
-        ## execute query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    
-    }
-
-
-    # 5. Get data frame
-
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({st_simplify_fun}({x_geom}, {tolerance})) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
+  
+    ## 1.2. Build tolerance parameter
+    simplify_args <- tolerance
+  
+    # 2. Pass to template  
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = st_simplify_fun,
+        other_args = simplify_args
     )
 
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -567,7 +411,8 @@ ddbs_exterior_ring <- function(
         output = output,
         overwrite = overwrite,
         quiet = quiet,
-        fun = "ST_ExteriorRing"
+        fun = "ST_ExteriorRing",
+        other_args = NULL
     )
 
 }
@@ -635,7 +480,8 @@ ddbs_make_polygon <- function(
         output = output,
         overwrite = overwrite,
         quiet = quiet,
-        fun = "ST_MakePolygon"
+        fun = "ST_MakePolygon",
+        other_args = NULL
     )
 }
 
@@ -716,99 +562,26 @@ ddbs_concave_hull <- function(
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
+    # 0. Handle function-specific errors
     assert_numeric_interval(ratio, 0, 1, "ratio")
     assert_logic(allow_holes, "allow_holes")
-    assert_conn_character(conn, x)
-    assert_name(name)
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
 
-    # 1. Manage connection to DB
+    # 1. Build ST_ConcaveHull parameters string
+    concavehull_args <- glue::glue("{ratio}, {toupper(allow_holes)}")    
 
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-
-    # 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query 
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_ConcaveHull({x_geom}, {ratio}, {allow_holes}) as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-
-    # 5. create the base query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_ConcaveHull({x_geom}, {ratio}, {allow_holes})) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-    ## send the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
+    # 2. Pass to template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_ConcaveHull",
+        other_args = concavehull_args
     )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -887,7 +660,8 @@ ddbs_convex_hull <- function(
         output = output,
         overwrite = overwrite,
         quiet = quiet,
-        fun = "ST_ConvexHull"
+        fun = "ST_ConvexHull",
+        other_args = NULL
     )
 
 }

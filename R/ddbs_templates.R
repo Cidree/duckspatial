@@ -84,6 +84,7 @@ template_geometry_validation <- function(
 #' @template overwrite
 #' @template quiet
 #' @param fun The duckdb function to use
+#' @param other_params string with other function-specific parameters
 #' 
 #' @template returns_output
 #' @keywords internal
@@ -97,7 +98,8 @@ template_unary_ops <- function(
     output = NULL,
     overwrite = FALSE,
     quiet = FALSE,
-    fun) {
+    fun,
+    other_args = NULL) {
     
     deprecate_crs(crs_column, crs)
 
@@ -144,7 +146,26 @@ template_unary_ops <- function(
 
     ## 3.2. Get names of the rest of the columns
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
+  
+    ## 3.3. Append all args
+    ## if other_args is NULL, use only the geometry column name
+    ## if is not NULL, append the rest of the function arguments
+    if (is.null(other_args)) {
+      args <- x_geom
+    } else {
+      args <- sprintf(
+        "%s, %s",
+        x_geom,
+        other_args
+      )
+    }
+  
+    ## 3.4. Function-specific handling
+    if (tolower(fun) == "st_buffer") {
+      crs_units <- crs_x$units_gdal
+      if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
+    }
+  
   
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -159,7 +180,7 @@ template_unary_ops <- function(
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
             SELECT {x_rest}
-            {fun}({x_geom}) as {x_geom}
+            {fun}({args}) as {x_geom}
             FROM {x_list$query_name};
         ")
         ## execute query
@@ -174,7 +195,7 @@ template_unary_ops <- function(
     ## 5.1. create query
     tmp.query <- glue::glue("
         SELECT {x_rest}
-        ST_AsWKB({fun}({x_geom})) as {x_geom}
+        ST_AsWKB({fun}({args})) as {x_geom}
         FROM {x_list$query_name};
     ")
   
