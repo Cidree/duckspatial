@@ -52,10 +52,9 @@ reference:
 - title: Spatial Joins and Filters
   desc: Binary operations combining two geometries
   contents:
-  - ddbs_difference
+  - ddbs_binary_funs
   - ddbs_filter
   - ddbs_interpolate_aw
-  - ddbs_intersection
   - ddbs_join
 
 - title: Geometry Processing
