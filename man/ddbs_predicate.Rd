@@ -32,174 +32,33 @@ ddbs_predicate(
   quiet = FALSE
 )
 
-ddbs_intersects(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_intersects(x, y, ...)
 
-ddbs_covers(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_covers(x, y, ...)
 
-ddbs_touches(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_touches(x, y, ...)
 
-ddbs_is_within_distance(
-  x,
-  y,
-  distance = NULL,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_is_within_distance(x, y, distance = NULL, ...)
 
-ddbs_disjoint(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_disjoint(x, y, ...)
 
-ddbs_within(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_within(x, y, ...)
 
-ddbs_contains(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_contains(x, y, ...)
 
-ddbs_overlaps(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_overlaps(x, y, ...)
 
-ddbs_crosses(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_crosses(x, y, ...)
 
-ddbs_equals(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_equals(x, y, ...)
 
-ddbs_covered_by(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_covered_by(x, y, ...)
 
-ddbs_intersects_extent(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_intersects_extent(x, y, ...)
 
-ddbs_contains_properly(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_contains_properly(x, y, ...)
 
-ddbs_within_properly(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_within_properly(x, y, ...)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -245,6 +104,8 @@ the coordinate system of the geometry (e.g. degrees or meters)}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
+
+\item{...}{Passed to \link{ddbs_predicate}}
 }
 \value{
 A \strong{list} of length equal to the number of rows in \code{x}.

@@ -47,21 +47,7 @@ reference:
 - title: Spatial Predicates
   desc: Test spatial relationships between geometries
   contents:
-  - ddbs_contains
-  - ddbs_contains_properly
-  - ddbs_covered_by
-  - ddbs_covers
-  - ddbs_crosses
-  - ddbs_disjoint
-  - ddbs_equals
-  - ddbs_intersects
-  - ddbs_intersects_extent
-  - ddbs_is_within_distance
-  - ddbs_overlaps
   - ddbs_predicate
-  - ddbs_touches
-  - ddbs_within
-  - ddbs_within_properly
 
 - title: Spatial Joins and Filters
   desc: Binary operations combining two geometries
