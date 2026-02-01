@@ -69,146 +69,29 @@
 #' ddbs_area(argentina_ddbs)
 #' }
 ddbs_area <- function(
-    x,
-    conn = NULL,
-    name = NULL,
-    new_column = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
-    output = NULL,
-    overwrite = FALSE,
-    quiet = FALSE) {
+  x,
+  conn = NULL,
+  name = NULL,
+  new_column = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
+  template_measure(
+    x = x,
+    conn = conn,
+    name = name,
+    new_column = new_column,
+    crs = crs,
+    crs_column = crs_column,
+    output = output,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Area"
+  )
 
-    # 0. Validate inputs
-    assert_xy(x, "x")
-    assert_conn_character(conn, x)
-    assert_name(name)
-    assert_name(new_column, "new_column")
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    
-    if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
-
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Extract units, and warn if they aren't meters or EPSG:4326
-    ## for EPSG:4326, we can use ST_Area_Spheroid to get the area in meters
-    ## so that will be an exception
-    crs_units <- crs_x$units_gdal
-
-    if (crs_units != "metre" && "EPSG:4326" != crs_x$input) {
-        cli::cli_warn(
-          "Input is in {.val {crs_x$input}}, not {.val EPSG:4326}. Area calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
-        )
-    }
-
-    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Use the right function depending on the CRS
-    st_area_fun <- if (crs_units == "metre") {
-      glue::glue("ST_Area({x_geom})")
-    } else {
-      glue::glue("ST_Area_Spheroid(ST_FlipCoordinates({x_geom}))")
-    }
-
-
-    # 4. Handle new column = NULL
-    if (is.null(new_column)) {
-        tmp.query <- glue::glue("
-            SELECT {st_area_fun} as area,
-            FROM {x_list$query_name};
-        ")
-        
-        data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
-        feedback_query(quiet)
-    
-        ## get vector, and convert it to units
-        data_units <- units::as_units(data_vec[, 1], "m^2")
-    
-        return(data_units)
-    }
-
-
-    # 5. if name is not NULL (i.e. no data frame returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {st_area_fun} AS {new_column},
-            {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute area query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 5. Get data frame
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        {st_area_fun} AS {new_column},
-        ST_AsWKB({x_geom}) as {x_geom}
-        FROM {x_list$query_name}
-    ")
-    ## 5.2. retrieve results of the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    ## 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -286,145 +169,29 @@ ddbs_area <- function(
 #' ddbs_length(rivers_ddbs)
 #' }
 ddbs_length <- function(
-    x,
-    conn = NULL,
-    name = NULL,
-    new_column = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
-    output = NULL,
-    overwrite = FALSE,
-    quiet = FALSE) {
+  x,
+  conn = NULL,
+  name = NULL,
+  new_column = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+  
+  template_measure(
+    x = x,
+    conn = conn,
+    name = name,
+    new_column = new_column,
+    crs = crs,
+    crs_column = crs_column,
+    output = output,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Length"
+  )
 
-    deprecate_crs(crs_column, crs)
-
-    # 0. Validate inputs
-    assert_xy(x, "x")
-    assert_conn_character(conn, x)  
-    assert_name(name)
-    assert_name(new_column, "new_column")
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
-        
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-    
-    ## 1.2. Extract units, and warn if they aren't meters or EPSG:4326
-    ## for EPSG:4326, we can use ST_Length_Spheroid to get the length in meters
-    ## so that will be an exception
-    crs_units <- crs_x$units_gdal
-
-    if (crs_units != "metre" && "EPSG:4326" != crs_x$input) {
-        cli::cli_warn(
-          "Input is in {.val {crs_x$input}}, not {.val EPSG:4326}. Length calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
-        )
-    }
-
-
-    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Use the right function depending on the CRS
-    st_length_fun <- if (crs_units == "metre") {
-      glue::glue("ST_Length({x_geom})")
-    } else {
-      glue::glue("ST_Length_Spheroid(ST_FlipCoordinates({x_geom}))")
-    }
-
-
-    # 4. Handle new column = NULL
-    if (is.null(new_column)) {
-        tmp.query <- glue::glue("
-            SELECT {st_length_fun} as length,
-            FROM {x_list$query_name};
-        ")
-        
-        data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
-    
-        ## get vector, and convert it to units
-        data_units <- units::as_units(data_vec[, 1], "metre")
-    
-        return(data_units)
-    }
-
-
-    # 5. if name is not NULL (i.e. no data frame returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {st_length_fun} AS {new_column},
-            {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute length query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 5. Get data frame
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        {st_length_fun} AS {new_column},
-        ST_AsWKB({x_geom}) as {x_geom}
-        FROM {x_list$query_name}
-    ")
-    ## 5.2. retrieve results of the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    # 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -751,144 +518,27 @@ ddbs_distance <- function(
 #' ddbs_perimeter(argentina_ddbs)
 #' }
 ddbs_perimeter <- function(
-    x,
-    conn = NULL,
-    name = NULL,
-    new_column = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
-    output = NULL,
-    overwrite = FALSE,
-    quiet = FALSE) {
+  x,
+  conn = NULL,
+  name = NULL,
+  new_column = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
+  template_measure(
+    x = x,
+    conn = conn,
+    name = name,
+    new_column = new_column,
+    crs = crs,
+    crs_column = crs_column,
+    output = output,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Perimeter"
+  )
 
-    # 0. Validate inputs
-    assert_xy(x, "x")
-    assert_conn_character(conn, x)
-    assert_name(name)
-    assert_name(new_column, "new_column")
-    assert_name(output, "output")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    
-    if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
-
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Extract units, and warn if they aren't meters or EPSG:4326
-    ## for EPSG:4326, we can use ST_Perimeter_Spheroid to get the perimeter in meters
-    ## so that will be an exception
-    crs_units <- crs_x$units_gdal
-
-    if (crs_units != "metre" && "EPSG:4326" != crs_x$input) {
-        cli::cli_warn(
-          "Input is in {.val {crs_x$input}}, not {.val EPSG:4326}. Perimeter calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
-        )
-    }
-
-    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Use the right function depending on the CRS
-    st_perimeter_fun <- if (crs_units == "metre") {
-      glue::glue("ST_Perimeter({x_geom})")
-    } else {
-      glue::glue("ST_Perimeter_Spheroid(ST_FlipCoordinates({x_geom}))")
-    }
-
-
-    # 4. Handle new column = NULL
-    if (is.null(new_column)) {
-        tmp.query <- glue::glue("
-            SELECT {st_perimeter_fun} as perimeter,
-            FROM {x_list$query_name};
-        ")
-        
-        data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
-        feedback_query(quiet)
-    
-        ## get vector, and convert it to units
-        data_units <- units::as_units(data_vec[, 1], "m")
-    
-        return(data_units)
-    }
-
-
-    # 5. if name is not NULL (i.e. no data frame returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {st_perimeter_fun} AS {new_column},
-            {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute perimeter query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 6. Get data frame
-    ## 6.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        {st_perimeter_fun} AS {new_column},
-        ST_AsWKB({x_geom}) as {x_geom}
-        FROM {x_list$query_name}
-    ")
-    ## 6.2. retrieve results of the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    ## 6.3. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
