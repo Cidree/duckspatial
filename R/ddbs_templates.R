@@ -495,7 +495,7 @@ template_measure <- function(
 #' Template for ST_HasZ and ST_HasM
 #'
 #' @template x
-#' @param by_feature logical
+#' @template by_feature
 #' @template conn_null
 #' @template quiet
 #' @param fun The duckdb function to use

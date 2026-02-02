@@ -68,8 +68,7 @@ ddbs_boundary <- function(
 #' Returns the minimum axis-aligned rectangle that fully contains the geometry.
 #'
 #' @template x
-#' @param by_feature Logical. If \code{TRUE}, returns one envelope per feature.
-#' If \code{FALSE} (default), returns a single envelope for all geometries combined.
+#' @template by_feature
 #' @template conn_null
 #' @template name
 #' @template crs
@@ -258,9 +257,7 @@ ddbs_envelope <- function(
 #' to summarize its spatial extent.
 #'
 #' @template x
-#' @param by_feature Boolean. The function defaults to `FALSE`, and returns a
-#'        single bounding box for `x`. If `TRUE`, it return one bounding box for
-#'        each feature.
+#' @template by_feature
 #' @template conn_null
 #' @template name
 #' @template crs

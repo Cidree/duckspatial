@@ -20,18 +20,15 @@ ddbs_has_m(x, by_feature = FALSE, conn = NULL, quiet = FALSE)
 }
 Data is returned from this object.}
 
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE}, the geometric
+operation is applied to the data as a whole.}
+
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
-
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
 }
 \value{
 A logical vector

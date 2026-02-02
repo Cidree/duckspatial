@@ -35,7 +35,7 @@ For each unit in Y, X coordinates are shifted by this amount}
 For each unit in X, Y coordinates are shifted by this amount}
 
 \item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
-separately to each geometry. If \code{FALSE} (default), the geometric
+separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function

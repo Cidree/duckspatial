@@ -25,9 +25,9 @@ ddbs_bbox(
 }
 Data is returned from this object.}
 
-\item{by_feature}{Boolean. The function defaults to \code{FALSE}, and returns a
-single bounding box for \code{x}. If \code{TRUE}, it return one bounding box for
-each feature.}
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE}, the geometric
+operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}

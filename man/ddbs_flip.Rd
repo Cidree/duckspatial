@@ -32,7 +32,7 @@ or "vertical". Horizontal flips across the Y-axis (left-right), vertical flips a
 the X-axis (top-bottom)}
 
 \item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
-separately to each geometry. If \code{FALSE} (default), the geometric
+separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function

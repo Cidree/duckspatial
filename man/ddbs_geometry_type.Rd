@@ -19,9 +19,9 @@ Data is returned from this object.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
-\item{by_feature}{Boolean. If \code{TRUE} (default), returns the geometry type for
-each feature. If \code{FALSE}, returns a single geometry type summary for
-the entire dataset.}
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE}, the geometric
+operation is applied to the data as a whole.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}

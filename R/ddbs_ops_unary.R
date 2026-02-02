@@ -878,9 +878,7 @@ ddbs_transform <- function(
 #'
 #' @template x
 #' @template conn_null
-#' @param by_feature Boolean. If `TRUE` (default), returns the geometry type for 
-#'        each feature. If `FALSE`, returns a single geometry type summary for 
-#'        the entire dataset.
+#' @template by_feature
 #' @template quiet
 #'
 #' @returns A factor with geometry type(s)

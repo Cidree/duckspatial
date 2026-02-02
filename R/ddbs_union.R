@@ -554,8 +554,6 @@ ddbs_union_agg <- function(
 
 
   # 4. Create the base query
-  ## Union of geometries grouped by specified columns
-  by_cols <- paste0(by, collapse = ", ")
 
   ## create the query based on if other_cols has at least one column
   tmp.query <- glue::glue("
