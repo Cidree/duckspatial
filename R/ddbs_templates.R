@@ -492,3 +492,78 @@ template_measure <- function(
 
 
 
+#' Template for ST_HasZ and ST_HasM
+#'
+#' @template x
+#' @param by_feature logical
+#' @template conn_null
+#' @template quiet
+#' @param fun The duckdb function to use
+#' 
+#' @returns Character vector or list
+#' @keywords internal
+#' @noRd
+template_has <- function(
+  x,
+  by_feature = FALSE,
+  conn = NULL,
+  quiet = FALSE,
+  fun
+) {
+
+  ## 0. Handle errors
+  assert_xy(x, "x")
+  assert_logic(by_feature, "by_feature")
+  assert_conn_character(conn, x)
+  assert_logic(quiet, "quiet")
+
+  # 1. Manage connection to DB
+
+  ## 1.1. Pre-extract attributes (CRS and geometry column name)
+  ## this step should be before normalize_spatial_input()
+  crs_x    <- ddbs_crs(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+
+  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 3. Query
+
+  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+  ## 3.2. Create the base query
+  tmp.query <- glue::glue("
+    SELECT {fun}({x_geom}) as hasz
+    FROM {x_list$query_name};
+  ")
+
+  ## 3.3. Get the query
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+
+  ## 3.4. Result depending on by_feature
+  feedback_query(quiet)
+  if (isTRUE(by_feature)) {
+    return(data_tbl$hasz)
+  } else {
+    return(any(data_tbl$hasz))
+  }
+
+}

@@ -79,6 +79,8 @@ reference:
   contents:
   - ddbs_geometry_type
   - ddbs_geom_validation_funs
+  - ddbs_has_dim
+  - ddbs_force_dim
 
 - title: Format Conversion
   desc: Convert geometries to standard spatial formats

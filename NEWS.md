@@ -28,6 +28,10 @@
 
 * `ddbs_sym_difference()`: performs symmetric difference between pairs of geometries (#91).
 
+* `ddbs_force_2d()`, `ddbs_force_3d()`, `ddbs_force_4d()`: force the geometries to have specfic dimensions (#91).
+
+* `ddbs_has_z()` and `ddbs_has_m()`: check if the geometry has the dimension (#91).
+
 ## MINOR CHANGES
 
 * Improve the documentation of the functions (#85).
