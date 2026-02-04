@@ -50,34 +50,45 @@ reference:
   - ddbs_predicate
 
 - title: Spatial Joins and Filters
-  desc: Binary operations combining two geometries
+  desc: Combine or filter geometries based on spatial relationships
   contents:
   - ddbs_binary_funs
   - ddbs_filter
   - ddbs_interpolate_aw
   - ddbs_join
 
+- title: Geometry Construction
+  desc: Create new geometries from scratch or existing data
+  contents:
+  - ddbs_as_spatial
+  - ddbs_generate_points
+  - ddbs_quadkey
+
 - title: Geometry Processing
   desc: Modify and process individual geometries
   contents:
-  - ddbs_as_spatial
+  - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid
   - ddbs_concave_hull
   - ddbs_convex_hull
+  - ddbs_endpoint
   - ddbs_exterior_ring
-  - ddbs_generate_points
   - ddbs_make_polygon
-  - ddbs_make_valid
-  - ddbs_simplify
-  - ddbs_transform
-  - ddbs_quadkey
   - ddbs_union_funs
+  - ddbs_voronoi
+
+- title: Coordinate Operations
+  desc: Transform and manipulate coordinates
+  - ddbs_transform
+  - ddbs_flip_coordinates
 
 - title: Geometry Validation
-  desc: Check geometry validity
+  desc: Check and ensure geometry validity and dimensionality
   contents:
   - ddbs_geometry_type
+  - ddbs_make_valid
+  - ddbs_simplify
   - ddbs_geom_validation_funs
   - ddbs_has_dim
   - ddbs_force_dim
@@ -91,7 +102,6 @@ reference:
   desc: Extract geometry bounds and envelopes
   contents:
   - ddbs_bbox
-  - ddbs_boundary
   - ddbs_envelope
 
 - title: Affine Transformations
