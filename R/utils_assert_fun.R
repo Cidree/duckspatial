@@ -213,3 +213,26 @@ assert_memory_limit_gb <- function(memory_limit, ref = "memory_limit_gb") { # no
     }
   }
 } # nocov end
+
+
+assert_geom_type <- function(x, conn, geom, multi = FALSE) { # nocov start
+  
+  ## add multi if required
+  if (isTRUE(multi)) {
+    geom <- c(geom, paste0("MULTI", geom))
+  }
+  
+  ## get the unique geometry types
+  geom_type <- ddbs_geometry_type(x, conn, by_feature = FALSE, quiet = TRUE)
+  
+  ## check geometry type
+  invalid_types <- setdiff(geom_type, geom)
+  
+  if (length(invalid_types) > 0) {
+    cli::cli_abort(c(
+      "Invalid geometry type{?s} found: {.val {invalid_types}}",
+      "i" = "Allowed type{?s}: {.val {geom}}"
+    ))
+  }
+  
+} # nocov end
