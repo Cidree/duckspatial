@@ -179,7 +179,7 @@ ddbs_envelope <- function(
     if (isTRUE(by_feature)) {
         st_envelope_clause <- glue::glue("ST_Envelope({x_geom})")
     } else {
-        st_envelope_clause <- glue::glue("ST_Envelope(ST_Collect(LIST({x_geom})))")
+        st_envelope_clause <- glue::glue("ST_Envelope_Agg({x_geom})")
     }
 
 
@@ -356,7 +356,7 @@ ddbs_bbox <- function(
     if (isTRUE(by_feature)) {
         st_extent_clause <- glue::glue("ST_Extent({x_geom})")
     } else {
-        st_extent_clause <- glue::glue("ST_Extent(ST_Collect(LIST({x_geom})))")
+        st_extent_clause <- glue::glue("ST_Extent_Agg({x_geom})")
     }
 
     tmp.query <- glue::glue(
