@@ -32,6 +32,14 @@
 
 * `ddbs_has_z()` and `ddbs_has_m()`: check if the geometry has the dimension (#91).
 
+* `ddbs_polygonize()`, `ddbs_build_area()`: generates polygons from lines (#91).
+
+* `ddbs_voronoi()`: generates Voronoi diagrams from point geometries (#91).
+
+* `ddbs_endpoint()`: extracts the endpoint of a linestring geometry (#91).
+
+* `ddbs_flip_coordinates()`: swaps X and Y coordinates (#91).
+
 ## MINOR CHANGES
 
 * Improve the documentation of the functions (#85).

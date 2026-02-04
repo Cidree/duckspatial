@@ -402,6 +402,9 @@ ddbs_exterior_ring <- function(
     overwrite = FALSE,
     quiet = FALSE) {
     
+    # 0. Handle function-specific error
+    assert_geom_type(x = x, conn = conn, geom = "POLYGON", multi = FALSE)
+    
     template_unary_ops(
         x = x,
         conn = conn,
@@ -421,10 +424,11 @@ ddbs_exterior_ring <- function(
 
 
 
-#' Create polygons from linestrings
+#' Create a polygon from a single closed linestring
 #'
-#' Constructs polygon geometries from linestrings. Input linestrings must be closed 
-#' (first and last points identical) to form valid polygons.
+#' Converts a single closed linestring geometry into a polygon. The linestring 
+#' must be closed (first and last points identical). Does not work with 
+#' MULTILINESTRING inputs - use [ddbs_polygonize()] or [ddbs_build_area()] instead.
 #'
 #' @template x
 #' @template conn_null
@@ -435,8 +439,9 @@ ddbs_exterior_ring <- function(
 #' @template quiet
 #'
 #' @template returns_output
+#' @family polygon construction
+#' @seealso [ddbs_polygonize()], [ddbs_build_area()]
 #' @export
-#'
 #' @examples
 #' \dontrun{
 #' ## load package
@@ -470,6 +475,9 @@ ddbs_make_polygon <- function(
     output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    # 0. Handle function-specific error
+    assert_geom_type(x = x, conn = conn, geom = "LINESTRING", multi = FALSE)
     
     template_unary_ops(
         x = x,
@@ -964,4 +972,402 @@ ddbs_geometry_type <- function(
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
   feedback_query(quiet)
   return(data_tbl$geometry)
+}
+
+
+
+
+
+
+#' Assemble polygons from multiple linestrings
+#'
+#' Takes a collection of linestrings or polygons and assembles them into polygons by 
+#' finding all closed rings formed by the network. Returns a GEOMETRYCOLLECTION containing 
+#' the resulting polygons.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @family polygon construction
+#' @seealso [ddbs_make_polygon()], [ddbs_build_area()]
+#' @export
+ddbs_polygonize <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+    
+    deprecate_crs(crs_column, crs)
+
+    ## 0. Handle errors
+    assert_xy(x, "x")
+    assert_conn_character(conn, x)
+    assert_name(name)
+    assert_name(output, "output")
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+
+  
+    # 1. Manage connection to DB
+
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- ddbs_crs(x, conn)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+    assert_geometry_column(x_geom, x_list)
+  
+    ## 3.2. Function to use
+    st_function <- glue::glue("ST_Polygonize(LIST({x_geom}))")
+  
+  
+    # 4. if name is not NULL (i.e. no SF returned)
+    if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
+        ## handle overwrite
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
+
+        ## create query (no st_as_text)
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            SELECT {st_function} as {x_geom}
+            FROM {x_list$query_name};
+        ")
+        ## execute query
+        DBI::dbExecute(target_conn, tmp.query)
+        feedback_query(quiet)
+        return(invisible(TRUE))
+    }
+
+  
+    # 5. Get data frame
+  
+    ## 5.1. create query
+    tmp.query <- glue::glue("
+        SELECT ST_AsWKB({st_function}) as {x_geom}
+        FROM {x_list$query_name};
+    ")
+  
+    ## 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+
+  
+    # 6. convert to SF and return result
+    data_sf <- ddbs_handle_output(
+        data       = data_tbl,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
+        crs_column = crs_column,
+        x_geom     = x_geom
+    )
+
+    feedback_query(quiet)
+    return(data_sf)
+}
+
+
+
+
+
+#' Build polygon areas from multiple linestrings
+#'
+#' Constructs polygon or multipolygon geometries from a collection of linestrings, 
+#' handling intersections and creating unified areas. Returns POLYGON or MULTIPOLYGON 
+#' (not wrapped in a geometry collection). Requires MULTILINESTRING input - for 
+#' single linestrings, use [ddbs_make_polygon()].
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @family polygon construction
+#' @seealso [ddbs_make_polygon()], [ddbs_polygonize()]
+#' @export
+ddbs_build_area <- function(
+  x,
+  conn = NULL,
+  name = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+  
+  
+  template_unary_ops(
+    x = x,
+    conn = conn,
+    name = name,
+    crs = crs,
+    crs_column = crs_column,
+    output = output,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_BuildArea",
+    other_args = NULL
+  )
+
+}
+
+
+
+
+
+#' Computes a Voronoi diagram from point geometries
+#'
+#' Returns a Voronoi diagram (Thiessen polygons) from a collection of points.
+#' Each polygon represents the region closer to one point than to any other
+#' point in the set. This function only works with MULTIPOINT geometries.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## create some points, and combine them to MULTIPOINT
+#' set.seed(42)
+#' n <- 1000
+#' points_ddbs <- data.frame(
+#'     id = 1:n,
+#'     x = runif(n, min = -20, max = 20),
+#'     y = runif(n, min = -20, max = 02)
+#' ) |>
+#'   ddbs_as_spatial(coords = c("x", "y"), crs = 4326) |> 
+#'   ddbs_combine()
+#' 
+#' ## create voronoi diagrama
+#' ddbs_voronoi(points_ddbs)
+#' }
+ddbs_voronoi <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+
+    # 0. Handle function-specific errors
+    assert_geom_type(x, conn, geom = "MULTIPOINT")
+
+    # 1. Run the template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_VoronoiDiagram",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+#' Extracts the endpoint of a linestring geometry
+#'
+#' Returns the last point of a LINESTRING geometry. This function only works
+#' with LINESTRING geometries (not MULTILINESTRING or other geometry types).
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @export
+#'
+#' @details
+#' This function wraps DuckDB Spatial's \code{ST_EndPoint}. Input geometries must be of
+#' type LINESTRING (MULTILINESTRING is not supported). For each input feature, the final
+#' coordinate of the LINESTRING is returned as a POINT geometry.
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## store in duckdb
+#' ddbs_write_vector(conn, rivers_ddbs, "rivers")
+#'
+#' ## extract end points
+#' ddbs_endpoint(conn = conn, "rivers")
+#'
+#' ## extract end points without using a connection
+#' ddbs_endpoint(rivers_ddbs)
+#' }
+ddbs_endpoint <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+
+    # 0. Handle function-specific error
+    assert_geom_type(x = x, conn = conn, geom = "LINESTRING", multi = FALSE)
+
+
+    # 1. Run the template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_EndPoint",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+
+#' Flips the X and Y coordinates of geometries
+#'
+#' Returns a geometry with the X and Y coordinates swapped. This is useful
+#' for correcting geometries where longitude and latitude are in the wrong
+#' order, or for converting between coordinate systems with different axis
+#' orders.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
+#' ## store in duckdb
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#'
+#' ## flip coordinates
+#' ddbs_flip_coordinates("argentina", conn)
+#'
+#' ## flip coordinates without using a connection
+#' ddbs_flip_coordinates(argentina_ddbs)
+#' }
+ddbs_flip_coordinates <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_FlipCoordinates",
+        other_args = NULL
+    )
+
 }
