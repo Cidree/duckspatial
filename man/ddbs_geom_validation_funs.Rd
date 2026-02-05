@@ -12,40 +12,60 @@
 ddbs_is_simple(
   x,
   conn = NULL,
+  name = NULL,
+  new_column = "is_simple",
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
   quiet = FALSE
 )
 
 ddbs_is_valid(
   x,
   conn = NULL,
+  name = NULL,
+  new_column = "is_valid",
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
   quiet = FALSE
 )
 
 ddbs_is_closed(
   x,
   conn = NULL,
+  name = NULL,
+  new_column = "is_closed",
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
   quiet = FALSE
 )
 
 ddbs_is_empty(
   x,
   conn = NULL,
+  name = NULL,
+  new_column = "is_empty",
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
   quiet = FALSE
 )
 
 ddbs_is_ring(
   x,
   conn = NULL,
+  name = NULL,
+  new_column = "is_ring",
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
   quiet = FALSE
 )
 }
@@ -62,6 +82,14 @@ Data is returned from this object.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
+
+\item{new_column}{Name of the new column to create on the input data. If NULL,
+the function will return a vector with the result}
+
 \item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
@@ -69,18 +97,43 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
+\item{output}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+\item \code{"tibble"}: Eagerly collected tibble without geometry
+\item \code{"raw"}: Eagerly collected tibble with WKB geometry (list of raw vectors)
+\item \code{"geoarrow"}: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)
+}
+Can be set globally via \code{\link{ddbs_options}(output_type = "...")} or
+per-function via this argument. Per-function overrides global setting.}
+
+\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
+to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
+
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
 }
 \value{
-A logical vector
+When \code{new_column = NULL} it returns a logical vector. When \code{new_column} is not NULL, the
+output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+\itemize{
+\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected \code{sf} object in R memory.
+\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
+\item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
+\item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
+}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Functions to check various geometric properties and validity conditions of spatial
 geometries using DuckDB's spatial extension.
 }
 \details{
-These functions provide different types of geometric validation:
+These functions provide different types of geometric validation. Note that by default,
+the functions add a new column as a logical vector. This behaviour allows to filter the
+data within DuckDB without the need or materializating a vector in R (see details).
 \itemize{
 \item \code{ddbs_is_valid()} checks if a geometry is valid according to the OGC Simple Features
 specification. Invalid geometries may have issues like self-intersections in polygons,
@@ -100,6 +153,7 @@ simplicity.
 \dontrun{
 ## load package
 library(duckspatial)
+library(dplyr)
 
 ## create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
@@ -122,6 +176,8 @@ ddbs_is_ring(rivers_ddbs)
 ddbs_is_empty(countries_ddbs)
 ddbs_is_closed(countries_ddbs)
 
+## filter invalid countries
+ddbs_is_valid(countries_ddbs) |> filter(!is_valid)
 }
 
 }

@@ -12,7 +12,7 @@
 
 * `ddbs_simplify()`: tolerance defaults to 0; gains a new argument `preserve_topology` specified before `conn` (#86).
 
-* `ddbs_is_simple()` and `ddbs_is_valid()`: it had a `new_column` argument to create a new table adding the resulting logical vector. As this was a weird implementation and complicates the understanding of the function, now it just returns a logical vector (#83).
+* `ddbs_is_simple()` and `ddbs_is_valid()`: the `new_column` argument now defaults to a colum name, as we now encourage the users to keep most of the work inside DuckDB (#83).
 
 ## NEW FEATURES
 
