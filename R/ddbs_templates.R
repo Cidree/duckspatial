@@ -535,23 +535,6 @@ template_new_column <- function(
   quiet = FALSE,
   fun) {
   
-  
-  # Handle polymorphic API
-  is_table <- tryCatch({
-    inherits(
-      x,
-      c("sf", "duckspatial_df", "tbl_lazy", "tbl_duckdb_connection")
-    ) || 
-      is.character(x)
-  }, error = function(e) FALSE)
-
-  if (isFALSE(is_table)) {
-    x_expr <- substitute(x)
-    dplyr::sql(
-      glue::glue("{fun}({as.character(x_expr)})")
-    )
-  }
-  
   deprecate_crs(crs_column, crs)
 
   ## 0. Handle errors
