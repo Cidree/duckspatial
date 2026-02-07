@@ -21,6 +21,12 @@
     CREATE OR REPLACE MACRO ddbs_is_closed(geom) AS ST_IsClosed(geom);
     CREATE OR REPLACE MACRO ddbs_is_ring(geom) AS ST_IsRing(geom);
     CREATE OR REPLACE MACRO ddbs_is_empty(geom) AS ST_IsEmpty(geom);
+    CREATE OR REPLACE MACRO ddbs_area(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Area_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Area(geom)
+      END
+    );
     "
   )
 
