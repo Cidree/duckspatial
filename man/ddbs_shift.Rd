@@ -75,9 +75,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Shifts (translates) geometries from a \code{sf} object or a DuckDB table. Returns
-the result as an \code{sf} object or creates a new  table in the database.
-This function is equivalent to \code{terra::shift()}.
+Translates geometries by specified X and Y distances, moving
+them without altering their shape or orientation.
 }
 \examples{
 \dontrun{

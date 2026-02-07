@@ -1,8 +1,7 @@
-#' Returns the boundary of geometries
+#' Get the boundary of geometries
 #'
-#' Returns the boundary of geometries from a `sf` object or a DuckDB table.
-#' Returns the result as an \code{sf} object or creates a new table in the
-#' database.
+#' Returns the boundary of geometries as a new geometry, e.g., the edges of polygons 
+#' or the start/end points of lines.
 #'
 #' @template x
 #' @template conn_null
@@ -45,111 +44,31 @@ ddbs_boundary <- function(
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-
-
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-
-    # 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query 
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_Boundary({x_geom}) as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-
-    # 5. create the base query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_Boundary({x_geom})) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-    ## send the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
-        conn       = target_conn,
-        output     = output,
-        crs        = if (!is.null(crs)) crs else crs_x,
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_Boundary",
+        other_args = NULL
     )
-
-    feedback_query(quiet)
-    return(data_sf)
+    
 }
 
 
 
 
 
-#' Returns the envelope (bounding box) of geometries
+#' Get the envelope (bounding box) of geometries
 #'
-#' Returns the minimum bounding rectangle (envelope) of geometries from a `sf`
-#' object or a DuckDB table. Returns the result as an \code{sf} object or creates
-#' a new table in the database.
+#' Returns the minimum axis-aligned rectangle that fully contains the geometry.
 #'
 #' @template x
-#' @param by_feature Logical. If \code{TRUE}, returns one envelope per feature.
-#' If \code{FALSE} (default), returns a single envelope for all geometries combined.
+#' @template by_feature
 #' @template conn_null
 #' @template name
 #' @template crs
@@ -213,17 +132,18 @@ ddbs_envelope <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_logic(by_feature, "by_feature")
+    assert_name(name)
+    assert_conn_character(conn, x)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -259,7 +179,7 @@ ddbs_envelope <- function(
     if (isTRUE(by_feature)) {
         st_envelope_clause <- glue::glue("ST_Envelope({x_geom})")
     } else {
-        st_envelope_clause <- glue::glue("ST_Envelope(ST_Collect(LIST({x_geom})))")
+        st_envelope_clause <- glue::glue("ST_Envelope_Agg({x_geom})")
     }
 
 
@@ -331,23 +251,20 @@ ddbs_envelope <- function(
 
 
 
-#' Returns the minimal bounding box enclosing the input geometry
+#' Get the bounding box of geometries
 #'
-#' Returns the minimal bounding box enclosing the input geometry from a `sf` object
-#' or a DuckDB table. Returns the result as an \code{sf} object or creates a new
-#' table in the database.
+#' Returns the minimal rectangle that encloses the geometry, typically used 
+#' to summarize its spatial extent.
 #'
 #' @template x
-#' @param by_feature Boolean. The function defaults to `FALSE`, and returns a
-#'        single bounding box for `x`. If `TRUE`, it return one bounding box for
-#'        each feature.
+#' @template by_feature
 #' @template conn_null
 #' @template name
 #' @template crs
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @returns A data frame or \code{TRUE} (invisibly) for table creation when name is not NULL.
 #' @export
 #'
 #' @examples
@@ -393,8 +310,9 @@ ddbs_bbox <- function(
 
     # 0. Handle errors
     assert_xy(x, "x")
-    assert_name(name)
     assert_logic(by_feature, "by_feature")
+    assert_conn_character(conn, x)
+    assert_name(name)
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     assert_connflict(conn, xy = x, ref = "x")
@@ -403,7 +321,7 @@ ddbs_bbox <- function(
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -438,7 +356,7 @@ ddbs_bbox <- function(
     if (isTRUE(by_feature)) {
         st_extent_clause <- glue::glue("ST_Extent({x_geom})")
     } else {
-        st_extent_clause <- glue::glue("ST_Extent(ST_Collect(LIST({x_geom})))")
+        st_extent_clause <- glue::glue("ST_Extent_Agg({x_geom})")
     }
 
     tmp.query <- glue::glue(

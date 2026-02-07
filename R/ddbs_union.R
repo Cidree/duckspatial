@@ -8,8 +8,15 @@
 #' * `ddbs_union_agg()` - Union geometries grouped by one or more columns
 #' * `ddbs_combine()` - Combine geometries into a MULTI-geometry without dissolving boundaries
 #'
-#' @param x A spatial dataset (duckdb table/view)
-#' @param y A second spatial dataset for pairwise union operations. Default is `NULL`
+#' @template x
+#' @param y Input spatial data. Can be:
+#'   \itemize{
+#'    \item \code{NULL} (default): performs only the union of `x`
+#'     \item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+#'     \item An \code{sf} object
+#'     \item A \code{tbl_lazy} from dbplyr
+#'     \item A character string naming a table/view in \code{conn}
+#'   }
 #' @param by_feature Logical. When `y` is provided:
 #'   * `FALSE` (default) - Union all geometries from both `x` and `y` into a single geometry
 #'   * `TRUE` - Perform row-by-row union between matching features from `x` and `y` (requires same number of rows)
@@ -76,13 +83,13 @@
 #' union_countries_rivers_ddbs <- ddbs_union(countries_ddbs, rivers_ddbs)
 #' }
 #'
-#' @name ddbs_union
-#' @rdname ddbs_union
+#' @name ddbs_union_funs
+#' @rdname ddbs_union_funs
 NULL
 
 
 
-#' @rdname ddbs_union
+#' @rdname ddbs_union_funs
 #' @export
 ddbs_union <- function(
   x,
@@ -102,15 +109,15 @@ ddbs_union <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_name(name)
-  assert_logic(overwrite, "overwrite")
   assert_logic(by_feature, "by_feature")
+  assert_name(name)
+  assert_name(output, "output")
+  assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
   if (isTRUE(by_feature) & is.null(y)) cli::cli_warn("When {.arg y} is NULL, {.arg by_feature = TRUE} is ignored.")
 
   ## Pre-extract `x` attributes (CRS and geometry column name)
-  crs_x <- detect_crs(x)
+  crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
   sf_col_x <- attr(x, "sf_column")
 
 
@@ -122,7 +129,7 @@ ddbs_union <- function(
     assert_conn_character(conn, y)
   
     ## 1.1. Pre-extract `y` attributes
-    crs_y    <- detect_crs(y)
+    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
     sf_col_y <- attr(y, "sf_column")
   
     ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
@@ -344,7 +351,7 @@ ddbs_union <- function(
 
 
 
-#' @rdname ddbs_union
+#' @rdname ddbs_union_funs
 #' @export
 ddbs_combine <- function(
     x,
@@ -360,17 +367,18 @@ ddbs_combine <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
   
 
     # 1. Manage connection to DB
 
     ## 1.1. Pre-extract attributes (CRS and geometry column name)
     ## this step should be before normalize_spatial_input()
-    crs_x    <- detect_crs(x)
+    crs_x    <- ddbs_crs(x, conn)
     sf_col_x <- attr(x, "sf_column")
 
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -457,7 +465,7 @@ ddbs_combine <- function(
 
 
 
-#' @rdname ddbs_union
+#' @rdname ddbs_union_funs
 #' @export
 ddbs_union_agg <- function(
   x,
@@ -474,17 +482,18 @@ ddbs_union_agg <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
+  assert_conn_character(conn, x)
   assert_name(name)
+  assert_name(output, "output")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
 
 
   # 1. Manage connection to DB
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -545,8 +554,6 @@ ddbs_union_agg <- function(
 
 
   # 4. Create the base query
-  ## Union of geometries grouped by specified columns
-  by_cols <- paste0(by, collapse = ", ")
 
   ## create the query based on if other_cols has at least one column
   tmp.query <- glue::glue("

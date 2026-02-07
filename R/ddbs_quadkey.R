@@ -1,17 +1,16 @@
 
 
-#' Convert geometries to QuadKey tiles
+#' Convert point geometries to QuadKey tiles
 #'
-#' Converts POINT geometries to QuadKey tile representations at a specified zoom level.
-#' QuadKeys are a hierarchical spatial indexing system used by mapping services like Bing Maps.
-#'
+#' Transforms point geometries into QuadKey identifiers at a specified zoom level, 
+#' a hierarchical spatial indexing system used by mapping services.
+#' 
 #' @template x
 #' @param level An integer specifying the zoom level for QuadKey generation (1-23).
 #' Higher values provide finer spatial resolution. Default is 10.
-#' @param field Character string specifying the field name for raster output.
-#' Only used when \code{output = "raster"}
-#' @param fun summarizing function for when there are multiple geometries in one cell (e.g. "mean",
-#' "min", "max", "sum"). Only used when \code{output = "raster"}
+#' @param field Character string specifying the field name for aggregation.
+#' @param fun aggregation function for when there are multiple quadkeys (e.g. "mean",
+#' "min", "max", "sum").
 #' @param background numeric. Default value in raster cells without values. Only used when 
 #' \code{output = "raster"}
 #' @template conn_null
@@ -90,14 +89,17 @@ ddbs_quadkey <- function(
   
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_name(name)
-  assert_name(output)
-  assert_name(fun)
-  assert_name(field)
   assert_numeric(level, "level")
+  assert_name(field, "field")
+  assert_character_scalar(fun, "fun")
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(output, "output")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
+
+  ## valid outputs
+  if (!output %in% c("polygon", "raster", "tilexy")) cli::cli_abort("{.arg output} must be one of: {.val {c('polygon', 'raster', 'tilexy')}}")
 
   ## suggested packages
   rlang::check_installed(
@@ -116,7 +118,7 @@ ddbs_quadkey <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x    <- detect_crs(x)
+  crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
@@ -149,14 +151,13 @@ ddbs_quadkey <- function(
   
 
   ## 3.3. check CRS (we need EPSG:4326 for quadkeys)
-  data_crs <- ddbs_crs(target_conn, x_list$query_name, crs_column = crs_column)
-  if (data_crs$input != "EPSG:4326") {
+  if (crs_x$input != "EPSG:4326") {
     if (!quiet) cli::cli_alert_info("Transforming {.arg x} crs to {.val EPSG:4326}")
     ## query
     tmp.query <- glue::glue("
       CREATE OR REPLACE TABLE {x_list$query_name} AS
       SELECT {x_rest}
-      ST_Transform({x_geom}, '{data_crs$input}', 'EPSG:4326') as {x_geom} 
+      ST_Transform({x_geom}, '{crs_x$input}', 'EPSG:4326') as {x_geom} 
       FROM {x_list$query_name};
     ")
     ## execute
@@ -173,13 +174,25 @@ ddbs_quadkey <- function(
       ## handle overwrite
       overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
-      ## create query (no st_as_text)
-      tmp.query <- glue::glue("
-        CREATE TABLE {name_list$query_name} AS
-        SELECT {x_rest}
-        ST_QuadKey({x_geom}, {level}) as quadkey 
-        FROM {x_list$query_name};
-      ")
+      ## create query with optional aggregation
+      if (!is.null(field)) {
+        tmp.query <- glue::glue("
+          CREATE TABLE {name_list$query_name} AS
+          SELECT 
+            ST_QuadKey({x_geom}, {level}) as quadkey,
+            {fun}({field}) as {field},
+            {crs_column}
+          FROM {x_list$query_name}
+          GROUP BY quadkey, {crs_column};
+        ")
+      } else {
+        tmp.query <- glue::glue("
+          CREATE TABLE {name_list$query_name} AS
+          SELECT {x_rest}
+          ST_QuadKey({x_geom}, {level}) as quadkey 
+          FROM {x_list$query_name};
+        ")
+      }
       ## execute intersection query
       DBI::dbExecute(target_conn, tmp.query)
       feedback_query(quiet)
@@ -187,25 +200,41 @@ ddbs_quadkey <- function(
   }
 
 
-  # 5. Get data frame
-  ## 5.1. create query
-  tmp.query <- glue::glue("
-    SELECT {x_rest}
-    ST_QuadKey({x_geom}, {level}) as quadkey 
-    FROM {x_list$query_name};
-  ")
-  ## 4.2. retrieve results from the query
+  # 5. Get data frame with query-level aggregation
+  ## 5.1. create query with aggregation if field is specified
+  if (!is.null(field)) {
+    tmp.query <- glue::glue("
+      SELECT 
+        ST_QuadKey({x_geom}, {level}) as quadkey,
+        {fun}({field}) as {field},
+        {crs_column}
+      FROM {x_list$query_name}
+      GROUP BY quadkey, {crs_column};
+    ")
+  } else {
+    tmp.query <- glue::glue("
+      SELECT {x_rest}
+      ST_QuadKey({x_geom}, {level}) as quadkey 
+      FROM {x_list$query_name};
+    ")
+  }
+  
+  ## 5.2. retrieve results from the query
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
   data_tbl <- dplyr::select(data_tbl, -dplyr::all_of(crs_column))
 
-  ## 5. convert to SF and return result
+  ## 6. convert to desired output format
   if (output == "polygon") {
 
-    prep_data <- quadkeyr::quadkey_df_to_polygon(data_tbl) |> 
-      as_duckspatial_df()
+    ## get 1 quadkey per row (already aggregated if field was specified)
+    data_sf <- quadkeyr::quadkey_df_to_polygon(data_tbl)
+
+    ## convert to duckspatial_df
+    prep_data <- as_duckspatial_df(data_sf)
 
   } else if (tolower(output) == "tilexy") {
 
+    ## convert to tibble
     prep_data <- dplyr::bind_cols(
       dplyr::bind_rows(lapply(data_tbl$quadkey, quadkeyr::quadkey_to_tileXY)),
       data_tbl |> dplyr::select(-dplyr::all_of("quadkey"))

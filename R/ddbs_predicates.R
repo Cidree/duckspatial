@@ -1,18 +1,14 @@
 
 
 
-#' Spatial predicate operations
+#' Evaluate spatial predicates between geometries
 #'
-#' Computes spatial relationships between two geometry datasets using DuckDB's
-#' spatial extension. Returns a list where each element corresponds to a row of
-#' `x`, containing the indices (or IDs) of rows in `y` that satisfy the specified
-#' spatial predicate.
-#'
+#' Determines which geometries in one dataset satisfy a specified spatial 
+#' relationship with geometries in another dataset, such as intersection, 
+#' containment, or touching.
 #'
 #' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
-#'        Data is returned from this object.
+#' @template y
 #' @template predicate
 #' @template conn_null
 #' @template conn_x_conn_y
@@ -20,6 +16,7 @@
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
 #' @template quiet
+#' @param ... Passed to [ddbs_predicate]
 #'
 #' @details
 #'
@@ -149,8 +146,10 @@ ddbs_predicate <- function(
   ## 0. Handle errors
   assert_xy(x, "x")
   assert_xy(y, "y")
-  assert_logic(quiet, "quiet")
+  assert_name(id_x, "id_x")
+  assert_name(id_y, "id_y")
   assert_logic(sparse, "sparse")
+  assert_logic(quiet, "quiet")
 
   ## Validate predicate early (it aborts on invalid)
   st_predicate <- get_st_predicate(predicate)
@@ -160,8 +159,8 @@ ddbs_predicate <- function(
 
   ## 1.1. Pre-extract attributes (CRS and geometry column name)
   ## this step should be before normalize_spatial_input()
-  crs_x <- detect_crs(x)
-  crs_y <- detect_crs(y)
+  crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
+  crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
   sf_col_x <- attr(x, "sf_column")
   sf_col_y <- attr(y, "sf_column")
 
@@ -221,6 +220,19 @@ ddbs_predicate <- function(
   ## 4.1. create query
   if (st_predicate == "ST_DWithin") {
 
+    ## check the CRS units to use the right function
+    crs_units <- crs_x$units_gdal
+    if (crs_units != "metre") {
+      st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
+      if (crs_x$input != "EPSG:4326") {
+        cli::cli_warn(
+          "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
+        )
+      }
+    } else {
+      st_predicate <- glue::glue("ST_DWithin(x.{x_geom}, y.{y_geom}, {distance})")
+    }
+
     ## if distance is not specified, it will use ST_Within
     if (is.null(distance)) {
       cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
@@ -228,7 +240,7 @@ ddbs_predicate <- function(
     }
 
     tmp.query <- glue::glue("
-      SELECT {st_predicate}(x.{x_geom}, y.{y_geom}, {distance}) as predicate
+      SELECT {st_predicate} as predicate
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
     ")
@@ -261,435 +273,72 @@ ddbs_predicate <- function(
 
 
 
-
 #' @rdname ddbs_predicate
-ddbs_intersects <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "intersects",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y,
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_intersects <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "intersects", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_covers <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "covers",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y,
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_covers <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "covers", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_touches <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "touches",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y,
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_touches <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "touches", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_is_within_distance <- function(
-  x,
-  y,
-  distance = NULL,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "dwithin",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y,
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    distance  = distance,
-    quiet     = quiet
-  )
-
+ddbs_is_within_distance <- function(x, y, distance = NULL, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "dwithin", distance = distance, ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_disjoint <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x, 
-    y         = y, 
-    predicate = "disjoint", 
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x, 
-    id_y      = id_y, 
-    sparse    = sparse, 
-    quiet     = quiet
-  )
-
+ddbs_disjoint <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "disjoint", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_within <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "within",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_within <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "within", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_contains <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "contains",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_contains <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "contains", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_overlaps <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "overlaps",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_overlaps <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "overlaps", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_crosses <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "crosses",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_crosses <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "crosses", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_equals <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "equals",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_equals <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "equals", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_covered_by <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "covered_by",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_covered_by <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "covered_by", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_intersects_extent <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "intersects_extent",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_intersects_extent <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "intersects_extent", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_contains_properly <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "contains_properly",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_contains_properly <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "contains_properly", ...)
 }
 
-
-
-
-
 #' @rdname ddbs_predicate
-ddbs_within_properly <- function(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE) {
-
-  ddbs_predicate(
-    x         = x,
-    y         = y,
-    predicate = "within_properly",
-    conn      = conn,
-    conn_x    = conn_x,
-    conn_y    = conn_y, 
-    id_x      = id_x,
-    id_y      = id_y,
-    sparse    = sparse,
-    quiet     = quiet
-  )
-
+ddbs_within_properly <- function(x, y, ...) {
+  ddbs_predicate(x = x, y = y, predicate = "within_properly", ...)
 }

@@ -47,69 +47,61 @@ reference:
 - title: Spatial Predicates
   desc: Test spatial relationships between geometries
   contents:
-  - ddbs_contains
-  - ddbs_contains_properly
-  - ddbs_covered_by
-  - ddbs_covers
-  - ddbs_crosses
-  - ddbs_disjoint
-  - ddbs_equals
-  - ddbs_intersects
-  - ddbs_intersects_extent
-  - ddbs_is_within_distance
-  - ddbs_overlaps
   - ddbs_predicate
-  - ddbs_touches
-  - ddbs_within
-  - ddbs_within_properly
 
 - title: Spatial Joins and Filters
-  desc: Binary operations combining two geometries
+  desc: Combine or filter geometries based on spatial relationships
   contents:
-  - ddbs_difference
+  - ddbs_binary_funs
   - ddbs_filter
   - ddbs_interpolate_aw
-  - ddbs_intersection
   - ddbs_join
+
+- title: Geometry Construction
+  desc: Create new geometries from scratch or existing data
+  contents:
+  - ddbs_as_spatial
+  - ddbs_generate_points
+  - ddbs_quadkey
 
 - title: Geometry Processing
   desc: Modify and process individual geometries
   contents:
-  - ddbs_as_spatial
+  - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid
-  - ddbs_combine
   - ddbs_concave_hull
   - ddbs_convex_hull
+  - ddbs_endpoint
   - ddbs_exterior_ring
-  - ddbs_generate_points
   - ddbs_make_polygon
-  - ddbs_make_valid
-  - ddbs_simplify
+  - ddbs_union_funs
+  - ddbs_voronoi
+
+- title: Coordinate Operations
+  desc: Transform and manipulate coordinates
   - ddbs_transform
-  - ddbs_quadkey
-  - ddbs_union
-  - ddbs_union_agg
+  - ddbs_flip_coordinates
 
 - title: Geometry Validation
-  desc: Check geometry validity
+  desc: Check and ensure geometry validity and dimensionality
   contents:
   - ddbs_geometry_type
-  - ddbs_is_simple
-  - ddbs_is_valid
+  - ddbs_make_valid
+  - ddbs_simplify
+  - ddbs_geom_validation_funs
+  - ddbs_has_dim
+  - ddbs_force_dim
 
 - title: Format Conversion
   desc: Convert geometries to standard spatial formats
   contents:
-  - ddbs_as_text
-  - ddbs_as_wkb
-  - ddbs_as_hexwkb
+  - ddbs_as_format
 
 - title: Spatial Extent and Boundaries
   desc: Extract geometry bounds and envelopes
   contents:
   - ddbs_bbox
-  - ddbs_boundary
   - ddbs_envelope
 
 - title: Affine Transformations
@@ -128,6 +120,7 @@ reference:
   - ddbs_area
   - ddbs_distance
   - ddbs_length
+  - ddbs_perimeter
 
 - title: Database Utilities
   desc: Helper functions for database management

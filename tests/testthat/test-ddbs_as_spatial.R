@@ -23,82 +23,112 @@ DBI::dbWriteTable(conn_test, "cities", cities_tbl)
 
 # 1. ddbs_as_spatial() -------------------------------------------------------
 
-## 1.1. Expected behaviour -------------------
-
-## expected behaviour
 ## - CHECK 1.1: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
 ## - CHECK 1.2: messages work
 ## - CHECK 1.3: writting a table works
 ## - CHECK 1.4: different column names, and CRS
-testthat::test_that("ddbs_as_spatial(): expected behavior", {
-  
-  ## CHECK 1.1
-  output_ddbs_fmt     <- ddbs_as_spatial(cities_tbl)
-  output_geoarrow_fmt <- ddbs_as_spatial(cities_tbl, output = "geoarrow")
-  output_sf_fmt       <- ddbs_as_spatial(cities_tbl, output = "sf")
-  output_raw_fmt      <- ddbs_as_spatial(cities_tbl, output = "raw")
+## - CHECK 2.1: specific errors
+## - CHECK 2.2: general errors
+describe("ddbs_as_spatial()", {
 
-  testthat::expect_s3_class(output_ddbs_fmt, "duckspatial_df")
-  testthat::expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-  testthat::expect_s3_class(output_sf_fmt, "sf")
-  testthat::expect_s3_class(output_raw_fmt, "tbl_df")
+  ### EXPECTED BEHAVIOR -------------------------------------------------
 
+  describe("expected behavior", {
 
-  ## CHECK 1.2
-  testthat::expect_message(ddbs_as_spatial(cities_tbl))
-  testthat::expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial"))
-  testthat::expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE))
-  testthat::expect_true(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial2"))
+    it("returns different output formats", {
+      output_ddbs_fmt     <- ddbs_as_spatial(cities_tbl)
+      output_geoarrow_fmt <- ddbs_as_spatial(cities_tbl, output = "geoarrow")
+      output_sf_fmt       <- ddbs_as_spatial(cities_tbl, output = "sf")
+      output_raw_fmt      <- ddbs_as_spatial(cities_tbl, output = "raw")
 
-  testthat::expect_no_message(ddbs_as_spatial(cities_tbl, quiet = TRUE))
-  testthat::expect_no_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE, quiet = TRUE))
+      expect_s3_class(output_ddbs_fmt, "duckspatial_df")
+      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      expect_s3_class(output_sf_fmt, "sf")
+      expect_s3_class(output_raw_fmt, "tbl_df")
+    })
 
+    it("shows and suppresses messages correctly", {
+      expect_message(ddbs_as_spatial(cities_tbl))
+      expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial"))
+      expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE))
+      expect_true(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial2"))
 
-  ## CHECK 1.3
-  output_tbl <- ddbs_read_vector(conn_test, "as_spatial")
-  testthat::expect_equal(
-    ddbs_collect(output_ddbs_fmt)$geometry,
-    output_tbl$geometry
-  )
+      expect_no_message(ddbs_as_spatial(cities_tbl, quiet = TRUE))
+      expect_no_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE, quiet = TRUE))
+    })
 
+    it("writes tables correctly to DuckDB", {
+      output_tbl <- ddbs_read_vector(conn_test, "as_spatial")
+      expect_equal(
+        ddbs_collect(ddbs_as_spatial(cities_tbl))$geometry,
+        output_tbl$geometry
+      )
+    })
 
-  ## CHECK 1.4
-  cities_3857 <- output_tbl |> 
-    sf::st_transform("EPSG:3847") %>%
-    dplyr::mutate(
-      xx = sf::st_coordinates(.)[, 1],
-      yy = sf::st_coordinates(.)[, 2]
-    ) |> 
-    sf::st_drop_geometry()
+    it("handles different column names and CRS correctly", {
+      output_tbl <- ddbs_read_vector(conn_test, "as_spatial")
+      cities_3857 <- output_tbl |> 
+        sf::st_transform("EPSG:3847") %>% 
+        dplyr::mutate(
+          xx = sf::st_coordinates(.)[, 1],
+          yy = sf::st_coordinates(.)[, 2]
+        ) |> 
+        sf::st_drop_geometry()
 
-  output_3857 <- ddbs_as_spatial(
-    cities_3857,
-    coords = c("xx", "yy"),
-    crs = "EPSG:3857"
-  )
+      output_3857 <- ddbs_as_spatial(
+        cities_3857,
+        coords = c("xx", "yy"),
+        crs = "EPSG:3857"
+      )
 
-  testthat::expect_equal(st_crs(output_3857), st_crs("EPSG:3857"))
-    
+      expect_equal(st_crs(output_3857), st_crs("EPSG:3857"))
+    })
+  })
+
+  ### ERRORS ------------------------------------------------------------
+
+  describe("errors", {
+
+    it("validates coords argument", {
+      expect_error(ddbs_as_spatial(cities_tbl, coords = c("longitude", "latitude")))
+      expect_error(ddbs_as_spatial(cities_tbl, coords = c("longitude", "latitude", "z")))
+    })
+
+    it("validates CRS argument", {
+      expect_error(ddbs_as_spatial(cities_tbl, crs = "NICE_CRS"))
+    })
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_as_spatial("cities", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_as_spatial(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_as_spatial(cities_tbl, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_as_spatial(cities_tbl, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_as_spatial(cities_tbl, quiet = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_as_spatial(x = "999", conn = conn_test))
+    })
+
+    it("requires name to be single character string", {
+      expect_error(ddbs_as_spatial(cities_tbl, conn = conn_test, name = c('banana', 'banana')))
+    })
+  })
 })
 
-## 1.2. Errors -------------------------
 
-## CHECK 2.1: specific errors
-## CHECK 2.2: general errors
-testthat::test_that("ddbs_as_spatial(): errors work", {
-  
-    ## CHECK 2.1
-    testthat::expect_error(ddbs_as_spatial(cities_tbl, coords = c("longitude", "latitude")))
-    testthat::expect_error(ddbs_as_spatial(cities_tbl, crs = "NICE_CRS"))
-    testthat::expect_error(ddbs_as_spatial("cities", conn = NULL))
-    testthat::expect_error(ddbs_as_spatial(cities_tbl, coords = c("longitude", "latitude", "z")))
-  
-    ## CHECK 2.2.
-    testthat::expect_error(ddbs_as_spatial(x = 999))
-    testthat::expect_error(ddbs_as_spatial(cities_tbl, conn = 999))
-    testthat::expect_error(ddbs_as_spatial(cities_tbl, overwrite = 999))
-    testthat::expect_error(ddbs_as_spatial(cities_tbl, quiet = 999))
-    testthat::expect_error(ddbs_as_spatial(x = "999", conn = conn_test))
-    testthat::expect_error(ddbs_as_spatial(cities_tbl, conn = conn_test, name = c('banana', 'banana')))
-  
-})
+
+## stop connection
+duckspatial::ddbs_stop_conn(conn_test)

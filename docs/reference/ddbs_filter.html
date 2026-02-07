@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0999</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,10 +52,13 @@
 <span>  <span class="va">y</span>,</span>
 <span>  predicate <span class="op">=</span> <span class="st">"intersects"</span>,</span>
 <span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conn_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conn_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
 <span>  distance <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -66,13 +69,19 @@
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An <code>sf</code> spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database <code>conn</code>.
-Data is returned from this object.</p></dd>
+<dd><p>Input spatial data. Can be:</p><ul><li><p>A <code>duckspatial_df</code> object (lazy spatial data frame via dbplyr)</p></li>
+<li><p>An <code>sf</code> object</p></li>
+<li><p>A <code>tbl_lazy</code> from dbplyr</p></li>
+<li><p>A character string naming a table/view in <code>conn</code></p></li>
+</ul><p>Data is returned from this object.</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>Y table with geometry column within the DuckDB database</p></dd>
+<dd><p>Input spatial data. Can be:</p><ul><li><p>A <code>duckspatial_df</code> object (lazy spatial data frame via dbplyr)</p></li>
+<li><p>An <code>sf</code> object</p></li>
+<li><p>A <code>tbl_lazy</code> from dbplyr</p></li>
+<li><p>A character string naming a table/view in <code>conn</code></p></li>
+</ul></dd>
 
 
 <dt id="arg-predicate">predicate<a class="anchor" aria-label="anchor" href="#arg-predicate"></a></dt>
@@ -85,6 +94,16 @@ a wrapper of <code>ST_Intersects</code>. See details for other options.</p></dd>
 runs on a temporary DuckDB database.</p></dd>
 
 
+<dt id="arg-conn-x">conn_x<a class="anchor" aria-label="anchor" href="#arg-conn-x"></a></dt>
+<dd><p>A <code>DBIConnection</code> object to a DuckDB database for the input <code>x</code>.
+If <code>NULL</code> (default), it is resolved from <code>conn</code> or extracted from <code>x</code>.</p></dd>
+
+
+<dt id="arg-conn-y">conn_y<a class="anchor" aria-label="anchor" href="#arg-conn-y"></a></dt>
+<dd><p>A <code>DBIConnection</code> object to a DuckDB database for the input <code>y</code>.
+If <code>NULL</code> (default), it is resolved from <code>conn</code> or extracted from <code>y</code>.</p></dd>
+
+
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
@@ -93,12 +112,12 @@ names. If <code>NULL</code> (the default), the function returns the result as an
 
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
-<dd><p>The coordinates reference system of the data. Specify if the data
+<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> The coordinates reference system of the data. Specify if the data
 doesn't have a <code>crs_column</code>, and you know the CRS.</p></dd>
 
 
 <dt id="arg-crs-column">crs_column<a class="anchor" aria-label="anchor" href="#arg-crs-column"></a></dt>
-<dd><p>a character string of length one specifying the column
+<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> a character string of length one specifying the column
 storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>).
 Set to <code>NULL</code> if absent.</p></dd>
 
@@ -106,6 +125,16 @@ Set to <code>NULL</code> if absent.</p></dd>
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
 <dd><p>a numeric value specifying the distance for ST_DWithin. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)</p></dd>
+
+
+<dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
+<dd><p>Character. Controls the return type. Options:</p><ul><li><p><code>"duckspatial_df"</code> (default): Lazy spatial data frame backed by dbplyr/DuckDB</p></li>
+<li><p><code>"sf"</code>: Eagerly collected sf object (uses memory)</p></li>
+<li><p><code>"tibble"</code>: Eagerly collected tibble without geometry</p></li>
+<li><p><code>"raw"</code>: Eagerly collected tibble with WKB geometry (list of raw vectors)</p></li>
+<li><p><code>"geoarrow"</code>: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)</p></li>
+</ul><p>Can be set globally via <code><a href="ddbs_options.html">ddbs_options</a>(output_type = "...")</code> or
+per-function via this argument. Per-function overrides global setting.</p></dd>
 
 
 <dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
@@ -120,7 +149,12 @@ Defaults to <code>FALSE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An sf object or TRUE (invisibly) for table creation</p>
+    <p>Depends on the <code>output</code> argument (or global preference set by <code><a href="ddbs_options.html">ddbs_options</a></code>):</p><ul><li><p><code>duckspatial_df</code> (default): A lazy spatial data frame backed by dbplyr/DuckDB.</p></li>
+<li><p><code>sf</code>: An eagerly collected <code>sf</code> object in R memory.</p></li>
+<li><p><code>tibble</code>: An eagerly collected <code>tibble</code> without geometry in R memory.</p></li>
+<li><p><code>raw</code>: An eagerly collected <code>tibble</code> with WKB geometry (no conversion).</p></li>
+<li><p><code>geoarrow</code>: An eagerly collected <code>tibble</code> with geometry converted to <code>geoarrow_vctr</code>.</p></li>
+</ul><p>When <code>name</code> is provided, the result is also written as a table or view in DuckDB and the function returns <code>TRUE</code> (invisibly).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -144,26 +178,41 @@ most commonly used ones, taking two geometries a and b:</p><ul><li><p><code>"ST_
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co">## load packages</span></span></span>
+<span class="r-in"><span><span class="co"># RECOMMENDED: Efficient lazy workflow using ddbs_open_dataset</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Load data directly as lazy spatial data frames (CRS auto-detected)</span></span></span>
+<span class="r-in"><span><span class="va">countries</span> <span class="op">&lt;-</span> <span class="fu"><a href="ddbs_open_dataset.html">ddbs_open_dataset</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">argentina</span> <span class="op">&lt;-</span> <span class="fu"><a href="ddbs_open_dataset.html">ddbs_open_dataset</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/argentina.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Lazy filter - computation stays in DuckDB</span></span></span>
+<span class="r-in"><span><span class="va">neighbors</span> <span class="op">&lt;-</span> <span class="fu">ddbs_filter</span><span class="op">(</span><span class="va">countries</span>, <span class="va">argentina</span>, predicate <span class="op">=</span> <span class="st">"touches"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Collect to sf when needed</span></span></span>
+<span class="r-in"><span><span class="va">neighbors_sf</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="va">neighbors</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Alternative: using sf objects directly (legacy compatibility)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># create a duckdb database in memory (with spatial extension)</span></span></span>
-<span class="r-in"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span>dbdir <span class="op">=</span> <span class="st">"memory"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## read data</span></span></span>
 <span class="r-in"><span><span class="va">countries_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">argentina_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/argentina.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## store in duckdb</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">ddbs_filter</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">argentina_sf</span>, predicate <span class="op">=</span> <span class="st">"touches"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Alternative: using table names in a duckdb connection</span></span></span>
+<span class="r-in"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span>dbdir <span class="op">=</span> <span class="st">"memory"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, <span class="st">"countries"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">argentina_sf</span>, <span class="st">"argentina"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## filter countries touching argentina</span></span></span>
 <span class="r-in"><span><span class="fu">ddbs_filter</span><span class="op">(</span>conn <span class="op">=</span> <span class="va">conn</span>, <span class="st">"countries"</span>, <span class="st">"argentina"</span>, predicate <span class="op">=</span> <span class="st">"touches"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## filter without using a connection</span></span></span>
-<span class="r-in"><span><span class="fu">ddbs_filter</span><span class="op">(</span><span class="va">countries_sf</span>, <span class="va">argentina_sf</span>, predicate <span class="op">=</span> <span class="st">"touches"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

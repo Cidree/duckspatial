@@ -2,12 +2,13 @@
 
 
 
-#' Performs spatial filter of two geometries
+#' Perform a spatial filter
 #'
-#' Filters data spatially based on a spatial predicate
+#' Filters geometries based on a spatial relationship with another geometry, 
+#' such as intersection, containment, or proximity.
 #'
 #' @template x
-#' @param y Y table with geometry column within the DuckDB database
+#' @template y
 #' @template predicate
 #' @template conn_null
 #' @template conn_x_conn_y
@@ -84,6 +85,7 @@ ddbs_filter <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     
@@ -93,8 +95,8 @@ ddbs_filter <- function(
     # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
     
     # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
-    crs_x <- detect_crs(x)
-    crs_y <- detect_crs(y)
+    crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
+    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
     sf_col_x <- attr(x, "sf_column")
     sf_col_y <- attr(y, "sf_column")
 
@@ -169,6 +171,19 @@ ddbs_filter <- function(
         ## if distance is not specified, it will use ST_Within
         if (sel_pred == "ST_DWithin") {
 
+            ## check the CRS units to use the right function
+            crs_units <- crs_x$units_gdal
+            if (crs_units != "metre") {
+                st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(v1.{x_geom}), ST_FlipCoordinates(v2.{y_geom}), {distance})")
+                if (crs_x$input != "EPSG:4326") {
+                    cli::cli_warn(
+                    "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
+                    )
+                }
+            } else {
+                st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
+            }
+
             if (is.null(distance)) {
                 cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
                 distance <- 0
@@ -183,7 +198,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
+                    {st_predicate}
             ")
 
         } else {
@@ -209,6 +224,19 @@ ddbs_filter <- function(
     ## 6. Get data frame
     if (sel_pred == "ST_DWithin") {
 
+        ## check the CRS units to use the right function
+        crs_units <- crs_x$units_gdal
+        if (crs_units != "metre") {
+            st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(v1.{x_geom}), ST_FlipCoordinates(v2.{y_geom}), {distance})")
+            if (crs_x$input != "EPSG:4326") {
+                cli::cli_warn(
+                "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
+                )
+            }
+        } else {
+            st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
+        }
+
         ## if distance is not specified, it will use ST_Within
         if (is.null(distance)) {
             cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
@@ -224,7 +252,7 @@ ddbs_filter <- function(
                     {x_list$query_name} v1, 
                     {y_list$query_name} v2
                 WHERE 
-                    {sel_pred}(v1.{x_geom}, v2.{y_geom}, {distance})
+                    {st_predicate}
             ")
         )
 

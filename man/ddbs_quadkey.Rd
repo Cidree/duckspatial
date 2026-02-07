@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_quadkey.R
 \name{ddbs_quadkey}
 \alias{ddbs_quadkey}
-\title{Convert geometries to QuadKey tiles}
+\title{Convert point geometries to QuadKey tiles}
 \usage{
 ddbs_quadkey(
   x,
@@ -32,11 +32,10 @@ Data is returned from this object.}
 \item{level}{An integer specifying the zoom level for QuadKey generation (1-23).
 Higher values provide finer spatial resolution. Default is 10.}
 
-\item{field}{Character string specifying the field name for raster output.
-Only used when \code{output = "raster"}}
+\item{field}{Character string specifying the field name for aggregation.}
 
-\item{fun}{summarizing function for when there are multiple geometries in one cell (e.g. "mean",
-"min", "max", "sum"). Only used when \code{output = "raster"}}
+\item{fun}{aggregation function for when there are multiple quadkeys (e.g. "mean",
+"min", "max", "sum").}
 
 \item{background}{numeric. Default value in raster cells without values. Only used when
 \code{output = "raster"}}
@@ -79,8 +78,8 @@ Depends on the output argument
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Converts POINT geometries to QuadKey tile representations at a specified zoom level.
-QuadKeys are a hierarchical spatial indexing system used by mapping services like Bing Maps.
+Transforms point geometries into QuadKey identifiers at a specified zoom level,
+a hierarchical spatial indexing system used by mapping services.
 }
 \details{
 QuadKeys divide the world into a hierarchical grid of tiles, where each tile

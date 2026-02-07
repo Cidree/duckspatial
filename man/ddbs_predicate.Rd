@@ -16,7 +16,7 @@
 \alias{ddbs_intersects_extent}
 \alias{ddbs_contains_properly}
 \alias{ddbs_within_properly}
-\title{Spatial predicate operations}
+\title{Evaluate spatial predicates between geometries}
 \usage{
 ddbs_predicate(
   x,
@@ -32,174 +32,33 @@ ddbs_predicate(
   quiet = FALSE
 )
 
-ddbs_intersects(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_intersects(x, y, ...)
 
-ddbs_covers(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_covers(x, y, ...)
 
-ddbs_touches(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_touches(x, y, ...)
 
-ddbs_is_within_distance(
-  x,
-  y,
-  distance = NULL,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_is_within_distance(x, y, distance = NULL, ...)
 
-ddbs_disjoint(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_disjoint(x, y, ...)
 
-ddbs_within(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_within(x, y, ...)
 
-ddbs_contains(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_contains(x, y, ...)
 
-ddbs_overlaps(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_overlaps(x, y, ...)
 
-ddbs_crosses(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_crosses(x, y, ...)
 
-ddbs_equals(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_equals(x, y, ...)
 
-ddbs_covered_by(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_covered_by(x, y, ...)
 
-ddbs_intersects_extent(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_intersects_extent(x, y, ...)
 
-ddbs_contains_properly(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_contains_properly(x, y, ...)
 
-ddbs_within_properly(
-  x,
-  y,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  id_x = NULL,
-  id_y = NULL,
-  sparse = TRUE,
-  quiet = FALSE
-)
+ddbs_within_properly(x, y, ...)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -211,9 +70,13 @@ ddbs_within_properly(
 }
 Data is returned from this object.}
 
-\item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
-Data is returned from this object.}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
 \item{predicate}{A geometry predicate function. Defaults to \code{intersects},
 a wrapper of \code{ST_Intersects}. See details for other options.}
@@ -241,6 +104,8 @@ the coordinate system of the geometry (e.g. degrees or meters)}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
+
+\item{...}{Passed to \link{ddbs_predicate}}
 }
 \value{
 A \strong{list} of length equal to the number of rows in \code{x}.
@@ -261,10 +126,9 @@ the corresponding geometry of \code{x}, or
 If there's no match between \code{x} and \code{y} it returns \code{NULL}
 }
 \description{
-Computes spatial relationships between two geometry datasets using DuckDB's
-spatial extension. Returns a list where each element corresponds to a row of
-\code{x}, containing the indices (or IDs) of rows in \code{y} that satisfy the specified
-spatial predicate.
+Determines which geometries in one dataset satisfy a specified spatial
+relationship with geometries in another dataset, such as intersection,
+containment, or touching.
 }
 \details{
 This function provides a unified interface to all spatial predicate operations

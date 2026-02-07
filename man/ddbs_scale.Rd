@@ -33,7 +33,7 @@ Data is returned from this object.}
 \item{y_scale}{numeric value specifying the scaling factor in the Y direction (default = 1)}
 
 \item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
-separately to each geometry. If \code{FALSE} (default), the geometric
+separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
@@ -80,8 +80,9 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Scales geometries around the centroid of the geometry. Returns the result as
-an \code{sf} object or creates a new table in the database.
+Resizes geometries by specified X and Y scale factors. By default, scaling is
+performed relative to the centroid of all geometries; if \code{by_feature = TRUE},
+each geometry is scaled relative to its own centroid.
 }
 \examples{
 \dontrun{

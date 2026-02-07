@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_utils.R
 \name{ddbs_stop_conn}
 \alias{ddbs_stop_conn}
-\title{Close a duckdb connection}
+\title{Close a DuckDB connection}
 \usage{
 ddbs_stop_conn(conn)
 }
@@ -13,7 +13,7 @@ ddbs_stop_conn(conn)
 TRUE (invisibly) for successful disconnection
 }
 \description{
-Close a duckdb connection
+Close a DuckDB connection
 }
 \examples{
 \dontrun{

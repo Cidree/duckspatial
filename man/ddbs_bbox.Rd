@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_extent_funs.R
 \name{ddbs_bbox}
 \alias{ddbs_bbox}
-\title{Returns the minimal bounding box enclosing the input geometry}
+\title{Get the bounding box of geometries}
 \usage{
 ddbs_bbox(
   x,
@@ -25,9 +25,9 @@ ddbs_bbox(
 }
 Data is returned from this object.}
 
-\item{by_feature}{Boolean. The function defaults to \code{FALSE}, and returns a
-single bounding box for \code{x}. If \code{TRUE}, it return one bounding box for
-each feature.}
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE}, the geometric
+operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -51,20 +51,11 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-Depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
-\itemize{
-\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
-\item \code{sf}: An eagerly collected \code{sf} object in R memory.
-\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
-\item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
-\item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
-}
-When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
+A data frame or \code{TRUE} (invisibly) for table creation when name is not NULL.
 }
 \description{
-Returns the minimal bounding box enclosing the input geometry from a \code{sf} object
-or a DuckDB table. Returns the result as an \code{sf} object or creates a new
-table in the database.
+Returns the minimal rectangle that encloses the geometry, typically used
+to summarize its spatial extent.
 }
 \examples{
 \dontrun{

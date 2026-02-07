@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_join.R
 \name{ddbs_join}
 \alias{ddbs_join}
-\title{Performs spatial joins of two geometries}
+\title{Perform a spatial join of two geometries}
 \usage{
 ddbs_join(
   x,
@@ -29,8 +29,13 @@ ddbs_join(
 }
 Data is returned from this object.}
 
-\item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
 \item{join}{A geometry predicate function. Defaults to \code{"intersects"}. See
 the details for other options.}
@@ -46,8 +51,8 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names. If it's \code{NULL} (the default), it will return the result as an
-\code{sf} object.}
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
 
 \item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
@@ -85,8 +90,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Performs spatial joins of two geometries, and returns a \code{sf} object
-or creates a new table in a DuckDB database.
+Combines two sets of geometries based on spatial relationships, such as
+intersection or containment, attaching attributes from one set to the other.
 }
 \details{
 Spatial Join Predicates:

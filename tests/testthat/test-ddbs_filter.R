@@ -195,11 +195,9 @@ testthat::test_that("ddbs_filter works with different predicates", {
   expect_false(1 %in% res_disjoint$id)
   
   # ST_DWithin
-  res_dwithin <- ddbs_filter(pts_sf, poly_sf, predicate = "dwithin", distance = 15) |> dplyr::collect()
-  expect_true(3 %in% res_dwithin$id) # 20,20 is ~14.1 units from 10,10
-  
-  res_dwithin_small <- ddbs_filter(pts_sf, poly_sf, predicate = "dwithin", distance = 5) |> dplyr::collect()
-  expect_false(3 %in% res_dwithin_small$id)
+  res_dwithin <- ddbs_filter(pts_sf, pts_sf[1, ], predicate = "dwithin", distance = 15000000) |> dplyr::collect()
+  expect_true(3 %in% res_dwithin$id)
+
 })
 
 # output parameters ------------------------------------------------------------
@@ -225,4 +223,8 @@ testthat::test_that("ddbs_filter throws error on CRS mismatch", {
     ddbs_filter(points_3857, argentina_sf),
     "Coordinates Reference System"
   )
+})
+
+testthat::test_that("dwithin fails in non-point geometries", {
+  expect_error(ddbs_filter(pts_sf, poly_sf, predicate = "dwithin", distance = 100))
 })

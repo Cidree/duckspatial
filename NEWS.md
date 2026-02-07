@@ -2,9 +2,17 @@
 
 ## MAJOR CHANGES
 
-* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (#55).
+* `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (with `ddbs_collect()` or `st_as_sf()`). Every function now accepts this class as input, and it's the returned class by default. If the user is interested in returning a different class, there's a convenient `output` argument (#55, #63).
+
+* `ddbs_buffer()`: now has four new arguments: `num_triangles`, `cap_style`, `join_style`, and `mitre_limit` (#72).
 
 * `ddbs_union()`: is spplited into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
+
+* `ddbs_length()`, `ddbs_area()` and `ddbs_distance()`: now use by default the best DuckDB function (e.g. `ST_Area()` or `ST_Area_Spheroid()`) depending on the input's CRS. Additionally, they return an `units` object (#80, #82).
+
+* `ddbs_simplify()`: tolerance defaults to 0; gains a new argument `preserve_topology` specified before `conn` (#86).
+
+* `ddbs_is_simple()` and `ddbs_is_valid()`: the `new_column` argument now defaults to a colum name, as we now encourage the users to keep most of the work inside DuckDB (#83).
 
 ## NEW FEATURES
 
@@ -12,6 +20,41 @@
 
 * `ddbs_geometry_type()`: returns the geometry type of an object (#76).
 
+* `ddbs_as_geojson()`: converts the geometry to geojson format (#84).
+
+* `ddbs_perimeter()`: calculates the perimeter of polygons (#89).
+
+* New geometry validation/check functions: `ddbs_is_empty()`, `ddbs_is_ring()` and `ddbs_is_closed()` (#91).
+
+* `ddbs_sym_difference()`: performs symmetric difference between pairs of geometries (#91).
+
+* `ddbs_force_2d()`, `ddbs_force_3d()`, `ddbs_force_4d()`: force the geometries to have specfic dimensions (#91).
+
+* `ddbs_has_z()` and `ddbs_has_m()`: check if the geometry has the dimension (#91).
+
+* `ddbs_polygonize()`, `ddbs_build_area()`: generates polygons from lines (#91).
+
+* `ddbs_voronoi()`: generates Voronoi diagrams from point geometries (#91).
+
+* `ddbs_endpoint()`: extracts the endpoint of a linestring geometry (#91).
+
+* `ddbs_flip_coordinates()`: swaps X and Y coordinates (#91).
+
+## MINOR CHANGES
+
+* Improve the documentation of the functions (#85).
+
+* `ddbs_buffer()`: warns if the input CRS is not a projected CRS, as the distance uses its units.
+
+* `ddbs_quadkey()`: can aggregate by `field` when output is `polygon` and `tilexy` (#78).
+
+* `ddbs_crs()`: accepts CRS codes and `crs` objects as inputs (#87).
+
+## BUG FIXES
+
+* `ddbs_length()`, `ddbs_area()` and `ddbs_distance()` were calculating the wrong measure when the CRS was geographic (#82).
+
+* `ddbs_filter(predicate = "dwithin")` and `ddbs_is_within_distance` were calculating wrong distances for geographic CRS (#88).
 
 
 # duckspatial 0.9.0

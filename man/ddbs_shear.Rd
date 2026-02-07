@@ -35,7 +35,7 @@ For each unit in Y, X coordinates are shifted by this amount}
 For each unit in X, Y coordinates are shifted by this amount}
 
 \item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
-separately to each geometry. If \code{FALSE} (default), the geometric
+separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
@@ -82,9 +82,10 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Applies a shear transformation to geometries from a \code{sf} object or a DuckDB
-table. Returns the result as an \code{sf} object or creates a new table in the
-database. Shearing skews the geometry by shifting coordinates proportionally.
+Applies a shear transformation to geometries, shifting coordinates proportionally
+in the X and Y directions. By default, shearing is applied relative to the centroid
+of all geometries; if \code{by_feature = TRUE}, each geometry is sheared relative to its
+own centroid.
 }
 \examples{
 \dontrun{

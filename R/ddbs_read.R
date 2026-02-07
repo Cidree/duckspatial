@@ -54,11 +54,17 @@ ddbs_read_vector <- function(
     clauses = NULL,
     quiet = FALSE) {
     
+    
     deprecate_crs(crs_column, crs)
+    
+    # 0. Handle errors
+    dbConnCheck(conn)
+    assert_name(name)
+    assert_name(clauses, "clauses")
+    assert_logic(quiet, "quiet")
+    
 
     # 1. Checks
-    ## Check if connection is correct
-    dbConnCheck(conn)
     ## convenient names of table and/or schema.table
     name_list <- get_query_name(name)
 

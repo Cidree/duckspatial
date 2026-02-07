@@ -1,20 +1,15 @@
-#' Performs spatial joins of two geometries
+#' Perform a spatial join of two geometries
 #'
-#' Performs spatial joins of two geometries, and returns a \code{sf} object
-#' or creates a new table in a DuckDB database.
+#' Combines two sets of geometries based on spatial relationships, such as 
+#' intersection or containment, attaching attributes from one set to the other.
 #'
 #' @template x
-#' @param y An `sf` spatial object. Alternatively, it can be a string with the
-#'        name of a table with geometry column within the DuckDB database `conn`.
+#' @template y
 #' @param join A geometry predicate function. Defaults to `"intersects"`. See
 #'        the details for other options.
 #' @template conn_null
 #' @template conn_x_conn_y
-#'
-#' @param name A character string of length one specifying the name of the table,
-#'        or a character string of length two specifying the schema and table
-#'        names. If it's `NULL` (the default), it will return the result as an
-#'        \code{sf} object.
+#' @template name
 #' @template crs
 #' @template output
 #' @template overwrite
@@ -100,6 +95,7 @@ ddbs_join <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     
@@ -109,8 +105,8 @@ ddbs_join <- function(
     # 2. Normalize inputs (coerce tbl_duckdb_connection, validate character)
     
     # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
-    crs_x <- detect_crs(x)
-    crs_y <- detect_crs(y)
+    crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
+    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
     sf_col_x <- attr(x, "sf_column")
     sf_col_y <- attr(y, "sf_column")
 

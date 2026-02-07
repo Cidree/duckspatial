@@ -2,12 +2,12 @@
 % Please edit documentation in R/ddbs_measure.R
 \name{ddbs_distance}
 \alias{ddbs_distance}
-\title{Returns the distance between two geometries}
+\title{Calculate the distance between geometries}
 \usage{
 ddbs_distance(
   x,
   y,
-  dist_type = "haversine",
+  dist_type = NULL,
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
@@ -24,15 +24,16 @@ ddbs_distance(
 }
 Data is returned from this object.}
 
-\item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
-\item{dist_type}{String. One of \code{c("planar", "haversine")}. Defaults to
-\code{"haversine"} and returns distance in meters, but the input is expected
-to be in WGS84 (EPSG:4326) coordinates. The option \code{"haversine"} only
-accepts \code{POINT} geometries. When \code{dist_type = "planar"}, distances
-estimates are in the same unit as the coordinate reference system (CRS)
-of the input.}
+\item{dist_type}{Character. Distance type to be calculated. By the default it uses
+the best option for the input CRS (see details).}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -47,11 +48,25 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 Defaults to \code{FALSE}.}
 }
 \value{
-A \code{data.frame} object or \code{TRUE} (invisibly) for table creation
+A \code{units} matrix in meters
 }
 \description{
-Returns the planar or haversine distance between two geometries, and returns
-a \code{data.frame} object or creates a new table in a DuckDB database.
+Computes the distance between two geometries, automatically using an appropriate
+measurement based on their coordinate reference system and geometry type.
+}
+\details{
+The \code{dist_type} argument can take any of the following values:
+\itemize{
+\item \code{NULL} (default): it will use the best option for the inputs CRS
+\item \code{"planar"}: planar distance between two geometries (default for projected CRS)
+\item \code{"geos"}: planar distance between two geometries using GEOS library
+\item \code{"haversine"}: returns the great circle distance. Requires the input to be
+in WGS84 (EPSG:4326) and POINT geometry (default for EPSG:4326).
+\item \code{"spheroid"}: returns the distance using an ellipsoidal model of the earth's
+surface using the GeographicLib library. It's highly accurate but the slowest
+}
+
+Note that geometries different than POINT are not supported by "haversine" nor "spheroid".
 }
 \examples{
 \dontrun{

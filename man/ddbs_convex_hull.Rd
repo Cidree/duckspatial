@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_convex_hull}
 \alias{ddbs_convex_hull}
-\title{Returns the convex hull enclosing the geometry}
+\title{Compute the convex hull of geometries}
 \usage{
 ddbs_convex_hull(
   x,
@@ -69,9 +69,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Returns the convex hull enclosing the geometry from an \code{sf} object or
-from a DuckDB table using the spatial extension. Returns the result as an
-\code{sf} object or creates a new table in the database.
+Returns the convex hull that encloses the geometry, forming the smallest convex
+polygon that contains all points of the geometry.
 }
 \examples{
 \dontrun{

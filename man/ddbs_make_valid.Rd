@@ -69,8 +69,9 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Attempts to make invalid geometries valid from a DuckDB table using the spatial extension.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Attempts to correct invalid geometries so they conform to the rules of well-formed
+geometries (e.g., fixing self-intersections or improper rings) and returns the
+corrected geometries.
 }
 \examples{
 \dontrun{

@@ -30,6 +30,8 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
+    assert_name(name)
+    assert_logic(quiet, "quiet")
     ## Check if schema already exists
     namechar  <- DBI::dbQuoteString(conn,name)
     tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = ",
@@ -175,6 +177,12 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
 #' @param conn A DuckDB connection (required for character method)
 #' @param crs_column Column name storing CRS info (default: "crs_duckspatial")
 ddbs_crs.character <- function(x, conn, crs_column = "crs_duckspatial", ...) {
+
+    # 0. Check if x is in AUTH:CODE format (e.g., "EPSG:4326")
+    if (length(x) == 1 && grepl("^[A-Z]+:[0-9]+$", x)) {
+        return(sf::st_crs(x))
+    }
+  
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
@@ -269,6 +277,40 @@ ddbs_crs.duckdb_connection <- function(x, name, ...) {
   }
   ddbs_crs.character(name, conn = x, ...)
 }
+
+
+#' @export
+#' @rdname ddbs_crs
+ddbs_crs.numeric <- function(x, ...) {
+  # Convert numeric EPSG code to CRS
+  # Assumes EPSG authority by default
+  if (length(x) != 1) {
+      cli::cli_abort("Numeric CRS input must be a single value (EPSG code).")
+  }
+  
+  if (x < 1 || x != as.integer(x)) {
+      cli::cli_abort("CRS code must be a positive integer.")
+  }
+
+  # Extract the CRS
+  crs_x <- sf::st_crs(as.integer(x))
+  
+  # If the CRS doesn't exist, the previous function returns NA
+  if (is.na(crs_x)) {
+    cli::cli_abort("CRS code wasn't found.")
+  } else {
+    return(crs_x)
+  }
+
+}
+
+
+#' @export
+#' @rdname ddbs_crs
+ddbs_crs.crs <- function(x, ...) {
+  return(x)
+}
+
 
 #' @export
 #' @rdname ddbs_crs
@@ -523,7 +565,7 @@ ddbs_drivers <- function(conn = NULL) {
     ")
 }
 
-#' Close a duckdb connection
+#' Close a DuckDB connection
 #'
 #' @template conn
 #'

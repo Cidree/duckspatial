@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_as_spatial.R
 \name{ddbs_as_spatial}
 \alias{ddbs_as_spatial}
-\title{Convert a table with coordinates to spatial data}
+\title{Generate point geometries from coordinates}
 \usage{
 ddbs_as_spatial(
   x,
@@ -76,9 +76,7 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Converts a data frame or DuckDB table with coordinate columns into spatial
-points. This function replicates the functionality \code{sf::st_as_sf()} for
-DuckDB spatial operations.
+Converts a data frame with coordinate columns into spatial point geometries.
 }
 \examples{
 \dontrun{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_geometry_type}
 \alias{ddbs_geometry_type}
-\title{Returns the geometry type of input features}
+\title{Get the geometry type of features}
 \usage{
 ddbs_geometry_type(x, conn = NULL, by_feature = TRUE, quiet = FALSE)
 }
@@ -19,9 +19,9 @@ Data is returned from this object.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
-\item{by_feature}{Boolean. If \code{TRUE} (default), returns the geometry type for
-each feature. If \code{FALSE}, returns a single geometry type summary for
-the entire dataset.}
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE}, the geometric
+operation is applied to the data as a whole.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
@@ -30,7 +30,8 @@ Defaults to \code{FALSE}.}
 A factor with geometry type(s)
 }
 \description{
-Returns the geometry type(s) from a \code{sf} object or a DuckDB table.
+Returns the type of each geometry (e.g., POINT, LINESTRING, POLYGON) in the
+input features.
 }
 \examples{
 \dontrun{

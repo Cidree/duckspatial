@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_make_polygon}
 \alias{ddbs_make_polygon}
-\title{Creates polygons from linestring geometries}
+\title{Create a polygon from a single closed linestring}
 \usage{
 ddbs_make_polygon(
   x,
@@ -69,10 +69,9 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Constructs polygon geometries from linestring geometries in a DuckDB table using
-the spatial extension. The input linestrings must be closed (first and last points
-must be identical). Returns the result as an \code{sf} object or creates a new table
-in the database.
+Converts a single closed linestring geometry into a polygon. The linestring
+must be closed (first and last points identical). Does not work with
+MULTILINESTRING inputs - use \code{\link[=ddbs_polygonize]{ddbs_polygonize()}} or \code{\link[=ddbs_build_area]{ddbs_build_area()}} instead.
 }
 \examples{
 \dontrun{
@@ -99,3 +98,11 @@ ddbs_make_polygon(conn = conn, ring_ddbs, name = "argentina_poly")
 ddbs_make_polygon(ring_ddbs)
 }
 }
+\seealso{
+\code{\link[=ddbs_polygonize]{ddbs_polygonize()}}, \code{\link[=ddbs_build_area]{ddbs_build_area()}}
+
+Other polygon construction: 
+\code{\link{ddbs_build_area}()},
+\code{\link{ddbs_polygonize}()}
+}
+\concept{polygon construction}

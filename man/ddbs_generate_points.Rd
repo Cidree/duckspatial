@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_generate_points.R
 \name{ddbs_generate_points}
 \alias{ddbs_generate_points}
-\title{Generate random points within geometries}
+\title{Generate random points within bounding boxes of geometries}
 \usage{
 ddbs_generate_points(
   x,
@@ -75,9 +75,8 @@ Depends on the \code{output} argument (or global preference set by \code{\link{d
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Generates random points within geometries from a DuckDB table using the spatial extension.
-Works similarly to generating random points within polygons in \code{sf}.
-Returns the result as an \code{sf} object or creates a new table in the database.
+Creates random points within the bounding box of each geometry, which may
+fall outside the geometry itself.
 }
 \examples{
 \dontrun{
