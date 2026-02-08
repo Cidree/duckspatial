@@ -1250,6 +1250,8 @@ create_duckdb_macros <- function(conn) {
         ELSE ST_Perimeter(geom)
       END
     );
+    CREATE OR REPLACE MACRO ddbs_union_agg(geom) AS ST_Union_Agg(geom);
+    CREATE OR REPLACE MACRO ddbs_union(geom) AS ST_Union_Agg(geom);
     "
   )
 }
