@@ -24,7 +24,7 @@
 #'
 #' # disconnect from db
 #' duckdb::dbDisconnect(conn)
-ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial") {
+ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial", community = FALSE) {
 
     # 1. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
@@ -33,21 +33,30 @@ ddbs_install <- function(conn, upgrade = FALSE, quiet = FALSE, extension = "spat
     ## 2.1. Check connection
     dbConnCheck(conn)
     ## 2.2. Check if extension is available
-    if (!(extension %in% ext$extension_name))
-        cli::cli_abort("{extension} extension is not available")
+    if (!(extension %in% ext$extension_name) & isFALSE(community))
+        cli::cli_abort("{extension} extension is not available. If it's a community extension use <community = TRUE>")
     ## 2.3. Check if it's installed
     target_ext <- ext[ext$extension_name == extension, ]
-    if (target_ext$installed && !upgrade) {
+    if (length(target_ext) == 1) {
+        if (target_ext$installed && !upgrade) {
 
         if (isFALSE(quiet)) {
             cli::cli_alert_info("{extension} extension version {.val {target_ext$extension_version}} is already installed in this database")
         }
 
         return(invisible(TRUE))
+        }
     }
 
+
     # 3. Install extension
-    suppressMessages(DBI::dbExecute(conn, glue::glue("INSTALL {extension};")))
+    if (isTRUE(community)) {
+      suppressMessages(DBI::dbExecute(conn, glue::glue("INSTALL {extension} FROM community;")))
+    } else {
+      suppressMessages(DBI::dbExecute(conn, glue::glue("INSTALL {extension};")))
+    }
+
+    
 
     if (isFALSE(quiet)) {
         cli::cli_alert_success("{extension} extension installed")
