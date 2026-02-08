@@ -314,6 +314,13 @@ ddbs_crs.crs <- function(x, ...) {
 
 #' @export
 #' @rdname ddbs_crs
+ddbs_crs.data.frame <- function(x, ...) {
+  return(NULL)
+}
+
+
+#' @export
+#' @rdname ddbs_crs
 ddbs_crs.default <- function(x, ...) {
   cli::cli_abort(c(
     "{.arg x} must be a duckspatial_df, sf object, tbl_duckdb_connection, or character table name.",

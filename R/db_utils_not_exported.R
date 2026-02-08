@@ -851,6 +851,19 @@ deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
 ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL, 
                                 crs_column = "crs_duckspatial", x_geom = "geometry") {
   # nocov start
+
+  # For simple data frames
+  if (is.null(crs) & length(x_geom) == 0) {
+    view_name <- ddbs_temp_view_name()
+    dplyr::copy_to(
+      conn,
+      data,
+      name = view_name
+    )
+
+    return(dplyr::tbl(conn, view_name))
+
+  }
   
   # Resolve output type: parameter > global option > default
 
