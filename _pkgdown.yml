@@ -117,10 +117,7 @@ reference:
 - title: Measurements
   desc: Calculate geometric properties
   contents:
-  - ddbs_area
-  - ddbs_distance
-  - ddbs_length
-  - ddbs_perimeter
+  - ddbs_measure_funs
 
 - title: Database Utilities
   desc: Helper functions for database management

@@ -16,7 +16,8 @@
 #' @details
 #' These functions provide different types of geometric validation. Note that by default,
 #' the functions add a new column as a logical vector. This behaviour allows to filter the
-#' data within DuckDB without the need or materializating a vector in R (see details).
+#' data within DuckDB without the need or materializating a vector in R. There's also the
+#' possibility of using these functions within `dplyr` verbs (see examples).
 #'
 #' - `ddbs_is_valid()` checks if a geometry is valid according to the OGC Simple Features
 #'   specification. Invalid geometries may have issues like self-intersections in polygons,
@@ -52,10 +53,10 @@
 #' ## load package
 #' library(duckspatial)
 #' library(dplyr)
-#'
+#' 
 #' ## create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
-#'
+#' 
 #' ## read data
 #' countries_ddbs <- ddbs_open_dataset(
 #'   system.file("spatial/countries.geojson", 
@@ -67,15 +68,21 @@
 #'   package = "duckspatial")
 #' )
 #' 
-#' ## geometry validation
+#' ## simple geometry validation (adds a new column)
 #' ddbs_is_valid(countries_ddbs)
 #' ddbs_is_simple(countries_ddbs)
 #' ddbs_is_ring(rivers_ddbs)
 #' ddbs_is_empty(countries_ddbs)
 #' ddbs_is_closed(countries_ddbs)
 #' 
-#' ## filter invalid countries
-#' ddbs_is_valid(countries_ddbs) |> filter(!is_valid)
+#' ## filter invalid countries using the added column
+#' ddbs_is_valid(countries_ddbs) |> 
+#'   filter(!is_valid)
+#' 
+#' ## filter invalid countries within dplyr
+#' ## this only works with lazy tables (e.g. duckspatial_df)
+#' countries_ddbs |> 
+#'   filter(!ddbs_is_valid(geom))
 #' }
 #'
 #' @name ddbs_geom_validation_funs
