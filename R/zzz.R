@@ -27,6 +27,18 @@
         ELSE ST_Area(geom)
       END
     );
+    CREATE OR REPLACE MACRO ddbs_length(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Length_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Length(geom)
+      END
+    );
+    CREATE OR REPLACE MACRO ddbs_perimeter(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Perimeter_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Perimeter(geom)
+      END
+    );
     "
   )
 
