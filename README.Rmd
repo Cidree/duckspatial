@@ -13,38 +13,36 @@ knitr::opts_chunk$set(
 )
 ```
 
-# duckspatial <a href="https://cidree.github.io/duckspatial/"><img src="man/figures/logo.png" align="right" height="138" alt="duckspatial website" /></a>
+# duckspatial <a href="https://cidree.github.io/duckspatial/"><img src="man/figures/logo.png" alt="duckspatial website" align="right" height="138"/></a>
 
 <!-- badges: start -->
-[![CRAN status](https://www.r-pkg.org/badges/version/duckspatial)](https://CRAN.R-project.org/package=duckspatial)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![Codecov test coverage](https://codecov.io/gh/Cidree/duckspatial/graph/badge.svg)](https://app.codecov.io/gh/Cidree/duckspatial)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![Last Month Downloads](https://cranlogs.r-pkg.org/badges/last-month/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial)
-[![check](https://github.com/Cidree/duckspatial/workflows/check/badge.svg)](https://github.com/Cidree/duckspatial/actions)
+
+[![CRAN status](https://www.r-pkg.org/badges/version/duckspatial)](https://CRAN.R-project.org/package=duckspatial) [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) [![Codecov test coverage](https://codecov.io/gh/Cidree/duckspatial/graph/badge.svg)](https://app.codecov.io/gh/Cidree/duckspatial) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) [![Last Month Downloads](https://cranlogs.r-pkg.org/badges/last-month/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial) [![Total Downloads](https://cranlogs.r-pkg.org/badges/grand-total/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial) [![check](https://github.com/Cidree/duckspatial/workflows/check/badge.svg)](https://github.com/Cidree/duckspatial/actions)
+
 <!-- badges: end -->
 
+> Important note: The {duckspatial} R package is undergoing major changes in preparation for v1.0.0. This release will align with DuckDB v1.5 and its native CRS support in the Spatial extension.
+>
+> Previously, {duckspatial} relied on a workaround to store CRS information in a dedicated column (named "crs_duckspatial" by default and referenced via the crs_column argument). With native CRS support now available, this workaround is no longer needed and will be removed. As a result, the crs and crs_column arguments are deprecated as of v0.9.0.
+>
+> The upcoming version also introduces a new native spatial class, duckspatial_df. This represents a lazy spatial table backed by a temporary DuckDB view, allowing workflows to remain fully lazy until results are explicitly materialized with ddbs_collect(). In practice, this means you can work with {duckspatial} without eagerly loading data into R.
+>
+> Finally, v1.0.0 will include many new functions and broader API improvements.
 
-The **{duckspatial}** package provides fast and memory-efficient functions to 
-analyze and manipulate large spatial vector datasets in R. It allows R users to 
-benefit directly from the analytical power of [DuckDB and its spatial extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions), 
-while remaining fully compatible with R’s spatial ecosystem, especially **{sf}**.
+The **{duckspatial}** package provides fast and memory-efficient functions to analyze and manipulate large spatial vector datasets in R. It allows R users to benefit directly from the analytical power of [DuckDB and its spatial extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions), while remaining fully compatible with R’s spatial ecosystem, especially **{sf}**.
 
 At its core, **{duckspatial}** bridges two worlds:
 
-- R spatial workflows based on {sf} objects
-- Database-backed spatial analytics powered by DuckDB SQL
+-   R spatial workflows based on {sf} objects
+-   Database-backed spatial analytics powered by DuckDB SQL
 
 This design makes **{duckspatial}** especially well suited for:
 
-- Working with large spatial data sets
-- Speeding up spatial analysis at scale
-- Workflows where data does not fit comfortably in memory
+-   Working with large spatial data sets
+-   Speeding up spatial analysis at scale
+-   Workflows where data does not fit comfortably in memory
 
-Importantly, **{duckspatial}** brings the power of DuckDB spatial to R users while
-keeping workflows similar to {sf} .
-
+Importantly, **{duckspatial}** brings the power of DuckDB spatial to R users while keeping workflows similar to {sf} .
 
 # Installation
 
@@ -63,16 +61,13 @@ pak::pak("Cidree/duckspatial")
 
 # Core idea: flexible spatial workflows
 
-A central design principle of {duckspatial} is that the same spatial operation 
-can be used in different ways, depending on how your data is stored and how you 
-want to manage memory and performance.
+A central design principle of {duckspatial} is that the same spatial operation can be used in different ways, depending on how your data is stored and how you want to manage memory and performance.
 
 Most functions in {duckspatial} support four complementary workflows:
 
-1. Input`sf` → Output `sf`
-4. Input `sf` → Output DuckDB table
-2. Input DuckDB table → Output `sf`
-3. Input DuckDB table → Output DuckDB table
+1.  Input`sf` → Output `sf`
+2.  Input `sf` → Output DuckDB table
+3.  Input DuckDB table → Output `sf`
+4.  Input DuckDB table → Output DuckDB table
 
 See the ["Get Started" vignette for examples](https://Cidree.github.io/duckspatial/articles/duckspatial.html).
-
