@@ -33,8 +33,9 @@ operations on large data sets with three different approaches:
 Let's see a few examples. First, let's load a few libraries and our sample data:
 
 ```{r}
+#| message: false
+#| warning: false
 library(duckspatial)
-# library(mapview)
 library(sf)
 
 # polygons

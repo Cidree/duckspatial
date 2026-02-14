@@ -1,19 +1,160 @@
 url: https://cidree.github.io/duckspatial/
 template:
+  # ── Written with Claude ──────────────────────────────────────────────────────
   bootstrap: 5
   bslib:
-    bg: '#F5F7FA'
-    fg: '#202123'
-    primary: '#333C4A'
-    secondary: '#ff5733'
-    pkgdown-nav-height: 75px
+    # ── Palette ────────────────────────────────────────────────────────────────
+    # Deep ink background with sharp teal-cyan accent — evokes water, maps,
+    # and the precision of a database engine.
+    bg:                 '#F8FAFB'   # near-white with a cool undertone
+    fg:                 '#0D1B2A'   # deep navy ink
+    primary:            '#0A7EA4'   # vivid teal — links, buttons, active states
+    secondary:          '#FF6B35'   # burnt orange — badges, highlights
+    success:            '#2CB67D'   # muted green
+    info:               '#5B8DB8'   # mid steel blue
+    warning:            '#F4A261'   # warm amber
+    danger:             '#E63946'   # clear red
+
+    # ── Navbar ─────────────────────────────────────────────────────────────────
+    pkgdown-nav-height: 70px
+
+    # ── Typography ─────────────────────────────────────────────────────────────
+    # DM Sans — geometric, technical, slightly quirky; pairs well with the
+    # spatial/engineering context without feeling corporate.
+    # DM Mono — optical sibling of DM Sans, gives code blocks visual harmony.
     base_font:
-      google: Roboto
+      google:
+        family: DM Sans
+        wght:   "300;400;500;600"
     heading_font:
-      google: Merriweather
+      google:
+        family: DM Sans
+        wght:   "600;700"
     code_font:
-      google: Source Code Pro
-  theme: pygments
+      google:
+        family: DM Mono
+        wght:   "400;500"
+
+    # ── Spacing & shape ────────────────────────────────────────────────────────
+    border-radius:       0.5rem
+    border-radius-sm:    0.3rem
+    border-radius-lg:    0.75rem
+    font-size-base:      1rem
+    line-height-base:    1.65
+
+  # Syntax highlighting
+  light-switch: true
+  theme: a11y-light
+  theme-dark: a11y-dark
+
+  # ── Custom CSS  ───────────────────────────────────────────────────
+  includes:
+    in_header: |
+      <style>
+      /* ── Navbar ─────────────────────────────────────────────────── */
+      .navbar {
+        background: #0D1B2A !important;
+        border-bottom: 2px solid #0A7EA4;
+        letter-spacing: 0.01em;
+      }
+      .navbar-brand {
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: #ffffff !important;
+        letter-spacing: -0.02em;
+      }
+      .navbar-nav .nav-link {
+        color: rgba(255,255,255,0.80) !important;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: color 0.15s;
+      }
+      .navbar-nav .nav-link:hover,
+      .navbar-nav .nav-link.active {
+        color: #0A7EA4 !important;
+      }
+
+      /* ── Vignette TOC ────────────────────────────────────────────── */
+      /* Shared structure */
+      #toc a,
+      #toc .nav-link,
+      .bd-toc a,
+      .bd-toc .nav-link,
+      .bs-docs-sidebar .nav > li > a {
+        font-size: 0.85rem;
+        border-left: 2px solid transparent;
+        padding-left: 0.75rem;
+        text-decoration: none;
+        transition: border-color 0.15s, color 0.15s;
+      }
+
+      /* Light mode (default) */
+      #toc,
+      #toc .nav,
+      .bd-toc,
+      .bd-toc .nav {
+        --bs-nav-link-color:       #3d5166;
+        --bs-nav-link-hover-color: #0A7EA4;
+      }
+      #toc a,
+      #toc .nav-link,
+      .bd-toc a,
+      .bd-toc .nav-link,
+      .bs-docs-sidebar .nav > li > a {
+        color: #3d5166 !important;
+      }
+      #toc a:hover,
+      #toc .nav-link:hover,
+      #toc .nav-link.active,
+      .bd-toc a:hover,
+      .bd-toc .nav-link.active,
+      .bs-docs-sidebar .nav > li > a:hover,
+      .bs-docs-sidebar .nav > li.active > a {
+        color: #0A7EA4 !important;
+        border-left-color: #0A7EA4;
+      }
+
+      /* Dark mode — pkgdown adds data-bs-theme="dark" on <html> */
+      [data-bs-theme="dark"] #toc,
+      [data-bs-theme="dark"] #toc .nav,
+      [data-bs-theme="dark"] .bd-toc,
+      [data-bs-theme="dark"] .bd-toc .nav {
+        --bs-nav-link-color:       #a8c0d6;
+        --bs-nav-link-hover-color: #3dd6f5;
+      }
+      [data-bs-theme="dark"] #toc a,
+      [data-bs-theme="dark"] #toc .nav-link,
+      [data-bs-theme="dark"] .bd-toc a,
+      [data-bs-theme="dark"] .bd-toc .nav-link,
+      [data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a {
+        color: #a8c0d6 !important;
+      }
+      [data-bs-theme="dark"] #toc a:hover,
+      [data-bs-theme="dark"] #toc .nav-link:hover,
+      [data-bs-theme="dark"] #toc .nav-link.active,
+      [data-bs-theme="dark"] .bd-toc a:hover,
+      [data-bs-theme="dark"] .bd-toc .nav-link.active,
+      [data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a:hover,
+      [data-bs-theme="dark"] .bs-docs-sidebar .nav > li.active > a {
+        color: #3dd6f5 !important;
+        border-left-color: #3dd6f5;
+      }
+
+      /* ── Tables ─────────────────────────────────────────────────── */
+      .table thead th {
+        background: #0D1B2A;
+        color: #ffffff;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-weight: 600;
+        border: none;
+      }
+      .table tbody tr:hover { background: #f0f7fb; }
+      .table { border-radius: 0.5rem; overflow: hidden; }
+      
+      </style>
+
 authors:
   Adrián Cidre González:
     href: https://adrian-cidre.com/
@@ -22,9 +163,10 @@ authors:
   Egor Kotov:
     href: https://www.ekotov.pro/
 
+# ── Reference index ────────────────────────────────────────────────────────────
 reference:
 - title: Setup and Connection
-  desc: Install spatial extension and manage database connections
+  desc: Install the spatial extension and manage DuckDB connections
   contents:
   - ddbs_create_conn
   - ddbs_stop_conn
@@ -35,8 +177,8 @@ reference:
   - ddbs_get_resources
   - ddbs_sitrep
 
-- title: Data Import/Export
-  desc: Read and write spatial data
+- title: Data Import / Export
+  desc: Read and write spatial data to and from DuckDB
   contents:
   - ddbs_open_dataset
   - ddbs_read_vector
@@ -50,7 +192,7 @@ reference:
   - ddbs_predicate
 
 - title: Spatial Joins and Filters
-  desc: Combine or filter geometries based on spatial relationships
+  desc: Combine or subset geometries based on spatial relationships
   contents:
   - ddbs_binary_funs
   - ddbs_filter
@@ -58,33 +200,36 @@ reference:
   - ddbs_join
 
 - title: Geometry Construction
-  desc: Create new geometries from scratch or existing data
+  desc: Create new geometries from scratch or from existing data
   contents:
   - ddbs_as_spatial
   - ddbs_generate_points
   - ddbs_quadkey
 
 - title: Geometry Processing
-  desc: Modify and process individual geometries
+  desc: Modify, simplify, and transform individual geometries
   contents:
   - ddbs_boundary
   - ddbs_buffer
+  - ddbs_build_area
   - ddbs_centroid
   - ddbs_concave_hull
   - ddbs_convex_hull
   - ddbs_endpoint
   - ddbs_exterior_ring
   - ddbs_make_polygon
+  - ddbs_polygonize
   - ddbs_union_funs
   - ddbs_voronoi
 
 - title: Coordinate Operations
-  desc: Transform and manipulate coordinates
+  desc: Transform and manipulate coordinate systems
+  contents:
   - ddbs_transform
   - ddbs_flip_coordinates
 
 - title: Geometry Validation
-  desc: Check and ensure geometry validity and dimensionality
+  desc: Check and repair geometry validity and dimensionality
   contents:
   - ddbs_geometry_type
   - ddbs_make_valid
@@ -94,18 +239,18 @@ reference:
   - ddbs_force_dim
 
 - title: Format Conversion
-  desc: Convert geometries to standard spatial formats
+  desc: Convert geometries to and from standard spatial formats
   contents:
   - ddbs_as_format
 
 - title: Spatial Extent and Boundaries
-  desc: Extract geometry bounds and envelopes
+  desc: Extract bounding boxes and envelopes
   contents:
   - ddbs_bbox
   - ddbs_envelope
 
 - title: Affine Transformations
-  desc: Geometric transformations (rotate, scale, flip, shift)
+  desc: Rotate, scale, shear, and shift geometries
   contents:
   - ddbs_flip
   - ddbs_rotate
@@ -115,7 +260,7 @@ reference:
   - ddbs_shift
 
 - title: Measurements
-  desc: Calculate geometric properties
+  desc: Calculate areas, distances, lengths, and perimeters
   contents:
   - ddbs_area
   - ddbs_distance
@@ -123,7 +268,7 @@ reference:
   - ddbs_perimeter
 
 - title: Database Utilities
-  desc: Helper functions for database management
+  desc: Helper functions for managing DuckDB schemas and metadata
   contents:
   - ddbs_create_schema
   - ddbs_crs
@@ -132,7 +277,7 @@ reference:
   - ddbs_list_tables
 
 - title: Lazy Spatial Data Frames
-  desc: Create and work with lazy duckspatial_df objects
+  desc: Create and work with lazy `duckspatial_df` objects
   contents:
   - as_duckspatial_df
   - is_duckspatial_df
@@ -142,24 +287,27 @@ reference:
   - duckspatial_df_sf
   - duckspatial_df_dplyr
 
-
+# ── Navbar ──────────────────────────────────────────────────────────────────────
 navbar:
   title: duckspatial
   bg: dark
   left:
   - icon: fa-home
     href: index.html
+    aria-label: Home
+  - text: Get Started
+    href: articles/duckspatial.html
   - text: Reference
     href: reference/index.html
   - text: Articles
     menu:
-    - text: Get Started
-      href: articles/duckspatial.html
-    - text: "---"
+    - text: "Workflows"
     - text: Spatial Joins
       href: articles/spatial_joins.html
     - text: Areal-Weighted Interpolation
       href: articles/aw_interpolation.html
+    - text: "---"
+    - text: "Performance"
     - text: Benchmarks
       href: articles/benchmark.html
   - text: News
@@ -168,20 +316,10 @@ navbar:
     right:
     - search
     - github
+    - lightswitch
   components:
     github:
       icon: fa-github
       href: https://github.com/Cidree/duckspatial
       aria-label: GitHub
 
-articles:
-  - title: "Introduction"
-    contents:
-      - duckspatial
-  - title: "Advanced Features"
-    contents:
-      - spatial_joins
-      - aw_interpolation
-  - title: "Performance"
-    contents:
-      - benchmark

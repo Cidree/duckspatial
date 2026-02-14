@@ -37,7 +37,10 @@ We will use the North Carolina dataset from the `sf` package as our **source**, 
 
 *Note: We project the data to Albers Equal Area (EPSG:5070) because accurate interpolation requires an equal-area projection.*
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
 library(duckspatial)
 library(sf)
 

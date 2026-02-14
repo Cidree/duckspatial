@@ -29,6 +29,8 @@ Let's start by loading the packages we need:
 
 ```{r}
 #| label: setup
+#| message: false
+#| warning: false
 
 library(duckdb)
 library(duckspatial)
@@ -86,6 +88,7 @@ Printing a `duckspatial_df` object displays the most important metadata at a gla
 | **Bounding box** | Four coordinates bounding all geometries |
 | **Source** | Name of the temporary view inside DuckDB |
 | **Database** | DuckDB database path and version |
+| **Data** | First rows of the dataset |
 
 The table is not in R's memory; it lives inside the DuckDB connection. Every {duckspatial} operation you apply runs there, using the DuckDB engine.
 

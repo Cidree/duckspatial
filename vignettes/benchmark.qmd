@@ -39,6 +39,8 @@ retains a memory advantage for Euclidean distances.
 ```{r}
 #| message: false
 #| warning: false
+#| code-fold: true
+#| code-summary: "Set-up"
 
 library(duckspatial)
 library(bench)
@@ -101,6 +103,8 @@ df_bench_join <- lapply(
 ```
 
 ```{r}
+#| code-fold: true
+#| code-summary: "Figure Code"
 #| warning: false
 
 ggplot(data = df_bench_join) +
@@ -159,6 +163,8 @@ df_bench_filter <- lapply(
 
 ```{r}
 #| warning: false
+#| code-fold: true
+#| code-summary: "Figure Code"
 
 ggplot(data = df_bench_filter) +
   geom_point(
@@ -227,6 +233,8 @@ df_bench_distance <- lapply(
 
 ```{r}
 #| warning: false
+#| code-fold: true
+#| code-summary: "Figure Code"
 
 ggplot(data = df_bench_distance) +
   geom_point(
@@ -247,7 +255,7 @@ ggplot(data = df_bench_distance) +
   theme_minimal()
 ```
 
-![](../man/figures/bench/spatial-distance-bench.png)
+![](../man/figures/bench/spatial-distances-bench.png)
 
 Calculating pairwise distances between 10K points, {duckspatial} was **87%
 faster** but used **3× more memory** than {sf}.
