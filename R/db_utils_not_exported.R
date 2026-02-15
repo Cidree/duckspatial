@@ -1265,6 +1265,9 @@ create_duckdb_macros <- function(conn) {
     );
     CREATE OR REPLACE MACRO ddbs_union_agg(geom) AS ST_Union_Agg(geom);
     CREATE OR REPLACE MACRO ddbs_union(geom) AS ST_Union_Agg(geom);
+    CREATE OR REPLACE MACRO 
+      ddbs_buffer(geometry, distance, num_triangles := 8, cap_style := 'CAP_ROUND', join_style := 'JOIN_ROUND', mitre_limit := 1) as 
+      ST_Buffer(geometry, distance, num_triangles, cap_style, join_style, mitre_limit)
     "
   )
 }
