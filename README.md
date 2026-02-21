@@ -18,9 +18,32 @@ state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Last Month
 Downloads](https://cranlogs.r-pkg.org/badges/last-month/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial)
+[![Total
+Downloads](https://cranlogs.r-pkg.org/badges/grand-total/duckspatial?color=green)](https://CRAN.R-project.org/package=duckspatial)
 [![check](https://github.com/Cidree/duckspatial/workflows/check/badge.svg)](https://github.com/Cidree/duckspatial/actions)
 
 <!-- badges: end -->
+
+> Important note: The {duckspatial} R package is undergoing major
+> changes in preparation for v1.0.0. This release will align with DuckDB
+> v1.5 and its native CRS support in the Spatial extension.
+>
+> Previously, {duckspatial} relied on a workaround to store CRS
+> information in a dedicated column (named “crs_duckspatial” by default
+> and referenced via the crs_column argument). With native CRS support
+> now available, this workaround is no longer needed and will be
+> removed. As a result, the crs and crs_column arguments are deprecated
+> as of v0.9.0.
+>
+> The upcoming version also introduces a new native spatial class,
+> duckspatial_df. This represents a lazy spatial table backed by a
+> temporary DuckDB view, allowing workflows to remain fully lazy until
+> results are explicitly materialized with ddbs_collect(). In practice,
+> this means you can work with {duckspatial} without eagerly loading
+> data into R.
+>
+> Finally, v1.0.0 will include many new functions and broader API
+> improvements.
 
 ## Overview
 
