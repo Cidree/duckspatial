@@ -10,14 +10,20 @@
 #'     \item \code{"geoarrow"}: Eagerly collected \code{tibble} with geometry as \code{geoarrow_vctr}.
 #'   }
 #'   If \code{NULL} (the default), the existing option is not changed.
+#' @param mode Character. Controls the return type. Options:
+#'   \itemize{
+#'     \item \code{"duckspatial"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+#'     \item \code{"sf"}: Eagerly collected sf object (uses memory)
+#'   }
+#'   If \code{NULL} (the default), the existing option is not changed.
 #'
 #' @return Invisibly returns a list containing the currently set options.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Set default output to sf
-#' ddbs_options(output_type = "sf")
+#' # Set default mode to sf
+#' ddbs_options(mode = "sf")
 #' 
 #' # Set default output to tibble
 #' ddbs_options(output_type = "tibble")
@@ -28,7 +34,7 @@
 #' # Check current settings
 #' ddbs_options()
 #' }
-ddbs_options <- function(output_type = NULL) {
+ddbs_options <- function(output_type = NULL, mode = NULL) {
   
   # 1. SETTER logic
   if (!is.null(output_type)) {
@@ -40,17 +46,28 @@ ddbs_options <- function(output_type = NULL) {
     }
     options(duckspatial.output_type = output_type)
   }
+
+  if (!is.null(mode)) {
+    if (!mode %in% c("duckspatial", "sf")) {
+      cli::cli_abort(paste0(
+        "Invalid mode: {.val {mode}}. ",
+        "Must be one of {.val duckspatial}, or {.val sf}."
+      ))
+    }
+    options(duckspatial.mode = mode)
+  }
   
   # 2. GETTER logic (Always retrieve current state)
   op <- list(
-    duckspatial.output_type = getOption("duckspatial.output_type")
+    duckspatial.output_type = getOption("duckspatial.output_type"),
+    duckspatial.mode = getOption("duckspatial.mode")
   )
   
   # If we set a value, return invisibly. If just checking, return visibly.
-  if (!is.null(output_type)) {
-    invisible(op)
-  } else {
+  if (all(is.null(output_type), is.null(mode))) {
     op
+  } else {
+    invisible(op)
   }
 }
 
@@ -73,8 +90,10 @@ ddbs_sitrep <- function() {
   cli::cli_h2("Global Options")
   
   out_type <- getOption("duckspatial.output_type", "duckspatial_df (default)")
+  mode     <- getOption("duckspatial.mode", "duckspatial (default)")
   cli::cli_ul()
   cli::cli_li("Output Type: {.val {out_type}}")
+  cli::cli_li("Mode: {.val {mode}}")
   cli::cli_end()
   
   # 2. Connection Status
