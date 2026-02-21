@@ -1,23 +1,21 @@
 ---
 title: "Areal Interpolation"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
 code-annotations: hover
 urlcolor: blue
 vignette: >
   %\VignetteIndexEntry{Areal Interpolation}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: "#>"
+    out.width: "100%"
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  # eval = identical(tolower(Sys.getenv("NOT_CRAN")), "true"),
-  eval = TRUE,
-  out.width = "100%"
-)
+```{r}
+#| include: false
 
 # CRAN OMP THREAD LIMIT to avoid CRAN NOTE
 Sys.setenv(OMP_THREAD_LIMIT = 2)
@@ -39,7 +37,10 @@ We will use the North Carolina dataset from the `sf` package as our **source**, 
 
 *Note: We project the data to Albers Equal Area (EPSG:5070) because accurate interpolation requires an equal-area projection.*
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
 library(duckspatial)
 library(sf)
 

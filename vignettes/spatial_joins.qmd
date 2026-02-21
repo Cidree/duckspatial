@@ -1,22 +1,23 @@
 ---
 title: "Spatial joins"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
 code-annotations: hover
 urlcolor: blue
 vignette: >
-  %\VignetteIndexEntry{Spatial joins}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{Benchmark}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+execute:
+  eval: !expr identical(tolower(Sys.getenv("NOT_CRAN")), "true")
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: "#>"
+    out.width: "100%"
 ---
   
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  eval = identical(tolower(Sys.getenv("NOT_CRAN")), "true"),
-  out.width = "100%"
-)
+```{r}
+#| include: false
 
 # CRAN OMP THREAD LIMIT to avoid CRAN NOTE
 Sys.setenv(OMP_THREAD_LIMIT = 2)
@@ -32,8 +33,9 @@ operations on large data sets with three different approaches:
 Let's see a few examples. First, let's load a few libraries and our sample data:
 
 ```{r}
+#| message: false
+#| warning: false
 library(duckspatial)
-# library(mapview)
 library(sf)
 
 # polygons

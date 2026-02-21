@@ -465,7 +465,8 @@ ddbs_glimpse <- function(
 #' It creates a DuckDB connection, and then it installs and loads the
 #' spatial extension
 #'
-#' @param dbdir String. Either `"tempdir"` or `"memory"`. Defaults to `"memory"`.
+#' @param dbdir String. Either `"tempdir"`, `"memory"`, or file path with
+#' `.duckdb` or `.db` extension. Defaults to `"memory"`.
 #' @template threads
 #' @template memory_limit_gb
 #'
@@ -491,8 +492,11 @@ ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb =
 
     # 0. Handle errors
     if (!dbdir %in% c("tempdir","memory")) {
-            cli::cli_abort("dbdir should be one of <'tempdir'>, <'memory'>")
-        }
+      ## get file extension
+      db_extension <- tools::file_ext(dbdir)
+      if (!db_extension %in% c("", "duckdb", "db"))
+        cli::cli_abort("dbdir should be <'tempdir'>, <'memory'>, or have <'.duckdb'> or <'.db'> extension.")
+    }
 
     assert_threads(threads)
     assert_memory_limit_gb(memory_limit_gb)
@@ -500,24 +504,25 @@ ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb =
     # this creates a local database which allows DuckDB to
     # perform **larger-than-memory** workloads
     if(dbdir == 'tempdir'){
-
-        db_path <- tempfile(pattern = 'duckspatial', fileext = '.duckdb')
-        conn <- duckdb::dbConnect(
-             duckdb::duckdb(
-                 dbdir = db_path
-                 #, bigint = "integer64" ## in case the data includes big int
-                 )
-            )
-        }
-
-    if(dbdir == 'memory'){
-
-        conn <- duckdb::dbConnect(
-            duckdb::duckdb(
-                dbdir = ":memory:"
-                #, bigint = "integer64" ## in case the data includes big int
-                )
-            )
+      
+      db_path <- tempfile(pattern = 'duckspatial', fileext = '.duckdb')
+      conn <- duckdb::dbConnect(
+        duckdb::duckdb(
+          dbdir = db_path
+          #, bigint = "integer64" ## in case the data includes big int
+        )
+      )
+    } else if (dbdir == 'memory') {
+      conn <- duckdb::dbConnect(
+        duckdb::duckdb(
+          dbdir = ":memory:"
+          #, bigint = "integer64" ## in case the data includes big int
+        )
+      )
+    } else {
+      conn <- duckdb::dbConnect(
+        duckdb::duckdb(dbdir = dbdir)
+      )
     }
 
     # Checks and installs the Spatial extension
