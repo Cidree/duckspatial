@@ -848,9 +848,14 @@ deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
 #' @keywords internal
 #' @noRd
 #' @returns Object of the specified output type
-ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL, 
-                                crs_column = "crs_duckspatial", x_geom = "geometry") {
-  # nocov start
+ddbs_handle_output <- function(
+  data, 
+  conn, 
+  output = NULL, 
+  crs = NULL, 
+  crs_column = "crs_duckspatial", 
+  x_geom = "geometry"
+) { # nocov start
   
   # Resolve output type: parameter > global option > default
 
@@ -939,6 +944,85 @@ ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL,
   }
   # nocov end
 }
+
+
+
+
+#' Handle output type for duckspatial functions
+#'
+#' Returns a `sf` or a `duckspatial_df` from a query, depending
+#' on the `mode` parameter or global options.
+#'
+#' @param query A query
+#' @param conn DuckDB connection
+#' @template mode
+#' @template crs
+#' @param x_geom Name of the geometry column
+#'
+#' @keywords internal
+#' @noRd
+#' @returns Object of the specified mode type
+ddbs_handle_query <- function(
+  query, 
+  view_name,
+  conn, 
+  mode = NULL, 
+  crs = NULL, 
+  crs_column = "crs_duckspatial", 
+  x_geom = "geometry"
+) { # nocov start
+  
+  # Resolve mode type: parameter > global option > default
+
+  if (is.null(mode)) {
+    mode <- getOption("duckspatial.mode", "duckspatial")
+  }
+  
+  # Validate mode type
+  valid_modes <- c("duckspatial", "sf")
+  if (!mode %in% valid_modes) {
+    cli::cli_abort(
+      "{.arg mode} must be one of {.val {valid_modes}}, not {.val {mode}}."
+    )
+  }
+  
+  # Handle based on mode type
+  if (mode == "sf") {
+
+    # Get the query
+    data_tbl <- DBI::dbGetQuery(conn, query)
+
+    # Convert to sf object
+    data_sf <- convert_to_sf_wkb(
+      data       = data_tbl,
+      crs        = crs,
+      crs_column = crs_column,
+      x_geom     = x_geom
+    )
+    return(data_sf)
+    
+  } else {
+    # mode == "duckspatial"
+    # Create the view
+    DBI::dbExecute(conn, query)
+
+    # Open lazily as duckspatial_df
+    # This could be replaced by ddbs_open_table()
+    lazy_tbl <- dplyr::tbl(conn, view_name)
+
+    result <- new_duckspatial_df(
+      lazy_tbl, 
+      crs = crs, 
+      geom_col = x_geom, 
+      source_table = view_name
+    )
+    
+    return(result)
+  }
+  # nocov end
+}
+
+
 
 #' Get CRS from a spatial file
 #'
