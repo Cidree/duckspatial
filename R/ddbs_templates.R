@@ -6,13 +6,13 @@
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #' @param fun The duckdb function to use
 #' @param other_params string with other function-specific parameters
 #' 
-#' @template returns_output
+#' @template returns_mode
 #' @keywords internal
 #' @noRd
 template_unary_ops <- function(
@@ -21,7 +21,7 @@ template_unary_ops <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE,
     fun,
@@ -33,7 +33,7 @@ template_unary_ops <- function(
     assert_xy(x, "x")
     assert_conn_character(conn, x)
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -116,31 +116,43 @@ template_unary_ops <- function(
     }
 
   
-    # 5. Get data frame
+    # 5. Apply geospatial operation
   
-    ## 5.1. create query
-    tmp.query <- glue::glue("
+    ## 5.1. Get mode option
+    if (is.null(mode)) {
+      mode <- getOption("duckspatial.mode", "duckspatial")
+    }
+  
+    ## 5.1. Create the query based on output
+    if (mode == "duckspatial") {
+      view_name <- ddbs_temp_view_name()
+      tmp.query <- glue::glue("
+        CREATE TEMP VIEW {view_name} AS
+        SELECT {x_rest}
+        {fun}({args}) as {x_geom}
+        FROM {x_list$query_name};
+      ")
+    } else {
+      view_name <- NULL
+      tmp.query <- glue::glue("
         SELECT {x_rest}
         ST_AsWKB({fun}({args})) as {x_geom}
         FROM {x_list$query_name};
-    ")
+      ")
+    }
   
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-  
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    ## 5.2. Handle the output
+    result <- ddbs_handle_query(
+        query      = tmp.query,
+        view_name  = view_name,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 
 
