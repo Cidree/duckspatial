@@ -128,8 +128,8 @@ ggplot(data = df_bench_join) +
 
 ![](../man/figures/bench/spatial-join-bench.png)
 
-Working with 1 million points, {duckspatial} was **95% faster** and used
-**18× less memory** than {sf}.
+Working with 10 million points, {duckspatial} was **76% faster** and used
+**2.6× less memory** than {sf}.
 
 # Spatial filter
 
@@ -187,8 +187,6 @@ ggplot(data = df_bench_filter) +
 
 ![](../man/figures/bench/spatial-filter-bench.png)
 
-Working with 1 million points, {duckspatial} was **97% faster** and used
-**21× less memory** than {sf}.
 
 # Spatial distances
 
@@ -257,5 +255,4 @@ ggplot(data = df_bench_distance) +
 
 ![](../man/figures/bench/spatial-distances-bench.png)
 
-Calculating pairwise distances between 10K points, {duckspatial} was **87%
-faster** but used **3× more memory** than {sf}.
+
