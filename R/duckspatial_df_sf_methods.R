@@ -205,7 +205,7 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   geom_col <- attr(x, "sf_column") %||% "geom"
   crs <- st_crs(x)
   bbox <- st_bbox(x)
-  geomtype <- ddbs_geometry_type(x, by_feature = FALSE, quiet = TRUE)
+  geomtype <- ddbs_geometry_type(x, by_feature = FALSE)
   
   ## header with visual separator
   cat(cli::col_silver("# A duckspatial lazy spatial table\n"))
