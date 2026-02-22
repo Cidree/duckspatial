@@ -39,17 +39,12 @@ describe("ddbs_boundary()", {
     })
 
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_boundary(countries_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_boundary(countries_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_boundary(countries_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_boundary(countries_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_boundary(countries_ddbs))
+      expect_no_message(ddbs_boundary(countries_ddbs))
       expect_message(ddbs_boundary("countries", conn = conn_test, name = "boundary"))
       expect_message(ddbs_boundary("countries", conn = conn_test, name = "boundary", overwrite = TRUE))
       expect_true(ddbs_boundary("countries", conn = conn_test, name = "boundary2"))
@@ -136,17 +131,12 @@ describe("ddbs_envelope()", {
     })
 
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_envelope(countries_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_envelope(countries_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_envelope(countries_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_envelope(countries_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_envelope(countries_ddbs))
+      expect_no_message(ddbs_envelope(countries_ddbs))
       expect_message(ddbs_envelope("countries", conn = conn_test, name = "envelope"))
       expect_message(ddbs_envelope("countries", conn = conn_test, name = "envelope", overwrite = TRUE))
       expect_true(ddbs_envelope("countries", conn = conn_test, name = "envelope2"))
@@ -252,7 +242,7 @@ describe("ddbs_bbox()", {
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_bbox(countries_ddbs))
+      expect_no_message(ddbs_bbox(countries_ddbs))
       expect_message(ddbs_bbox("countries", conn = conn_test, name = "bbox"))
       expect_message(ddbs_bbox("countries", conn = conn_test, name = "bbox", overwrite = TRUE))
       expect_true(ddbs_bbox("countries", conn = conn_test, name = "bbox2"))

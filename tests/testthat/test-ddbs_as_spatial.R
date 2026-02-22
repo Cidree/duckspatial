@@ -36,19 +36,15 @@ describe("ddbs_as_spatial()", {
   describe("expected behavior", {
 
     it("returns different output formats", {
-      output_ddbs_fmt     <- ddbs_as_spatial(cities_tbl)
-      output_geoarrow_fmt <- ddbs_as_spatial(cities_tbl, output = "geoarrow")
-      output_sf_fmt       <- ddbs_as_spatial(cities_tbl, output = "sf")
-      output_raw_fmt      <- ddbs_as_spatial(cities_tbl, output = "raw")
+      output_ddbs_fmt <- ddbs_as_spatial(cities_tbl)
+      output_sf_fmt <- ddbs_as_spatial(cities_tbl, mode = "sf")
 
       expect_s3_class(output_ddbs_fmt, "duckspatial_df")
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_as_spatial(cities_tbl))
+      expect_no_message(ddbs_as_spatial(cities_tbl))
       expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial"))
       expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE))
       expect_true(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial2"))

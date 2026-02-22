@@ -296,10 +296,6 @@ describe("ddbs_predicate()", {
       expect_error(ddbs_predicate(argentina_ddbs, points_sf, overwrite = 999))
     })
     
-    it("validates quiet argument type", {
-      expect_error(ddbs_predicate(argentina_ddbs, points_sf, quiet = 999))
-    })
-    
     it("requires name to be single character string", {
       expect_error(ddbs_predicate(argentina_ddbs, points_sf, conn = conn_test, name = c('banana', 'banana')))
     })

@@ -76,18 +76,13 @@ describe("ddbs_intersection()", {
       expect_equal(ddbs_collect(output_1), ddbs_collect(output_9))
     })
 
-    it("returns different outputs depending on 'output' argument", {
-      output_geoarrow_fmt <- ddbs_intersection(poly1_sf, poly2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_intersection(poly1_sf, poly2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_intersection(poly1_sf, poly2_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different outputs depending on 'mode' argument", {
+      output_sf_fmt <- ddbs_intersection(poly1_sf, poly2_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("handles messages correctly", {
-      expect_message(ddbs_intersection(poly1_sf, poly2_sf))
+      expect_no_message(ddbs_intersection(poly1_sf, poly2_sf))
       expect_message(ddbs_intersection(poly1_sf, poly2_sf, conn = conn_test, name = "intersection"))
       expect_message(ddbs_intersection(poly1_sf, poly2_sf, conn = conn_test, name = "intersection", overwrite = TRUE))
       expect_true(ddbs_intersection(poly1_sf, poly2_sf, conn = conn_test, name = "intersection2"))
@@ -186,18 +181,13 @@ describe("ddbs_difference()", {
       expect_equal(ddbs_collect(output_1), ddbs_collect(output_9))
     })
 
-    it("returns different outputs depending on 'output' argument", {
-      output_geoarrow_fmt <- ddbs_difference(poly1_sf, poly2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_difference(poly1_sf, poly2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_difference(poly1_sf, poly2_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different outputs depending on 'mode' argument", {
+      output_sf_fmt <- ddbs_difference(poly1_sf, poly2_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("handles messages correctly", {
-      expect_message(ddbs_difference(poly1_sf, poly2_sf))
+      expect_no_message(ddbs_difference(poly1_sf, poly2_sf))
       expect_message(ddbs_difference(poly1_sf, poly2_sf, conn = conn_test, name = "difference"))
       expect_message(ddbs_difference(poly1_sf, poly2_sf, conn = conn_test, name = "difference", overwrite = TRUE))
       expect_true(ddbs_difference(poly1_sf, poly2_sf, conn = conn_test, name = "difference2"))
@@ -287,18 +277,13 @@ describe("ddbs_sym_difference()", {
       expect_equal(ddbs_collect(output_1), ddbs_collect(output_9))
     })
 
-    it("returns different outputs depending on 'output' argument", {
-      output_geoarrow_fmt <- ddbs_sym_difference(poly1_sf, poly2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_sym_difference(poly1_sf, poly2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_sym_difference(poly1_sf, poly2_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different outputs depending on 'mode' argument", {
+      output_sf_fmt <- ddbs_sym_difference(poly1_sf, poly2_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("handles messages correctly", {
-      expect_message(ddbs_sym_difference(poly1_sf, poly2_sf))
+      expect_no_message(ddbs_sym_difference(poly1_sf, poly2_sf))
       expect_message(ddbs_sym_difference(poly1_sf, poly2_sf, conn = conn_test, name = "symdifference"))
       expect_message(ddbs_sym_difference(poly1_sf, poly2_sf, conn = conn_test, name = "symdifference", overwrite = TRUE))
       expect_true(ddbs_sym_difference(poly1_sf, poly2_sf, conn = conn_test, name = "symdifference2"))

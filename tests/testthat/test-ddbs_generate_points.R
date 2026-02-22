@@ -37,18 +37,13 @@ describe("ddbs_generate_points()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
 
-    it("returns different outputs based on output argument", {
-      output_geoarrow_fmt <- ddbs_generate_points(argentina_ddbs, 10, output = "geoarrow")
-      output_sf_fmt       <- ddbs_generate_points(argentina_ddbs, 10, output = "sf")
-      output_raw_fmt      <- ddbs_generate_points(argentina_ddbs, 10, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different outputs based on mode argument", {
+      output_sf_fmt <- ddbs_generate_points(argentina_ddbs, 10, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_generate_points(argentina_ddbs, 10))
+      expect_no_message(ddbs_generate_points(argentina_ddbs, 10))
       expect_message(ddbs_generate_points("argentina", 50, conn = conn_test, name = "generate_points"))
       expect_message(ddbs_generate_points("argentina", 50, conn = conn_test, name = "generate_points", overwrite = TRUE))
       expect_true(ddbs_generate_points("argentina", 50, conn = conn_test, name = "generate_points2"))

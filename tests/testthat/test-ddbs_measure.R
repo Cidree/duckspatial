@@ -62,21 +62,22 @@ describe("ddbs_area()", {
   
   describe("expected behavior on sf input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_area(nc_4326_sf)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_area(nc_4326_sf, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_area(nc_4326_sf, new_column = "area_calc", output = NULL)
-      output_geoarrow <- ddbs_area(nc_4326_sf, new_column = "area_calc", output = "geoarrow")
-      output_sf       <- ddbs_area(nc_4326_sf, new_column = "area_calc", output = "sf")
-      output_raw      <- ddbs_area(nc_4326_sf, new_column = "area_calc", output = "raw")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_ddbs <- ddbs_area(nc_4326_sf, mode = NULL)
+      output_sf <- ddbs_area(nc_4326_sf, mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -85,7 +86,7 @@ describe("ddbs_area()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_area(nc_4326_sf, new_column = "area_calc"))
+      expect_no_message(ddbs_area(nc_4326_sf, new_column = "area_calc"))
       expect_message(ddbs_area(nc_4326_sf, conn = conn_test, name = "area_tbl2", new_column = "area_calc"))
       
       expect_no_message(ddbs_area(nc_4326_sf, new_column = "area_calc", quiet = TRUE))
@@ -94,21 +95,21 @@ describe("ddbs_area()", {
     
     it("calculates area correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
-      area_ddbs <- ddbs_area(argentina_3857_sf)
+      area_ddbs <- ddbs_area(argentina_3857_sf, new_column = NULL)
       area_sf   <- sf::st_area(argentina_3857_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
     })
 
     it("calculates area correctly on geographic CRS", {
-      area_ddbs <- ddbs_area(argentina_sf)
+      area_ddbs <- ddbs_area(argentina_sf, new_column = NULL)
       area_sf   <- sf::st_area(argentina_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_area(nc_4326_sf, new_column = "area_calc", output = NULL)
+      output_with_column <- ddbs_area(nc_4326_sf, new_column = "area_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -120,8 +121,8 @@ describe("ddbs_area()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_area(nc_4326_sf) |> as.numeric()
-      output_column <- ddbs_area(nc_4326_sf, new_column = "area_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_area(nc_4326_sf, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_area(nc_4326_sf, new_column = "area_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$area_calc)
     })
@@ -131,21 +132,22 @@ describe("ddbs_area()", {
   
   describe("expected behavior on duckspatial_df input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_area(nc_ddbs)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_area(nc_ddbs, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_area(nc_ddbs, new_column = "area_calc", output = NULL)
-      output_geoarrow <- ddbs_area(nc_ddbs, new_column = "area_calc", output = "geoarrow")
-      output_sf       <- ddbs_area(nc_ddbs, new_column = "area_calc", output = "sf")
-      output_raw      <- ddbs_area(nc_ddbs, new_column = "area_calc", output = "raw")
+      output_ddbs     <- ddbs_area(nc_ddbs, new_column = "area_calc", mode = NULL)
+      output_sf       <- ddbs_area(nc_ddbs, new_column = "area_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -155,7 +157,7 @@ describe("ddbs_area()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_area(nc_ddbs, new_column = "area_calc"))
+      expect_no_message(ddbs_area(nc_ddbs, new_column = "area_calc"))
       expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl2", new_column = "area_calc") |> suppressWarnings())
       expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl3", new_column = "area_calc", quiet = TRUE) |> suppressWarnings())
       
@@ -163,7 +165,7 @@ describe("ddbs_area()", {
     })
 
     it("calculates area correctly on geographic CRS", {
-      area_ddbs <- ddbs_area(argentina_sf)
+      area_ddbs <- ddbs_area(argentina_sf, new_column = NULL)
       area_sf   <- sf::st_area(argentina_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
@@ -171,7 +173,7 @@ describe("ddbs_area()", {
     
     it("calculates area correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
-      area_ddbs <- ddbs_area(argentina_3857_sf)
+      area_ddbs <- ddbs_area(argentina_3857_sf, new_column = NULL)
       area_sf   <- sf::st_area(argentina_3857_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
@@ -182,7 +184,7 @@ describe("ddbs_area()", {
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_area(nc_ddbs, new_column = "area_calc", output = NULL)
+      output_with_column <- ddbs_area(nc_ddbs, new_column = "area_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -194,8 +196,8 @@ describe("ddbs_area()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_area(nc_ddbs) |> as.numeric()
-      output_column <- ddbs_area(nc_ddbs, new_column = "area_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_area(nc_ddbs, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_area(nc_ddbs, new_column = "area_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$area_calc)
     })
@@ -205,21 +207,22 @@ describe("ddbs_area()", {
   
   describe("expected behavior on DuckDB table input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_area("nc", conn = conn_test)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_area("nc", conn = conn_test, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", output = NULL)
-      output_geoarrow <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", output = "geoarrow")
-      output_sf       <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", output = "sf")
-      output_raw      <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", output = "raw")
+      output_ddbs     <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", mode = NULL)
+      output_sf       <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -228,7 +231,7 @@ describe("ddbs_area()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_area("nc", conn = conn_test, new_column = "area_calc"))
+      expect_no_message(ddbs_area("nc", conn = conn_test, new_column = "area_calc"))
       expect_message(ddbs_area("nc", conn = conn_test, name = "conn_area_tbl2", new_column = "area_calc"))
       
       expect_no_message(ddbs_area("nc", conn = conn_test, new_column = "area_calc", quiet = TRUE))
@@ -237,7 +240,7 @@ describe("ddbs_area()", {
 
     it("calculates area correctly on geographic CRS", {
       duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina", overwrite = TRUE)
-      area_ddbs <- ddbs_area("argentina", conn_test)
+      area_ddbs <- ddbs_area("argentina", conn_test, new_column = NULL)
       area_sf   <- sf::st_area(argentina_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
@@ -246,14 +249,14 @@ describe("ddbs_area()", {
     it("calculates area correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
       duckspatial::ddbs_write_vector(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
-      area_ddbs <- ddbs_area("argentina", conn_test)
+      area_ddbs <- ddbs_area("argentina", conn_test, new_column = NULL)
       area_sf   <- sf::st_area(argentina_3857_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", output = NULL)
+      output_with_column <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -265,8 +268,8 @@ describe("ddbs_area()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_area("nc", conn = conn_test) |> as.numeric()
-      output_column <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_area("nc", conn = conn_test, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$area_calc)
     })
@@ -359,21 +362,22 @@ describe("ddbs_length()", {
   
   describe("expected behavior on sf input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_length(rivers_sf)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_length(rivers_sf, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_length(rivers_sf, new_column = "length_calc", output = NULL)
-      output_geoarrow <- ddbs_length(rivers_sf, new_column = "length_calc", output = "geoarrow")
-      output_sf       <- ddbs_length(rivers_sf, new_column = "length_calc", output = "sf")
-      output_raw      <- ddbs_length(rivers_sf, new_column = "length_calc", output = "raw")
+      output_ddbs     <- ddbs_length(rivers_sf, new_column = "length_calc", mode = NULL)
+      output_sf       <- ddbs_length(rivers_sf, new_column = "length_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -382,7 +386,7 @@ describe("ddbs_length()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_length(rivers_sf, new_column = "length_calc"))
+      expect_no_message(ddbs_length(rivers_sf, new_column = "length_calc"))
       expect_message(ddbs_length(rivers_sf, conn = conn_test, name = "length_tbl2", new_column = "length_calc"))
       
       expect_no_message(ddbs_length(rivers_sf, new_column = "length_calc", quiet = TRUE))
@@ -390,7 +394,7 @@ describe("ddbs_length()", {
     })
 
     it("calculates length correctly on geographic CRS", {
-      length_ddbs <- ddbs_length(rivers_sf)
+      length_ddbs <- ddbs_length(rivers_sf, new_column = NULL)
       length_sf   <- sf::st_length(rivers_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -398,14 +402,14 @@ describe("ddbs_length()", {
     
     it("calculates length correctly on projected CRS", {
       rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
-      length_ddbs <- ddbs_length(rivers_3857_sf)
+      length_ddbs <- ddbs_length(rivers_3857_sf, new_column = NULL)
       length_sf   <- sf::st_length(rivers_3857_sf)
       
       expect_equal(length_ddbs, length_sf)
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_length(rivers_sf, new_column = "length_calc", output = NULL)
+      output_with_column <- ddbs_length(rivers_sf, new_column = "length_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -417,15 +421,15 @@ describe("ddbs_length()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_length(rivers_sf) |> as.numeric()
-      output_column <- ddbs_length(rivers_sf, new_column = "length_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_length(rivers_sf, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_length(rivers_sf, new_column = "length_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$length_calc)
     })
     
     it("returns 0 for polygons and points", {
-      output_polygons <- ddbs_length(countries_sf) |> as.numeric()
-      output_points   <- ddbs_length(points_sf) |> as.numeric()
+      output_polygons <- ddbs_length(countries_sf, new_column = NULL) |> as.numeric()
+      output_points   <- ddbs_length(points_sf, new_column = NULL) |> as.numeric()
       
       expect_true(all(output_polygons == 0))
       expect_true(all(output_points == 0))
@@ -436,21 +440,22 @@ describe("ddbs_length()", {
   
   describe("expected behavior on duckspatial_df input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_length(rivers_ddbs)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_length(rivers_ddbs, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_length(rivers_ddbs, new_column = "length_calc", output = NULL)
-      output_geoarrow <- ddbs_length(rivers_ddbs, new_column = "length_calc", output = "geoarrow")
-      output_sf       <- ddbs_length(rivers_ddbs, new_column = "length_calc", output = "sf")
-      output_raw      <- ddbs_length(rivers_ddbs, new_column = "length_calc", output = "raw")
+      output_ddbs     <- ddbs_length(rivers_ddbs, new_column = "length_calc", mode = NULL)
+      output_sf       <- ddbs_length(rivers_ddbs, new_column = "length_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geom, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -460,7 +465,7 @@ describe("ddbs_length()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_length(rivers_ddbs, new_column = "length_calc"))
+      expect_no_message(ddbs_length(rivers_ddbs, new_column = "length_calc"))
       expect_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl2", new_column = "length_calc") |> suppressWarnings())
       expect_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl3", new_column = "length_calc", quiet = TRUE) |> suppressWarnings())
       
@@ -468,7 +473,7 @@ describe("ddbs_length()", {
     })
 
     it("calculates length correctly on geographic CRS", {
-      length_ddbs <- ddbs_length(rivers_sf)
+      length_ddbs <- ddbs_length(rivers_sf, new_column = NULL)
       length_sf   <- sf::st_length(rivers_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -476,7 +481,7 @@ describe("ddbs_length()", {
     
     it("calculates length correctly on projected CRS", {
       rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
-      length_ddbs <- ddbs_length(rivers_3857_sf)
+      length_ddbs <- ddbs_length(rivers_3857_sf, new_column = NULL)
       length_sf   <- sf::st_length(rivers_3857_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -487,7 +492,7 @@ describe("ddbs_length()", {
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_length(rivers_ddbs, new_column = "length_calc", output = NULL)
+      output_with_column <- ddbs_length(rivers_ddbs, new_column = "length_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -499,8 +504,8 @@ describe("ddbs_length()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_length(rivers_ddbs) |> as.numeric()
-      output_column <- ddbs_length(rivers_ddbs, new_column = "length_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_length(rivers_ddbs, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_length(rivers_ddbs, new_column = "length_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$length_calc)
     })
@@ -510,21 +515,22 @@ describe("ddbs_length()", {
   
   describe("expected behavior on DuckDB table input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_length("rivers", conn = conn_test)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_length("rivers", conn = conn_test, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", output = NULL)
-      output_geoarrow <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", output = "geoarrow")
-      output_sf       <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", output = "sf")
-      output_raw      <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", output = "raw")
+      output_ddbs     <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", mode = NULL)
+      output_sf       <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -533,7 +539,7 @@ describe("ddbs_length()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_length("rivers", conn = conn_test, new_column = "length_calc"))
+      expect_no_message(ddbs_length("rivers", conn = conn_test, new_column = "length_calc"))
       expect_message(ddbs_length("rivers", conn = conn_test, name = "conn_length_tbl2", new_column = "length_calc"))
       
       expect_no_message(ddbs_length("rivers", conn = conn_test, new_column = "length_calc", quiet = TRUE))
@@ -542,7 +548,7 @@ describe("ddbs_length()", {
 
     it("calculates length correctly on geographic CRS", {
       duckspatial::ddbs_write_vector(conn_test, rivers_sf, "rivers_4326")
-      length_ddbs <- ddbs_length("rivers_4326", conn_test)
+      length_ddbs <- ddbs_length("rivers_4326", conn_test, new_column = NULL)
       length_sf   <- sf::st_length(rivers_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -551,14 +557,14 @@ describe("ddbs_length()", {
     it("calculates length correctly on projected CRS", {
       rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
       duckspatial::ddbs_write_vector(conn_test, rivers_3857_sf, "rivers_3857")
-      length_ddbs <- ddbs_length("rivers_3857", conn_test)
+      length_ddbs <- ddbs_length("rivers_3857", conn_test, new_column = NULL)
       length_sf   <- sf::st_length(rivers_3857_sf)
       
       expect_equal(length_ddbs, length_sf)
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", output = NULL)
+      output_with_column <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -570,8 +576,8 @@ describe("ddbs_length()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_length("rivers", conn = conn_test) |> as.numeric()
-      output_column <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_length("rivers", conn = conn_test, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$length_calc)
     })
@@ -784,21 +790,22 @@ describe("ddbs_perimeter()", {
   
   describe("expected behavior on sf input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_perimeter(nc_4326_sf)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_perimeter(nc_4326_sf, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = NULL)
-      output_geoarrow <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = "geoarrow")
-      output_sf       <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = "sf")
-      output_raw      <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = "raw")
+      output_ddbs     <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", mode = NULL)
+      output_sf       <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -807,7 +814,7 @@ describe("ddbs_perimeter()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc"))
+      expect_no_message(ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc"))
       expect_message(ddbs_perimeter(nc_4326_sf, conn = conn_test, name = "perimeter_tbl2", new_column = "perimeter_calc"))
       
       expect_no_message(ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", quiet = TRUE))
@@ -816,21 +823,21 @@ describe("ddbs_perimeter()", {
     
     it("calculates perimeter correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
-      perimeter_ddbs <- ddbs_perimeter(argentina_3857_sf)
+      perimeter_ddbs <- ddbs_perimeter(argentina_3857_sf, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
     })
 
     it("calculates perimeter correctly on geographic CRS", {
-      perimeter_ddbs <- ddbs_perimeter(argentina_sf)
+      perimeter_ddbs <- ddbs_perimeter(argentina_sf, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = NULL)
+      output_with_column <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -842,8 +849,8 @@ describe("ddbs_perimeter()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_perimeter(nc_4326_sf) |> as.numeric()
-      output_column <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_perimeter(nc_4326_sf, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$perimeter_calc)
     })
@@ -853,21 +860,22 @@ describe("ddbs_perimeter()", {
   
   describe("expected behavior on duckspatial_df input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_perimeter(nc_ddbs)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_perimeter(nc_ddbs, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = NULL)
-      output_geoarrow <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = "geoarrow")
-      output_sf       <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = "sf")
-      output_raw      <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = "raw")
+      output_ddbs     <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", mode = NULL)
+      output_sf       <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -877,7 +885,7 @@ describe("ddbs_perimeter()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc"))
+      expect_no_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc"))
       expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl2", new_column = "perimeter_calc") |> suppressWarnings())
       expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE) |> suppressWarnings())
       
@@ -885,7 +893,7 @@ describe("ddbs_perimeter()", {
     })
 
     it("calculates perimeter correctly on geographic CRS", {
-      perimeter_ddbs <- ddbs_perimeter(argentina_sf)
+      perimeter_ddbs <- ddbs_perimeter(argentina_sf, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
@@ -893,7 +901,7 @@ describe("ddbs_perimeter()", {
     
     it("calculates perimeter correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
-      perimeter_ddbs <- ddbs_perimeter(argentina_3857_sf)
+      perimeter_ddbs <- ddbs_perimeter(argentina_3857_sf, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
@@ -904,7 +912,7 @@ describe("ddbs_perimeter()", {
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = NULL)
+      output_with_column <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -916,8 +924,8 @@ describe("ddbs_perimeter()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_perimeter(nc_ddbs) |> as.numeric()
-      output_column <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_perimeter(nc_ddbs, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$perimeter_calc)
     })
@@ -927,21 +935,22 @@ describe("ddbs_perimeter()", {
   
   describe("expected behavior on DuckDB table input", {
     
-    it("returns a units vector by default", {
+    it("returns a duckspatial_df by default", {
       output <- ddbs_perimeter("nc", conn = conn_test)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a units vector with new_column NULL", {
+      output <- ddbs_perimeter("nc", conn = conn_test, new_column = NULL)
       expect_s3_class(output, "units")
     })
     
     it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = NULL)
-      output_geoarrow <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = "geoarrow")
-      output_sf       <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = "sf")
-      output_raw      <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = "raw")
+      output_ddbs     <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", mode = NULL)
+      output_sf       <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("writes tables to the database", {
@@ -950,7 +959,7 @@ describe("ddbs_perimeter()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc"))
+      expect_no_message(ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc"))
       expect_message(ddbs_perimeter("nc", conn = conn_test, name = "conn_perimeter_tbl2", new_column = "perimeter_calc"))
       
       expect_no_message(ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", quiet = TRUE))
@@ -959,7 +968,7 @@ describe("ddbs_perimeter()", {
 
     it("calculates perimeter correctly on geographic CRS", {
       duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina", overwrite = TRUE)
-      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test)
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
@@ -968,14 +977,14 @@ describe("ddbs_perimeter()", {
     it("calculates perimeter correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
       duckspatial::ddbs_write_vector(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
-      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test)
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
     })
     
     it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
-      output_with_column <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = NULL)
+      output_with_column <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", mode = NULL)
       
       output_sf      <- output_with_column |> st_as_sf()
       output_collect <- output_with_column |> collect()
@@ -987,8 +996,8 @@ describe("ddbs_perimeter()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_perimeter("nc", conn = conn_test) |> as.numeric()
-      output_column <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", output = NULL) |> st_as_sf()
+      output_vector <- ddbs_perimeter("nc", conn = conn_test, new_column = NULL) |> as.numeric()
+      output_column <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", mode = NULL) |> st_as_sf()
       
       expect_identical(output_vector, output_column$perimeter_calc)
     })

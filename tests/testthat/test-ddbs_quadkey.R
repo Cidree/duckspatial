@@ -61,7 +61,7 @@ describe("ddbs_quadkey()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_quadkey(rand_ddbs, level = 1))
+      expect_no_message(ddbs_quadkey(rand_ddbs, level = 1))
       expect_message(ddbs_quadkey("points", conn = conn_test, name = "quadkey"))
       expect_message(ddbs_quadkey("points", conn = conn_test, name = "quadkey", overwrite = TRUE))
       

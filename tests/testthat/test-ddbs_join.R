@@ -17,7 +17,7 @@ tester <- function(x = points_sf,
                    name = NULL,
                    crs = NULL,
                    crs_column = "crs_duckspatial",
-                   output = "sf",
+                   mode = "sf",
                    overwrite = FALSE,
                    quiet = FALSE) {
     ddbs_join(
@@ -28,7 +28,7 @@ tester <- function(x = points_sf,
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet
     )
@@ -86,7 +86,7 @@ testthat::test_that("expected behavior", {
 
 
     # show and suppress messages
-    testthat::expect_message( tester() )
+    testthat::expect_no_message( tester() )
     testthat::expect_no_message( tester(quiet = TRUE))
 
 
@@ -178,7 +178,7 @@ testthat::test_that("ddbs_join works with duckspatial_df inputs", {
   
   # 3. sf x duckspatial_df
   
-  withr::with_options(list(duckspatial.output_type = "sf"), {
+  withr::with_options(list(duckspatial.mode = "sf"), {
       r_sf <- ddbs_join(points_sf, countries_ds, join = "intersects")
       expect_s3_class(r_sf, "sf")
   })
@@ -216,15 +216,11 @@ testthat::test_that("ddbs_join works with different predicates", {
 # output parameters ------------------------------------------------------------
 
 testthat::test_that("ddbs_join respects output parameter", {
-  result_sf <- ddbs_join(points_sf, countries_sf, output = "sf")
+  result_sf <- ddbs_join(points_sf, countries_sf, mode = "sf")
   expect_s3_class(result_sf, "sf")
   
-  result_ds <- ddbs_join(points_sf, countries_sf, output = "duckspatial_df")
+  result_ds <- ddbs_join(points_sf, countries_sf, mode = "duckspatial")
   expect_s3_class(result_ds, "duckspatial_df")
-  
-  result_tibble <- ddbs_join(points_sf, countries_sf, output = "tibble")
-  expect_s3_class(result_tibble, "tbl_df")
-  expect_true(!inherits(result_tibble, "sf")) 
 })
 
 # error handling ---------------------------------------------------------------

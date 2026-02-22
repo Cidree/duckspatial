@@ -55,17 +55,12 @@ describe("ddbs_is_valid()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_valid(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_valid(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_valid(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_is_valid(countries_2_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_valid(countries_2_ddbs))
+      expect_no_message(ddbs_is_valid(countries_2_ddbs))
       expect_message(ddbs_is_valid("countries", conn = conn_test, name = "is_valid_tbl"))
       expect_message(ddbs_is_valid("countries", conn = conn_test, name = "is_valid_tbl", overwrite = TRUE))
       expect_true(ddbs_is_valid("countries", conn = conn_test, name = "is_valid_tbl2"))
@@ -166,17 +161,12 @@ describe("ddbs_is_simple()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_simple(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_simple(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_simple(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_is_simple(countries_2_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_simple(countries_2_ddbs))
+      expect_no_message(ddbs_is_simple(countries_2_ddbs))
       expect_message(ddbs_is_simple("countries", conn = conn_test, name = "is_simple_tbl"))
       expect_message(ddbs_is_simple("countries", conn = conn_test, name = "is_simple_tbl", overwrite = TRUE))
       expect_true(ddbs_is_simple("countries", conn = conn_test, name = "is_simple_tbl2"))
@@ -276,17 +266,12 @@ describe("ddbs_is_empty()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_empty(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_empty(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_empty(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_is_empty(countries_2_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_empty(countries_2_ddbs))
+      expect_no_message(ddbs_is_empty(countries_2_ddbs))
       expect_message(ddbs_is_empty("countries", conn = conn_test, name = "is_empty_tbl"))
       expect_message(ddbs_is_empty("countries", conn = conn_test, name = "is_empty_tbl", overwrite = TRUE))
       expect_true(ddbs_is_empty("countries", conn = conn_test, name = "is_empty_tbl2"))
@@ -386,17 +371,12 @@ describe("ddbs_is_ring()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_ring(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_ring(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_ring(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_is_ring(countries_2_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_ring(countries_2_ddbs))
+      expect_no_message(ddbs_is_ring(countries_2_ddbs))
       expect_message(ddbs_is_ring("countries", conn = conn_test, name = "is_ring_tbl"))
       expect_message(ddbs_is_ring("countries", conn = conn_test, name = "is_ring_tbl", overwrite = TRUE))
       expect_true(ddbs_is_ring("countries", conn = conn_test, name = "is_ring_tbl2"))
@@ -522,17 +502,12 @@ describe("ddbs_is_closed()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_closed(lines_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_closed(lines_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_closed(lines_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_is_closed(lines_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_closed(lines_ddbs))
+      expect_no_message(ddbs_is_closed(lines_ddbs))
       expect_message(ddbs_is_closed("lines", conn = conn_test, name = "is_closed_tbl"))
       expect_message(ddbs_is_closed("lines", conn = conn_test, name = "is_closed_tbl", overwrite = TRUE))
       expect_true(ddbs_is_closed("lines", conn = conn_test, name = "is_closed_tbl2"))

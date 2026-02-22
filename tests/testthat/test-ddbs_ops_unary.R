@@ -33,18 +33,13 @@ describe("ddbs_buffer()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_buffer(points_ddbs, 10, output = "geoarrow")
-      output_sf_fmt       <- ddbs_buffer(points_ddbs, 10, output = "sf")
-      output_raw_fmt      <- ddbs_buffer(points_ddbs, 10, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_buffer(points_ddbs, 10, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_buffer(points_ddbs, 10))
+      expect_no_message(ddbs_buffer(points_ddbs, 10))
       expect_message(ddbs_buffer("points", 50, conn = conn_test, name = "buffer"))
       expect_message(ddbs_buffer("points", 50, conn = conn_test, name = "buffer", overwrite = TRUE))
       expect_true(ddbs_buffer("points", 50, conn = conn_test, name = "buffer2"))
@@ -374,7 +369,7 @@ describe("ddbs_buffer()", {
 
 ## expected behaviour
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 #  - CHECK 1.4: writting table works
 ## - CHECK 1.5: expected errors
@@ -394,18 +389,13 @@ describe("ddbs_centroid()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_centroid(argentina_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_centroid(argentina_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_centroid(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_centroid(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_centroid(argentina_ddbs))
+      expect_no_message(ddbs_centroid(argentina_ddbs))
       expect_message(ddbs_centroid("argentina", conn = conn_test, name = "centroid"))
       expect_message(ddbs_centroid("argentina", conn = conn_test, name = "centroid", overwrite = TRUE))
       expect_true(ddbs_centroid("argentina", conn = conn_test, name = "centroid2"))
@@ -465,7 +455,7 @@ describe("ddbs_centroid()", {
 # 3. ddbs_make_valid() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 2.1: errors
@@ -484,18 +474,13 @@ describe("ddbs_make_valid()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_make_valid(argentina_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_make_valid(argentina_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_make_valid(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_make_valid(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_make_valid(argentina_ddbs))
+      expect_no_message(ddbs_make_valid(argentina_ddbs))
       expect_message(ddbs_make_valid("argentina", conn = conn_test, name = "make_valid"))
       expect_message(ddbs_make_valid("argentina", conn = conn_test, name = "make_valid", overwrite = TRUE))
       expect_true(ddbs_make_valid("argentina", conn = conn_test, name = "make_valid2"))
@@ -554,7 +539,7 @@ describe("ddbs_make_valid()", {
 # 4. ddbs_simplify() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 2.1: errors
@@ -572,18 +557,13 @@ describe("ddbs_simplify()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_simplify(argentina_ddbs, tolerance = 0.01, output = "geoarrow")
-      output_sf_fmt       <- ddbs_simplify(argentina_ddbs, tolerance = 0.01, output = "sf")
-      output_raw_fmt      <- ddbs_simplify(argentina_ddbs, tolerance = 0.01, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_simplify(argentina_ddbs, tolerance = 0.01, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_simplify(argentina_ddbs, tolerance = 0.01))
+      expect_no_message(ddbs_simplify(argentina_ddbs, tolerance = 0.01))
       expect_message(ddbs_simplify("argentina", tolerance = 0.01, conn = conn_test, name = "simplify"))
       expect_message(ddbs_simplify("argentina", tolerance = 0.01, conn = conn_test, name = "simplify", overwrite = TRUE))
       expect_true(ddbs_simplify("argentina", tolerance = 0.01, conn = conn_test, name = "simplify2"))
@@ -646,7 +626,7 @@ describe("ddbs_simplify()", {
 # 5. ddbs_exterior_ring() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 1.5: geometry type
@@ -665,18 +645,13 @@ describe("ddbs_exterior_ring()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_exterior_ring(argentina_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_exterior_ring(argentina_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_exterior_ring(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_exterior_ring(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_exterior_ring(argentina_ddbs))
+      expect_no_message(ddbs_exterior_ring(argentina_ddbs))
       expect_message(ddbs_exterior_ring("argentina", conn = conn_test, name = "exterior_ring"))
       expect_message(ddbs_exterior_ring("argentina", conn = conn_test, name = "exterior_ring", overwrite = TRUE))
       expect_true(ddbs_exterior_ring("argentina", conn = conn_test, name = "exterior_ring2"))
@@ -743,7 +718,7 @@ describe("ddbs_exterior_ring()", {
 # 6. ddbs_make_polygon() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 1.5: geometry type
@@ -766,22 +741,16 @@ describe("ddbs_make_polygon()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
+    it("returns different output formats (duckspatial_df, sf)", {
       ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      
-      output_geoarrow_fmt <- ddbs_make_polygon(ext_ring_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_make_polygon(ext_ring_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_make_polygon(ext_ring_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_make_polygon(ext_ring_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
       ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
       
-      expect_message(ddbs_make_polygon(ext_ring_ddbs))
+      expect_no_message(ddbs_make_polygon(ext_ring_ddbs))
       expect_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon"))
       expect_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon", overwrite = TRUE))
       expect_true(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon2"))
@@ -855,7 +824,7 @@ describe("ddbs_make_polygon()", {
 # 7. ddbs_convex_hull() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 2.1: errors
@@ -873,18 +842,13 @@ describe("ddbs_convex_hull()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_convex_hull(argentina_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_convex_hull(argentina_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_convex_hull(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_convex_hull(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_convex_hull(argentina_ddbs))
+      expect_no_message(ddbs_convex_hull(argentina_ddbs))
       expect_message(ddbs_convex_hull("argentina", conn = conn_test, name = "convex_hull"))
       expect_message(ddbs_convex_hull("argentina", conn = conn_test, name = "convex_hull", overwrite = TRUE))
       expect_true(ddbs_convex_hull("argentina", conn = conn_test, name = "convex_hull2"))
@@ -941,7 +905,7 @@ describe("ddbs_convex_hull()", {
 # 8. ddbs_concave_hull() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 1.5: ratio work
@@ -963,18 +927,13 @@ describe("ddbs_concave_hull()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_geoarrow_fmt <- ddbs_concave_hull(argentina_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_concave_hull(argentina_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_concave_hull(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_concave_hull(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_concave_hull(argentina_ddbs))
+      expect_no_message(ddbs_concave_hull(argentina_ddbs))
       expect_message(ddbs_concave_hull("argentina", conn = conn_test, name = "concave_hull"))
       expect_message(ddbs_concave_hull("argentina", conn = conn_test, name = "concave_hull", overwrite = TRUE))
       expect_true(ddbs_concave_hull("argentina", conn = conn_test, name = "concave_hull2"))
@@ -996,8 +955,8 @@ describe("ddbs_concave_hull()", {
     describe("ratio parameter", {
       
       it("produces different results with different ratios", {
-        output_ratio_1 <- ddbs_concave_hull(argentina_ddbs, ratio = 1, output = "sf")
-        output_ratio_2 <- ddbs_concave_hull(argentina_ddbs, ratio = 0.2, output = "sf")
+        output_ratio_1 <- ddbs_concave_hull(argentina_ddbs, ratio = 1, mode = "sf")
+        output_ratio_2 <- ddbs_concave_hull(argentina_ddbs, ratio = 0.2, mode = "sf")
 
         expect_false(identical(output_ratio_1, output_ratio_2))
       })
@@ -1006,8 +965,8 @@ describe("ddbs_concave_hull()", {
     describe("allow_holes parameter", {
       
       it("produces different results with different allow_holes values", {
-        output_holes_1 <- ddbs_concave_hull(argentina_ddbs, allow_holes = TRUE, output = "sf")
-        output_holes_2 <- ddbs_concave_hull(argentina_ddbs, allow_holes = FALSE, output = "sf")
+        output_holes_1 <- ddbs_concave_hull(argentina_ddbs, allow_holes = TRUE, mode = "sf")
+        output_holes_2 <- ddbs_concave_hull(argentina_ddbs, allow_holes = FALSE, mode = "sf")
 
         expect_false(identical(output_holes_1, output_holes_2))
       })
@@ -1018,7 +977,7 @@ describe("ddbs_concave_hull()", {
       skip_if(geos_version < "3.11.0")
 
       sf_output   <- sf::st_concave_hull(argentina_sf, ratio = 0.5, allow_holes = FALSE)
-      ddbs_output <- ddbs_concave_hull(argentina_sf, ratio = 0.5, allow_holes = FALSE, output = "sf")
+      ddbs_output <- ddbs_concave_hull(argentina_sf, ratio = 0.5, allow_holes = FALSE, mode = "sf")
       
       expect_equal(sf_output$geometry, ddbs_output$geometry)
     })
@@ -1132,8 +1091,7 @@ describe("ddbs_geometry_type()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_geometry_type(argentina_ddbs))
-      expect_no_message(ddbs_geometry_type(argentina_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_geometry_type(argentina_ddbs))
     })
     
     describe("geometry type detection", {
@@ -1181,10 +1139,6 @@ describe("ddbs_geometry_type()", {
       
       it("validates conn argument type", {
         expect_error(ddbs_geometry_type(argentina_ddbs, conn = 999))
-      })
-      
-      it("validates quiet argument type", {
-        expect_error(ddbs_geometry_type(argentina_ddbs, quiet = 999))
       })
       
       it("validates table name exists", {
