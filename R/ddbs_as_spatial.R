@@ -16,11 +16,11 @@
 #' @param crs_column \link{Deprecated} a character string of length one specifying the column
 #'        storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 #'        Set to `NULL` if absent.
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -73,15 +73,16 @@ ddbs_as_spatial <- function(
     conn = NULL,
     name = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
   
 
     ## 0. Handle errors
-    assert_conn_character(conn, x)
     assert_name(name)
-    assert_name(output, "output")
+    assert_conn_x_name(conn, x, name)
+    assert_conn_character(conn, x)
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
   
@@ -91,6 +92,9 @@ ddbs_as_spatial <- function(
     ## 1.1. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.2. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -114,6 +118,15 @@ ddbs_as_spatial <- function(
 
     ## 3.2. Coords as character
     coords_str <- paste0(coords,  collapse = ", ")
+  
+    ## 3.3. Build base query
+    st_function <- glue::glue("ST_Point({coords_str})")
+    base.query <- glue::glue("
+      SELECT {all_cols}
+      '{crs}' AS '{crs_column}',
+      {build_geom_query(st_function, mode)} as geometry
+      FROM {x_list$query_name};
+    ")    
 
 
     # 4. if name is not NULL (i.e. no SF returned)
@@ -128,10 +141,7 @@ ddbs_as_spatial <- function(
         ## create query (no st_as_text)
         tmp.query <-glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {all_cols}
-            '{crs}' AS '{crs_column}',
-            ST_Point({coords_str}) as geometry
-            FROM {x_list$query_name};
+            {base.query}
         ")
         
         ## execute query
@@ -140,30 +150,32 @@ ddbs_as_spatial <- function(
         return(invisible(TRUE))
     }
 
-
-    # 5. Get data frame
-
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {all_cols}
-        ST_AsWKB(ST_Point({coords_str})) as geometry
-        FROM {x_list$query_name};
-    ")
-
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    
+    # 5. Apply geospatial operation
+  
+    ## 5.1. Create the query based on output
+    if (mode == "duckspatial") {
+      view_name <- ddbs_temp_view_name()
+      tmp.query <- glue::glue("
+        CREATE TEMP VIEW {view_name} AS
+        {base.query}
+      ")
+    } else {
+      view_name <- NULL
+      tmp.query <- base.query
+    }
+  
+    ## 5.2. Handle the output
+    result <- ddbs_handle_query(
+        query      = tmp.query,
+        view_name  = view_name,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = crs,
         crs_column = NULL,
         x_geom     = "geometry"
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
+

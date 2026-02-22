@@ -11,11 +11,11 @@
 #' @template conn_x_conn_y
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #'
 #' @template spatial_join_predicates
 #'
@@ -85,7 +85,7 @@ ddbs_join <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
 
@@ -95,7 +95,7 @@ ddbs_join <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     
@@ -118,8 +118,12 @@ ddbs_join <- function(
     # Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, validate character table names
     x <- normalize_spatial_input(x, conn_x)
     y <- normalize_spatial_input(y, conn_y)
+
+    ## Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
     
-     # 3. Manage connection to DB
+    # 3. Manage connection to DB
     ## 3.1. Resolve connections and handle imports
     resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
     
@@ -127,10 +131,10 @@ ddbs_join <- function(
     x <- resolve_res$x
     y <- resolve_res$y
     
-    # Register cleanup
-    on.exit(resolve_res$cleanup(), add = TRUE)
-
-
+    ## register cleanup of the connection
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_res$cleanup(), add = TRUE)   
+    }
     
     ## 3.3. Get query list of table names
     x_list <- get_query_list(x, target_conn)
@@ -139,8 +143,6 @@ ddbs_join <- function(
     on.exit(y_list$cleanup(), add = TRUE)
     
     # CRS already extracted at start of function
-
-    
     if (!is.null(crs_x) && !is.null(crs_y)) {
        if (!crs_equal(crs_x, crs_y)) {
          cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
@@ -148,6 +150,7 @@ ddbs_join <- function(
     } else {
        assert_crs(target_conn, x_list$query_name, y_list$query_name)
     }
+
 
     # 4. Prepare parameters for query
     ## 4.1. predicate already validated early (sel_pred above)
@@ -174,7 +177,23 @@ ddbs_join <- function(
     x_rest <- if (length(x_rest_cols) > 0) paste0('tbl_x."', x_rest_cols, '", ', collapse = '') else ""
     y_rest <- if (length(y_rest_cols) > 0) paste0('tbl_y."', y_rest_cols, '", ', collapse = '') else ""
 
-    ## 5. if name is not NULL (i.e. no SF returned)
+    ## 4.5. Build base query
+    st_function <- glue::glue("tbl_x.{x_geom}")
+    base.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            {y_rest}
+            {build_geom_query(st_function, mode)} AS {x_geom}
+        FROM 
+            {x_list$query_name} tbl_x
+        JOIN 
+            {y_list$query_name} tbl_y
+        ON 
+            {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom});
+    ")
+
+
+    # 5. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
@@ -186,17 +205,7 @@ ddbs_join <- function(
         ## create query
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT 
-                {x_rest}
-                {y_rest}
-                tbl_x.{x_geom} AS {x_geom}
-            FROM 
-                {x_list$query_name} tbl_x
-            JOIN 
-                {y_list$query_name} tbl_y
-            ON 
-                {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
-
+            {base.query}
         ")
 
         ## execute intersection query
@@ -205,51 +214,33 @@ ddbs_join <- function(
         return(invisible(TRUE))
     }
 
-    ## 6. create the base query
-    tmp.query <- glue::glue("
-        SELECT 
-            {x_rest}
-            {y_rest}
-            ST_AsWKB(tbl_x.{x_geom}) AS {x_geom}
-        FROM 
-            {x_list$query_name} tbl_x
-        JOIN 
-            {y_list$query_name} tbl_y
-        ON 
-            {sel_pred}(tbl_x.{x_geom}, tbl_y.{y_geom})
-    ")
 
-    ## send the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    ## 7. Handle output based on output parameter
-    result <- ddbs_handle_output(
-        data       = data_tbl,
+    # 6. Apply geospatial operation
+  
+    ## 6.1. Create the query based on output
+    if (mode == "duckspatial") {
+        view_name <- ddbs_temp_view_name()
+        tmp.query <- glue::glue("
+            CREATE TEMP VIEW {view_name} AS
+            {base.query}
+        ")
+    } else {
+        view_name <- NULL
+        tmp.query <- base.query
+    }
+  
+    ## 6.3. Handle the output
+    result <- ddbs_handle_query(
+        query      = tmp.query,
+        view_name  = view_name,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
     return(result)
 }
 
 
-
-# has_rtree_index <- function(conn,  tbl_name){
-#
-#     temp_df <- DBI::dbGetQuery(
-#         conn,
-#         glue::glue("
-#             SELECT *
-#             FROM duckdb_indexes()
-#             WHERE table_name = '{tbl_name}';
-#           ")
-#     )
-#
-#     check <- grepl(" RTREE ", temp_df$sql)
-#     check <- ifelse(isTRUE(check), TRUE, FALSE)
-#     return(check)
-# }

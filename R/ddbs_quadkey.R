@@ -92,6 +92,7 @@ ddbs_quadkey <- function(
   assert_numeric(level, "level")
   assert_name(field, "field")
   assert_character_scalar(fun, "fun")
+  assert_conn_x_name(conn, x, name)
   assert_conn_character(conn, x)
   assert_name(name)
   assert_name(output, "output")
@@ -272,7 +273,6 @@ ddbs_quadkey <- function(
 
   }
   
-  feedback_query(quiet)
   return(prep_data)
 
 }

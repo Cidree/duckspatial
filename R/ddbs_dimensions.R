@@ -108,7 +108,7 @@ ddbs_has_m <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
@@ -129,7 +129,7 @@ ddbs_has_m <- function(
 #' - `ddbs_force_4d()` forces geometries to have all four dimensions (X, Y, Z, M).
 #'   Missing Z or M values are typically set to 0.
 #'
-#' @template returns_output
+#' @template returns_mode
 #' 
 #' @examples
 #' \dontrun{
@@ -182,7 +182,7 @@ ddbs_force_2d <- function(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
 
@@ -193,7 +193,7 @@ ddbs_force_2d <- function(
       name = name,
       crs = crs,
       crs_column = crs_column,
-      output = output,
+      mode = mode,
       overwrite = overwrite,
       quiet = quiet,
       fun = "ST_Force2D",
@@ -216,7 +216,7 @@ ddbs_force_3d <- function(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
 
@@ -233,7 +233,7 @@ ddbs_force_3d <- function(
       name = name,
       crs = crs,
       crs_column = crs_column,
-      output = output,
+      mode = mode,
       overwrite = overwrite,
       quiet = quiet,
       fun = st_fun,
@@ -256,7 +256,7 @@ ddbs_force_4d <- function(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -272,7 +272,7 @@ ddbs_force_4d <- function(
       name = name,
       crs = crs,
       crs_column = crs_column,
-      output = output,
+      mode = mode,
       overwrite = overwrite,
       quiet = quiet,
       fun = "ST_Force4D",

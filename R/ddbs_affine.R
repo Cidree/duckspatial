@@ -108,6 +108,9 @@ ddbs_rotate <- function(
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
 
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
 
     # 2. Manage connection to DB
 
@@ -180,6 +183,13 @@ ddbs_rotate <- function(
         )
     }
 
+    ## 3.6. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(rotation_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
+
   
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -193,9 +203,7 @@ ddbs_rotate <- function(
         ## create query
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest} 
-            {rotation_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute rotation query
         DBI::dbExecute(target_conn, tmp.query)
@@ -205,27 +213,18 @@ ddbs_rotate <- function(
 
     # 5. Apply geospatial operation
   
-    ## 5.1. Get mode option
-    if (is.null(mode)) {
-      mode <- getOption("duckspatial.mode", "duckspatial")
-    }
+    
   
     ## 5.1. Create the query based on output
     if (mode == "duckspatial") {
       view_name <- ddbs_temp_view_name()
       tmp.query <- glue::glue("
         CREATE TEMP VIEW {view_name} AS
-        SELECT {x_rest} 
-        {rotation_expr} as {x_geom} 
-        FROM {x_list$query_name};
+        {base.query}
       ")
     } else {
       view_name <- NULL
-      tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({rotation_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-      ")
+      tmp.query <- base.query
     }
   
     ## 5.2. Handle the output
@@ -499,6 +498,7 @@ ddbs_flip <- function(
     direction <- match.arg(direction)
     assert_name(direction, "direction")
     assert_logic(by_feature, "by_feature")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
     assert_name(mode, "mode")
@@ -516,6 +516,9 @@ ddbs_flip <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -593,7 +596,14 @@ ddbs_flip <- function(
         }
     }
 
+    ## 3.4. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(flip_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
   
+
     # 4. if name is not NULL
     if (!is.null(name)) {
 
@@ -606,9 +616,7 @@ ddbs_flip <- function(
         ## create query 
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {flip_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute flip query
         DBI::dbExecute(target_conn, tmp.query)
@@ -616,29 +624,19 @@ ddbs_flip <- function(
         return(invisible(TRUE))
     }
 
+
     # 5. Apply geospatial operation
-  
-    ## 5.1. Get mode option
-    if (is.null(mode)) {
-      mode <- getOption("duckspatial.mode", "duckspatial")
-    }
-  
+
     ## 5.1. Create the query based on output
     if (mode == "duckspatial") {
       view_name <- ddbs_temp_view_name()
       tmp.query <- glue::glue("
         CREATE TEMP VIEW {view_name} AS
-        SELECT {x_rest}
-        {flip_expr} as {x_geom} 
-        FROM {x_list$query_name};
+        {base.query}
       ")
     } else {
       view_name <- NULL
-      tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({flip_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-      ")
+      tmp.query <- base.query
     }
   
     ## 5.2. Handle the output
@@ -731,6 +729,7 @@ ddbs_scale <- function(
     assert_numeric(x_scale, "x_scale")
     assert_numeric(y_scale, "y_scale")
     assert_logic(by_feature, "by_feature")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
     assert_name(mode, "mode")
@@ -748,6 +747,9 @@ ddbs_scale <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -802,6 +804,13 @@ ddbs_scale <- function(
         )
     }
 
+    ## 3.4. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(scale_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
+
   
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -815,9 +824,7 @@ ddbs_scale <- function(
         ## create query 
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {scale_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute scale query
         DBI::dbExecute(target_conn, tmp.query)
@@ -827,27 +834,18 @@ ddbs_scale <- function(
 
     # 5. Apply geospatial operation
   
-    ## 5.1. Get mode option
-    if (is.null(mode)) {
-      mode <- getOption("duckspatial.mode", "duckspatial")
-    }
+   
   
     ## 5.1. Create the query based on output
     if (mode == "duckspatial") {
       view_name <- ddbs_temp_view_name()
       tmp.query <- glue::glue("
         CREATE TEMP VIEW {view_name} AS
-        SELECT {x_rest}
-        {scale_expr} as {x_geom} 
-        FROM {x_list$query_name};
+        {base.query}
       ")
     } else {
       view_name <- NULL
-      tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({scale_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-      ")
+      tmp.query <- base.query
     }
   
     ## 5.2. Handle the output
@@ -942,6 +940,7 @@ ddbs_shear <- function(
     assert_numeric(x_shear, "x_shear")
     assert_numeric(y_shear, "y_shear")
     assert_logic(by_feature, "by_feature")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
     assert_name(mode, "mode")
@@ -959,6 +958,9 @@ ddbs_shear <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -1009,6 +1011,13 @@ ddbs_shear <- function(
         )
     }
 
+    ## 3.4. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(shear_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
+
 
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -1022,9 +1031,7 @@ ddbs_shear <- function(
         ## create query 
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {shear_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute shear query
         DBI::dbExecute(target_conn, tmp.query)
@@ -1034,28 +1041,18 @@ ddbs_shear <- function(
 
     
     # 5. Apply geospatial operation
-  
-    ## 5.1. Get mode option
-    if (is.null(mode)) {
-      mode <- getOption("duckspatial.mode", "duckspatial")
-    }
+
   
     ## 5.1. Create the query based on output
     if (mode == "duckspatial") {
       view_name <- ddbs_temp_view_name()
       tmp.query <- glue::glue("
         CREATE TEMP VIEW {view_name} AS
-        SELECT {x_rest}
-        {shear_expr} as {x_geom} 
-        FROM {x_list$query_name};
+        {base.query}
       ")
     } else {
       view_name <- NULL
-      tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({shear_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-      ")
+      tmp.query <- base.query
     }
   
     ## 5.2. Handle the output

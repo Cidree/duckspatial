@@ -15,7 +15,6 @@
 #' @template predicate_args
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
-#' @template quiet
 #' @param ... Passed to [ddbs_predicate]
 #'
 #' @details
@@ -139,8 +138,7 @@ ddbs_predicate <- function(
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
-  distance = NULL,
-  quiet = FALSE) {
+  distance = NULL) {
 
   
   ## 0. Handle errors
@@ -149,7 +147,6 @@ ddbs_predicate <- function(
   assert_name(id_x, "id_x")
   assert_name(id_y, "id_y")
   assert_logic(sparse, "sparse")
-  assert_logic(quiet, "quiet")
 
   ## Validate predicate early (it aborts on invalid)
   st_predicate <- get_st_predicate(predicate)
@@ -266,7 +263,6 @@ ddbs_predicate <- function(
     sparse = sparse
   )
 
-  feedback_query(quiet)
   return(result_lst)
 }
 

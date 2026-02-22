@@ -31,6 +31,7 @@ template_unary_ops <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
     assert_name(mode, "mode")
@@ -48,6 +49,9 @@ template_unary_ops <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -92,6 +96,14 @@ template_unary_ops <- function(
       if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
     }
   
+    ## 3.5. Build base query
+    st_function <- glue::glue("{fun}({args})")
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(st_function, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
+  
   
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -105,9 +117,7 @@ template_unary_ops <- function(
         ## create query (no st_as_text)
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {fun}({args}) as {x_geom}
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute query
         DBI::dbExecute(target_conn, tmp.query)
@@ -118,27 +128,16 @@ template_unary_ops <- function(
   
     # 5. Apply geospatial operation
   
-    ## 5.1. Get mode option
-    if (is.null(mode)) {
-      mode <- getOption("duckspatial.mode", "duckspatial")
-    }
-  
     ## 5.1. Create the query based on output
     if (mode == "duckspatial") {
       view_name <- ddbs_temp_view_name()
       tmp.query <- glue::glue("
         CREATE TEMP VIEW {view_name} AS
-        SELECT {x_rest}
-        {fun}({args}) as {x_geom}
-        FROM {x_list$query_name};
+        {base.query};
       ")
     } else {
       view_name <- NULL
-      tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({fun}({args})) as {x_geom}
-        FROM {x_list$query_name};
-      ")
+      tmp.query <- base.query
     }
   
     ## 5.2. Handle the output
@@ -164,7 +163,6 @@ template_unary_ops <- function(
 #'
 #' @template x
 #' @template conn_null
-#' @template quiet
 #' @param fun The duckdb function to use
 #' 
 #' @returns Character vector or list
@@ -173,13 +171,11 @@ template_unary_ops <- function(
 template_geometry_conversion <- function(
   x,
   conn = NULL,
-  quiet = FALSE,
   fun
 ) {
 
   ## 0. Handle errors
   assert_xy(x, "x")
-  assert_logic(quiet, "quiet")
   assert_conn_character(conn, x)
 
 
@@ -228,7 +224,6 @@ template_geometry_conversion <- function(
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
   data_vec <- data_tbl$geometry
 
-  feedback_query(quiet)
   return(data_vec)
 
 }
@@ -244,21 +239,18 @@ template_geometry_conversion <- function(
 #' @template name
 #' @template new_column
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #' @param fun The duckdb function to use
 #' 
-#' @returns When `new_column = NULL` it returns a `units` vector in meters. When `new_column` is not NULL, the
-#' output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+#' @returns When `new_column = NULL` it returns a `units` vector in \eqn{m^2}. When `new_column` is not NULL, the
+#' output depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
 #'   \itemize{
-#'     \item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+#'     \item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
 #'     \item \code{sf}: An eagerly collected \code{sf} object in R memory.
-#'     \item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
-#'     \item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
-#'     \item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
-#'   }
-#'   When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
+#' }
+#' When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 #' 
 #' @keywords internal
 #' @noRd
@@ -269,7 +261,7 @@ template_measure <- function(
   new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
   fun = c("ST_Area", "ST_Length", "ST_Perimeter")) {
@@ -281,10 +273,11 @@ template_measure <- function(
 
   # 0. Validate inputs
   assert_xy(x, "x")
+  assert_conn_x_name(conn, x, name)
   assert_conn_character(conn, x)
   assert_name(name)
   assert_name(new_column, "new_column")
-  assert_name(output, "output")
+  assert_name(mode, "mode")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
   
@@ -313,6 +306,9 @@ template_measure <- function(
   ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
   ## validate character table names
   x <- normalize_spatial_input(x, conn)
+
+  ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
+  mode <- get_mode(mode, name)
 
 
   # 2. Manage connection to DB
@@ -354,6 +350,16 @@ template_measure <- function(
     "ST_Perimeter" = "metre"
   )
 
+  ## 3.5. Build the base query
+  base.query <- glue::glue("
+      SELECT 
+        {x_rest}
+        {st_function} AS {new_column},
+        {build_geom_query(x_geom, mode)} AS {x_geom}
+      FROM 
+        {x_list$query_name};
+  ")
+
 
   # 4. Handle new_column = NULL (return vector)
   if (is.null(new_column)) {
@@ -363,7 +369,6 @@ template_measure <- function(
       ")
       
       data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
-      feedback_query(quiet)
   
       ## get vector, and convert it to units
       data_units <- units::as_units(data_vec[, 1], output_units)
@@ -384,12 +389,7 @@ template_measure <- function(
       ## create query
       tmp.query <- glue::glue("
           CREATE TABLE {name_list$query_name} AS
-          SELECT 
-            {x_rest}
-            {st_function} AS {new_column},
-            {x_geom}
-          FROM 
-            {x_list$query_name};
+          {base.query}
       ")
       ## execute query
       DBI::dbExecute(target_conn, tmp.query)
@@ -397,31 +397,33 @@ template_measure <- function(
       return(invisible(TRUE))
   }
 
-  # 6. Get data frame (default behavior)
-  ## 6.1. create query
-  tmp.query <- glue::glue("
-      SELECT 
-        {x_rest}
-        {st_function} AS {new_column},
-        ST_AsWKB({x_geom}) as {x_geom}
-      FROM 
-        {x_list$query_name};
-  ")
-  ## 6.2. retrieve results of the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  ## 7. convert to target output
-  data_sf <- ddbs_handle_output(
-      data       = data_tbl,
+  # 6. Apply geospatial operation
+
+  ## 6.1. Create the query based on output
+  if (mode == "duckspatial") {
+    view_name <- ddbs_temp_view_name()
+    tmp.query <- glue::glue("
+      CREATE TEMP VIEW {view_name} AS
+      {base.query}
+    ")
+  } else {
+    view_name <- NULL
+    tmp.query <- base.query
+  }
+
+  ## 6.2. Handle the output
+  result <- ddbs_handle_query(
+      query      = tmp.query,
+      view_name  = view_name,
       conn       = target_conn,
-      output     = output,
+      mode       = mode,
       crs        = if (!is.null(crs)) crs else crs_x,
       crs_column = crs_column,
       x_geom     = x_geom
   )
 
-  feedback_query(quiet)
-  return(data_sf)
+  return(result)
 
 }
 
@@ -497,7 +499,7 @@ template_has <- function(
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
   ## 3.4. Result depending on by_feature
-  feedback_query(quiet)
+
   if (isTRUE(by_feature)) {
     return(data_tbl$hasz)
   } else {
@@ -517,21 +519,18 @@ template_has <- function(
 #' @template name
 #' @template new_column
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #' @param fun The duckdb function to use
 #' 
 #' @returns When `new_column = NULL` it returns a logical vector. When `new_column` is not NULL, the
-#' output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+#' output depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
 #'   \itemize{
-#'     \item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+#'     \item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
 #'     \item \code{sf}: An eagerly collected \code{sf} object in R memory.
-#'     \item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
-#'     \item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
-#'     \item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
-#'   }
-#'   When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
+#' }
+#' When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 #' 
 #' @keywords internal
 #' @noRd
@@ -542,7 +541,7 @@ template_new_column <- function(
   new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
   fun) {
@@ -554,6 +553,7 @@ template_new_column <- function(
   assert_name(name)
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
+  assert_conn_x_name(conn, x, name)
   assert_conn_character(conn, x)
 
   if (!is.null(name) && is.null(new_column)) cli::cli_abort("Please, specify the {.arg new_column} name.")
@@ -568,6 +568,9 @@ template_new_column <- function(
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
   ## validate character table names
   x <- normalize_spatial_input(x, conn)
+
+  ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+  mode <- get_mode(mode, name)
 
 
   # 2. Manage connection to DB
@@ -593,6 +596,16 @@ template_new_column <- function(
   ## 3.2. Get names of the rest of the columns
   x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
+  ## 3.3. Build the base query
+  st_function <- glue::glue("{x_geom}")
+  base.query <- glue::glue("
+      SELECT 
+        {x_rest}
+        {fun}({x_geom}) as {new_column},
+        {build_geom_query(st_function, mode)} as {x_geom}
+      FROM 
+        {x_list$query_name};
+  ")
 
   # 3. Handle new column = NULL
   if (is.null(new_column)) {
@@ -602,7 +615,7 @@ template_new_column <- function(
         ")
 
         data_vec <- DBI::dbGetQuery(target_conn, tmp.query)
-        feedback_query(quiet)
+
         return(data_vec[, 1])
   }
 
@@ -619,10 +632,7 @@ template_new_column <- function(
       ## create query (no st_as_text)
       tmp.query <- glue::glue("
           CREATE TABLE {name_list$query_name} AS
-          SELECT {x_rest}
-          {fun}({x_geom}) as {new_column},
-          {x_geom}
-          FROM {x_list$query_name};
+          {base.query}
       ")
       ## execute intersection query
       DBI::dbExecute(target_conn, tmp.query)
@@ -631,30 +641,35 @@ template_new_column <- function(
   }
 
 
-  # 5. Get data frame
+  # 5. Apply geospatial operation
 
-  ## 5.1. create query
-  tmp.query <- glue::glue("
-      SELECT {x_rest}
-      {fun}({x_geom}) as {new_column},
-      ST_AsWKB({x_geom}) as {x_geom}
-      FROM {x_list$query_name};
-  ")
+  ## 5.1. Get mode option
+  if (is.null(mode)) {
+    mode <- getOption("duckspatial.mode", "duckspatial")
+  }
 
-  ## 5.2. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+  ## 5.2. Create the query based on output
+  if (mode == "duckspatial") {
+    view_name <- ddbs_temp_view_name()
+    tmp.query <- glue::glue("
+      CREATE TEMP VIEW {view_name} AS
+      {base.query}
+    ")
+  } else {
+    view_name <- NULL
+    tmp.query <- base.query
+  }
 
-
-  # 6. convert to SF and return result
-  data_sf <- ddbs_handle_output(
-      data       = data_tbl,
+  ## 5.3. Handle the output
+  result <- ddbs_handle_query(
+      query      = tmp.query,
+      view_name  = view_name,
       conn       = target_conn,
-      output     = output,
+      mode       = mode,
       crs        = if (!is.null(crs)) crs else crs_x,
       crs_column = crs_column,
       x_geom     = x_geom
   )
-
-  feedback_query(quiet)
-  return(data_sf)
+  
+  return(result)
 }

@@ -10,11 +10,11 @@
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -48,7 +48,7 @@ ddbs_generate_points <- function(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 ) {
@@ -58,9 +58,10 @@ ddbs_generate_points <- function(
   ## 0. Handle errors
   assert_xy(x, "x")
   assert_numeric(n, "n")
+  assert_conn_x_name(conn, x, name)
   assert_conn_character(conn, x)
   assert_name(name)
-  assert_name(output, "output")
+  assert_name(mode, "mode")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
 
@@ -74,6 +75,9 @@ ddbs_generate_points <- function(
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
   ## validate character table names
   x <- normalize_spatial_input(x, conn)
+
+  ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+  mode <- get_mode(mode, name)
 
 
   # 2. Manage connection to DB
@@ -92,16 +96,18 @@ ddbs_generate_points <- function(
   bbox <- ddbs_bbox(x_list$query_name, conn = target_conn, quiet = TRUE)
   if (is.null(crs)) crs_data <- ddbs_crs(target_conn, x_list$query_name)$input else crs_data <- crs
 
+
   # 2. Create table as temp view
+
   ## 2.1. Create the table and store it as a view
-  view_name <- paste0("temp-", uuid::UUIDgenerate())
+  view_name_tbl <- ddbs_temp_view_name()
   generate_points_query <- if (is.null(seed)) {
     glue::glue("ST_GeneratePoints({{min_x: {bbox$min_x}, min_y: {bbox$min_y}, max_x: {bbox$max_x}, max_y: {bbox$max_y}}}::BOX_2D, {n}) as geometry")
   } else {
     glue::glue("ST_GeneratePoints({{min_x: {bbox$min_x}, min_y: {bbox$min_y}, max_x: {bbox$max_x}, max_y: {bbox$max_y}}}::BOX_2D, {n}, {seed}) as geometry")
   }
   tmp.query   <- glue::glue("
-    CREATE VIEW '{view_name}' AS 
+    CREATE TEMP VIEW '{view_name_tbl}' AS 
     SELECT
       ST_X(point) AS x,
       ST_Y(point) AS y,
@@ -110,7 +116,15 @@ ddbs_generate_points <- function(
        {generate_points_query};
   ")
   DBI::dbExecute(target_conn, tmp.query)
-  on.exit(DBI::dbExecute(target_conn, glue::glue('DROP VIEW IF EXISTS "{view_name}";')))
+
+  ## 2.2. Build base query  
+  st_function <- "ST_Point(x, y)"
+  base.query <- glue::glue("
+    SELECT {crs_column},
+    {build_geom_query(st_function, mode)} as geometry
+    FROM {view_name_tbl};
+  ")  
+
 
   # 3. if name is not NULL (i.e. no SF returned)
   if (!is.null(name)) {
@@ -124,7 +138,7 @@ ddbs_generate_points <- function(
       ## create query
       tmp.query <- glue::glue("
           CREATE TABLE {name_list$query_name} AS
-          SELECT {crs_column}, ST_Point(x, y) as geometry FROM '{view_name}';
+          {base.query}
       ")
 
       ## execute query
@@ -134,28 +148,32 @@ ddbs_generate_points <- function(
 
   }
 
-  # 4. Get data frame
-  ## 4.1. create query
-  tmp.query <- glue::glue("
-    SELECT 
-    {crs_column},
-    ST_AsWKB(ST_Point(x, y)) as geometry 
-    FROM '{view_name}'
-  ")
-  ## 4.2. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  ## 5. convert to SF and return result
-  data_sf <- ddbs_handle_output(
-      data       = data_tbl,
+  # 4. Apply geospatial operation
+  
+  ## 4.1. Create the query based on output
+  if (mode == "duckspatial") {
+    view_name <- ddbs_temp_view_name()
+    tmp.query <- glue::glue("
+      CREATE TEMP VIEW {view_name} AS
+      {base.query}
+    ")
+  } else {
+    view_name <- NULL
+    tmp.query <- base.query
+  }
+
+  ## 4.3. Handle the output
+  result <- ddbs_handle_query(
+      query      = tmp.query,
+      view_name  = view_name,
       conn       = target_conn,
-      output     = output,
+      mode       = mode,
       crs        = if (!is.null(crs)) crs else crs_x,
       crs_column = crs_column,
       x_geom     = "geometry"
   )
-
-  feedback_query(quiet)
-  return(data_sf)
+  
+  return(result)
 
 }

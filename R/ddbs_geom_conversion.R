@@ -11,7 +11,6 @@
 #'
 #' @template x
 #' @template conn_null
-#' @template quiet
 #'
 #' @details
 #' These functions are thin wrappers around DuckDB spatial serialization
@@ -55,13 +54,11 @@ NULL
 #' @export
 ddbs_as_text <- function(
   x,
-  conn = NULL,
-  quiet = FALSE) {
+  conn = NULL) {
 
   template_geometry_conversion(
     x = x,
     conn = conn,
-    quiet = quiet,
     fun = "ST_AsText"
   )
 
@@ -75,13 +72,11 @@ ddbs_as_text <- function(
 #' @export
 ddbs_as_wkb <- function(
   x,
-  conn = NULL,
-  quiet = FALSE) {
+  conn = NULL) {
 
   template_geometry_conversion(
     x = x,
     conn = conn,
-    quiet = quiet,
     fun = "ST_AsWKB"
   )
 
@@ -95,13 +90,11 @@ ddbs_as_wkb <- function(
 #' @export
 ddbs_as_hexwkb <- function(
   x,
-  conn = NULL,
-  quiet = FALSE) {
+  conn = NULL) {
 
   template_geometry_conversion(
     x = x,
     conn = conn,
-    quiet = quiet,
     fun = "ST_AsHEXWKB"
   )
 
@@ -115,13 +108,11 @@ ddbs_as_hexwkb <- function(
 #' @export
 ddbs_as_geojson <- function(
   x,
-  conn = NULL,
-  quiet = FALSE) {
+  conn = NULL) {
 
   template_geometry_conversion(
     x = x,
     conn = conn,
-    quiet = quiet,
     fun = "ST_AsGeoJSON"
   )
 

@@ -7,11 +7,11 @@
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -40,7 +40,7 @@ ddbs_boundary <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -50,7 +50,7 @@ ddbs_boundary <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_Boundary",
@@ -72,7 +72,7 @@ ddbs_boundary <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
@@ -85,7 +85,7 @@ ddbs_boundary <- function(
 #' When \code{by_feature = FALSE}, all geometries are combined and a single envelope
 #' is returned that encompasses the entire dataset.
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -124,7 +124,7 @@ ddbs_envelope <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -134,8 +134,9 @@ ddbs_envelope <- function(
     assert_xy(x, "x")
     assert_logic(by_feature, "by_feature")
     assert_name(name)
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -149,6 +150,9 @@ ddbs_envelope <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -174,12 +178,30 @@ ddbs_envelope <- function(
     ## 3.2. Get names of the rest of the columns
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
-
     ## 3.3. Build envelope clause based on by_feature
     if (isTRUE(by_feature)) {
         st_envelope_clause <- glue::glue("ST_Envelope({x_geom})")
     } else {
         st_envelope_clause <- glue::glue("ST_Envelope_Agg({x_geom})")
+    }
+
+    ## 3.4. Build base query
+    if (isTRUE(by_feature)) {
+        base.query <- glue::glue("
+            SELECT 
+                {x_rest}
+                {build_geom_query(st_envelope_clause, mode)} as {x_geom}
+            FROM 
+                {x_list$query_name};
+        ")
+    } else {
+        base.query <- glue::glue("
+            SELECT 
+                {build_geom_query(st_envelope_clause, mode)} as {x_geom},
+                FIRST({crs_column}) as {crs_column}
+            FROM 
+                {x_list$query_name};
+        ")
     }
 
 
@@ -193,58 +215,43 @@ ddbs_envelope <- function(
         overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query 
-        if (isTRUE(by_feature)) {
-            tmp.query <- glue::glue("
-                SELECT {x_rest}
-                {st_envelope_clause} as {x_geom}
-                FROM {x_list$query_name};
-            ")
-        } else {
-            tmp.query <- glue::glue("
-                SELECT {st_envelope_clause} as {x_geom},
-                FIRST({crs_column}) as {crs_column}
-                FROM {x_list$query_name};
-            ")
-        }
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS {base.query}
+        ")
 
         ## execute query
-        DBI::dbExecute(target_conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
 
-    # 5. create the base query
-    if (isTRUE(by_feature)) {
+    # 5. Apply geospatial operation
+  
+    ## 5.1. Create the query based on output
+    if (mode == "duckspatial") {
+        view_name <- ddbs_temp_view_name()
         tmp.query <- glue::glue("
-            SELECT {x_rest}
-            ST_AsWKB({st_envelope_clause}) as {x_geom}
-            FROM {x_list$query_name};
+            CREATE TEMP VIEW {view_name} AS
+            {base.query}
         ")
     } else {
-        tmp.query <- glue::glue("
-            SELECT ST_AsWKB({st_envelope_clause}) as {x_geom},
-            FIRST({crs_column}) as {crs_column}
-            FROM {x_list$query_name};
-        ")
+        view_name <- NULL
+        tmp.query <- base.query
     }
-
-    ## send the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+  
+    ## 5.2. Handle the output
+    result <- ddbs_handle_query(
+        query      = tmp.query,
+        view_name  = view_name,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 
 
@@ -311,6 +318,7 @@ ddbs_bbox <- function(
     # 0. Handle errors
     assert_xy(x, "x")
     assert_logic(by_feature, "by_feature")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
     assert_logic(overwrite, "overwrite")
@@ -359,17 +367,17 @@ ddbs_bbox <- function(
         st_extent_clause <- glue::glue("ST_Extent_Agg({x_geom})")
     }
 
-    tmp.query <- glue::glue(
-        "SELECT
+    tmp.query <- glue::glue("
+        SELECT
             ST_XMin(ext) AS min_x,
             ST_YMin(ext) AS min_y,
             ST_XMax(ext) AS max_x,
             ST_YMax(ext) AS max_y
-         FROM (
+        FROM (
             SELECT {st_extent_clause} AS ext
             FROM {x_list$query_name}
-            );"
-        )
+        );"
+    )
 
 
     # 5. if name is not NULL (i.e. no data frame returned)
@@ -383,19 +391,12 @@ ddbs_bbox <- function(
 
         ## execute area query
         DBI::dbExecute(target_conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
-
-        if (isFALSE(quiet)) {
-            cli::cli_alert_success("Query successful")
-        }
-
+        feedback_query(quiet)
         return(invisible(TRUE))
     }
 
     # 4. Get data frame
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    # class(data_tbl) <- "bbox"
-
-    if (isFALSE(quiet)) cli::cli_alert_success("Query successful")
     return(data_tbl)
 }
