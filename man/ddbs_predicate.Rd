@@ -28,8 +28,7 @@ ddbs_predicate(
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
-  distance = NULL,
-  quiet = FALSE
+  distance = NULL
 )
 
 ddbs_intersects(x, y, ...)
@@ -101,9 +100,6 @@ it returns a dense logical matrix.}
 
 \item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)}
-
-\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
-Defaults to \code{FALSE}.}
 
 \item{...}{Passed to \link{ddbs_predicate}}
 }
