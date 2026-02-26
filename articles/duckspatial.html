@@ -5,26 +5,132 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Intro to duckspatial • duckspatial</title>
+<title>Getting started • duckspatial</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.10/font.css" rel="stylesheet">
-<link href="../deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet">
-<link href="../deps/Merriweather-0.4.10/font.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/DM_Sans-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/DM_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Intro to duckspatial">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="duckspatial_files/libs/quarto-html/popper.min.js"></script><script src="duckspatial_files/libs/quarto-html/tippy.umd.min.js"></script><link href="duckspatial_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="duckspatial_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting started">
+<meta property="og:image" content="https://cidree.github.io/duckspatial/logo.png">
+<style>
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar {
+  background: #0D1B2A !important;
+  border-bottom: 2px solid #0A7EA4;
+  letter-spacing: 0.01em;
+}
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #ffffff !important;
+  letter-spacing: -0.02em;
+}
+.navbar-nav .nav-link {
+  color: rgba(255,255,255,0.80) !important;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.15s;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: #0A7EA4 !important;
+}
+
+/* ── Vignette TOC ────────────────────────────────────────────── */
+/* Shared structure */
+#toc a,
+#toc .nav-link,
+.bd-toc a,
+.bd-toc .nav-link,
+.bs-docs-sidebar .nav > li > a {
+  font-size: 0.85rem;
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+/* Light mode (default) */
+#toc,
+#toc .nav,
+.bd-toc,
+.bd-toc .nav {
+  --bs-nav-link-color:       #3d5166;
+  --bs-nav-link-hover-color: #0A7EA4;
+}
+#toc a,
+#toc .nav-link,
+.bd-toc a,
+.bd-toc .nav-link,
+.bs-docs-sidebar .nav > li > a {
+  color: #3d5166 !important;
+}
+#toc a:hover,
+#toc .nav-link:hover,
+#toc .nav-link.active,
+.bd-toc a:hover,
+.bd-toc .nav-link.active,
+.bs-docs-sidebar .nav > li > a:hover,
+.bs-docs-sidebar .nav > li.active > a {
+  color: #0A7EA4 !important;
+  border-left-color: #0A7EA4;
+}
+
+/* Dark mode — pkgdown adds data-bs-theme="dark" on <html> */
+[data-bs-theme="dark"] #toc,
+[data-bs-theme="dark"] #toc .nav,
+[data-bs-theme="dark"] .bd-toc,
+[data-bs-theme="dark"] .bd-toc .nav {
+  --bs-nav-link-color:       #a8c0d6;
+  --bs-nav-link-hover-color: #3dd6f5;
+}
+[data-bs-theme="dark"] #toc a,
+[data-bs-theme="dark"] #toc .nav-link,
+[data-bs-theme="dark"] .bd-toc a,
+[data-bs-theme="dark"] .bd-toc .nav-link,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a {
+  color: #a8c0d6 !important;
+}
+[data-bs-theme="dark"] #toc a:hover,
+[data-bs-theme="dark"] #toc .nav-link:hover,
+[data-bs-theme="dark"] #toc .nav-link.active,
+[data-bs-theme="dark"] .bd-toc a:hover,
+[data-bs-theme="dark"] .bd-toc .nav-link.active,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a:hover,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li.active > a {
+  color: #3dd6f5 !important;
+  border-left-color: #3dd6f5;
+}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.table thead th {
+  background: #0D1B2A;
+  color: #ffffff;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+  border: none;
+}
+.table tbody tr:hover { background: #f0f7fb; }
+.table { border-radius: 0.5rem; overflow: hidden; }
+
+</style>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-dark" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
@@ -37,15 +143,17 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../index.html"><span class="fa fa-home"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../index.html" aria-label="Home"><span class="fa fa-home"></span></a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/duckspatial.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/duckspatial.html">Get Started</a></li>
-    <li><hr class="dropdown-divider"></li>
+<li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/spatial_joins.html">Spatial Joins</a></li>
     <li><a class="dropdown-item" href="../articles/aw_interpolation.html">Areal-Weighted Interpolation</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Performance</h6></li>
     <li><a class="dropdown-item" href="../articles/benchmark.html">Benchmarks</a></li>
   </ul>
 </li>
@@ -56,274 +164,449 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/Cidree/duckspatial" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
       </ul>
 </div>
 
 
   </div>
-</nav><div class="container template-article">
-
-
-
-
+</nav><div class="container template-quarto">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Intro to duckspatial</h1>
-            
-            <h4 data-toc-skip class="date">2026-02-10</h4>
-      
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/duckspatial.Rmd" class="external-link"><code>vignettes/duckspatial.Rmd</code></a></small>
-      <div class="d-none name"><code>duckspatial.Rmd</code></div>
+      <img src="../logo.png" class="logo" alt=""><h1>Getting started</h1>
+
+
+      <p class="date">2026-02-26</p>
+
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/duckspatial.qmd" class="external-link"><code>vignettes/duckspatial.qmd</code></a></small>
+      <div class="d-none name"><code></code></div>
     </div>
 
-    
-    
-<p>The <strong>{duckspatial}</strong> package provides fast and
-memory-efficient functions to analyze and manipulate large spatial
-vector datasets in R. It allows R users to benefit directly from the
-analytical power of <a href="https://duckdb.org/docs/stable/core_extensions/spatial/functions" class="external-link">DuckDB
-and its spatial extension</a>, while remaining fully compatible with R’s
-spatial ecosystem, especially <strong>{sf}</strong>.</p>
-<p>At its core, <strong>{duckspatial}</strong> bridges two worlds:</p>
-<ul>
-<li>R spatial workflows based on {sf} objects</li>
-<li>Database-backed spatial analytics powered by DuckDB SQL</li>
-</ul>
-<p>This design makes <strong>{duckspatial}</strong> especially well
-suited for:</p>
-<ul>
-<li>Working with large spatial data sets</li>
-<li>Speeding up spatial analysis at scale</li>
-<li>Workflows with larger-than memory data</li>
-</ul>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+
+
+
+
+
+    <section class="section level2"><h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
-<p>You can install <strong>{duckspatial}</strong> directly from CRAN
-with:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"duckspatial"</span><span class="op">)</span></span></code></pre></div>
-<p>Or you can install the development version from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p><strong>{duckspatial}</strong> provides fast, memory-efficient functions for analysing and manipulating large spatial vector datasets in R. It bridges <a href="https://duckdb.org/docs/stable/core_extensions/spatial/functions" class="external-link">DuckDB’s spatial extension</a> with R’s spatial ecosystem — in particular <strong>{sf}</strong> — so you can leverage DuckDB’s analytical power without leaving your familiar R workflow.</p>
+<p>Let’s start by loading the packages we need:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></code></pre></div>
+</div>
+</section><section class="section level2"><h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>Install the stable release from CRAN:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Cidree/duckspatial"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="core-idea-flexible-spatial-workflows">Core idea: flexible spatial workflows<a class="anchor" aria-label="anchor" href="#core-idea-flexible-spatial-workflows"></a>
-</h2>
-<p>A central design principle of <strong>{duckspatial}</strong> is that
-the same spatial operation can be used in different ways, depending on
-how your data is stored and how you want to manage memory and
-performance. Most functions in <strong>{duckspatial}</strong> support
-four complementary workflows:</p>
-<ol style="list-style-type: decimal">
-<li>Input<code>sf</code> → Output <code>sf</code>
-</li>
-<li>Input <code>sf</code> → Output DuckDB table</li>
-<li>Input DuckDB table → Output <code>sf</code>
-</li>
-<li>Input DuckDB table → Output DuckDB table</li>
-</ol>
-<p>Let’s see a few examples to illustrate these workflows with a few
-sample data sets.</p>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"duckspatial"</span><span class="op">)</span></span></code></pre></div>
+<p>Install the latest GitHub version (more features, fewer accumulated bugs):</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># polygons</span></span>
-<span><span class="va">countries_sf</span>  <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>,  package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span>,</span>
-<span>    quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>    <span class="op">)</span></span>
-<span></span>
-<span><span class="co"># create random points</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">10000</span></span>
-<span><span class="va">points_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n</span>,</span>
-<span>  x  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">180</span>, max <span class="op">=</span> <span class="fl">180</span><span class="op">)</span>,</span>
-<span>  y  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span>  <span class="op">-</span><span class="fl">90</span>, max <span class="op">=</span>  <span class="fl">90</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>,<span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="workflow-1-sf-input-sf-output">Workflow 1: <code>sf</code> input → <code>sf</code> output<a class="anchor" aria-label="anchor" href="#workflow-1-sf-input-sf-output"></a>
-</h3>
-<p>The simplest way to perform fast spatial operations. Here you pass
-<code>sf</code> objects as inputs, and under the hood {duckspatial}:</p>
-<ul>
-<li>Registers them temporarily in DuckDB</li>
-<li>Executes the spatial operation using SQL</li>
-<li>Returns the result as an {sf} object</li>
-</ul>
-<p>In this example, we use <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> (which is equivalent
-to <code><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">sf::st_join</a></code>) to determine which country is intersected
-by each point.</p>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Cidree/duckspatial"</span><span class="op">)</span></span></code></pre></div>
+<p>Install the development version (may be unstable):</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
-<span>  x <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>  y <span class="op">=</span> <span class="va">countries_sf</span>,</span>
-<span>  join <span class="op">=</span> <span class="st">"intersects"</span></span>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Cidree/duckspatial@dev"</span><span class="op">)</span></span></code></pre></div>
+</section><section class="section level2"><h2 id="reading-data">Reading data<a class="anchor" aria-label="anchor" href="#reading-data"></a>
+</h2>
+<p>{duckspatial} is built around the <code>duckspatial_df</code> S3 class: a lazy-table-like object that holds a geometry column alongside its geospatial properties, but keeps the data <strong>outside R’s memory</strong> until you explicitly ask for it.</p>
+<p>If you have a local file (a GeoPackage, a Shapefile, a GeoJSON, etc.) you can open it lazily with <code><a href="../reference/ddbs_open_dataset.html">ddbs_open_dataset()</a></code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">countries_ddbs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_open_dataset.html">ddbs_open_dataset</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>    <span class="st">"spatial/countries.geojson"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"duckspatial"</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result_sf</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simple feature collection with 6 features and 7 fields</span></span>
-<span><span class="co">#&gt; Geometry type: POINT</span></span>
-<span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591</span></span>
-<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#&gt;     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date</span></span>
-<span><span class="co">#&gt; 1  708      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt;                      geometry</span></span>
-<span><span class="co">#&gt; 1 POINT (-72.75607 -50.15994)</span></span>
-<span><span class="co">#&gt; 2 POINT (-68.77194 -48.12303)</span></span>
-<span><span class="co">#&gt; 3 POINT (-70.82253 -46.23146)</span></span>
-<span><span class="co">#&gt; 4  POINT (-71.6444 -44.25323)</span></span>
-<span><span class="co">#&gt; 5 POINT (-71.18679 -44.60882)</span></span>
-<span><span class="co">#&gt; 6 POINT (-67.79479 -43.01591)</span></span></code></pre></div>
-<ul>
-<li>
-<strong>When to use:</strong> quick analysis, prototyping, or when
-you don’t need to persist intermediate tables.</li>
-</ul>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">countries_ddbs</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
+<span><span class="co">#&gt; # ● CRS: EPSG:4326 </span></span>
+<span><span class="co">#&gt; # ● Geometry column: geom </span></span>
+<span><span class="co">#&gt; # ● Geometry type: POLYGON </span></span>
+<span><span class="co">#&gt; # ● Bounding box: xmin: -178.91 ymin: -89.9 xmax: 180 ymax: 83.652 </span></span>
+<span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
+<span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
+<span><span class="co">#&gt; #</span></span>
+<span><span class="co">#&gt; # Source:   table&lt;temp_view_40a9d6b0_8a3b_478d_aa52_d4c6a25c4608&gt; [?? x 7]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
+<span><span class="co">#&gt;    CNTR_ID NAME_ENGL            ISO3_CODE CNTR_NAME       FID   date       geom </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;                &lt;chr&gt;     &lt;chr&gt;           &lt;chr&gt; &lt;date&gt;     &lt;lis&gt;</span></span>
+<span><span class="co">#&gt;  1 AR      Argentina            ARG       Argentina       AR    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  2 AS      American Samoa       ASM       American Samoa… AS    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  3 AT      Austria              AUT       Österreich      AT    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  4 AQ      Antarctica           ATA       Antarctica      AQ    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  5 AD      Andorra              AND       Andorra         AD    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  6 AE      United Arab Emirates ARE       ???????? ?????… AE    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  7 AF      Afghanistan          AFG       ?????????-????… AF    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  8 AG      Antigua and Barbuda  ATG       Antigua and Ba… AG    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  9 AI      Anguilla             AIA       Anguilla        AI    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt; 10 AL      Albania              ALB       Shqipëria       AL    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt; # ℹ more rows</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="creating-a-duckdb-connection">Creating a DuckDB connection<a class="anchor" aria-label="anchor" href="#creating-a-duckdb-connection"></a>
-</h3>
-<p>The next workflows use a DuckDB connection, which makes these
-workflows much more efficient for working with large spatial data sets
-in general. To create a DuckDB connection, we use the
-<code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> function, which automatically creates
-the database connection and installs / loads DuckDB’s spatial extension
-in a single call.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># create duckdb con and install / load spatial extension</span></span>
-<span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="workflow-2-sf-input-duckdb-table">Workflow 2: <code>sf</code> input → DuckDB table<a class="anchor" aria-label="anchor" href="#workflow-2-sf-input-duckdb-table"></a>
-</h3>
-<p>This workflow is ideal when you start in R, but want to persist
-results efficiently in the database without load the results to memory.
-You pass <code>sf</code> objects as input, and {duckspatial} writes the
-output directly to DuckDB.</p>
-<p>The only difference is that here you also pass the <code>name</code>
-of the table that should be written with the output to DuckDB and the
-database <code>conn</code> where the table should saved.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
-<span>    conn <span class="op">=</span> <span class="va">conn</span>,</span>
-<span>    x <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>    y <span class="op">=</span> <span class="va">countries_sf</span>,</span>
-<span>    join <span class="op">=</span> <span class="st">"intersects"</span>, </span>
-<span>    name <span class="op">=</span> <span class="st">"points_in_countries_tbl"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>And if you want to fetch the table to memory, the
-<code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code> allows you to read a table and return it
-as a <code>sf</code> object.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tbl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_read_vector.html">ddbs_read_vector</a></span><span class="op">(</span></span>
-<span>    conn <span class="op">=</span> <span class="va">conn</span>,</span>
-<span>    name <span class="op">=</span> <span class="st">"points_in_countries_tbl"</span></span>
-<span>    <span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">tbl</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simple feature collection with 6 features and 7 fields</span></span>
-<span><span class="co">#&gt; Geometry type: POINT</span></span>
-<span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: -72.75607 ymin: -50.15994 xmax: -67.79479 ymax: -43.01591</span></span>
-<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#&gt;     id CNTR_ID NAME_ENGL ISO3_CODE CNTR_NAME FID       date</span></span>
-<span><span class="co">#&gt; 1  708      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 2 3041      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 3 9309      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 4 2446      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 5 8456      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt; 6 2707      AR Argentina       ARG Argentina  AR 2021-01-01</span></span>
-<span><span class="co">#&gt;                      geometry</span></span>
-<span><span class="co">#&gt; 1 POINT (-72.75607 -50.15994)</span></span>
-<span><span class="co">#&gt; 2 POINT (-68.77194 -48.12303)</span></span>
-<span><span class="co">#&gt; 3 POINT (-70.82253 -46.23146)</span></span>
-<span><span class="co">#&gt; 4  POINT (-71.6444 -44.25323)</span></span>
-<span><span class="co">#&gt; 5 POINT (-71.18679 -44.60882)</span></span>
-<span><span class="co">#&gt; 6 POINT (-67.79479 -43.01591)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="workflow-3-duckdb-tables-sf-output">Workflow 3: DuckDB tables → <code>sf</code> output<a class="anchor" aria-label="anchor" href="#workflow-3-duckdb-tables-sf-output"></a>
-</h3>
-<p>In this workflow, your spatial data lives inside DuckDB as tables but
-you want to return the output of <code>sf</code> objects to memory.</p>
-<p>You can easily write <code>sf</code> objects as tables to duckdb with
-the <code><a href="../reference/ddbs_write_vector.html">ddbs_write_vector()</a></code> function by passing the
-<code>sf</code> data and indicating the <code>name</code> of the table
-to be written in the database.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># write `sf` objects as tables to duckdb</span></span>
-<span><span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span></span>
-<span>    conn <span class="op">=</span> <span class="va">conn</span>, </span>
-<span>    data <span class="op">=</span> <span class="va">countries_sf</span>, </span>
-<span>    name <span class="op">=</span> <span class="st">"countries"</span></span>
-<span>    <span class="op">)</span></span>
-<span></span>
-<span><span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span></span>
-<span>    conn <span class="op">=</span> <span class="va">conn</span>, </span>
-<span>    data <span class="op">=</span> <span class="va">points_sf</span>, </span>
-<span>    name <span class="op">=</span> <span class="st">"points"</span></span>
-<span>    <span class="op">)</span></span></code></pre></div>
-<p>To perform a spatial operation, you pass the table names and you get
-an <code>sf</code> object back.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
-<span>  conn <span class="op">=</span> <span class="va">conn</span>,</span>
-<span>  x <span class="op">=</span> <span class="st">"points"</span>,</span>
-<span>  y <span class="op">=</span> <span class="st">"countries"</span>,</span>
-<span>  join <span class="op">=</span> <span class="st">"intersects"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
-<ul>
-<li>
-<strong>When to use:</strong> iterative workflows,
-larger-than-memory data, or when you’ll run multiple queries on the same
-tables.</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="workflow-4-duckdb-tables-duckdb-table">Workflow 4: DuckDB tables → DuckDB table<a class="anchor" aria-label="anchor" href="#workflow-4-duckdb-tables-duckdb-table"></a>
-</h3>
-<p>This is the fastest and most scalable workflow. The entire
-computation happens inside DuckDB, and the result is written to a new
-database table.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
-<span>  conn <span class="op">=</span> <span class="va">conn</span>,</span>
-<span>  x <span class="op">=</span> <span class="st">"points"</span>,</span>
-<span>  y <span class="op">=</span> <span class="st">"countries"</span>,</span>
-<span>  join <span class="op">=</span> <span class="st">"intersects"</span>, </span>
-<span>  name <span class="op">=</span> <span class="st">"points_in_countries_tbl"</span>, </span>
-<span>  overwrite <span class="op">=</span> <span class="cn">TRUE</span></span>
+<blockquote>
+<p><strong>Note:</strong> The first call to <code><a href="../reference/ddbs_open_dataset.html">ddbs_open_dataset()</a></code> may take a few seconds. Internally, {duckspatial} creates a default DuckDB connection, then installs and loads the Spatial extension into it. Subsequent calls reuse the same connection and are much faster. We cover this connection in more detail in the <a href="#working-in-a-database">Working in a database</a> section below.</p>
+</blockquote>
+<p>Printing a <code>duckspatial_df</code> object displays the most important metadata at a glance:</p>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 59%">
+</colgroup>
+<thead><tr class="header">
+<th>Field</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><strong>CRS</strong></td>
+<td>Coordinate reference system (AUTHORITY:CODE)</td>
+</tr>
+<tr class="even">
+<td><strong>Geometry column</strong></td>
+<td>Name of the column holding geometries</td>
+</tr>
+<tr class="odd">
+<td><strong>Geometry type</strong></td>
+<td>Type(s) present (e.g. <code>POLYGON</code>, <code>MULTIPOLYGON</code>, <code>POINT</code>)</td>
+</tr>
+<tr class="even">
+<td><strong>Bounding box</strong></td>
+<td>Four coordinates bounding all geometries</td>
+</tr>
+<tr class="odd">
+<td><strong>Source</strong></td>
+<td>Name of the temporary view inside DuckDB</td>
+</tr>
+<tr class="even">
+<td><strong>Database</strong></td>
+<td>DuckDB database path and version</td>
+</tr>
+<tr class="odd">
+<td><strong>Data</strong></td>
+<td>First rows of the dataset</td>
+</tr>
+</tbody>
+</table>
+<p>The table is not in R’s memory; it lives inside the DuckDB connection. Every {duckspatial} operation you apply runs there, using the DuckDB engine.</p>
+<p>Alternatively, if you already have an <code>sf</code> object in memory, you can convert it to a <code>duckspatial_df</code> with <code><a href="../reference/as_duckspatial_df.html">as_duckspatial_df()</a></code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## read with sf as usual</span></span>
+<span><span class="va">countries_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">read_sf</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>    <span class="st">"spatial/countries.geojson"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"duckspatial"</span></span>
 <span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
+<span><span class="co">## push into DuckDB</span></span>
+<span><span class="va">countries_ddbs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_duckspatial_df.html">as_duckspatial_df</a></span><span class="op">(</span><span class="va">countries_sf</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># and read the table to memory as sf</span></span>
-<span><span class="co"># tbl &lt;- ddbs_read_vector(</span></span>
-<span><span class="co">#     conn = conn,</span></span>
-<span><span class="co">#     name = "points_in_countries_tbl"</span></span>
-<span><span class="co">#     )</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">countries_ddbs</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "duckspatial_df"        "tbl_duckdb_connection" "tbl_dbi"              </span></span>
+<span><span class="co">#&gt; [4] "tbl_sql"               "tbl_lazy"              "tbl"</span></span></code></pre></div>
+</div>
+</section><section class="section level2"><h2 id="processing-data">Processing data<a class="anchor" aria-label="anchor" href="#processing-data"></a>
+</h2>
+<p>Let’s run a typical spatial workflow: dissolving all country polygons into a single <code>MULTIPOLYGON</code> with internal boundaries removed, using <code><a href="../reference/ddbs_union_funs.html">ddbs_union()</a></code> (the {duckspatial} equivalent of <code><a href="https://r-spatial.github.io/sf/reference/geos_combine.html" class="external-link">sf::st_union()</a></code>).</p>
+<p><code><a href="../reference/ddbs_union_funs.html">ddbs_union()</a></code> requires all geometries to be valid. We can check this first with <code><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_valid()</a></code> (equivalent to <code><a href="https://r-spatial.github.io/sf/reference/valid.html" class="external-link">sf::st_is_valid()</a></code>), which appends a logical <code>is_valid</code> column to the lazy table so the subsequent <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code> also runs inside DuckDB:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">countries_ddbs</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_valid</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">is_valid</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ Query successful</span></span>
+<span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
+<span><span class="co">#&gt; # ● CRS: EPSG:4326 </span></span>
+<span><span class="co">#&gt; # ● Geometry column: geometry </span></span>
+<span><span class="co">#&gt; # ● Geometry type: POLYGON </span></span>
+<span><span class="co">#&gt; # ● Bounding box: xmin: -178.91 ymin: -89.9 xmax: 180 ymax: -63.281 </span></span>
+<span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
+<span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
+<span><span class="co">#&gt; #</span></span>
+<span><span class="co">#&gt; # Source:   SQL [?? x 9]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
+<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;lgl&gt;    &lt;list&gt;  </span></span>
+<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    &lt;raw&gt;   </span></span>
+<span><span class="co">#&gt; # ℹ 1 more variable: crs_duckspatial &lt;chr&gt;</span></span></code></pre></div>
+</div>
+<p>Antarctica has invalid geometries (likely self-intersections). We can repair them with <code><a href="../reference/ddbs_make_valid.html">ddbs_make_valid()</a></code> before computing the union, and because <code>duckspatial_df</code> objects are lazy, we can chain both steps in a single pipe:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">world_ddbs</span> <span class="op">&lt;-</span> <span class="va">countries_ddbs</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/ddbs_make_valid.html">ddbs_make_valid</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/ddbs_union_funs.html">ddbs_union</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ Query successful</span></span>
+<span><span class="co">#&gt; ✔ Query successful</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">world_ddbs</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
+<span><span class="co">#&gt; # ● CRS: EPSG:4326 </span></span>
+<span><span class="co">#&gt; # ● Geometry column: geometry </span></span>
+<span><span class="co">#&gt; # ● Geometry type: MULTIPOLYGON </span></span>
+<span><span class="co">#&gt; # ● Bounding box: xmin: -178.91 ymin: -89.9 xmax: 180 ymax: 83.652 </span></span>
+<span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
+<span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
+<span><span class="co">#&gt; #</span></span>
+<span><span class="co">#&gt; # Source:   table&lt;temp_view_9a83e127_3852_490b_8b63_7e28b46efec6&gt; [?? x 2]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
+<span><span class="co">#&gt;   geometry        crs_duckspatial</span></span>
+<span><span class="co">#&gt;   &lt;list&gt;          &lt;chr&gt;          </span></span>
+<span><span class="co">#&gt; 1 &lt;raw [195,104]&gt; EPSG:4326</span></span></code></pre></div>
+</div>
+<p>The result is still a lazy <code>duckspatial_df</code>. To visualise it we need to pull the data into R as an <code>sf</code> object. Any of the following three calls do that:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Option A</span></span>
+<span><span class="va">world_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_collect.html">ddbs_collect</a></span><span class="op">(</span><span class="va">world_ddbs</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Option B</span></span>
+<span><span class="va">world_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="va">world_ddbs</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Option C</span></span>
+<span><span class="va">world_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="va">world_ddbs</span><span class="op">)</span></span></code></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">world_sf</span> <span class="op">&lt;-</span> <span class="va">world_ddbs</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/ddbs_collect.html">ddbs_collect</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">world_sf</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Simple feature collection with 1 feature and 1 field</span></span>
+<span><span class="co">#&gt; Geometry type: MULTIPOLYGON</span></span>
+<span><span class="co">#&gt; Dimension:     XY</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187</span></span>
+<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
+<span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
+<span><span class="co">#&gt;                                                         geometry crs_duckspatial</span></span>
+<span><span class="co">#&gt; *                                             &lt;MULTIPOLYGON [°]&gt; &lt;chr&gt;          </span></span>
+<span><span class="co">#&gt; 1 (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.48… EPSG:4326</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">world_sf</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="duckspatial_files/figure-html/unnamed-chunk-7-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section class="section level2"><h2 id="working-in-a-database">Working in a database<a class="anchor" aria-label="anchor" href="#working-in-a-database"></a>
+</h2>
+<p>So far we have been using the default, temporary DuckDB connection that {duckspatial} manages for us. For some use cases you may want to manage the connection yourself, most commonly when you need a <strong>persistent database</strong> that survives the R session.</p>
+<p>There are two connection modes:</p>
 <ul>
 <li>
-<strong>When to use:</strong> Very large datasets, Production
-pipelines with multiple steps and when results will be reused downstream
-in DuckDB</li>
+<strong>Non-persistent (in-memory):</strong> data exists only for the duration of the R session or until it is closed. As of v1.0.0, this mode is kept for backward compatibility, but working with <code>duckspatial_df</code> objects directly achieves the same goals with less boilerplate.</li>
+<li>
+<strong>Persistent:</strong> data is written to a <code>.duckdb</code> or <code>.db</code> file on disk and survives after the session ends.</li>
 </ul>
+<section class="level2"><h3 id="creating-a-connection">Creating a connection<a class="anchor" aria-label="anchor" href="#creating-a-connection"></a>
+</h3>
+<p>{duckspatial} provides a convenience wrapper, <code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>, that creates a DuckDB connection, installs the Spatial extension, and loads it, all in one call:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>You can also limit the resources DuckDB is allowed to use:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span></span>
+<span>  threads         <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  memory_limit_gb <span class="op">=</span> <span class="fl">8</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Under the hood, <code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> is equivalent to:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ddbs_install.html">ddbs_install</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ddbs_load.html">ddbs_load</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></code></pre></div>
+</section><section class="level2"><h3 id="non-persistent-database">Non-persistent database<a class="anchor" aria-label="anchor" href="#non-persistent-database"></a>
+</h3>
+<p>Once you have a connection, write spatial data into it with <code><a href="../reference/ddbs_write_vector.html">ddbs_write_vector()</a></code>. It accepts both <code>sf</code> and <code>duckspatial_df</code> objects:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, name <span class="op">=</span> <span class="st">"countries"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ Table countries successfully imported</span></span></code></pre></div>
+</div>
+<p>Verify the table is there:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_list_tables.html">ddbs_list_tables</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   table_schema table_name table_type</span></span>
+<span><span class="co">#&gt; 1         main  countries BASE TABLE</span></span></code></pre></div>
+</div>
+<p>From here the workflow mirrors the <code>duckspatial_df</code> workflow. Functions that accept a <code>duckspatial_df</code> also accept a table name + connection pair:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_valid</a></span><span class="op">(</span><span class="st">"countries"</span>, conn <span class="op">=</span> <span class="va">conn</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">is_valid</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ Query successful</span></span>
+<span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
+<span><span class="co">#&gt; # ● CRS: EPSG:4326 </span></span>
+<span><span class="co">#&gt; # ● Geometry column: geometry </span></span>
+<span><span class="co">#&gt; # ● Geometry type: POLYGON </span></span>
+<span><span class="co">#&gt; # ● Bounding box: xmin: -178.91 ymin: -89.9 xmax: 180 ymax: -63.281 </span></span>
+<span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
+<span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
+<span><span class="co">#&gt; #</span></span>
+<span><span class="co">#&gt; # Source:   SQL [?? x 9]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
+<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;lgl&gt;    &lt;list&gt;  </span></span>
+<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    &lt;raw&gt;   </span></span>
+<span><span class="co">#&gt; # ℹ 1 more variable: crs_duckspatial &lt;chr&gt;</span></span></code></pre></div>
+</div>
+<p>You can write intermediate results as named tables in the database by passing a <code>name</code> argument:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_make_valid.html">ddbs_make_valid</a></span><span class="op">(</span><span class="st">"countries"</span>, conn <span class="op">=</span> <span class="va">conn</span>, name <span class="op">=</span> <span class="st">"countries_valid"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ Query successful</span></span>
+<span><span class="fu"><a href="../reference/ddbs_union_funs.html">ddbs_union</a></span><span class="op">(</span><span class="st">"countries_valid"</span>, conn <span class="op">=</span> <span class="va">conn</span>, name <span class="op">=</span> <span class="st">"world"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ Query successful</span></span></code></pre></div>
+</div>
+<p><code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code> materialises a table directly as <code>sf</code> (not lazily), so the result can be passed straight to <code><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot()</a></code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_read_vector.html">ddbs_read_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="st">"world"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ✔ table world successfully imported.</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="duckspatial_files/figure-html/unnamed-chunk-14-1.png" style="width:100.0%"></p>
+</figure>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+</div>
+<p>When you are done, close the connection. Because this is an in-memory database, all tables written to it will be discarded:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_stop_conn.html">ddbs_stop_conn</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section><section class="level2"><h3 id="persistent-database">Persistent database<a class="anchor" aria-label="anchor" href="#persistent-database"></a>
+</h3>
+<p>The workflow is identical to the non-persistent case. The only difference is the connection string, pass a file path to <code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="st">"my_database.duckdb"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>A practical pattern is to do all processing with the <code>duckspatial_df</code> workflow (which is lazily evaluated inside the default connection), and only write the final results to the persistent database:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## open persistent connection</span></span>
+<span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="st">"my_database.duckdb"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## do all processing with duckspatial_df objects</span></span>
+<span><span class="va">world_ddbs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_open_dataset.html">ddbs_open_dataset</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/ddbs_make_valid.html">ddbs_make_valid</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/ddbs_union_funs.html">ddbs_union</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## write only the final result to the persistent database</span></span>
+<span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">world_ddbs</span>, name <span class="op">=</span> <span class="st">"world"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## close — "my_database.duckdb" will persist on disk</span></span>
+<span><span class="fu"><a href="../reference/ddbs_stop_conn.html">ddbs_stop_conn</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section></section><script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'light-border',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config);
+    }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script></main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
-
 
 
     <footer><div class="pkgdown-footer-left">

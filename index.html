@@ -11,23 +11,126 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" sizes="any" href="favicon.ico">
 <link rel="manifest" href="site.webmanifest">
-<script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/Roboto-0.4.10/font.css" rel="stylesheet">
-<link href="deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet">
-<link href="deps/Merriweather-0.4.10/font.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/DM_Sans-0.4.10/font.css" rel="stylesheet">
+<link href="deps/DM_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="R Interface to DuckDB Database with Spatial Extension">
 <meta name="description" content="Fast &amp; memory-efficient functions to analyze and manipulate large spatial data data sets. It leverages the fast analytical capabilities of DuckDB and its spatial extension (see &lt;https://duckdb.org/docs/stable/core_extensions/spatial/overview&gt;) while maintaining compatibility with R’s spatial data ecosystem to work with spatial vector data.">
 <meta property="og:description" content="Fast &amp; memory-efficient functions to analyze and manipulate large spatial data data sets. It leverages the fast analytical capabilities of DuckDB and its spatial extension (see &lt;https://duckdb.org/docs/stable/core_extensions/spatial/overview&gt;) while maintaining compatibility with R’s spatial data ecosystem to work with spatial vector data.">
 <meta property="og:image" content="https://cidree.github.io/duckspatial/logo.png">
+<style>
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar {
+  background: #0D1B2A !important;
+  border-bottom: 2px solid #0A7EA4;
+  letter-spacing: 0.01em;
+}
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #ffffff !important;
+  letter-spacing: -0.02em;
+}
+.navbar-nav .nav-link {
+  color: rgba(255,255,255,0.80) !important;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.15s;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: #0A7EA4 !important;
+}
+
+/* ── Vignette TOC ────────────────────────────────────────────── */
+/* Shared structure */
+#toc a,
+#toc .nav-link,
+.bd-toc a,
+.bd-toc .nav-link,
+.bs-docs-sidebar .nav > li > a {
+  font-size: 0.85rem;
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+/* Light mode (default) */
+#toc,
+#toc .nav,
+.bd-toc,
+.bd-toc .nav {
+  --bs-nav-link-color:       #3d5166;
+  --bs-nav-link-hover-color: #0A7EA4;
+}
+#toc a,
+#toc .nav-link,
+.bd-toc a,
+.bd-toc .nav-link,
+.bs-docs-sidebar .nav > li > a {
+  color: #3d5166 !important;
+}
+#toc a:hover,
+#toc .nav-link:hover,
+#toc .nav-link.active,
+.bd-toc a:hover,
+.bd-toc .nav-link.active,
+.bs-docs-sidebar .nav > li > a:hover,
+.bs-docs-sidebar .nav > li.active > a {
+  color: #0A7EA4 !important;
+  border-left-color: #0A7EA4;
+}
+
+/* Dark mode — pkgdown adds data-bs-theme="dark" on <html> */
+[data-bs-theme="dark"] #toc,
+[data-bs-theme="dark"] #toc .nav,
+[data-bs-theme="dark"] .bd-toc,
+[data-bs-theme="dark"] .bd-toc .nav {
+  --bs-nav-link-color:       #a8c0d6;
+  --bs-nav-link-hover-color: #3dd6f5;
+}
+[data-bs-theme="dark"] #toc a,
+[data-bs-theme="dark"] #toc .nav-link,
+[data-bs-theme="dark"] .bd-toc a,
+[data-bs-theme="dark"] .bd-toc .nav-link,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a {
+  color: #a8c0d6 !important;
+}
+[data-bs-theme="dark"] #toc a:hover,
+[data-bs-theme="dark"] #toc .nav-link:hover,
+[data-bs-theme="dark"] #toc .nav-link.active,
+[data-bs-theme="dark"] .bd-toc a:hover,
+[data-bs-theme="dark"] .bd-toc .nav-link.active,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a:hover,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li.active > a {
+  color: #3dd6f5 !important;
+  border-left-color: #3dd6f5;
+}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.table thead th {
+  background: #0D1B2A;
+  color: #ffffff;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+  border: none;
+}
+.table tbody tr:hover { background: #f0f7fb; }
+.table { border-radius: 0.5rem; overflow: hidden; }
+
+</style>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-dark" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="index.html">duckspatial</a>
 
@@ -40,15 +143,17 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="active nav-item"><a class="nav-link" href="index.html"><span class="fa fa-home"></span></a></li>
+<li class="active nav-item"><a class="nav-link" href="index.html" aria-label="Home"><span class="fa fa-home"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="articles/duckspatial.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/duckspatial.html">Get Started</a></li>
-    <li><hr class="dropdown-divider"></li>
+<li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="articles/spatial_joins.html">Spatial Joins</a></li>
     <li><a class="dropdown-item" href="articles/aw_interpolation.html">Areal-Weighted Interpolation</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Performance</h6></li>
     <li><a class="dropdown-item" href="articles/benchmark.html">Benchmarks</a></li>
   </ul>
 </li>
@@ -59,6 +164,14 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/Cidree/duckspatial" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
       </ul>
 </div>
 
@@ -81,47 +194,85 @@
 <p>The upcoming version also introduces a new native spatial class, duckspatial_df. This represents a lazy spatial table backed by a temporary DuckDB view, allowing workflows to remain fully lazy until results are explicitly materialized with ddbs_collect(). In practice, this means you can work with {duckspatial} without eagerly loading data into R.</p>
 <p>Finally, v1.0.0 will include many new functions and broader API improvements.</p>
 </blockquote>
-<p>The <strong>{duckspatial}</strong> package provides fast and memory-efficient functions to analyze and manipulate large spatial vector datasets in R. It allows R users to benefit directly from the analytical power of <a href="https://duckdb.org/docs/stable/core_extensions/spatial/functions" class="external-link">DuckDB and its spatial extension</a>, while remaining fully compatible with R’s spatial ecosystem, especially <strong>{sf}</strong>.</p>
-<p>At its core, <strong>{duckspatial}</strong> bridges two worlds:</p>
-<ul>
-<li>R spatial workflows based on {sf} objects</li>
-<li>Database-backed spatial analytics powered by DuckDB SQL</li>
-</ul>
-<p>This design makes <strong>{duckspatial}</strong> especially well suited for:</p>
-<ul>
-<li>Working with large spatial data sets</li>
-<li>Speeding up spatial analysis at scale</li>
-<li>Workflows where data does not fit comfortably in memory</li>
-</ul>
-<p>Importantly, <strong>{duckspatial}</strong> brings the power of DuckDB spatial to R users while keeping workflows similar to {sf} .</p>
+<div class="section level2">
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
+<p><strong>{duckspatial}</strong> provides fast, memory-efficient functions for analysing and manipulating large spatial vector datasets in R. It bridges <a href="https://duckdb.org/docs/stable/core_extensions/spatial/functions" class="external-link">DuckDB’s spatial extension</a> with R’s spatial ecosystem — in particular <strong>{sf}</strong> — so you can leverage DuckDB’s analytical power without leaving your familiar R workflow.</p>
+<div class="section level3">
+<h3 id="how-it-works">How it works<a class="anchor" aria-label="anchor" href="#how-it-works"></a>
+</h3>
+<p>Starting from v1.0.0, {duckspatial} introduces a native S3 class called <code>duckspatial_df</code>: a <code>tibble</code>-like object with a geometry column that lives <strong>outside R’s memory</strong>. Data is read and evaluated lazily (similar to how <code>duckplyr</code> handles lazy tables) and is only loaded into R when you explicitly materialise it (e.g. with <code><a href="reference/ddbs_collect.html">ddbs_collect()</a></code>).</p>
+<p>When the first <code>duckspatial_df</code> is created (either by reading a file or converting an <code>sf</code> object) a temporary view is registered in a default DuckDB connection with the spatial extension enabled. All spatial operations run inside that connection, letting DuckDB apply its own query optimisations before any data reaches R.</p>
 </div>
-<div class="section level1">
-<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h1>
-<p>You can install duckspatial directly from CRAN with:</p>
+<div class="section level3">
+<h3 id="naming-conventions">Naming conventions<a class="anchor" aria-label="anchor" href="#naming-conventions"></a>
+</h3>
+<p>All spatial functions follow the <code>ddbs_*()</code> prefix (<em>DuckDB Spatial</em>), and their names deliberately mirror the <strong>{sf}</strong> package, so users already familiar with <code>sf</code> can get started immediately.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>Install the stable release from CRAN:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"duckspatial"</span><span class="op">)</span></span></code></pre></div>
-<p>Or you can install the development version from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Cidree/duckspatial"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"duckspatial"</span><span class="op">)</span></span></code></pre></div>
+<p>Install the latest GitHub version (more features, fewer accumulated bugs):</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Cidree/duckspatial"</span><span class="op">)</span></span></code></pre></div>
+<p>Install the development version (may be unstable):</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Cidree/duckspatial@dev"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="core-idea-flexible-spatial-workflows">Core idea: flexible spatial workflows<a class="anchor" aria-label="anchor" href="#core-idea-flexible-spatial-workflows"></a>
-</h1>
-<p>A central design principle of {duckspatial} is that the same spatial operation can be used in different ways, depending on how your data is stored and how you want to manage memory and performance.</p>
-<p>Most functions in {duckspatial} support four complementary workflows:</p>
-<ol style="list-style-type: decimal">
-<li>Input<code>sf</code> → Output <code>sf</code>
-</li>
-<li>Input <code>sf</code> → Output DuckDB table</li>
-<li>Input DuckDB table → Output <code>sf</code>
-</li>
-<li>Input DuckDB table → Output DuckDB table</li>
-</ol>
-<p>See the <a href="https://Cidree.github.io/duckspatial/articles/duckspatial.html" class="external-link">“Get Started” vignette for examples</a>.</p>
+<div class="section level2">
+<h2 id="core-idea-flexible-spatial-workflows">Core idea: flexible spatial workflows<a class="anchor" aria-label="anchor" href="#core-idea-flexible-spatial-workflows"></a>
+</h2>
+<p>A central design principle of {duckspatial} is that the same spatial operation can be used in different ways depending on how your data is stored and how you want to manage memory and performance.</p>
+<p>Most functions support four complementary input/output combinations:</p>
+<table class="table">
+<thead><tr class="header">
+<th>Input</th>
+<th>Output</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<code>duckspatial_df</code> / <code>sf</code>
+</td>
+<td>
+<code>duckspatial_df</code> / <code>sf</code>
+</td>
+</tr>
+<tr class="even">
+<td>
+<code>duckspatial_df</code> / <code>sf</code>
+</td>
+<td>DuckDB table</td>
+</tr>
+<tr class="odd">
+<td>DuckDB table</td>
+<td>
+<code>duckspatial_df</code> / <code>sf</code>
+</td>
+</tr>
+<tr class="even">
+<td>DuckDB table</td>
+<td>DuckDB table</td>
+</tr>
+</tbody>
+</table>
+<p>This means you can keep data inside DuckDB for as long as possible, pulling results into R only when you need them. See the <a href="https://Cidree.github.io/duckspatial/articles/duckspatial.html" class="external-link">Get Started vignette</a> for worked examples of each workflow.</p>
 </div>
-
+<div class="section level2">
+<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
+</h2>
+<p>Bug reports, feature requests, and pull requests are very welcome!</p>
+<ul>
+<li><a href="https://github.com/Cidree/duckspatial/issues" class="external-link">Raise an issue</a></li>
+<li><a href="https://github.com/Cidree/duckspatial/pulls" class="external-link">Open a pull request</a></li>
+</ul>
+</div>
+</div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">

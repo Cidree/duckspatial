@@ -1,267 +1,218 @@
 # Benchmark
 
-This vignette shows a few benchmarks comparing **{duckspatial}** vs
-**{sf}**. We look at how both packages compare in terms of computation
-time and memory use when performing different spatial operations with
-increasingly large data sets. We plan to extend this vignette in the
-future to benchmark other types of spatial operations.
+This vignette benchmarks **{duckspatial}** against **{sf}** across
+several spatial operations, comparing computation time and memory usage
+as dataset size grows. We plan to extend it with additional operation
+types in future releases.
 
 ### TL;DR
 
-- {duckspatial} is substantially faster and uses way less memory than
-  {sf} in pretty much all cases, particularly when working with large
-  data sets
+{duckspatial} is substantially faster and allocates far less memory than
+{sf} in almost all cases, with the advantage becoming more pronounced on
+larger datasets. The one exception is pairwise distance calculation,
+where {sf} retains a memory advantage for Euclidean distances.
 
-### Prepare data for benchmark
+### Prepare data
 
-This chunk of code below loads a few libraries and create a few sample
-data sets used in this benchmark.
+Set-up
 
 ``` r
 library(duckspatial)
 library(bench)
 library(dplyr)
 library(sf)
-library(lwgeom)
 library(ggplot2)
 options(scipen = 999)
 
-# read polygons data
-countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#> Reading layer `countries' from data source 
-#>   `/home/runner/work/_temp/Library/duckspatial/spatial/countries.geojson' 
-#>   using driver `GeoJSON'
-#> Simple feature collection with 257 features and 6 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187
-#> Geodetic CRS:  WGS 84
+# Country polygons (257 features)
+countries_sf <- sf::st_read(
+  system.file("spatial/countries.geojson", package = "duckspatial")
+)
 
-# generate random points
+# Random point datasets of increasing size
 set.seed(42)
 
-## create points data
-n = 10e4
-points_sf_100k <- data.frame(
+make_points <- function(n) {
+  data.frame(
     id = 1:n,
-    x = runif(n, min = -180, max = 180),  
-    y = runif(n, min = -90, max = 90)
-    ) |> 
+    x  = runif(n, min = -180, max = 180),
+    y  = runif(n, min = -90,  max = 90)
+  ) |>
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
-
-n = 10e5
-points_sf_1mi <- data.frame(
-    id = 1:n,
-    x = runif(n, min = -180, max = 180),  
-    y = runif(n, min = -90, max = 90)
-    ) |> 
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326)
-
-# n = 10e6
-# points_sf_10mi <- data.frame(
-#     id = 1:n,
-#     x = runif(n, min = -180, max = 180),  
-#     y = runif(n, min = -90, max = 90)
-#     ) |> 
-#     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
-```
-
-## Spatial Join
-
-``` r
-run_benchmark <- function(points_sf){
-    
-    temp_bench <- bench::mark(
-        iterations = 1, 
-        check = FALSE, 
-        duckspatial = duckspatial::ddbs_join(
-            x = points_sf, 
-            y = countries_sf, 
-            join = "within"),
-        
-        sf = sf::st_join(
-            x = points_sf, 
-            y = countries_sf, 
-            join = sf::st_within)
-        )
-    
-    temp_bench$n <- nrow(points_sf)
-    temp_bench$pkg <- c("duckspatial", "sf")
-    
-    return(temp_bench)
 }
 
-# From 100K points to 1 million and 10 million points
-df_bench_join <- lapply(
-    X = list(points_sf_100k, points_sf_1mi),
-    FUN = run_benchmark
-    ) |> 
-    dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-
-
-# calculate difference in performance
-temp <- df_bench_join |> 
-    filter(n == 10e5)
-
-memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
-time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
+points_sf_100k <- make_points(10e4)
+points_sf_1mi  <- make_points(10e5)
 ```
 
-In this example working with 1 million points, {duckspatial} was 57%
-faster and used 5.5 times less memory than {sf}. Not bad.
+## Spatial join
+
+``` r
+run_join_benchmark <- function(points_sf) {
+  temp <- bench::mark(
+    iterations = 1,
+    check      = FALSE,
+    duckspatial = duckspatial::ddbs_join(
+      x    = points_sf,
+      y    = countries_sf,
+      join = "within"
+    ),
+    sf = sf::st_join(
+      x    = points_sf,
+      y    = countries_sf,
+      join = sf::st_within
+    )
+  )
+  temp$n   <- nrow(points_sf)
+  temp$pkg <- c("duckspatial", "sf")
+  temp
+}
+
+df_bench_join <- lapply(
+  X   = list(points_sf_100k, points_sf_1mi),
+  FUN = run_join_benchmark
+) |>
+  dplyr::bind_rows()
+```
+
+Figure Code
 
 ``` r
 ggplot(data = df_bench_join) +
-    geom_point(size =3, aes(x= mem_alloc, y = median, color = pkg, 
-                    shape = format(n, big.mark = ".")
-                    )) +
-    labs(color= "Package", shape = "Data size",
-         y = "Computation time (seconds)",
-         x = "Memory allocated") +
-    theme_minimal()
+  geom_point(
+    size = 3,
+    aes(
+      x     = mem_alloc,
+      y     = median,
+      color = pkg,
+      shape = format(n, big.mark = ".")
+    )
+  ) +
+  labs(
+    color = "Package",
+    shape = "Data size",
+    y     = "Computation time (seconds)",
+    x     = "Memory allocated"
+  ) +
+  theme_minimal()
 ```
 
-![](benchmark_files/figure-html/unnamed-chunk-4-1.png)
+![](../reference/figures/bench/spatial-join-bench.png)
+
+Working with 10 million points, {duckspatial} was **76% faster** and
+used **2.6× less memory** than {sf}.
 
 ## Spatial filter
 
 ``` r
-run_benchmark <- function(points_sf){
-    
-    temp_bench <- bench::mark(
-        iterations = 1, 
-        check = FALSE, 
-        duckspatial = duckspatial::ddbs_filter(
-            x = points_sf, 
-            y = countries_sf),
-        
-        sf = sf::st_filter(
-            x = points_sf, 
-            y = countries_sf)
-        )
-    
-    temp_bench$n <- nrow(points_sf)
-    temp_bench$pkg <- c("duckspatial", "sf")
-    
-    return(temp_bench)
+run_filter_benchmark <- function(points_sf) {
+  temp <- bench::mark(
+    iterations = 1,
+    check      = FALSE,
+    duckspatial = duckspatial::ddbs_filter(
+      x = points_sf,
+      y = countries_sf
+    ),
+    sf = sf::st_filter(
+      x = points_sf,
+      y = countries_sf
+    )
+  )
+  temp$n   <- nrow(points_sf)
+  temp$pkg <- c("duckspatial", "sf")
+  temp
 }
 
-
-# From 100K points to 1 million and 10 million points
 df_bench_filter <- lapply(
-    X = list(points_sf_100k, points_sf_1mi),
-    FUN = run_benchmark
-    ) |> 
-    dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-
-
-# calculate difference in performance
-temp <- df_bench_filter |> 
-    filter(n == 10e5)
-
-memo_diff <- round(as.numeric(temp$mem_alloc[2] / temp$mem_alloc[1]),1)
-time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
+  X   = list(points_sf_100k, points_sf_1mi),
+  FUN = run_filter_benchmark
+) |>
+  dplyr::bind_rows()
 ```
 
-In this example working with 1 million points, {duckspatial} was 76%
-faster and used 2.6 times less memory than {sf}.
-
-plot
+Figure Code
 
 ``` r
 ggplot(data = df_bench_filter) +
-    geom_point(size =3, aes(x= mem_alloc, y = median, color = pkg, 
-                    shape = format(n, big.mark = ".")
-                    )) +
-    labs(color= "Package", shape = "Data size",
-         y = "Computation time (seconds)",
-         x = "Memory allocated") +
-    theme_minimal()
+  geom_point(
+    size = 3,
+    aes(
+      x     = mem_alloc,
+      y     = median,
+      color = pkg,
+      shape = format(n, big.mark = ".")
+    )
+  ) +
+  labs(
+    color = "Package",
+    shape = "Data size",
+    y     = "Computation time (seconds)",
+    x     = "Memory allocated"
+  ) +
+  theme_minimal()
 ```
 
-![](benchmark_files/figure-html/unnamed-chunk-6-1.png)
+![](../reference/figures/bench/spatial-filter-bench.png)
 
 ## Spatial distances
 
+Note that this benchmark uses spherical (Haversine) distances for
+{duckspatial} and Great Circle distances for {sf}. {sf} retains a memory
+advantage when computing Euclidean distances.
+
 ``` r
-# Turn on S2 (Spherical geometry)
 sf::sf_use_s2(TRUE)
 
-run_benchmark <- function(n){
-    
-    set.seed(42)
+run_distance_benchmark <- function(n) {
+  set.seed(42)
+  points_sf <- make_points(n)
 
-    ## create points data
-    points_sf <- data.frame(
-        id = 1:n,
-        x = runif(n, min = -180, max = 180),  
-        y = runif(n, min = -90, max = 90)
-        ) |> 
-        sf::st_as_sf(coords = c("x", "y"), crs = 4326)
-    
-    temp_bench <- bench::mark(
-        iterations = 1, 
-        check = FALSE, 
-        duckspatial = duckspatial::ddbs_distance(
-            x = points_sf, 
-            y = points_sf, 
-            dist_type = "haversine"),
-        
-        sf = sf::st_distance(
-            x = points_sf, 
-            y = points_sf, 
-            which = "Great Circle")
-        )
-    
-    temp_bench$n <- nrow(points_sf)
-    temp_bench$pkg <- c("duckspatial", "sf")
-    
-    return(temp_bench)
+  temp <- bench::mark(
+    iterations = 1,
+    check      = FALSE,
+    duckspatial = duckspatial::ddbs_distance(
+      x         = points_sf,
+      y         = points_sf,
+      dist_type = "haversine"
+    ),
+    sf = sf::st_distance(
+      x     = points_sf,
+      y     = points_sf,
+      which = "Great Circle"
+    )
+  )
+  temp$n   <- n
+  temp$pkg <- c("duckspatial", "sf")
+  temp
 }
 
-
-# From 100K points to 1 million and 10 million points
 df_bench_distance <- lapply(
-    X = c(500, 1000, 10000),
-    FUN = run_benchmark
-    ) |> 
-    dplyr::bind_rows()
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-
-
-# calculate difference in performance
-temp <- df_bench_distance |> 
-    filter(n == 10000)
-
-memo_diff <- round(as.numeric(temp$mem_alloc[1]) / as.numeric(temp$mem_alloc[2]) ,1)
-time_diff <- (1 - round(as.numeric(temp$median[1] / temp$median[2]),2))*100
+  X   = c(500, 1000, 10000),
+  FUN = run_distance_benchmark
+) |>
+  dplyr::bind_rows()
 ```
 
-In this example calculating the distance between 10K points,
-{duckspatial} was 87% faster, but used 2 times more memory than {sf}.
-Mind you that {sf} is still more efficient when calculating Euclidean
-distances.
-
-plot
+Figure Code
 
 ``` r
 ggplot(data = df_bench_distance) +
-    geom_point(size =3, aes(x= mem_alloc, y = median, color = pkg, 
-                    shape = format(n, big.mark = ".")
-                    )) +
-    labs(color= "Package", shape = "Data size",
-         y = "Computation time (seconds)",
-         x = "Memory allocated") +
-    theme_minimal()
+  geom_point(
+    size = 3,
+    aes(
+      x     = mem_alloc,
+      y     = median,
+      color = pkg,
+      shape = format(n, big.mark = ".")
+    )
+  ) +
+  labs(
+    color = "Package",
+    shape = "Data size",
+    y     = "Computation time (seconds)",
+    x     = "Memory allocated"
+  ) +
+  theme_minimal()
 ```
 
-![](benchmark_files/figure-html/unnamed-chunk-8-1.png)
+![](../reference/figures/bench/spatial-distances-bench.png)

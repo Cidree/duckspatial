@@ -44,6 +44,9 @@ inner_join(
 head(x, n = 6L, ...)
 
 # S3 method for class 'duckspatial_df'
+glimpse(x, width = NULL, ...)
+
+# S3 method for class 'duckspatial_df'
 compute(x, name = NULL, temporary = TRUE, ...)
 ```
 

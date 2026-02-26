@@ -1,6 +1,6 @@
-# Close a duckdb connection
+# Close a DuckDB connection
 
-Close a duckdb connection
+Close a DuckDB connection
 
 ## Usage
 
@@ -12,7 +12,7 @@ ddbs_stop_conn(conn)
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 ## Value
 
@@ -21,7 +21,7 @@ TRUE (invisibly) for successful disconnection
 ## Examples
 
 ``` r
-if (FALSE) { # interactive()
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 
@@ -30,5 +30,5 @@ conn <- ddbs_create_conn(dbdir = "memory")
 
 ## close the connection
 ddbs_stop_conn(conn)
-}
+} # }
 ```

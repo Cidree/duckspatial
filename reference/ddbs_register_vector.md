@@ -15,7 +15,7 @@ ddbs_register_vector(conn, data, name, overwrite = FALSE, quiet = FALSE)
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - data:
 

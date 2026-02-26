@@ -21,7 +21,7 @@ ddbs_write_vector(
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - data:
 
@@ -59,7 +59,7 @@ TRUE (invisibly) for successful import
 ## Examples
 
 ``` r
-if (FALSE) { # interactive()
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -85,5 +85,5 @@ ddbs_read_vector(conn, "points", crs = 4326)
 
 ## disconnect from db
 dbDisconnect(conn)
-}
+} # }
 ```

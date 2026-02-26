@@ -1,8 +1,7 @@
-# Returns the minimal bounding box enclosing the input geometry
+# Get the bounding box of geometries
 
-Returns the minimal bounding box enclosing the input geometry from a
-`sf` object or a DuckDB table. Returns the result as an `sf` object or
-creates a new table in the database.
+Returns the minimal rectangle that encloses the geometry, typically used
+to summarize its spatial extent.
 
 ## Usage
 
@@ -23,15 +22,23 @@ ddbs_bbox(
 
 - x:
 
-  An `sf` spatial object. Alternatively, it can be a string with the
-  name of a table with geometry column within the DuckDB database
-  `conn`. Data is returned from this object.
+  Input spatial data. Can be:
+
+  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
+
+  - An `sf` object
+
+  - A `tbl_lazy` from dbplyr
+
+  - A character string naming a table/view in `conn`
+
+  Data is returned from this object.
 
 - by_feature:
 
-  Boolean. The function defaults to `FALSE`, and returns a single
-  bounding box for `x`. If `TRUE`, it return one bounding box for each
-  feature.
+  Logical. If `TRUE`, the geometric operation is applied separately to
+  each geometry. If `FALSE`, the geometric operation is applied to the
+  data as a whole.
 
 - conn:
 
@@ -47,13 +54,15 @@ ddbs_bbox(
 
 - crs:
 
-  The coordinates reference system of the data. Specify if the data
-  doesn't have a `crs_column`, and you know the CRS.
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
+  reference system of the data. Specify if the data doesn't have a
+  `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  a character string of length one specifying the column storing the CRS
-  (created automatically by
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
+  string of length one specifying the column storing the CRS (created
+  automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
 
@@ -69,7 +78,8 @@ ddbs_bbox(
 
 ## Value
 
-an `sf` object or `TRUE` (invisibly) for table creation
+A data frame or `TRUE` (invisibly) for table creation when name is not
+NULL.
 
 ## Examples
 
@@ -77,20 +87,22 @@ an `sf` object or `TRUE` (invisibly) for table creation
 if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 # option 1: passing sf objects
-ddbs_bbox(argentina_sf)
+ddbs_bbox(argentina_ddbs)
 
 
 ## option 2: passing the names of tables in a duckdb db
 
 # creates a duckdb write sf to it
 conn <- duckspatial::ddbs_create_conn()
-ddbs_write_vector(conn, argentina_sf, "argentina_tbl", overwrite = TRUE)
+ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
 
 output2 <- ddbs_bbox(
     conn = conn,

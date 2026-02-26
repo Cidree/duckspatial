@@ -12,7 +12,7 @@ ddbs_create_schema(conn, name, quiet = FALSE)
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - name:
 

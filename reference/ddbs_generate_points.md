@@ -1,9 +1,7 @@
-# Generate random points within geometries
+# Generate random points within bounding boxes of geometries
 
-Generates random points within geometries from a DuckDB table using the
-spatial extension. Works similarly to generating random points within
-polygons in `sf`. Returns the result as an `sf` object or creates a new
-table in the database.
+Creates random points within the bounding box of each geometry, which
+may fall outside the geometry itself.
 
 ## Usage
 
@@ -11,10 +9,12 @@ table in the database.
 ddbs_generate_points(
   x,
   n,
+  seed = NULL,
   conn = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -24,13 +24,25 @@ ddbs_generate_points(
 
 - x:
 
-  An `sf` spatial object. Alternatively, it can be a string with the
-  name of a table with geometry column within the DuckDB database
-  `conn`. Data is returned from this object.
+  Input spatial data. Can be:
+
+  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
+
+  - An `sf` object
+
+  - A `tbl_lazy` from dbplyr
+
+  - A character string naming a table/view in `conn`
+
+  Data is returned from this object.
 
 - n:
 
   Number of random points to generate within each geometry
+
+- seed:
+
+  A number for the random number generator
 
 - conn:
 
@@ -46,15 +58,39 @@ ddbs_generate_points(
 
 - crs:
 
-  The coordinates reference system of the data. Specify if the data
-  doesn't have a `crs_column`, and you know the CRS.
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
+  reference system of the data. Specify if the data doesn't have a
+  `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  a character string of length one specifying the column storing the CRS
-  (created automatically by
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
+  string of length one specifying the column storing the CRS (created
+  automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
+
+- output:
+
+  Character. Controls the return type. Options:
+
+  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
+    dbplyr/DuckDB
+
+  - `"sf"`: Eagerly collected sf object (uses memory)
+
+  - `"tibble"`: Eagerly collected tibble without geometry
+
+  - `"raw"`: Eagerly collected tibble with WKB geometry (list of raw
+    vectors)
+
+  - `"geoarrow"`: Eagerly collected tibble with geoarrow geometry
+    (geoarrow_vctr)
+
+  Can be set globally via
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(output_type = "...")`
+  or per-function via this argument. Per-function overrides global
+  setting.
 
 - overwrite:
 
@@ -68,7 +104,24 @@ ddbs_generate_points(
 
 ## Value
 
-an `sf` object or `TRUE` (invisibly) for table creation
+Depends on the `output` argument (or global preference set by
+[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
+
+- `duckspatial_df` (default): A lazy spatial data frame backed by
+  dbplyr/DuckDB.
+
+- `sf`: An eagerly collected `sf` object in R memory.
+
+- `tibble`: An eagerly collected `tibble` without geometry in R memory.
+
+- `raw`: An eagerly collected `tibble` with WKB geometry (no
+  conversion).
+
+- `geoarrow`: An eagerly collected `tibble` with geometry converted to
+  `geoarrow_vctr`.
+
+When `name` is provided, the result is also written as a table or view
+in DuckDB and the function returns `TRUE` (invisibly).
 
 ## Examples
 
@@ -76,21 +129,23 @@ an `sf` object or `TRUE` (invisibly) for table creation
 if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## generate 100 random points within each geometry
 ddbs_generate_points("argentina", n = 100, conn)
 
 ## generate points without using a connection
-ddbs_generate_points(argentina_sf, n = 100)
+ddbs_generate_points(argentina_ddbs, n = 100)
 } # }
 ```

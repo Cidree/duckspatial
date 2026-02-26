@@ -1,19 +1,20 @@
 # Simplify geometries
 
-Simplifies geometries from a DuckDB table using the Douglas-Peucker
-algorithm via the spatial extension. Returns the result as an `sf`
-object or creates a new table in the database.
+Reduces the complexity of geometries by removing unnecessary vertices
+while preserving the overall shape.
 
 ## Usage
 
 ``` r
 ddbs_simplify(
   x,
-  tolerance,
+  tolerance = 0,
+  preserve_topology = FALSE,
   conn = NULL,
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -23,14 +24,29 @@ ddbs_simplify(
 
 - x:
 
-  An `sf` spatial object. Alternatively, it can be a string with the
-  name of a table with geometry column within the DuckDB database
-  `conn`. Data is returned from this object.
+  Input spatial data. Can be:
+
+  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
+
+  - An `sf` object
+
+  - A `tbl_lazy` from dbplyr
+
+  - A character string naming a table/view in `conn`
+
+  Data is returned from this object.
 
 - tolerance:
 
   Tolerance distance for simplification. Larger values result in more
   simplified geometries.
+
+- preserve_topology:
+
+  If FALSE, uses the Douglas-Peucker algorithm, which reduces the
+  vertices by removing points that are within a given distance. If TRUE,
+  uses a topology-preserving variant of Douglas-Peucker that guarantees
+  the output geometry remains valid (slower).
 
 - conn:
 
@@ -46,15 +62,39 @@ ddbs_simplify(
 
 - crs:
 
-  The coordinates reference system of the data. Specify if the data
-  doesn't have a `crs_column`, and you know the CRS.
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
+  reference system of the data. Specify if the data doesn't have a
+  `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  a character string of length one specifying the column storing the CRS
-  (created automatically by
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
+  string of length one specifying the column storing the CRS (created
+  automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
+
+- output:
+
+  Character. Controls the return type. Options:
+
+  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
+    dbplyr/DuckDB
+
+  - `"sf"`: Eagerly collected sf object (uses memory)
+
+  - `"tibble"`: Eagerly collected tibble without geometry
+
+  - `"raw"`: Eagerly collected tibble with WKB geometry (list of raw
+    vectors)
+
+  - `"geoarrow"`: Eagerly collected tibble with geoarrow geometry
+    (geoarrow_vctr)
+
+  Can be set globally via
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(output_type = "...")`
+  or per-function via this argument. Per-function overrides global
+  setting.
 
 - overwrite:
 
@@ -68,30 +108,48 @@ ddbs_simplify(
 
 ## Value
 
-an `sf` object with simplified geometries or `TRUE` (invisibly) for
-table creation
+Depends on the `output` argument (or global preference set by
+[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
+
+- `duckspatial_df` (default): A lazy spatial data frame backed by
+  dbplyr/DuckDB.
+
+- `sf`: An eagerly collected `sf` object in R memory.
+
+- `tibble`: An eagerly collected `tibble` without geometry in R memory.
+
+- `raw`: An eagerly collected `tibble` with WKB geometry (no
+  conversion).
+
+- `geoarrow`: An eagerly collected `tibble` with geometry converted to
+  `geoarrow_vctr`.
+
+When `name` is provided, the result is also written as a table or view
+in DuckDB and the function returns `TRUE` (invisibly).
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-## load packages
+## load package
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+)
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## simplify with tolerance of 0.01
-ddbs_simplify("countries", tolerance = 0.01, conn)
+ddbs_simplify("countries", tolerance = 0.01, conn = conn)
 
 ## simplify without using a connection
-ddbs_simplify(countries_sf, tolerance = 0.01)
+ddbs_simplify(countries_ddbs, tolerance = 0.01)
 } # }
 ```

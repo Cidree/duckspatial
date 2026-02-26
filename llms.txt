@@ -21,81 +21,118 @@
 > Finally, v1.0.0 will include many new functions and broader API
 > improvements.
 
-The **{duckspatial}** package provides fast and memory-efficient
-functions to analyze and manipulate large spatial vector datasets in R.
-It allows R users to benefit directly from the analytical power of
-[DuckDB and its spatial
-extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions),
-while remaining fully compatible with R’s spatial ecosystem, especially
-**{sf}**.
+## Overview
 
-At its core, **{duckspatial}** bridges two worlds:
+**{duckspatial}** provides fast, memory-efficient functions for
+analysing and manipulating large spatial vector datasets in R. It
+bridges [DuckDB’s spatial
+extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions)
+with R’s spatial ecosystem — in particular **{sf}** — so you can
+leverage DuckDB’s analytical power without leaving your familiar R
+workflow.
 
-- R spatial workflows based on {sf} objects
-- Database-backed spatial analytics powered by DuckDB SQL
+### How it works
 
-This design makes **{duckspatial}** especially well suited for:
+Starting from v1.0.0, {duckspatial} introduces a native S3 class called
+`duckspatial_df`: a `tibble`-like object with a geometry column that
+lives **outside R’s memory**. Data is read and evaluated lazily (similar
+to how `duckplyr` handles lazy tables) and is only loaded into R when
+you explicitly materialise it (e.g. with
+[`ddbs_collect()`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)).
 
-- Working with large spatial data sets
-- Speeding up spatial analysis at scale
-- Workflows where data does not fit comfortably in memory
+When the first `duckspatial_df` is created (either by reading a file or
+converting an `sf` object) a temporary view is registered in a default
+DuckDB connection with the spatial extension enabled. All spatial
+operations run inside that connection, letting DuckDB apply its own
+query optimisations before any data reaches R.
 
-Importantly, **{duckspatial}** brings the power of DuckDB spatial to R
-users while keeping workflows similar to {sf} .
+### Naming conventions
 
-# Installation
+All spatial functions follow the `ddbs_*()` prefix (*DuckDB Spatial*),
+and their names deliberately mirror the **{sf}** package, so users
+already familiar with `sf` can get started immediately.
 
-You can install duckspatial directly from CRAN with:
+## Installation
 
-``` r
-install.packages("duckspatial")
-```
-
-Or you can install the development version from
-[GitHub](https://github.com/) with:
+Install the stable release from CRAN:
 
 ``` r
 # install.packages("pak")
+pak::pak("duckspatial")
+```
+
+Install the latest GitHub version (more features, fewer accumulated
+bugs):
+
+``` r
 pak::pak("Cidree/duckspatial")
 ```
 
-# Core idea: flexible spatial workflows
+Install the development version (may be unstable):
+
+``` r
+pak::pak("Cidree/duckspatial@dev")
+```
+
+## Core idea: flexible spatial workflows
 
 A central design principle of {duckspatial} is that the same spatial
-operation can be used in different ways, depending on how your data is
+operation can be used in different ways depending on how your data is
 stored and how you want to manage memory and performance.
 
-Most functions in {duckspatial} support four complementary workflows:
+Most functions support four complementary input/output combinations:
 
-1.  Input`sf` → Output `sf`
-2.  Input `sf` → Output DuckDB table
-3.  Input DuckDB table → Output `sf`
-4.  Input DuckDB table → Output DuckDB table
+| Input                   | Output                  |
+|-------------------------|-------------------------|
+| `duckspatial_df` / `sf` | `duckspatial_df` / `sf` |
+| `duckspatial_df` / `sf` | DuckDB table            |
+| DuckDB table            | `duckspatial_df` / `sf` |
+| DuckDB table            | DuckDB table            |
 
-See the [“Get Started” vignette for
-examples](https://Cidree.github.io/duckspatial/articles/duckspatial.html).
+This means you can keep data inside DuckDB for as long as possible,
+pulling results into R only when you need them. See the [Get Started
+vignette](https://Cidree.github.io/duckspatial/articles/duckspatial.html)
+for worked examples of each workflow.
+
+## Contributing
+
+Bug reports, feature requests, and pull requests are very welcome!
+
+- [Raise an issue](https://github.com/Cidree/duckspatial/issues)
+- [Open a pull request](https://github.com/Cidree/duckspatial/pulls)
 
 # Package index
 
 ## Setup and Connection
 
-Install spatial extension and manage database connections
+Install the spatial extension and manage DuckDB connections
 
 - [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md)
   : Create a DuckDB connection with spatial extension
 - [`ddbs_stop_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.md)
-  : Close a duckdb connection
+  : Close a DuckDB connection
 - [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md)
   : Checks and installs the Spatial extension
 - [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)
   : Loads the Spatial extension
+- [`ddbs_options()`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)
+  : Get or set global duckspatial options
+- [`ddbs_set_resources()`](https://cidree.github.io/duckspatial/reference/ddbs_set_resources.md)
+  [`ddbs_get_resources()`](https://cidree.github.io/duckspatial/reference/ddbs_set_resources.md)
+  : Get or set connection resources
+- [`ddbs_sitrep()`](https://cidree.github.io/duckspatial/reference/ddbs_sitrep.md)
+  : Report duckspatial configuration status
 
-## Data Import/Export
+## Data Import / Export
 
-Read and write spatial data
+Read and write spatial data to and from DuckDB
 
+- [`ddbs_open_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.md)
+  : Open spatial dataset lazily via DuckDB
 - [`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md)
   : Load spatial vector data from DuckDB into R
+- [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
+  : Write spatial dataset to disk
 - [`ddbs_write_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)
   : Write an SF Object to a DuckDB Database
 - [`ddbs_register_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_register_vector.md)
@@ -105,122 +142,140 @@ Read and write spatial data
 
 Test spatial relationships between geometries
 
-- [`ddbs_contains()`](https://cidree.github.io/duckspatial/reference/ddbs_contains.md)
-  : Spatial contains predicate
-- [`ddbs_contains_properly()`](https://cidree.github.io/duckspatial/reference/ddbs_contains_properly.md)
-  : Spatial contains properly predicate
-- [`ddbs_covered_by()`](https://cidree.github.io/duckspatial/reference/ddbs_covered_by.md)
-  : Spatial covered by predicate
-- [`ddbs_covers()`](https://cidree.github.io/duckspatial/reference/ddbs_covers.md)
-  : Spatial covers predicate
-- [`ddbs_crosses()`](https://cidree.github.io/duckspatial/reference/ddbs_crosses.md)
-  : Spatial crosses predicate
-- [`ddbs_disjoint()`](https://cidree.github.io/duckspatial/reference/ddbs_disjoint.md)
-  : Spatial disjoint predicate
-- [`ddbs_equals()`](https://cidree.github.io/duckspatial/reference/ddbs_equals.md)
-  : Spatial equals predicate
-- [`ddbs_intersects()`](https://cidree.github.io/duckspatial/reference/ddbs_intersects.md)
-  : Spatial intersects predicate
-- [`ddbs_intersects_extent()`](https://cidree.github.io/duckspatial/reference/ddbs_intersects_extent.md)
-  : Spatial intersects extent predicate
-- [`ddbs_is_within_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_is_within_distance.md)
-  : Within Distance predicate
-- [`ddbs_overlaps()`](https://cidree.github.io/duckspatial/reference/ddbs_overlaps.md)
-  : Spatial overlaps predicate
 - [`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
-  : Spatial predicate operations
-- [`ddbs_touches()`](https://cidree.github.io/duckspatial/reference/ddbs_touches.md)
-  : Spatial touches predicate
-- [`ddbs_within()`](https://cidree.github.io/duckspatial/reference/ddbs_within.md)
-  : Spatial within predicate
-- [`ddbs_within_properly()`](https://cidree.github.io/duckspatial/reference/ddbs_within_properly.md)
-  : Spatial within properly predicate
+  [`ddbs_intersects()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_covers()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_touches()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_is_within_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_disjoint()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_within()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_contains()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_overlaps()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_crosses()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_equals()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_covered_by()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_intersects_extent()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_contains_properly()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  [`ddbs_within_properly()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  : Evaluate spatial predicates between geometries
 
 ## Spatial Joins and Filters
 
-Binary operations combining two geometries
+Combine or subset geometries based on spatial relationships
 
-- [`ddbs_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_difference.md)
-  : Calculates the difference of two geometries
+- [`ddbs_intersection()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
+  [`ddbs_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
+  [`ddbs_sym_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
+  : Geometry binary operations
 - [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md)
-  : Performs spatial filter of two geometries
+  : Perform a spatial filter
 - [`ddbs_interpolate_aw()`](https://cidree.github.io/duckspatial/reference/ddbs_interpolate_aw.md)
   : Areal-Weighted Interpolation using DuckDB
-- [`ddbs_intersection()`](https://cidree.github.io/duckspatial/reference/ddbs_intersection.md)
-  : Calculates the intersection of two geometries
 - [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md)
-  : Performs spatial joins of two geometries
+  : Perform a spatial join of two geometries
+
+## Geometry Construction
+
+Create new geometries from scratch or from existing data
+
+- [`ddbs_as_spatial()`](https://cidree.github.io/duckspatial/reference/ddbs_as_spatial.md)
+  : Generate point geometries from coordinates
+- [`ddbs_generate_points()`](https://cidree.github.io/duckspatial/reference/ddbs_generate_points.md)
+  : Generate random points within bounding boxes of geometries
+- [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md)
+  : Convert point geometries to QuadKey tiles
 
 ## Geometry Processing
 
-Modify and process individual geometries
+Modify, simplify, and transform individual geometries
 
+- [`ddbs_boundary()`](https://cidree.github.io/duckspatial/reference/ddbs_boundary.md)
+  : Get the boundary of geometries
 - [`ddbs_buffer()`](https://cidree.github.io/duckspatial/reference/ddbs_buffer.md)
   : Creates a buffer around geometries
+- [`ddbs_build_area()`](https://cidree.github.io/duckspatial/reference/ddbs_build_area.md)
+  : Build polygon areas from multiple linestrings
 - [`ddbs_centroid()`](https://cidree.github.io/duckspatial/reference/ddbs_centroid.md)
   : Calculates the centroid of geometries
-- [`ddbs_combine()`](https://cidree.github.io/duckspatial/reference/ddbs_combine.md)
-  : Combine geometries into a single MULTI-geometry
 - [`ddbs_concave_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_concave_hull.md)
-  : Returns the concave hull enclosing the geometry
+  : Compute the concave hull of geometries
 - [`ddbs_convex_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_convex_hull.md)
-  : Returns the convex hull enclosing the geometry
+  : Compute the convex hull of geometries
+- [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint.md)
+  : Extracts the endpoint of a linestring geometry
 - [`ddbs_exterior_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.md)
-  : Extracts the exterior ring of polygon geometries
-- [`ddbs_generate_points()`](https://cidree.github.io/duckspatial/reference/ddbs_generate_points.md)
-  : Generate random points within geometries
+  : Extract the exterior ring of polygons
 - [`ddbs_make_polygon()`](https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.md)
-  : Creates polygons from linestring geometries
+  : Create a polygon from a single closed linestring
+- [`ddbs_polygonize()`](https://cidree.github.io/duckspatial/reference/ddbs_polygonize.md)
+  : Assemble polygons from multiple linestrings
+- [`ddbs_union()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
+  [`ddbs_combine()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
+  [`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
+  : Union and combine geometries
+- [`ddbs_voronoi()`](https://cidree.github.io/duckspatial/reference/ddbs_voronoi.md)
+  : Computes a Voronoi diagram from point geometries
+
+## Coordinate Operations
+
+Transform and manipulate coordinate systems
+
+- [`ddbs_transform()`](https://cidree.github.io/duckspatial/reference/ddbs_transform.md)
+  : Transform the coordinate reference system of geometries
+- [`ddbs_flip_coordinates()`](https://cidree.github.io/duckspatial/reference/ddbs_flip_coordinates.md)
+  : Flips the X and Y coordinates of geometries
+
+## Geometry Validation
+
+Check and repair geometry validity and dimensionality
+
+- [`ddbs_geometry_type()`](https://cidree.github.io/duckspatial/reference/ddbs_geometry_type.md)
+  : Get the geometry type of features
 - [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md)
   : Make invalid geometries valid
 - [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md)
   : Simplify geometries
-- [`ddbs_transform()`](https://cidree.github.io/duckspatial/reference/ddbs_transform.md)
-  : Transform coordinate reference system of geometries
-- [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md)
-  : Convert geometries to QuadKey tiles
-- [`ddbs_union()`](https://cidree.github.io/duckspatial/reference/ddbs_union.md)
-  : Union of geometries
-
-## Geometry Validation
-
-Check geometry validity
-
-- [`ddbs_is_simple()`](https://cidree.github.io/duckspatial/reference/ddbs_is_simple.md)
-  : Check if geometries are simple
-- [`ddbs_is_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_is_valid.md)
-  : Check if geometries are valid
+- [`ddbs_is_simple()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
+  [`ddbs_is_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
+  [`ddbs_is_closed()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
+  [`ddbs_is_empty()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
+  [`ddbs_is_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
+  : Geometry validation functions
+- [`ddbs_has_z()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
+  [`ddbs_has_m()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
+  : Check geometry dimensions
+- [`ddbs_force_2d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  [`ddbs_force_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  [`ddbs_force_4d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  : Force geometry dimensions
 
 ## Format Conversion
 
-Convert geometries to standard spatial formats
+Convert geometries to and from standard spatial formats
 
-- [`ddbs_as_text()`](https://cidree.github.io/duckspatial/reference/ddbs_as_text.md)
-  : Convert geometries to Well-Known Text (WKT) format
-- [`ddbs_as_wkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_wkb.md)
-  : Convert geometries to Well-Known Binary (WKB) format
-- [`ddbs_as_hexwkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_hexwkb.md)
-  : Convert geometries to hexadecimal Well-Known Binary (HEXWKB) format
+- [`ddbs_as_text()`](https://cidree.github.io/duckspatial/reference/ddbs_as_format.md)
+  [`ddbs_as_wkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_format.md)
+  [`ddbs_as_hexwkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_format.md)
+  [`ddbs_as_geojson()`](https://cidree.github.io/duckspatial/reference/ddbs_as_format.md)
+  : Convert geometries to standard interchange formats
 
 ## Spatial Extent and Boundaries
 
-Extract geometry bounds and envelopes
+Extract bounding boxes and envelopes
 
 - [`ddbs_bbox()`](https://cidree.github.io/duckspatial/reference/ddbs_bbox.md)
-  : Returns the minimal bounding box enclosing the input geometry
-- [`ddbs_boundary()`](https://cidree.github.io/duckspatial/reference/ddbs_boundary.md)
-  : Returns the boundary of geometries
+  : Get the bounding box of geometries
 - [`ddbs_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_envelope.md)
-  : Returns the envelope (bounding box) of geometries
+  : Get the envelope (bounding box) of geometries
 
 ## Affine Transformations
 
-Geometric transformations (rotate, scale, flip, shift)
+Rotate, scale, shear, and shift geometries
 
 - [`ddbs_flip()`](https://cidree.github.io/duckspatial/reference/ddbs_flip.md)
   : Flip geometries horizontally or vertically
 - [`ddbs_rotate()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate.md)
-  : Rotate geometries around centroid
+  : Rotate geometries around their centroid
 - [`ddbs_rotate_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate_3d.md)
   : Rotate 3D geometries around an axis
 - [`ddbs_scale()`](https://cidree.github.io/duckspatial/reference/ddbs_scale.md)
@@ -232,23 +287,25 @@ Geometric transformations (rotate, scale, flip, shift)
 
 ## Measurements
 
-Calculate geometric properties
+Calculate areas, distances, lengths, and perimeters
 
 - [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md)
-  : Calculates the area of geometries
+  : Calculate the area of geometries
 - [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_distance.md)
-  : Returns the distance between two geometries
+  : Calculate the distance between geometries
 - [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md)
-  : Calculates the length of geometries
+  : Calculate the length of geometries
+- [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_perimeter.md)
+  : Calculate the perimeter of geometries
 
 ## Database Utilities
 
-Helper functions for database management
+Helper functions for managing DuckDB schemas and metadata
 
 - [`ddbs_create_schema()`](https://cidree.github.io/duckspatial/reference/ddbs_create_schema.md)
   : Check and create schema
 - [`ddbs_crs()`](https://cidree.github.io/duckspatial/reference/ddbs_crs.md)
-  : Check CRS of a table
+  : Check CRS of spatial objects or database tables
 - [`ddbs_drivers()`](https://cidree.github.io/duckspatial/reference/ddbs_drivers.md)
   : Get list of GDAL drivers and file formats
 - [`ddbs_glimpse()`](https://cidree.github.io/duckspatial/reference/ddbs_glimpse.md)
@@ -256,20 +313,43 @@ Helper functions for database management
 - [`ddbs_list_tables()`](https://cidree.github.io/duckspatial/reference/ddbs_list_tables.md)
   : Check tables and schemas inside a database
 
+## Lazy Spatial Data Frames
+
+Create and work with lazy `duckspatial_df` objects
+
+- [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md)
+  : Convert objects to duckspatial_df
+- [`is_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/is_duckspatial_df.md)
+  : Check if object is a duckspatial_df
+- [`collect(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)
+  [`ddbs_collect()`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)
+  : Collect a duckspatial_df with flexible output formats
+- [`ddbs_compute()`](https://cidree.github.io/duckspatial/reference/ddbs_compute.md)
+  : Force computation of a lazy duckspatial_df
+- [`ddbs_geom_col()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_col.md)
+  : Get the geometry column name
+- [`st_crs(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
+  [`st_geometry(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
+  [`st_bbox(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
+  [`st_as_sf(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
+  [`print(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
+  : sf methods for duckspatial_df
+- [`dplyr_reconstruct(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`left_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`inner_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`head(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`glimpse(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`compute(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  : dplyr methods for duckspatial_df
+
 # Articles
 
-### Introduction
+### All vignettes
 
-- [Intro to
-  duckspatial](https://cidree.github.io/duckspatial/articles/duckspatial.md):
-
-### Advanced Features
-
-- [Spatial
-  joins](https://cidree.github.io/duckspatial/articles/spatial_joins.md):
 - [Areal
   Interpolation](https://cidree.github.io/duckspatial/articles/aw_interpolation.md):
-
-### Performance
-
 - [Benchmark](https://cidree.github.io/duckspatial/articles/benchmark.md):
+- [Getting
+  started](https://cidree.github.io/duckspatial/articles/duckspatial.md):
+- [Spatial
+  joins](https://cidree.github.io/duckspatial/articles/spatial_joins.md):

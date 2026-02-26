@@ -1,9 +1,8 @@
-# Spatial predicate operations
+# Evaluate spatial predicates between geometries
 
-Computes spatial relationships between two geometry datasets using
-DuckDB's spatial extension. Returns a list where each element
-corresponds to a row of `x`, containing the indices (or IDs) of rows in
-`y` that satisfy the specified spatial predicate.
+Determines which geometries in one dataset satisfy a specified spatial
+relationship with geometries in another dataset, such as intersection,
+containment, or touching.
 
 ## Usage
 
@@ -13,27 +12,71 @@ ddbs_predicate(
   y,
   predicate = "intersects",
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
   quiet = FALSE
 )
+
+ddbs_intersects(x, y, ...)
+
+ddbs_covers(x, y, ...)
+
+ddbs_touches(x, y, ...)
+
+ddbs_is_within_distance(x, y, distance = NULL, ...)
+
+ddbs_disjoint(x, y, ...)
+
+ddbs_within(x, y, ...)
+
+ddbs_contains(x, y, ...)
+
+ddbs_overlaps(x, y, ...)
+
+ddbs_crosses(x, y, ...)
+
+ddbs_equals(x, y, ...)
+
+ddbs_covered_by(x, y, ...)
+
+ddbs_intersects_extent(x, y, ...)
+
+ddbs_contains_properly(x, y, ...)
+
+ddbs_within_properly(x, y, ...)
 ```
 
 ## Arguments
 
 - x:
 
-  An `sf` spatial object. Alternatively, it can be a string with the
-  name of a table with geometry column within the DuckDB database
-  `conn`. Data is returned from this object.
+  Input spatial data. Can be:
+
+  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
+
+  - An `sf` object
+
+  - A `tbl_lazy` from dbplyr
+
+  - A character string naming a table/view in `conn`
+
+  Data is returned from this object.
 
 - y:
 
-  An `sf` spatial object. Alternatively, it can be a string with the
-  name of a table with geometry column within the DuckDB database
-  `conn`. Data is returned from this object.
+  Input spatial data. Can be:
+
+  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
+
+  - An `sf` object
+
+  - A `tbl_lazy` from dbplyr
+
+  - A character string naming a table/view in `conn`
 
 - predicate:
 
@@ -44,6 +87,16 @@ ddbs_predicate(
 
   A connection object to a DuckDB database. If `NULL`, the function runs
   on a temporary DuckDB database.
+
+- conn_x:
+
+  A `DBIConnection` object to a DuckDB database for the input `x`. If
+  `NULL` (default), it is resolved from `conn` or extracted from `x`.
+
+- conn_y:
+
+  A `DBIConnection` object to a DuckDB database for the input `y`. If
+  `NULL` (default), it is resolved from `conn` or extracted from `y`.
 
 - id_x:
 
@@ -71,6 +124,10 @@ ddbs_predicate(
 
   A logical value. If `TRUE`, suppresses any informational messages.
   Defaults to `FALSE`.
+
+- ...:
+
+  Passed to ddbs_predicate
 
 ## Value
 
@@ -147,33 +204,58 @@ if (FALSE) { # \dontrun{
 ## Load packages
 library(duckspatial)
 library(dplyr)
-library(sf)
 
 ## create in-memory DuckDB database
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+) |>
   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-  st_transform(st_crs(countries_sf))
+
+rivers_ddbs <- ddbs_open_dataset(
+  system.file("spatial/rivers.geojson", 
+  package = "duckspatial")
+) |>
+  ddbs_transform(ddbs_crs(countries_ddbs))
 
 ## Store in DuckDB
-ddbs_write_vector(conn, countries_sf, "countries")
-ddbs_write_vector(conn, rivers_sf, "rivers")
+ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_vector(conn, rivers_ddbs, "rivers")
 
 ## Example 1: Check which rivers intersect each country
-ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
+ddbs_predicate(countries_ddbs, rivers_ddbs, predicate = "intersects")
+ddbs_intersects(countries_ddbs, rivers_ddbs)
 
 ## Example 2: Find neighboring countries
-ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
-               id_x = "NAME_ENGL", id_y = "NAME_ENGL")
+ddbs_predicate(
+  countries_ddbs, 
+  countries_ddbs, 
+  predicate = "touches",
+  id_x = "NAME_ENGL", 
+  id_y = "NAME_ENGL"
+)
+
+ddbs_touches(
+  countries_ddbs, 
+  countries_ddbs, 
+  id_x = "NAME_ENGL", 
+  id_y = "NAME_ENGL"
+)
 
 ## Example 3: Find rivers that don't intersect countries
-ddbs_predicate(countries_sf, rivers_sf, predicate = "disjoint",
-               id_x = "NAME_ENGL", id_y = "RIVER_NAME")
+ddbs_predicate(
+  countries_ddbs, 
+  rivers_ddbs, 
+  predicate = "disjoint",
+  id_x = "NAME_ENGL", 
+  id_y = "RIVER_NAME"
+)
 
 ## Example 4: Use table names inside duckdb
-ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
+ddbs_predicate("countries", "rivers", predicate = "within", conn, id_x = "NAME_ENGL")
+ddbs_within("countries", "rivers", conn,  id_x = "NAME_ENGL")
 } # }
 ```

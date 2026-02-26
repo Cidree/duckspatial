@@ -5,7 +5,7 @@ Convert objects to duckspatial_df
 ## Usage
 
 ``` r
-as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 # S3 method for class 'duckspatial_df'
 as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
@@ -14,16 +14,16 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 # S3 method for class 'tbl_duckdb_connection'
-as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 # S3 method for class 'tbl_lazy'
-as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 # S3 method for class 'character'
-as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 # S3 method for class 'data.frame'
-as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = "geom", ...)
+as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 ```
 
 ## Arguments

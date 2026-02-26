@@ -1,8 +1,7 @@
 # Rotate 3D geometries around an axis
 
-Rotates 3D geometries from from a `sf` object or a DuckDB table around
-the X, Y, or Z axis. Returns the result as an `sf` object or creates a
-new table in the database.
+Rotates 3D geometries by a specified angle around the X, Y, or Z axis,
+preserving their shape.
 
 ## Usage
 
@@ -16,6 +15,7 @@ ddbs_rotate_3d(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -25,9 +25,17 @@ ddbs_rotate_3d(
 
 - x:
 
-  An `sf` spatial object. Alternatively, it can be a string with the
-  name of a table with geometry column within the DuckDB database
-  `conn`. Data is returned from this object.
+  Input spatial data. Can be:
+
+  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
+
+  - An `sf` object
+
+  - A `tbl_lazy` from dbplyr
+
+  - A character string naming a table/view in `conn`
+
+  Data is returned from this object.
 
 - angle:
 
@@ -57,15 +65,39 @@ ddbs_rotate_3d(
 
 - crs:
 
-  The coordinates reference system of the data. Specify if the data
-  doesn't have a `crs_column`, and you know the CRS.
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
+  reference system of the data. Specify if the data doesn't have a
+  `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  a character string of length one specifying the column storing the CRS
-  (created automatically by
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
+  string of length one specifying the column storing the CRS (created
+  automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
+
+- output:
+
+  Character. Controls the return type. Options:
+
+  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
+    dbplyr/DuckDB
+
+  - `"sf"`: Eagerly collected sf object (uses memory)
+
+  - `"tibble"`: Eagerly collected tibble without geometry
+
+  - `"raw"`: Eagerly collected tibble with WKB geometry (list of raw
+    vectors)
+
+  - `"geoarrow"`: Eagerly collected tibble with geoarrow geometry
+    (geoarrow_vctr)
+
+  Can be set globally via
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(output_type = "...")`
+  or per-function via this argument. Per-function overrides global
+  setting.
 
 - overwrite:
 
@@ -79,7 +111,24 @@ ddbs_rotate_3d(
 
 ## Value
 
-an `sf` object or `TRUE` (invisibly) for table creation
+Depends on the `output` argument (or global preference set by
+[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
+
+- `duckspatial_df` (default): A lazy spatial data frame backed by
+  dbplyr/DuckDB.
+
+- `sf`: An eagerly collected `sf` object in R memory.
+
+- `tibble`: An eagerly collected `tibble` without geometry in R memory.
+
+- `raw`: An eagerly collected `tibble` with WKB geometry (no
+  conversion).
+
+- `geoarrow`: An eagerly collected `tibble` with geometry converted to
+  `geoarrow_vctr`.
+
+When `name` is provided, the result is also written as a table or view
+in DuckDB and the function returns `TRUE` (invisibly).
 
 ## Examples
 
@@ -87,17 +136,20 @@ an `sf` object or `TRUE` (invisibly) for table creation
 if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
+library(dplyr)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read 3D data
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+countries_ddbs <- ddbs_open_dataset(
+ system.file("spatial/countries.geojson", 
+ package = "duckspatial")
+) |>
   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_sf, "countries")
+ddbs_write_vector(conn, countries_ddbs, "countries")
 
 ## rotate 45 degrees around X axis (pitch)
 ddbs_rotate_3d(conn = conn, "countries", angle = 45, axis = "x")
@@ -109,6 +161,6 @@ ddbs_rotate_3d(conn = conn, "countries", angle = 30, axis = "y")
 ddbs_rotate_3d(conn = conn, "countries", angle = 180, axis = "z")
 
 ## rotate without using a connection
-ddbs_rotate_3d(countries_sf, angle = 45, axis = "z")
+ddbs_rotate_3d(countries_ddbs, angle = 45, axis = "z")
 } # }
 ```

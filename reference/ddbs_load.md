@@ -6,19 +6,23 @@ database
 ## Usage
 
 ``` r
-ddbs_load(conn, quiet = FALSE)
+ddbs_load(conn, quiet = FALSE, extension = "spatial")
 ```
 
 ## Arguments
 
 - conn:
 
-  A connection object to a DuckDB database
+  A `DBIConnection` object to a DuckDB database
 
 - quiet:
 
   A logical value. If `TRUE`, suppresses any informational messages.
   Defaults to `FALSE`.
+
+- extension:
+
+  name of the extension to load, default is "spatial"
 
 ## Value
 
@@ -27,7 +31,7 @@ TRUE (invisibly) for successful installation
 ## Examples
 
 ``` r
-if (FALSE) { # interactive()
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 library(duckdb)
@@ -41,5 +45,5 @@ ddbs_load(conn)
 
 ## disconnect from db
 duckdb::dbDisconnect(conn)
-}
+} # }
 ```

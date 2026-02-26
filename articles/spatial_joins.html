@@ -11,20 +11,126 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.10/font.css" rel="stylesheet">
-<link href="../deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet">
-<link href="../deps/Merriweather-0.4.10/font.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/DM_Sans-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/DM_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Spatial joins">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="spatial_joins_files/libs/quarto-html/popper.min.js"></script><script src="spatial_joins_files/libs/quarto-html/tippy.umd.min.js"></script><link href="spatial_joins_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="spatial_joins_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Spatial joins">
+<meta property="og:image" content="https://cidree.github.io/duckspatial/logo.png">
+<style>
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar {
+  background: #0D1B2A !important;
+  border-bottom: 2px solid #0A7EA4;
+  letter-spacing: 0.01em;
+}
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #ffffff !important;
+  letter-spacing: -0.02em;
+}
+.navbar-nav .nav-link {
+  color: rgba(255,255,255,0.80) !important;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.15s;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: #0A7EA4 !important;
+}
+
+/* ── Vignette TOC ────────────────────────────────────────────── */
+/* Shared structure */
+#toc a,
+#toc .nav-link,
+.bd-toc a,
+.bd-toc .nav-link,
+.bs-docs-sidebar .nav > li > a {
+  font-size: 0.85rem;
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+/* Light mode (default) */
+#toc,
+#toc .nav,
+.bd-toc,
+.bd-toc .nav {
+  --bs-nav-link-color:       #3d5166;
+  --bs-nav-link-hover-color: #0A7EA4;
+}
+#toc a,
+#toc .nav-link,
+.bd-toc a,
+.bd-toc .nav-link,
+.bs-docs-sidebar .nav > li > a {
+  color: #3d5166 !important;
+}
+#toc a:hover,
+#toc .nav-link:hover,
+#toc .nav-link.active,
+.bd-toc a:hover,
+.bd-toc .nav-link.active,
+.bs-docs-sidebar .nav > li > a:hover,
+.bs-docs-sidebar .nav > li.active > a {
+  color: #0A7EA4 !important;
+  border-left-color: #0A7EA4;
+}
+
+/* Dark mode — pkgdown adds data-bs-theme="dark" on <html> */
+[data-bs-theme="dark"] #toc,
+[data-bs-theme="dark"] #toc .nav,
+[data-bs-theme="dark"] .bd-toc,
+[data-bs-theme="dark"] .bd-toc .nav {
+  --bs-nav-link-color:       #a8c0d6;
+  --bs-nav-link-hover-color: #3dd6f5;
+}
+[data-bs-theme="dark"] #toc a,
+[data-bs-theme="dark"] #toc .nav-link,
+[data-bs-theme="dark"] .bd-toc a,
+[data-bs-theme="dark"] .bd-toc .nav-link,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a {
+  color: #a8c0d6 !important;
+}
+[data-bs-theme="dark"] #toc a:hover,
+[data-bs-theme="dark"] #toc .nav-link:hover,
+[data-bs-theme="dark"] #toc .nav-link.active,
+[data-bs-theme="dark"] .bd-toc a:hover,
+[data-bs-theme="dark"] .bd-toc .nav-link.active,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li > a:hover,
+[data-bs-theme="dark"] .bs-docs-sidebar .nav > li.active > a {
+  color: #3dd6f5 !important;
+  border-left-color: #3dd6f5;
+}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.table thead th {
+  background: #0D1B2A;
+  color: #ffffff;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+  border: none;
+}
+.table tbody tr:hover { background: #f0f7fb; }
+.table { border-radius: 0.5rem; overflow: hidden; }
+
+</style>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-dark" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
@@ -37,15 +143,17 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../index.html"><span class="fa fa-home"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../index.html" aria-label="Home"><span class="fa fa-home"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/duckspatial.html">Get Started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/duckspatial.html">Get Started</a></li>
-    <li><hr class="dropdown-divider"></li>
+<li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/spatial_joins.html">Spatial Joins</a></li>
     <li><a class="dropdown-item" href="../articles/aw_interpolation.html">Areal-Weighted Interpolation</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Performance</h6></li>
     <li><a class="dropdown-item" href="../articles/benchmark.html">Benchmarks</a></li>
   </ul>
 </li>
@@ -56,46 +164,43 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/Cidree/duckspatial" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
       </ul>
 </div>
 
 
   </div>
-</nav><div class="container template-article">
-
-
-
-
+</nav><div class="container template-quarto">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Spatial joins</h1>
-            
-            <h4 data-toc-skip class="date">2026-02-10</h4>
-      
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/spatial_joins.Rmd" class="external-link"><code>vignettes/spatial_joins.Rmd</code></a></small>
-      <div class="d-none name"><code>spatial_joins.Rmd</code></div>
+
+
+      <p class="date">2026-02-26</p>
+
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/spatial_joins.qmd" class="external-link"><code>vignettes/spatial_joins.qmd</code></a></small>
+      <div class="d-none name"><code></code></div>
     </div>
 
-    
-    
-<p>This vignette shows how to use <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> to perform
-fast spatial join operations on large data sets with three different
-approaches:</p>
-<p>1 <strong>In-memory</strong>: pass <code>sf</code> objects and get an
-<code>sf</code> result (DuckDB runs under the hood, no persistent
-DataBase). 2. <strong>Connected</strong>: pass table names stored in an
-existing DuckDB connection and get an <code>sf</code> result. 3.
-<strong>Write-to-DB</strong>: same as (2), but write the result to a new
-DuckDB table.</p>
-<p>Let’s see a few examples. First, let’s load a few libraries and our
-sample data:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+
+
+
+
+
+    <p>This vignette shows how to use <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> to perform fast spatial join operations on large data sets with three different approaches:</p>
+<p>1 <strong>In-memory</strong>: pass <code>sf</code> objects and get an <code>sf</code> result (DuckDB runs under the hood, no persistent DataBase). 2. <strong>Connected</strong>: pass table names stored in an existing DuckDB connection and get an <code>sf</code> result. 3. <strong>Write-to-DB</strong>: same as (2), but write the result to a new DuckDB table.</p>
+<p>Let’s see a few examples. First, let’s load a few libraries and our sample data:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Important: 'crs_column' and 'crs' arguments are deprecated and will be removed in the next version.</span></span>
-<span><span class="co">#&gt; If possible, use the default values of these arguments to avoid future issues.</span></span>
-<span><span class="co"># library(mapview)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span></span>
 <span></span>
 <span><span class="co"># polygons</span></span>
 <span><span class="va">countries_sf</span>  <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span></span>
@@ -112,18 +217,17 @@ sample data:</p>
 <span>  y  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span>  <span class="op">-</span><span class="fl">90</span>, max <span class="op">=</span>  <span class="fl">90</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>,<span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="in-memory-pass-sf-return-sf">1) In-memory: pass <code>sf</code>, return <code>sf</code><a class="anchor" aria-label="anchor" href="#in-memory-pass-sf-return-sf"></a>
+</div>
+<section class="section level2"><h2 id="in-memory-pass-sf-return-sf">1) In-memory: pass <code>sf</code>, return <code>sf</code>
+<a class="anchor" aria-label="anchor" href="#in-memory-pass-sf-return-sf"></a>
 </h2>
-<p>The simplest way to perform fast spatial join. You simply pass two
-<code>sf</code> objects, and <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> spins up a
-temporary DuckDB, runs the join, and returns an <code>sf.</code></p>
+<p>The simplest way to perform fast spatial join. You simply pass two <code>sf</code> objects, and <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> spins up a temporary DuckDB, runs the join, and returns an <code>sf.</code></p>
 <ul>
 <li>
-<strong>When to use:</strong> quick analysis, prototyping, or when
-you don’t need to persist intermediate tables.</li>
+<strong>When to use:</strong> quick analysis, prototyping, or when you don’t need to persist intermediate tables.</li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out_sf1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
 <span>  x    <span class="op">=</span> <span class="va">points_sf</span>,</span>
 <span>  y    <span class="op">=</span> <span class="va">countries_sf</span>,</span>
@@ -133,21 +237,18 @@ you don’t need to persist intermediate tables.</li>
 <span><span class="co"># quick peek</span></span>
 <span><span class="co"># mapview(out_sf1, zcol="NAME_ENGL")</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="connected-pass-table-names-in-duckdb-return-sf">2) Connected: pass table names in DuckDB, return
-<code>sf</code><a class="anchor" aria-label="anchor" href="#connected-pass-table-names-in-duckdb-return-sf"></a>
+</section><section class="section level2"><h2 id="connected-pass-table-names-in-duckdb-return-sf">2) Connected: pass table names in DuckDB, return <code>sf</code>
+<a class="anchor" aria-label="anchor" href="#connected-pass-table-names-in-duckdb-return-sf"></a>
 </h2>
-<p>In the second and third approaches, we make use of a connection to an
-existing DuckDB database. So let’s create a fresh DuckDB connection
-using the <code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> function, which automatically
-install and load DuckDB spatial extension to the connection.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>In the second and third approaches, we make use of a connection to an existing DuckDB database. So let’s create a fresh DuckDB connection using the <code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> function, which automatically install and load DuckDB spatial extension to the connection.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># create a fresh DuckDB connection</span></span>
 <span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Now, in this second approach you need first to write your layers to
-DuckDB, and perform the spatial join by referencing their table names.
-Like this:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+</div>
+<p>Now, in this second approach you need first to write your layers to DuckDB, and perform the spatial join by referencing their table names. Like this:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># write data to DuckDB</span></span>
 <span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">points_sf</span>,   <span class="st">"points"</span>,    overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, <span class="st">"countries"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -159,21 +260,15 @@ Like this:</p>
 <span>  y    <span class="op">=</span> <span class="st">"countries"</span>,</span>
 <span>  join <span class="op">=</span> <span class="st">"within"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+</div>
 <ul>
 <li>
-<strong>When to use:</strong> iterative workflows,
-larger-than-memory data, or when you’ll run multiple queries on the same
-tables.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="write-to-db-create-a-new-table-with-the-join-result">3) Write-to-DB: create a new table with the join result<a class="anchor" aria-label="anchor" href="#write-to-db-create-a-new-table-with-the-join-result"></a>
+<strong>When to use:</strong> iterative workflows, larger-than-memory data, or when you’ll run multiple queries on the same tables.</li>
+</ul></section><section class="section level2"><h2 id="write-to-db-create-a-new-table-with-the-join-result">3) Write-to-DB: create a new table with the join result<a class="anchor" aria-label="anchor" href="#write-to-db-create-a-new-table-with-the-join-result"></a>
 </h2>
-<p>The output of approaches 1 and 2 is an <code>sf</code> object loaded
-to your memory. In this third approach, <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> writes
-a new table in the DuckDB database. You simply need to the
-<code>name</code> of the new table.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<p>The output of approaches 1 and 2 is an <code>sf</code> object loaded to your memory. In this third approach, <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code> writes a new table in the DuckDB database. You simply need to the <code>name</code> of the new table.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
 <span>    conn <span class="op">=</span> <span class="va">conn</span>,</span>
 <span>    x <span class="op">=</span> <span class="st">"points"</span>,</span>
@@ -187,28 +282,20 @@ a new table in the DuckDB database. You simply need to the
 <span><span class="co"># DBI::dbReadTable(conn, "points_in_countries") |&gt;</span></span>
 <span><span class="co">#     sf::st_as_sf(wkt = 'geometry') |&gt; </span></span>
 <span><span class="co">#     head()</span></span></code></pre></div>
+</div>
 <ul>
 <li>
-<strong>When to use:</strong> iterative workflows,
-larger-than-memory data, or when you’ll run multiple queries on the same
-tables.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="spatial-join-predicates">Spatial Join Predicates:<a class="anchor" aria-label="anchor" href="#spatial-join-predicates"></a>
+<strong>When to use:</strong> iterative workflows, larger-than-memory data, or when you’ll run multiple queries on the same tables.</li>
+</ul></section><section class="section level2"><h2 id="spatial-join-predicates">Spatial Join Predicates:<a class="anchor" aria-label="anchor" href="#spatial-join-predicates"></a>
 </h2>
-<p>A spatial predicate is really just a function that evaluates some
-spatial relation between two geometries and returns true or false, e.g.,
-“does a contain b” or “is a within distance x of b”. The
-<code>join</code> argument accepts the spatial predicates:</p>
+<p>A spatial predicate is really just a function that evaluates some spatial relation between two geometries and returns true or false, e.g., “does a contain b” or “is a within distance x of b”. The <code>join</code> argument accepts the spatial predicates:</p>
 <ul>
 <li>
 <code>"ST_Intersects"</code>: Whether a intersects b</li>
 <li>
 <code>"ST_Contains"</code>: Whether a contains b</li>
 <li>
-<code>"ST_ContainsProperly"</code>: Whether a contains b without b
-touching a’s boundary</li>
+<code>"ST_ContainsProperly"</code>: Whether a contains b without b touching a’s boundary</li>
 <li>
 <code>"ST_Within"</code>: Whether a is within b</li>
 <li>
@@ -224,21 +311,251 @@ touching a’s boundary</li>
 <li>
 <code>"ST_CoveredBy"</code>: Whether a is covered by b</li>
 <li>
-<code>"ST_DWithin"</code>: x) Whether a is within distance x of
-b</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
+<code>"ST_DWithin"</code>: x) Whether a is within distance x of b</li>
+</ul></section><section class="section level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <p>Don’t forget to disconnect from the database.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">duckdb</span><span class="fu">::</span><span class="fu">dbDisconnect</span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></code></pre></div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
-    </nav></aside>
+</section><script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'light-border',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config);
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        const annoteTargets = window.document.querySelectorAll('.code-annotation-anchor');
+        for (let i=0; i<annoteTargets.length; i++) {
+          const annoteTarget = annoteTargets[i];
+          const targetCell = annoteTarget.getAttribute("data-target-cell");
+          const targetAnnotation = annoteTarget.getAttribute("data-target-annotation");
+          const contentFn = () => {
+            const content = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+            if (content) {
+              const tipContent = content.cloneNode(true);
+              tipContent.classList.add("code-annotation-tip-content");
+              return tipContent.outerHTML;
+            }
+          }
+          const config = {
+            allowHTML: true,
+            content: contentFn,
+            onShow: (instance) => {
+              selectCodeLines(instance.reference);
+              instance.reference.classList.add('code-annotation-active');
+              window.tippy.hideAll();
+            },
+            onHide: (instance) => {
+              unselectCodeLines();
+              instance.reference.classList.remove('code-annotation-active');
+            },
+            maxWidth: 300,
+            delay: [50, 0],
+            duration: [200, 0],
+            offset: [5, 10],
+            arrow: true,
+            appendTo: function(el) {
+              return el.parentElement.parentElement.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'right',
+            popperOptions: {
+              modifiers: [
+              {
+                name: 'flip',
+                options: {
+                  flipVariations: false, // true by default
+                  allowedAutoPlacements: ['right'],
+                  fallbackPlacements: ['right', 'top', 'top-start', 'top-end', 'bottom', 'bottom-start', 'bottom-end', 'left'],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                options: {
+                  mainAxis: false,
+                  altAxis: false
+                }
+              }
+              ]
+            }
+          };
+          window.tippy(annoteTarget, config);
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script></main>
 </div>
-
 
 
     <footer><div class="pkgdown-footer-left">

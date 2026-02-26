@@ -1,8 +1,7 @@
-# Convert geometries to QuadKey tiles
+# Convert point geometries to QuadKey tiles
 
-Converts POINT geometries to QuadKey tile representations at a specified
-zoom level. QuadKeys are a hierarchical spatial indexing system used by
-mapping services like Bing Maps.
+Transforms point geometries into QuadKey identifiers at a specified zoom
+level, a hierarchical spatial indexing system used by mapping services.
 
 ## Usage
 
@@ -10,7 +9,6 @@ mapping services like Bing Maps.
 ddbs_quadkey(
   x,
   level = 10,
-  output = "polygon",
   field = NULL,
   fun = "mean",
   background = NA,
@@ -18,6 +16,7 @@ ddbs_quadkey(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = "polygon",
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -27,35 +26,31 @@ ddbs_quadkey(
 
 - x:
 
-  An `sf` spatial object. Alternatively, it can be a string with the
-  name of a table with geometry column within the DuckDB database
-  `conn`. Data is returned from this object.
+  Input spatial data. Can be:
+
+  - A `duckspatial_df` object (lazy spatial data frame via dbplyr)
+
+  - An `sf` object
+
+  - A `tbl_lazy` from dbplyr
+
+  - A character string naming a table/view in `conn`
+
+  Data is returned from this object.
 
 - level:
 
   An integer specifying the zoom level for QuadKey generation (1-23).
   Higher values provide finer spatial resolution. Default is 10.
 
-- output:
-
-  Character string specifying output format. One of:
-
-  - `"polygon"` - Returns QuadKey tile boundaries as polygons (default)
-
-  - `"raster"` - Returns QuadKey values as a raster grid
-
-  - `"tilexy"` - Returns tile XY coordinates
-
 - field:
 
-  Character string specifying the field name for raster output. Only
-  used when `output = "raster"`
+  Character string specifying the field name for aggregation.
 
 - fun:
 
-  summarizing function for when there are multiple geometries in one
-  cell (e.g. "mean", "min", "max", "sum"). Only used when
-  `output = "raster"`
+  aggregation function for when there are multiple quadkeys (e.g.
+  "mean", "min", "max", "sum").
 
 - background:
 
@@ -76,15 +71,28 @@ ddbs_quadkey(
 
 - crs:
 
-  The coordinates reference system of the data. Specify if the data
-  doesn't have a `crs_column`, and you know the CRS.
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
+  reference system of the data. Specify if the data doesn't have a
+  `crs_column`, and you know the CRS.
 
 - crs_column:
 
-  a character string of length one specifying the column storing the CRS
-  (created automatically by
+  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
+  string of length one specifying the column storing the CRS (created
+  automatically by
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
+
+- output:
+
+  Character string specifying output format. One of:
+
+  - `"polygon"` - Returns QuadKey tile boundaries as `duckspatial_df`
+    (default)
+
+  - `"raster"` - Returns QuadKey values as a `SpatRaster`
+
+  - `"tilexy"` - Returns tile XY coordinates as a `tibble`
 
 - overwrite:
 
@@ -98,7 +106,17 @@ ddbs_quadkey(
 
 ## Value
 
-An sf object or TRUE (invisibly) for table creation
+Depends on the output argument
+
+- `polygon` (default): A lazy spatial data frame backed by
+  dbplyr/DuckDB.
+
+- `raster`: An eagerly collected `SpatRaster` object in R memory.
+
+- `tilexy`: An eagerly collected `tibble` without geometry in R memory.
+
+When `name` is provided, the result is also written as a table or view
+in DuckDB and the function returns `TRUE` (invisibly).
 
 ## Details
 
@@ -106,6 +124,10 @@ QuadKeys divide the world into a hierarchical grid of tiles, where each
 tile is subdivided into four smaller tiles at the next zoom level. This
 function wraps DuckDB's ST_QuadKey spatial function to generate these
 tiles from input geometries.
+
+Note that creating a table inside the connection will generate a
+non-spatial table, and therefore, it cannot be read with
+[`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md).
 
 ## Examples
 
@@ -128,7 +150,7 @@ rand_sf["var"] <- runif(100)
 ddbs_write_vector(conn, rand_sf, "rand_sf")
 
 ## generate QuadKey polygons at zoom level 8
-qkey_sf <- ddbs_quadkey(conn = conn, "rand_sf", level = 8, output = "polygon")
+qkey_ddbs <- ddbs_quadkey(conn = conn, "rand_sf", level = 8, output = "polygon")
 
 ## generate QuadKey raster with custom field name
 qkey_rast <- ddbs_quadkey(conn = conn, "rand_sf", level = 6, output = "raster", field = "var")

@@ -21,56 +21,82 @@
 > Finally, v1.0.0 will include many new functions and broader API
 > improvements.
 
-The **{duckspatial}** package provides fast and memory-efficient
-functions to analyze and manipulate large spatial vector datasets in R.
-It allows R users to benefit directly from the analytical power of
-[DuckDB and its spatial
-extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions),
-while remaining fully compatible with R’s spatial ecosystem, especially
-**{sf}**.
+## Overview
 
-At its core, **{duckspatial}** bridges two worlds:
+**{duckspatial}** provides fast, memory-efficient functions for
+analysing and manipulating large spatial vector datasets in R. It
+bridges [DuckDB’s spatial
+extension](https://duckdb.org/docs/stable/core_extensions/spatial/functions)
+with R’s spatial ecosystem — in particular **{sf}** — so you can
+leverage DuckDB’s analytical power without leaving your familiar R
+workflow.
 
-- R spatial workflows based on {sf} objects
-- Database-backed spatial analytics powered by DuckDB SQL
+### How it works
 
-This design makes **{duckspatial}** especially well suited for:
+Starting from v1.0.0, {duckspatial} introduces a native S3 class called
+`duckspatial_df`: a `tibble`-like object with a geometry column that
+lives **outside R’s memory**. Data is read and evaluated lazily (similar
+to how `duckplyr` handles lazy tables) and is only loaded into R when
+you explicitly materialise it (e.g. with
+[`ddbs_collect()`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)).
 
-- Working with large spatial data sets
-- Speeding up spatial analysis at scale
-- Workflows where data does not fit comfortably in memory
+When the first `duckspatial_df` is created (either by reading a file or
+converting an `sf` object) a temporary view is registered in a default
+DuckDB connection with the spatial extension enabled. All spatial
+operations run inside that connection, letting DuckDB apply its own
+query optimisations before any data reaches R.
 
-Importantly, **{duckspatial}** brings the power of DuckDB spatial to R
-users while keeping workflows similar to {sf} .
+### Naming conventions
 
-# Installation
+All spatial functions follow the `ddbs_*()` prefix (*DuckDB Spatial*),
+and their names deliberately mirror the **{sf}** package, so users
+already familiar with `sf` can get started immediately.
 
-You can install duckspatial directly from CRAN with:
+## Installation
 
-``` r
-install.packages("duckspatial")
-```
-
-Or you can install the development version from
-[GitHub](https://github.com/) with:
+Install the stable release from CRAN:
 
 ``` r
 # install.packages("pak")
+pak::pak("duckspatial")
+```
+
+Install the latest GitHub version (more features, fewer accumulated
+bugs):
+
+``` r
 pak::pak("Cidree/duckspatial")
 ```
 
-# Core idea: flexible spatial workflows
+Install the development version (may be unstable):
+
+``` r
+pak::pak("Cidree/duckspatial@dev")
+```
+
+## Core idea: flexible spatial workflows
 
 A central design principle of {duckspatial} is that the same spatial
-operation can be used in different ways, depending on how your data is
+operation can be used in different ways depending on how your data is
 stored and how you want to manage memory and performance.
 
-Most functions in {duckspatial} support four complementary workflows:
+Most functions support four complementary input/output combinations:
 
-1.  Input`sf` → Output `sf`
-2.  Input `sf` → Output DuckDB table
-3.  Input DuckDB table → Output `sf`
-4.  Input DuckDB table → Output DuckDB table
+| Input                   | Output                  |
+|-------------------------|-------------------------|
+| `duckspatial_df` / `sf` | `duckspatial_df` / `sf` |
+| `duckspatial_df` / `sf` | DuckDB table            |
+| DuckDB table            | `duckspatial_df` / `sf` |
+| DuckDB table            | DuckDB table            |
 
-See the [“Get Started” vignette for
-examples](https://Cidree.github.io/duckspatial/articles/duckspatial.html).
+This means you can keep data inside DuckDB for as long as possible,
+pulling results into R only when you need them. See the [Get Started
+vignette](https://Cidree.github.io/duckspatial/articles/duckspatial.html)
+for worked examples of each workflow.
+
+## Contributing
+
+Bug reports, feature requests, and pull requests are very welcome!
+
+- [Raise an issue](https://github.com/Cidree/duckspatial/issues)
+- [Open a pull request](https://github.com/Cidree/duckspatial/pulls)
