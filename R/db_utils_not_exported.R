@@ -364,79 +364,79 @@ get_query_name <- function(name) {  # nocov start
 #' @keywords internal
 #' @noRd
 #' @returns list with fixed names
-# get_query_list <- function(x, conn) {
+get_query_list <- function(x, conn) {
 
-#   if (inherits(x, "sf")) {
-#     temp_view_name <- ddbs_temp_view_name()
-#     duckspatial::ddbs_write_vector(conn = conn, data = x, name = temp_view_name,
-#                                     quiet = TRUE, temp_view = TRUE)
-#     x_list <- get_query_name(temp_view_name)
-#     x_list$cleanup <- function() {
-#       tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
-#       tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
-#     }
-#     x_list$owned <- FALSE   # created here, caller should not clean up
-#     return(x_list)
+  if (inherits(x, "sf")) {
+    temp_view_name <- ddbs_temp_view_name()
+    duckspatial::ddbs_write_vector(conn = conn, data = x, name = temp_view_name,
+                                    quiet = TRUE, temp_view = TRUE)
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+      tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
+    }
+    x_list$owned <- FALSE   # created here, caller should not clean up
+    return(x_list)
 
-#   } else if (inherits(x, "duckspatial_df")) {
-#     source_table <- attr(x, "source_table")
-#     if (!is.null(source_table)) {
-#       remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
-#       if (!is.null(remote_name_result) &&
-#           !inherits(remote_name_result, "sql") &&
-#           as.character(remote_name_result) == source_table) {
-#         result <- get_query_name(source_table)
-#         result$cleanup <- function() NULL
-#         result$owned <- TRUE
-#         return(result)
-#       }
-#     }
-#     ## Modified by dplyr verbs: render to a new temp view
-#     temp_view_name <- ddbs_temp_view_name()
-#     query_sql <- dbplyr::sql_render(x, con = conn)
-#     DBI::dbExecute(conn, glue::glue(
-#       "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS {query_sql}"
-#     ))
-#     x_list <- get_query_name(temp_view_name)
-#     x_list$cleanup <- function() {
-#       tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
-#     }
-#     x_list$owned <- TRUE
+  } else if (inherits(x, "duckspatial_df")) {
+    source_table <- attr(x, "source_table")
+    if (!is.null(source_table)) {
+      remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
+      if (!is.null(remote_name_result) &&
+          !inherits(remote_name_result, "sql") &&
+          as.character(remote_name_result) == source_table) {
+        result <- get_query_name(source_table)
+        result$cleanup <- function() NULL
+        result$owned <- TRUE
+        return(result)
+      }
+    }
+    ## Modified by dplyr verbs: render to a new temp view
+    temp_view_name <- ddbs_temp_view_name()
+    query_sql <- dbplyr::sql_render(x, con = conn)
+    DBI::dbExecute(conn, glue::glue(
+      "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS {query_sql}"
+    ))
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
 
-#     return(x_list)
+    return(x_list)
 
-#   } else if (inherits(x, "tbl_lazy")) {
-#     temp_view_name <- ddbs_temp_view_name()
-#     query_sql <- dbplyr::sql_render(x)
-#     DBI::dbExecute(conn, glue::glue(
-#       "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS {query_sql}"
-#     ))
-#     x_list <- get_query_name(temp_view_name)
-#     x_list$cleanup <- function() {
-#       tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
-#     }
-#     x_list$owned <- TRUE
-#     return(x_list)
+  } else if (inherits(x, "tbl_lazy")) {
+    temp_view_name <- ddbs_temp_view_name()
+    query_sql <- dbplyr::sql_render(x)
+    DBI::dbExecute(conn, glue::glue(
+      "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS {query_sql}"
+    ))
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
+    return(x_list)
 
-#   } else if (inherits(x, "data.frame")) {
-#     temp_view_name <- ddbs_temp_view_name()
-#     duckdb::duckdb_register(conn, temp_view_name, x)
-#     x_list <- get_query_name(temp_view_name)
-#     x_list$cleanup <- function() {
-#       tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
-#       tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
-#     }
-#     x_list$owned <- TRUE
-#     return(x_list)
+  } else if (inherits(x, "data.frame")) {
+    temp_view_name <- ddbs_temp_view_name()
+    duckdb::duckdb_register(conn, temp_view_name, x)
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+      tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
+    return(x_list)
 
-#   } else {
-#     ## Character table name: pre-existing, never clean up
-#     x_list <- get_query_name(x)
-#     x_list$cleanup <- function() NULL
-#     x_list$owned <- TRUE
-#     return(x_list)
-#   }
-# }
+  } else {
+    ## Character table name: pre-existing, never clean up
+    x_list <- get_query_name(x)
+    x_list$cleanup <- function() NULL
+    x_list$owned <- TRUE
+    return(x_list)
+  }
+}
 
 
 
@@ -459,126 +459,126 @@ get_query_name <- function(name) {  # nocov start
 #   on.exit(result$cleanup(), add = TRUE)
 #   # ... use result$query_name ...
 #   # ... use result$query_name ...
-get_query_list <- function(x, conn) {
+# get_query_list <- function(x, conn) {
 
-  cleanup <- function() NULL  # default no-op
+#   cleanup <- function() NULL  # default no-op
   
-  if (inherits(x, "sf")) {
+#   if (inherits(x, "sf")) {
 
-    ## generate a unique temporary view name
-    temp_view_name <- ddbs_temp_view_name()
+#     ## generate a unique temporary view name
+#     temp_view_name <- ddbs_temp_view_name()
 
-    # Write table with the unique name
-    duckspatial::ddbs_write_vector(
-      conn      = conn,
-      data      = x,
-      name      = temp_view_name,
-      quiet     = TRUE,
-      temp_view = TRUE
-    )
+#     # Write table with the unique name
+#     duckspatial::ddbs_write_vector(
+#       conn      = conn,
+#       data      = x,
+#       name      = temp_view_name,
+#       quiet     = TRUE,
+#       temp_view = TRUE
+#     )
 
-    x_list <- get_query_name(temp_view_name)
+#     x_list <- get_query_name(temp_view_name)
 
-    x_list$cleanup <- function() {NULL}
+#     x_list$cleanup <- function() {NULL}
 
-    return(x_list)
+#     return(x_list)
 
-  } else if (inherits(x, "duckspatial_df")) {
+#   } else if (inherits(x, "duckspatial_df")) {
     
-    # 1. OPTIMIZATION: Check if we have an unmodified direct source table/view
-    # This optimization is ONLY valid when the lazy query hasn't been modified.
-    #
-    # When dplyr verbs (filter, select, mutate, etc.) are applied, the lazy query
-    # changes but source_table attribute may still point to original table.
-    # We detect modification by comparing source_table with dbplyr::remote_name():
-    # - If remote_name returns the same table name, query is unmodified
-    # - If remote_name returns sql() or NULL, query has been modified via dplyr verbs
-    source_table <- attr(x, "source_table")
-    if (!is.null(source_table)) {
-      remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
+#     # 1. OPTIMIZATION: Check if we have an unmodified direct source table/view
+#     # This optimization is ONLY valid when the lazy query hasn't been modified.
+#     #
+#     # When dplyr verbs (filter, select, mutate, etc.) are applied, the lazy query
+#     # changes but source_table attribute may still point to original table.
+#     # We detect modification by comparing source_table with dbplyr::remote_name():
+#     # - If remote_name returns the same table name, query is unmodified
+#     # - If remote_name returns sql() or NULL, query has been modified via dplyr verbs
+#     source_table <- attr(x, "source_table")
+#     if (!is.null(source_table)) {
+#       remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
       
-      # Only use optimization if remote_name matches source_table exactly
-      # (i.e., the query hasn't been modified by dplyr verbs)
-      if (!is.null(remote_name_result) && 
-          !inherits(remote_name_result, "sql") &&
-          as.character(remote_name_result) == source_table) {
-        result <- get_query_name(source_table)
-        result$cleanup <- function() NULL
-        return(result)
-      }
-      # Otherwise, fall through to SQL render path below
-    }
+#       # Only use optimization if remote_name matches source_table exactly
+#       # (i.e., the query hasn't been modified by dplyr verbs)
+#       if (!is.null(remote_name_result) && 
+#           !inherits(remote_name_result, "sql") &&
+#           as.character(remote_name_result) == source_table) {
+#         result <- get_query_name(source_table)
+#         result$cleanup <- function() NULL
+#         return(result)
+#       }
+#       # Otherwise, fall through to SQL render path below
+#     }
     
-    # 2. SQL render (efficient lazy evaluation)
-    # NOTE: Replaced inefficient collect-and-upload fallback with SQL render.
-    # Regression test: tests/testthat/test-regression-inefficient-fallback.R
-    # duckspatial_df inherits from tbl_lazy, so sql_render always works
-    temp_view_name <- ddbs_temp_view_name()
+#     # 2. SQL render (efficient lazy evaluation)
+#     # NOTE: Replaced inefficient collect-and-upload fallback with SQL render.
+#     # Regression test: tests/testthat/test-regression-inefficient-fallback.R
+#     # duckspatial_df inherits from tbl_lazy, so sql_render always works
+#     temp_view_name <- ddbs_temp_view_name()
     
-    query_sql <- dbplyr::sql_render(x, con = conn)
+#     query_sql <- dbplyr::sql_render(x, con = conn)
     
-    view_query <- glue::glue("
-      CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
-      {query_sql}
-    ")
-    DBI::dbExecute(conn, view_query)
+#     view_query <- glue::glue("
+#       CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
+#       {query_sql}
+#     ")
+#     DBI::dbExecute(conn, view_query)
     
-    cleanup <- function() {
-      tryCatch(
-        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-        error = function(e) NULL
-      )
-    }
+#     cleanup <- function() {
+#       tryCatch(
+#         DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+#         error = function(e) NULL
+#       )
+#     }
     
-    x_list <- get_query_name(temp_view_name)
-    x_list$cleanup <- cleanup
-    return(x_list)
+#     x_list <- get_query_name(temp_view_name)
+#     x_list$cleanup <- cleanup
+#     return(x_list)
 
-  } else if (inherits(x, "tbl_lazy")) {
+#   } else if (inherits(x, "tbl_lazy")) {
     
-    ## For dbplyr tbl_lazy, we can use sql_render
-    temp_view_name <- ddbs_temp_view_name()
+#     ## For dbplyr tbl_lazy, we can use sql_render
+#     temp_view_name <- ddbs_temp_view_name()
     
-    # Get the SQL query from the lazy table
-    query_sql <- dbplyr::sql_render(x)
+#     # Get the SQL query from the lazy table
+#     query_sql <- dbplyr::sql_render(x)
     
-    # Create temp view from the query
-    view_query <- glue::glue("
-      CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
-      {query_sql}
-    ")
-    DBI::dbExecute(conn, view_query)
+#     # Create temp view from the query
+#     view_query <- glue::glue("
+#       CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
+#       {query_sql}
+#     ")
+#     DBI::dbExecute(conn, view_query)
     
-    cleanup <- function() {
-      tryCatch(
-        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-        error = function(e) NULL
-      )
-    }
+#     cleanup <- function() {
+#       tryCatch(
+#         DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+#         error = function(e) NULL
+#       )
+#     }
     
-    x_list <- get_query_name(temp_view_name)
+#     x_list <- get_query_name(temp_view_name)
 
-  } else if (inherits(x, "data.frame")) {
+#   } else if (inherits(x, "data.frame")) {
 
-    ## generate a unique temporary view name
-    temp_view_name <- ddbs_temp_view_name()
+#     ## generate a unique temporary view name
+#     temp_view_name <- ddbs_temp_view_name()
 
-    ## register the view
-    duckdb::duckdb_register(conn, temp_view_name, x)
+#     ## register the view
+#     duckdb::duckdb_register(conn, temp_view_name, x)
 
-    cleanup <- function() {NULL}
+#     cleanup <- function() {NULL}
 
-    x_list <- get_query_name(temp_view_name)
+#     x_list <- get_query_name(temp_view_name)
 
-  } else {
-    x_list <- get_query_name(x)
-  }
+#   } else {
+#     x_list <- get_query_name(x)
+#   }
 
-  # Add cleanup function to result
-  x_list$cleanup <- cleanup
-  return(x_list)
+#   # Add cleanup function to result
+#   x_list$cleanup <- cleanup
+#   return(x_list)
 
-}
+# }
 
 
 
@@ -1058,6 +1058,7 @@ ddbs_handle_query <- function(
       CREATE TEMP TABLE {view_name} AS
       {query};
     ")
+    # on.exit(DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {view_name}")))
 
     # Create the view
     DBI::dbExecute(conn, query)
@@ -1070,7 +1071,7 @@ ddbs_handle_query <- function(
       lazy_tbl, 
       crs = crs, 
       geom_col = x_geom, 
-      source_table = view_name
+      source_table = ddbs_temp_view_name()
     )
     
     return(result)
