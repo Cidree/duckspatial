@@ -4,6 +4,32 @@ testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 skip_if_not_installed("sf")
 
+# 0. Test ddbs_temp_conn helper ----
+test_that("ddbs_temp_conn creates valid auto-closing connection", {
+  # Test that connection is valid
+  conn <- ddbs_temp_conn()
+  expect_true(DBI::dbIsValid(conn))
+  
+  # Test that connection works
+  result <- DBI::dbGetQuery(conn, "SELECT 1 AS test")
+  expect_equal(result$test, 1)
+})
+
+test_that("ddbs_temp_conn auto-closes on function exit", {
+  # Create a helper function that uses ddbs_temp_conn
+  get_conn_status <- function() {
+    conn <- ddbs_temp_conn()
+    # Return the connection object so we can check it after func exits
+    conn
+  }
+  
+  # Call the function - connection should be closed after it returns
+  returned_conn <- get_conn_status()
+  
+  # Connection should be invalid (closed) after function returned
+  expect_false(DBI::dbIsValid(returned_conn))
+})
+
 # create duckdb connection
 conn_test <- duckspatial::ddbs_create_conn()
 
@@ -127,4 +153,93 @@ test_that("ddbs_write_vector respects temp_view = TRUE", {
 })
 
 # Disconnect
-duckdb::dbDisconnect(conn_test, shutdown = TRUE)
+duckdb::dbDisconnect(conn_test)
+
+# 4. New functionality: duckspatial_df and existing CRS columns ----
+test_that("ddbs_write_vector can write a duckspatial_df object", {
+  conn_new <- ddbs_temp_conn()
+  
+  # Create a duckspatial_df
+  ddbs_write_vector(conn_new, points_sf, "points_source", overwrite = TRUE)
+  df_lazy <- ddbs_read_vector(conn_new, "points_source", crs = 4326) |>
+    as_duckspatial_df()
+  
+  table_name <- "points_from_lazy"
+  
+  # This should now work (previously failed with "Expected string vector of length 1")
+  expect_true(ddbs_write_vector(conn_new, df_lazy, table_name, overwrite = TRUE))
+  
+  # Verify result
+  result <- ddbs_read_vector(conn_new, table_name, crs = 4326)
+  expect_equal(nrow(result), nrow(points_sf))
+  expect_equal(sf::st_crs(result), sf::st_crs(points_sf))
+})
+
+test_that("ddbs_write_vector handles sf objects with existing crs_duckspatial column", {
+  conn_new <- ddbs_temp_conn()
+  
+  # Create an sf object that already has crs_duckspatial
+  points_with_crs_col <- points_sf
+  points_with_crs_col$crs_duckspatial <- "EPSG:4326"
+  
+  table_name <- "points_duplicate_col"
+  
+  # This should now work (previously failed with "Column with name crs_duckspatial already exists")
+  expect_true(ddbs_write_vector(conn_new, points_with_crs_col, table_name, overwrite = TRUE))
+  
+  # Verify result
+  result <- ddbs_read_vector(conn_new, table_name, crs = 4326)
+  expect_equal(nrow(result), nrow(points_sf))
+  
+  # Check we didn't end up with two crs columns or errors
+  fields <- DBI::dbListFields(conn_new, table_name)
+  expect_equal(sum(fields == "crs_duckspatial"), 1)
+})
+
+test_that("ddbs_write_vector throws error for unsupported input", {
+  conn_new <- ddbs_temp_conn()
+  
+  expect_error(
+    ddbs_write_vector(conn_new, list(a = 1), "bad_input"),
+    "must be an .*sf.* object"
+  )
+})
+
+test_that("ddbs_write_vector with temp_view=TRUE works for duckspatial_df", {
+  conn_new <- ddbs_temp_conn()
+  
+  # Create a duckspatial_df first
+  ddbs_write_vector(conn_new, points_sf, "points_src", overwrite = TRUE)
+  df_lazy <- ddbs_read_vector(conn_new, "points_src", crs = 4326) |>
+    as_duckspatial_df()
+  
+  view_name <- "points_lazy_view"
+  
+  # This should work with temp_view = TRUE
+  expect_true(ddbs_write_vector(conn_new, df_lazy, view_name, temp_view = TRUE, overwrite = TRUE))
+  
+  # Verify view was created (should be in Arrow views, not tables)
+  arrow_views <- duckdb::duckdb_list_arrow(conn_new)
+  expect_true(view_name %in% arrow_views)
+  
+  # Should be queryable
+  result <- ddbs_read_vector(conn_new, view_name, crs = 4326)
+  expect_equal(nrow(result), nrow(points_sf))
+})
+
+test_that("ddbs_write_vector with temp_view=TRUE handles existing crs_duckspatial", {
+  conn_new <- ddbs_temp_conn()
+  
+  # Create sf with existing crs_duckspatial
+  points_with_crs <- points_sf
+  points_with_crs$crs_duckspatial <- "EPSG:4326"
+  
+  view_name <- "points_crs_view"
+  
+  # Should not error despite existing column
+  expect_true(ddbs_write_vector(conn_new, points_with_crs, view_name, temp_view = TRUE, overwrite = TRUE))
+  
+  # Verify it works
+  arrow_views <- duckdb::duckdb_list_arrow(conn_new)
+  expect_true(view_name %in% arrow_views)
+})

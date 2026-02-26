@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_measure.R
 \name{ddbs_area}
 \alias{ddbs_area}
-\title{Calculates the area of geometries}
+\title{Calculate the area of geometries}
 \usage{
 ddbs_area(
   x,
@@ -11,13 +11,19 @@ ddbs_area(
   new_column = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
 }
 \arguments{
-\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
+\item{x}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}
 Data is returned from this object.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
@@ -31,12 +37,23 @@ names. If \code{NULL} (the default), the function returns the result as an
 \item{new_column}{Name of the new column to create on the input data. If NULL,
 the function will return a vector with the result}
 
-\item{crs}{The coordinates reference system of the data. Specify if the data
+\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{a character string of length one specifying the column
+\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
+
+\item{output}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+\item \code{"tibble"}: Eagerly collected tibble without geometry
+\item \code{"raw"}: Eagerly collected tibble with WKB geometry (list of raw vectors)
+\item \code{"geoarrow"}: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)
+}
+Can be set globally via \code{\link{ddbs_options}(output_type = "...")} or
+per-function via this argument. Per-function overrides global setting.}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
@@ -45,29 +62,48 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-a vector, an \code{sf} object or \code{TRUE} (invisibly) for table creation
+When \code{new_column = NULL} it returns a \code{units} vector in \eqn{m^2}. When \code{new_column} is not NULL, the
+output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+\itemize{
+\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected \code{sf} object in R memory.
+\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
+\item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
+\item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
+}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Calculates the area of geometries from a DuckDB table or a \code{sf} object
-Returns the result as an \code{sf} object with an area column or creates a new table in the database.
-Note: Area units depend on the CRS of the input geometries (e.g., square meters for projected CRS,
-or degrees for geographic CRS).
+Computes the area of polygon geometries in square meters.
+}
+\details{
+When the input geometry is in \code{EPSG:4326}, the function uses \code{ST_Area_Spheroid}, which
+use the GeographicLib library for calculating the area using an ellipsoidal model of the
+earth. This method is highly accurate for calculating the area of a line geometry considering
+the curvature of the earth, but it's also the slowest.
+
+If the input geometry is in a projected CRS, the function will use \code{ST_Area} to calculate the
+area in squared meters.
+
+In other cases, the function will use \code{ST_Area_Spheroid} and display a warning.
 }
 \examples{
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 # create a duckdb database in memory (with spatial extension)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial")) |>
-    st_transform("EPSG:3857")
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+) |>
+  ddbs_transform("EPSG:3857")
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
 ## calculate area (returns sf object with area column)
 ddbs_area("argentina", conn)
@@ -76,9 +112,12 @@ ddbs_area("argentina", conn)
 ddbs_area("argentina", conn, new_column = "area_sqm")
 
 ## create a new table with area calculations
-ddbs_area("argentina", conn, name = "argentina_with_area")
+ddbs_area("argentina", conn, name = "argentina_with_area", new_column = "area_sqm")
 
 ## calculate area in a sf object
-ddbs_area(argentina_sf)
+ddbs_area(argentina_ddbs)
 }
+}
+\references{
+\url{https://geographiclib.sourceforge.io/}
 }

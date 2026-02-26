@@ -12,35 +12,77 @@ assert_logic <- function(arg, ref = "quiet") { # nocov start
 
 assert_xy <- function(xy, ref = "x") { # nocov start
 
-    if (!(inherits(xy, "sf") || is.character(xy))) {
+    valid_types <- inherits(xy, "sf") || 
+                   inherits(xy, "duckspatial_df") ||
+                   inherits(xy, "tbl_sql") ||
+                   inherits(xy, "tbl_lazy") ||
+                   is.character(xy)
+    
+    if (!valid_types) {
         cli::cli_abort(
-            "{.arg {ref}} must be either an sf object or a string.",
+            "{.arg {ref}} must be an sf object, duckspatial_df, tbl_lazy, or a table name string.",
             .frame = parent.frame()
         )
     }
 } # nocov end
 
-assert_name <- function(name = parent.frame()$name) { # nocov start
+assert_name <- function(name = parent.frame()$name, ref = "name") { # nocov start
 
-    if (!any(is.character(name) | is.null(name))) {
-        cli::cli_abort("'name' must be a string character.",
-                       .frame = parent.frame()
-                       )
-        }
+    if (!is.null(name) && (!is.character(name) || length(name) != 1)) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single character string or NULL.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
 
-    if (length(name) > 1) {
-        cli::cli_abort("'name' must be a string character of length one",
-                       .frame = parent.frame()
-                       )
-        }
+assert_character_scalar <- function(arg, ref) { # nocov start
 
- } # nocov end
+    if (!is.character(arg) || length(arg) != 1) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single character string.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
 
 assert_numeric <- function(arg, ref) { # nocov start
 
     if (!is.numeric(arg) || length(arg) != 1) {
         cli::cli_abort(
             "{.arg {ref}} must be a single numeric value.",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
+assert_strict_positive_numeric <- function(arg, ref) { # nocov start
+
+    if (!is.numeric(arg) || length(arg) != 1 || arg <= 0) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single positive numeric value (> 0).",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
+
+assert_positive_numeric <- function(arg, ref) { # nocov start
+
+    if (!is.numeric(arg) || length(arg) != 1 || arg < 0) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single positive numeric value (>= 0).",
+            .frame = parent.frame()
+        )
+    }
+} # nocov end
+
+
+assert_integer_scalar <- function(arg, ref) { # nocov start
+
+    if (!is.numeric(arg) || length(arg) != 1 || arg != as.integer(arg)) {
+        cli::cli_abort(
+            "{.arg {ref}} must be a single integer value.",
             .frame = parent.frame()
         )
     }
@@ -78,12 +120,15 @@ assert_geometry_column <- function(geom, name_list) { # nocov start
 
 
 
-## assert crs_column (needed for ddbs_filter)
+## assert crs_column (needed for ddbs_filter and ddbs_join)
+## cols can be a character vector or a collapsed string
 assert_crs_column <- function(crs_column, cols) { # nocov start
-    if (!is.null(crs_column))
-        if (!crs_column %in% cols & !grepl(crs_column, cols))
+    if (!is.null(crs_column)) {
+        # Handle both vector and string inputs
+        found <- crs_column %in% cols | any(grepl(crs_column, cols, fixed = TRUE))
+        if (!found)
             cli::cli_abort("CRS column <{crs_column}> do not found in the table. If the data do not have CRS column, set the argument `crs_column = NULL`")
-
+    }
 } # nocov end
 
 
@@ -99,12 +144,14 @@ assert_predicate_id <- function(id, conn, lst) { # nocov start
 ## assert if the CRS of `x` and `y` is the same
 assert_crs <- function(conn, x, y) { # nocov start
 
-  ## get CRS
-  crs_x <- duckspatial::ddbs_crs(conn, x)
-  crs_y <- duckspatial::ddbs_crs(conn, y)
+  ## get CRS using character method
+  crs_x <- duckspatial::ddbs_crs(x, conn = conn)
+  crs_y <- duckspatial::ddbs_crs(y, conn = conn)
 
-  ## abort if CRS is different
-  if (crs_x != crs_y) cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
+  ## abort if CRS is different (use crs_equal for proper comparison)
+  if (!crs_equal(crs_x, crs_y)) {
+    cli::cli_abort("The Coordinates Reference System of `x` and `y` is different.")
+  }
 
 } # nocov end
 
@@ -144,4 +191,48 @@ assert_col_exists <- function(conn, table, cols, ref) { # nocov start
         )
     }
     invisible(TRUE)
+} # nocov end
+
+assert_threads <- function(threads, ref = "threads") { # nocov start
+  if (!is.null(threads)) {
+    valid <- is.numeric(threads) && length(threads) == 1 && 
+             threads > 0 && as.integer(threads) == threads
+    
+    if (!valid) {
+      cli::cli_abort("{.arg {ref}} must be a positive integer or NULL.")
+    }
+  }
+} # nocov end
+
+assert_memory_limit_gb <- function(memory_limit, ref = "memory_limit_gb") { # nocov start
+  if (!is.null(memory_limit)) {
+    valid <- is.numeric(memory_limit) && length(memory_limit) == 1 && memory_limit > 0
+    
+    if (!valid) {
+      cli::cli_abort("{.arg {ref}} must be a positive number (GB) or NULL.")
+    }
+  }
+} # nocov end
+
+
+assert_geom_type <- function(x, conn, geom, multi = FALSE) { # nocov start
+  
+  ## add multi if required
+  if (isTRUE(multi)) {
+    geom <- c(geom, paste0("MULTI", geom))
+  }
+  
+  ## get the unique geometry types
+  geom_type <- ddbs_geometry_type(x, conn, by_feature = FALSE, quiet = TRUE)
+  
+  ## check geometry type
+  invalid_types <- setdiff(geom_type, geom)
+  
+  if (length(invalid_types) > 0) {
+    cli::cli_abort(c(
+      "Invalid geometry type{?s} found: {.val {invalid_types}}",
+      "i" = "Allowed type{?s}: {.val {geom}}"
+    ))
+  }
+  
 } # nocov end

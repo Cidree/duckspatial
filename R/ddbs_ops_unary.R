@@ -3,118 +3,119 @@
 
 #' Creates a buffer around geometries
 #'
-#' Calculates the buffer of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Computes a polygon that represents all locations within a specified distance from the
+#' original geometry
 #'
 #' @template x
 #' @param distance a numeric value specifying the buffer distance. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
+#' @param num_triangles an integer representing how many triangles will be produced to 
+#' approximate a quarter circle. The larger the number, the smoother the resulting geometry. 
+#' Default is 8.
+#' @param cap_style a character string specifying the cap style. Must be one of 
+#' "CAP_ROUND" (default), "CAP_FLAT", or "CAP_SQUARE". Case-insensitive.
+#' @param join_style a character string specifying the join style. Must be one of 
+#' "JOIN_ROUND" (default), "JOIN_MITRE", or "JOIN_BEVEL". Case-insensitive.
+#' @param mitre_limit a numeric value specifying the mitre limit ratio. Only applies when 
+#' \code{join_style} is "JOIN_MITRE". It is the ratio of the distance from the corner to 
+#' the mitre point to the corner radius. Default is 1.0.
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
-#' # create a duckdb database in memory (with spatial extension)
+#' ## create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
-#' ## buffer
+#' ## basic buffer
 #' ddbs_buffer(conn = conn, "argentina", distance = 1)
 #'
+#' ## buffer with custom parameters
+#' ddbs_buffer(conn = conn, "argentina", distance = 1, 
+#'             num_triangles = 16, cap_style = "CAP_SQUARE")
+#'
 #' ## buffer without using a connection
-#' ddbs_buffer(argentina_sf, distance = 1)
+#' ddbs_buffer(argentina_ddbs, distance = 1)
 #' }
 ddbs_buffer <- function(
-    x,
-    distance,
-    conn = NULL,
-    name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
-    overwrite = FALSE,
-    quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
+  x,
+  distance,
+  num_triangles = 8L,
+  cap_style = "CAP_ROUND",
+  join_style = "JOIN_ROUND",
+  mitre_limit = 1.0,
+  conn = NULL,
+  name = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_numeric(distance, "distance")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
+  
+  # 0. Handle function-specific errors
+  assert_numeric(distance, "distance")
+  assert_integer_scalar(num_triangles, "num_triangles")
+  assert_character_scalar(cap_style, "cap_style")
+  assert_character_scalar(join_style, "join_style")
+  assert_numeric(mitre_limit, "mitre_limit")
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+  ## Validate cap_style
+  valid_cap_styles <- c("CAP_ROUND", "CAP_FLAT", "CAP_SQUARE")
+  if (!toupper(cap_style) %in% valid_cap_styles) {
+      cli::cli_abort("{.arg cap_style} must be one of: {.val {paste0(valid_cap_styles, collapse = ', ')}}.")
+  }
+  
+  ## Validate join_style
+  valid_join_styles <- c("JOIN_ROUND", "JOIN_MITRE", "JOIN_BEVEL")
+  if (!toupper(join_style) %in% valid_join_styles) {
+      cli::cli_abort("{.arg join_style} must be one of: {.val {paste0(valid_join_styles, collapse = ', ')}}.")
+  }
+  
+  ## Check num_triangles is positive
+  if (num_triangles < 1) cli::cli_abort("{.arg num_triangles} must be a positive integer")
+  
+  ## Check mitre_limit is striclty positive
+  if (mitre_limit <= 0) cli::cli_abort("{.arg mitre_limit} must be a positive number")
+  
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
+  # 1. Build ST_Buffer parameters string
+  buffer_args <- glue::glue("{distance}, {as.integer(num_triangles)}, '{toupper(cap_style)}', '{toupper(join_style)}', {mitre_limit}")
+  
 
-    ## 3. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
+  # 2. Pass to template
+  template_unary_ops(
+    x = x,
+    conn = conn,
+    name = name,
+    crs = crs,
+    crs_column = crs_column,
+    output = output,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Buffer",
+    other_args = buffer_args
+  )
 
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest} ST_Buffer({x_geom}, {distance}) as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 4. Get data frame
-    ## 4.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest} 
-        ST_AsWKB(ST_Buffer({x_geom}, {distance})) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -123,39 +124,42 @@ ddbs_buffer <- function(
 
 #' Calculates the centroid of geometries
 #'
-#' Calculates the centroids of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Returns the geometric center (centroid) of a geometry as a point, 
+#' representing its average position.
 #'
 #' @template x
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## centroid
 #' ddbs_centroid("argentina", conn)
 #'
 #' ## centroid without using a connection
-#' ddbs_centroid(argentina_sf)
+#' ddbs_centroid(argentina_ddbs)
 #' }
 ddbs_centroid <- function(
     x,
@@ -163,209 +167,23 @@ ddbs_centroid <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
     
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest} 
-            ST_Centroid({x_geom}) as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 4. Get data frame
-    ## 4.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_Centroid({x_geom})) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_Centroid",
+        other_args = NULL
     )
 
-    feedback_query(quiet)
-    return(data_sf)
-}
-
-
-
-
-
-#' Check if geometries are valid
-#'
-#' Checks the validity of geometries from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean validity column or creates
-#' a new table in the database.
-#'
-#' @template x
-#' @template conn_null
-#' @template name
-#' @template new_column
-#' @template crs
-#' @template overwrite
-#' @template quiet
-#'
-#' @returns a vector, an \code{sf} object with validity information or \code{TRUE} (invisibly) for table creation
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(duckspatial)
-#' library(sf)
-#'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
-#'
-#' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
-#' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
-#'
-#' ## check validity
-#' ddbs_is_valid("argentina", conn)
-#'
-#' ## check validity without using a connection
-#' ddbs_is_valid(argentina_sf)
-#' }
-ddbs_is_valid <- function(
-    x,
-    conn = NULL,
-    name = NULL,
-    new_column = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
-    overwrite = FALSE,
-    quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. Handle new column = NULL
-    if (is.null(new_column)) {
-        tmp.query <- glue::glue("
-            SELECT ST_IsValid({x_geom}) as isvalid,
-            FROM {x_list$query_name}
-          ")
-
-          data_vec <- DBI::dbGetQuery(conn, tmp.query)
-          return(data_vec[, 1])
-    }
-
-    ## 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_IsValid({x_geom}) as {new_column},
-            {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 5. Get data frame
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_IsValid({x_geom}) as {new_column},
-        ST_AsWKB({x_geom}) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 6. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -374,40 +192,43 @@ ddbs_is_valid <- function(
 
 #' Make invalid geometries valid
 #'
-#' Attempts to make invalid geometries valid from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Attempts to correct invalid geometries so they conform to the rules of well-formed 
+#' geometries (e.g., fixing self-intersections or improper rings) and returns the 
+#' corrected geometries.
 #'
 #' @template x
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @param crs_column Name of the column to store CRS information. Default is "crs_duckspatial".
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object with valid geometries or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#'
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## make valid
 #' ddbs_make_valid("countries", conn)
 #'
 #' ## make valid without using a connection
-#' ddbs_make_valid(countries_sf)
+#' ddbs_make_valid(countries_ddbs)
 #' }
 ddbs_make_valid <- function(
     x,
@@ -415,210 +236,25 @@ ddbs_make_valid <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_MakeValid({x_geom}) as {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 4. Get data frame
-    ## 4.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_MakeValid({x_geom})) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_MakeValid",
+        other_args = NULL
     )
-
-    feedback_query(quiet)
-    return(data_sf)
+    
 }
 
-
-
-
-
-#' Check if geometries are simple
-#'
-#' Checks if geometries are simple (no self-intersections) from a DuckDB table using the spatial extension.
-#' Returns the result as an \code{sf} object with a boolean simplicity column or creates
-#' a new table in the database.
-#'
-#' @template x
-#' @template conn_null
-#' @template name
-#' @template new_column
-#' @template crs
-#' @template overwrite
-#' @template quiet
-#'
-#' @returns a vector, an \code{sf} object with simplicity information or \code{TRUE} (invisibly) for table creation
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(duckspatial)
-#' library(sf)
-#'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
-#'
-#' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
-#' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
-#'
-#' ## check simplicity
-#' ddbs_is_simple("argentina", conn)
-#'
-#' ## check simplicity without using a connection
-#' ddbs_is_simple(argentina_sf)
-#' }
-ddbs_is_simple <- function(
-    x,
-    conn = NULL,
-    name = NULL,
-    new_column = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
-    overwrite = FALSE,
-    quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. Handle new column = NULL
-    if (is.null(new_column)) {
-        tmp.query <- glue::glue("
-            SELECT ST_IsSimple({x_geom}) as issimple,
-            FROM {x_list$query_name}
-          ")
-
-          data_vec <- DBI::dbGetQuery(conn, tmp.query)
-          return(data_vec[, 1])
-    }
-
-    ## 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-        
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_IsSimple({x_geom}) as {new_column},
-            {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    
-    }
-
-    # 5. Get data frame
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_IsSimple({x_geom}) as {new_column},
-        ST_AsWKB({x_geom}) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 6. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
-        crs_column = crs_column,
-        x_geom     = x_geom
-    )
-
-    feedback_query(quiet)
-    return(data_sf)
-}
 
 
 
@@ -626,120 +262,90 @@ ddbs_is_simple <- function(
 
 #' Simplify geometries
 #'
-#' Simplifies geometries from a DuckDB table using the Douglas-Peucker algorithm via the spatial extension.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Reduces the complexity of geometries by removing unnecessary vertices while preserving 
+#' the overall shape.
 #'
 #' @template x
+#' @param tolerance Tolerance distance for simplification. Larger values result in more 
+#' simplified geometries.
+#' @param preserve_topology If FALSE, uses the Douglas-Peucker algorithm, which reduces
+#' the vertices by removing points that are within a given distance. If TRUE, uses a
+#' topology-preserving variant of Douglas-Peucker that guarantees the output geometry
+#' remains valid (slower).
 #' @template conn_null
 #' @template name
-#' @param tolerance Tolerance distance for simplification. Larger values result in more simplified geometries.
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object with simplified geometries or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#'
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## simplify with tolerance of 0.01
-#' ddbs_simplify("countries", tolerance = 0.01, conn)
+#' ddbs_simplify("countries", tolerance = 0.01, conn = conn)
 #'
 #' ## simplify without using a connection
-#' ddbs_simplify(countries_sf, tolerance = 0.01)
+#' ddbs_simplify(countries_ddbs, tolerance = 0.01)
 #' }
 ddbs_simplify <- function(
     x,
-    tolerance,
+    tolerance = 0,
+    preserve_topology = FALSE,
     conn = NULL,
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-    if (missing(tolerance)) cli::cli_abort("tolerance parameter is required")
-
-    # 1. Manage connection to DB
-        ## 1.1. check if connection is provided, otherwise create a temporary connection
-        is_duckdb_conn <- dbConnCheck(conn)
-        if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()
-        on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-        }
-        ## 1.2. get query list of table names
-        x_list <- get_query_list(x, conn)
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_Simplify({x_geom}, {tolerance}) as {x_geom}
-            FROM {x_list$query_name};
-        ")
-
-        ## execute query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
+    # 0. Handle function-specific errors
+    assert_positive_numeric(tolerance, "tolerance")
+    assert_logic(preserve_topology, "preserve_topology")
+  
     
-    }
-
-    # 4. Get data frame
-    ## 4.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_Simplify({x_geom}, {tolerance})) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
+    # 1. Build ST_Simplify parameters string
+  
+    ## 1.1. Choose the right function
+    st_simplify_fun <- 
+        if (isTRUE(preserve_topology)) "ST_SimplifyPreserveTopology" else "ST_Simplify"
+  
+    ## 1.2. Build tolerance parameter
+    simplify_args <- tolerance
+  
+    # 2. Pass to template  
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = st_simplify_fun,
+        other_args = simplify_args
     )
 
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
@@ -747,43 +353,44 @@ ddbs_simplify <- function(
 
 
 
-#' Extracts the exterior ring of polygon geometries
+#' Extract the exterior ring of polygons
 #'
-#' Returns the exterior ring (outer boundary) of polygon geometries from a DuckDB table 
-#' using the spatial extension. For multi-polygons, returns the exterior ring of each 
-#' polygon component. Returns the result as an \code{sf} object or creates a new table 
-#' in the database.
+#' Returns the outer boundary (exterior ring) of polygon geometries. For multi-polygons, 
+#' returns the exterior ring of each individual polygon.
 #'
 #' @template x
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' countries_sf <- st_read(system.file("spatial/countries.geojson", package = "duckspatial"))
-#'
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_sf, "countries")
+#' ddbs_write_vector(conn, countries_ddbs, "countries")
 #'
 #' ## extract exterior ring
 #' ddbs_exterior_ring(conn = conn, "countries")
 #'
 #' ## extract exterior ring without using a connection
-#' ddbs_exterior_ring(countries_sf)
+#' ddbs_exterior_ring(countries_ddbs)
 #' }
 ddbs_exterior_ring <- function(
     x,
@@ -791,119 +398,73 @@ ddbs_exterior_ring <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-
-    # 1. Manage connection to DB
-        ## 1.1. check if connection is provided, otherwise create a temporary connection
-        is_duckdb_conn <- dbConnCheck(conn)
-        if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()
-        on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-        }
-        ## 1.2. get query list of table names
-        x_list <- get_query_list(x, conn)
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-        
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_ExteriorRing({x_geom}) as {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 4. Get data frame
-    ## 4.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_ExteriorRing({x_geom})) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
+    # 0. Handle function-specific error
+    assert_geom_type(x = x, conn = conn, geom = "POLYGON", multi = FALSE)
+    
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_ExteriorRing",
+        other_args = NULL
     )
 
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
 
 
 
-#' Creates polygons from linestring geometries
+#' Create a polygon from a single closed linestring
 #'
-#' Constructs polygon geometries from linestring geometries in a DuckDB table using 
-#' the spatial extension. The input linestrings must be closed (first and last points 
-#' must be identical). Returns the result as an \code{sf} object or creates a new table 
-#' in the database.
+#' Converts a single closed linestring geometry into a polygon. The linestring 
+#' must be closed (first and last points identical). Does not work with 
+#' MULTILINESTRING inputs - use [ddbs_polygonize()] or [ddbs_build_area()] instead.
 #'
 #' @template x
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
+#' @family polygon construction
+#' @seealso [ddbs_polygonize()], [ddbs_build_area()]
 #' @export
-#'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
 #'
 #' # create a duckdb database in memory (with spatial extension)
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
 #'
 #' ## extract exterior ring as linestring, then convert back to polygon
-#' ring_sf <- ddbs_exterior_ring(conn = conn, "argentina")
-#' ddbs_make_polygon(conn = conn, ring_sf, name = "argentina_poly")
+#' ring_ddbs <- ddbs_exterior_ring(conn = conn, "argentina")
+#' ddbs_make_polygon(conn = conn, ring_ddbs, name = "argentina_poly")
 #'
 #' ## create polygon without using a connection
-#' ddbs_make_polygon(ring_sf)
+#' ddbs_make_polygon(ring_ddbs)
 #' }
 ddbs_make_polygon <- function(
     x,
@@ -911,86 +472,35 @@ ddbs_make_polygon <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
-
-    # 1. Manage connection to DB
-        ## 1.1. check if connection is provided, otherwise create a temporary connection
-        is_duckdb_conn <- dbConnCheck(conn)
-        if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()
-        on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-        }
-        ## 1.2. get query list of table names
-        x_list <- get_query_list(x, conn)
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_MakePolygon({x_geom}) as {x_geom}
-            FROM {x_list$query_name};
-        ")
-        ## execute query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 4. Get data frame
-    ## 4.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_MakePolygon({x_geom})) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
+    # 0. Handle function-specific error
+    assert_geom_type(x = x, conn = conn, geom = "LINESTRING", multi = FALSE)
+    
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_MakePolygon",
+        other_args = NULL
     )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
 
 
 
-#' Returns the concave hull enclosing the geometry
+#' Compute the concave hull of geometries
 #'
-#' Returns the concave hull enclosing the geometry from an \code{sf} object or
-#' from a DuckDB table using the spatial extension. Returns the result as an
-#' \code{sf} object or creates a new table in the database.
+#' Returns the concave hull that tightly encloses the geometry, capturing its overall 
+#' shape more closely than a convex hull.
 #'
 #' @template x
 #' @param ratio Numeric. The ratio parameter dictates the level of concavity; `1`
@@ -1001,33 +511,31 @@ ddbs_make_polygon <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
 #' library(sf)
 #'
 #' # create points data
 #' n <- 5
-#' points_sf <- data.frame(
-#'     id = 1,
-#'     x = runif(n, min = -180, max = 180),
-#'     y = runif(n, min = -90, max = 90)
-#'     ) |>
-#'     sf::st_as_sf(coords = c("x", "y"), crs = 4326) |>
-#'     st_geometry() |>
-#'     st_combine() |>
-#'     st_cast("MULTIPOINT") |>
-#'     st_as_sf()
+#' points_ddbs <- data.frame(
+#'   id = 1,
+#'   x = runif(n, min = -180, max = 180),
+#'   y = runif(n, min = -90, max = 90)
+#' ) |>
+#'   ddbs_as_spatial(coords = c("x", "y"), crs = 4326) |>
+#'   ddbs_combine()
 #'
-#' # option 1: passing sf objects
-#' output1 <- duckspatial::ddbs_concave_hull(x = points_sf)
+#' # option 1: passing ddbs or sf objects
+#' output1 <- duckspatial::ddbs_concave_hull(points_ddbs, output = "sf")
 #'
 #' plot(output1)
 #'
@@ -1038,13 +546,14 @@ ddbs_make_polygon <- function(
 #' conn <- duckspatial::ddbs_create_conn()
 #'
 #' # write sf to duckdb
-#' ddbs_write_vector(conn, points_sf, "points_tbl")
+#' ddbs_write_vector(conn, points_ddbs, "points_tbl")
 #'
 #' # spatial join
 #' output2 <- duckspatial::ddbs_concave_hull(
-#'     conn = conn,
-#'     x = "points_tbl"
-#'     )
+#'  conn = conn,
+#'  x = "points_tbl",
+#'  output = "sf"
+#' )
 #'
 #' plot(output2)
 #'
@@ -1057,101 +566,55 @@ ddbs_concave_hull <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
+    # 0. Handle function-specific errors
     assert_numeric_interval(ratio, 0, 1, "ratio")
     assert_logic(allow_holes, "allow_holes")
-    assert_name(name)
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+    # 1. Build ST_ConcaveHull parameters string
+    concavehull_args <- glue::glue("{ratio}, {toupper(allow_holes)}")    
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
-
-        ## create query 
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_ConcaveHull({x_geom}, {ratio}, {allow_holes}) as {x_geom} 
-            FROM {x_list$query_name};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    ## 4. create the base query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_ConcaveHull({x_geom}, {ratio}, {allow_holes})) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-    ## send the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
-        data       = data_tbl,
-        crs        = crs,
+    # 2. Pass to template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
         crs_column = crs_column,
-        x_geom     = x_geom
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_ConcaveHull",
+        other_args = concavehull_args
     )
-
-    feedback_query(quiet)
-    return(data_sf)
 }
 
 
 
 
 
-#' Returns the convex hull enclosing the geometry
+#' Compute the convex hull of geometries
 #'
-#' Returns the convex hull enclosing the geometry from an \code{sf} object or
-#' from a DuckDB table using the spatial extension. Returns the result as an
-#' \code{sf} object or creates a new table in the database.
+#' Returns the convex hull that encloses the geometry, forming the smallest convex 
+#' polygon that contains all points of the geometry.
 #'
 #' @template x
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template output
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @template returns_output
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
 #' library(sf)
 #'
@@ -1159,10 +622,13 @@ ddbs_concave_hull <- function(
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' # read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
 #' # option 1: passing sf objects
-#' output1 <- duckspatial::ddbs_convex_hull(x = argentina_sf)
+#' output1 <- duckspatial::ddbs_convex_hull(x = argentina_ddbs, output = "sf")
 #'
 #' plot(output1["CNTR_NAME"])#' # store in duckdb
 #'
@@ -1172,13 +638,14 @@ ddbs_concave_hull <- function(
 #' conn <- duckspatial::ddbs_create_conn()
 #'
 #' # write sf to duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina_tbl")
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl")
 #'
 #' # spatial join
 #' output2 <- duckspatial::ddbs_convex_hull(
-#'     conn = conn,
-#'     x = "argentina_tbl"
-#'     )
+#'  conn = conn,
+#'  x = "argentina_tbl",
+#'  output = "sf"
+#' )
 #'
 #' plot(output2["CNTR_NAME"])
 #' }
@@ -1188,33 +655,172 @@ ddbs_convex_hull <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
+    
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_ConvexHull",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+
+#' Transform the coordinate reference system of geometries
+#'
+#' Converts geometries to a different coordinate reference system (CRS), updating 
+#' their coordinates accordingly.
+#'
+#' @template x
+#' @param y Target CRS. Can be:
+#'   \itemize{
+#'     \item A character string with EPSG code (e.g., "EPSG:4326")
+#'     \item An \code{sf} object (uses its CRS)
+#'     \item Name of a DuckDB table (uses its CRS)
+#'   }
+#' @template conn_null
+#' @template conn_x_conn_y
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#' 
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
+#' ## store in duckdb
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' 
+#' ## transform to different CRS using EPSG code
+#' ddbs_transform("argentina", "EPSG:3857", conn)
+#' 
+#' ## transform to match CRS of another object
+#' argentina_3857_ddbs <- ddbs_transform(argentina_ddbs, "EPSG:3857")
+#' ddbs_write_vector(conn, argentina_3857_ddbs, "argentina_3857")
+#' ddbs_transform("argentina", argentina_3857_ddbs, conn)
+#' 
+#' ## transform to match CRS of another DuckDB table
+#' ddbs_transform("argentina", "argentina_3857", conn)
+#' 
+#' ## transform without using a connection
+#' ddbs_transform(argentina_ddbs, "EPSG:3857")
+#' }
+ddbs_transform <- function(
+    x,
+    y,
+    conn = NULL,
+    conn_x = NULL,
+    conn_y = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet     = FALSE) {
     
     deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
+
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
+    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
+    sf_col_x <- attr(x, "sf_column")
+    sf_col_y <- attr(y, "sf_column")
+
+    ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
+    if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+    if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn_x)
+    try(y <- normalize_spatial_input(y, conn_y), silent = TRUE)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    y            <- resolve_conn$y
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+    y_list <- get_query_list(y, target_conn)
+    on.exit(y_list$cleanup(), add = TRUE)
+
+    ## if CRS wasn't guessed earlier
+    if (is.null(crs_x)) crs_x <- ddbs_crs(x_list$query_name, target_conn)
+    if (is.null(crs_y)) {
+        ## try to get from `y`. if it fails, it's not sf, nor duckspatial_df
+        ## therefore, it might be a CRS or character string with CRS
+        try(crs_y <- ddbs_crs(y_list$query_name, target_conn), silent = TRUE)
+
+        if (is.null(crs_y)) crs_y <- sf::st_crs(y)
     }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+
+    ## warn if the crs is the same
+    if (crs_x$input == crs_y$input) cli::cli_warn("The CRS of `x` and `y` is the same.")
 
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
+
+    ## 3.2. Get names of the rest of the columns
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+
+    ## remove CRS column from x_rest
+    x_rest <- setdiff(x_rest, crs_column)
+    
+    x_rest <- if (length(x_rest) > 0) {
+        x_rest <- paste0('"', x_rest, '"', collapse = ', ')
+        x_rest <- paste0(x_rest, ", ")
+    } else {
+        ""
+    }
 
     ## 3. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -1223,34 +829,44 @@ ddbs_convex_hull <- function(
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query (no st_as_text)
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            ST_ConvexHull({x_geom}) as {x_geom} 
-            FROM {x_list$query_name};
+            SELECT 
+                {x_rest}
+                '{crs_y$input}' AS '{crs_column}',
+                ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}') as {x_geom} 
+            FROM 
+                {x_list$query_name};
         ")
         ## execute intersection query
-        DBI::dbExecute(conn, tmp.query)
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    ## 4. create the base query
+    # 4. Get data frame
+    ## 4.1. create query
+    ## always_xy assumes [northing, easting]
     tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB(ST_ConvexHull({x_geom})) as {x_geom} 
-        FROM {x_list$query_name};
+        SELECT 
+            {x_rest}
+            '{crs_y$input}' AS '{crs_column}',
+            ST_AsWKB(ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)) as {x_geom} 
+        FROM 
+            {x_list$query_name};
     ")
-    ## send the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+    ## 4.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
     ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = crs_y,
         crs_column = crs_column,
         x_geom     = x_geom
     )
@@ -1263,149 +879,495 @@ ddbs_convex_hull <- function(
 
 
 
-#' Transform coordinate reference system of geometries
+#' Get the geometry type of features
 #'
-#' Transforms geometries from a DuckDB table to a different coordinate reference system
-#' using the spatial extension. Works similarly to \code{sf::st_transform()}.
-#' Returns the result as an \code{sf} object or creates a new table in the database.
+#' Returns the type of each geometry (e.g., POINT, LINESTRING, POLYGON) in the 
+#' input features.
 #'
 #' @template x
-#' @param y Target CRS. Can be:
-#'   \itemize{
-#'     \item A character string with EPSG code (e.g., "EPSG:4326")
-#'     \item An \code{sf} object (uses its CRS)
-#'     \item Name of a DuckDB table (uses its CRS)
-#'   }
 #' @template conn_null
-#' @template name
-#' @template crs
-#' @template overwrite
+#' @template by_feature
 #' @template quiet
 #'
-#' @returns an \code{sf} object or \code{TRUE} (invisibly) for table creation
+#' @returns A factor with geometry type(s)
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
+#' ## load package
 #' library(duckspatial)
-#' library(sf)
-#'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
-#' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
-#'
-#' ## transform to different CRS using EPSG code
-#' ddbs_transform("argentina", "EPSG:3857", conn)
-#'
-#' ## transform to match CRS of another sf object
-#' argentina_3857_sf <- st_transform(argentina_sf, "EPSG:3857")
-#' ddbs_write_vector(conn, argentina_3857_sf, "argentina_3857")
-#' ddbs_transform("argentina", argentina_3857_sf, conn)
-#'
-#' ## transform to match CRS of another DuckDB table
-#' ddbs_transform("argentina", "argentina_3857", conn)
-#'
-#' ## transform without using a connection
-#' ddbs_transform(argentina_sf, "EPSG:3857")
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
+#' # option 1: passing sf objects
+#' # Get geometry type for each feature
+#' ddbs_geometry_type(countries_ddbs)
+#' 
+#' # Get overall geometry type
+#' ddbs_geometry_type(countries_ddbs, by_feature = FALSE)
 #' }
-ddbs_transform <- function(
+ddbs_geometry_type <- function(
+  x,
+  conn = NULL,
+  by_feature = TRUE,
+  quiet = FALSE) {
+
+  ## 0. Handle errors
+  assert_xy(x, "x")
+  assert_conn_character(conn, x)
+  assert_logic(by_feature, "by_feature")
+  assert_logic(quiet, "quiet")
+  
+
+  # 1. Manage connection to DB
+
+  ## 1.1. Pre-extract attributes (geometry column name)
+  ## this step should be before normalize_spatial_input()
+  sf_col_x <- attr(x, "sf_column")
+
+  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names
+  x <- normalize_spatial_input(x, conn)
+
+
+  # 2. Manage connection to DB
+
+  ## 2.1. Resolve connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.2. Get query list of table names
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 3. Prepare parameters for the query
+
+  ## Get names of geometry columns (use saved sf_col_x from before transformation)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+
+  # 4. create the base query
+  if (isTRUE(by_feature)) {
+    tmp.query <- glue::glue("
+          SELECT ST_GeometryType({x_geom}) as geometry
+          FROM {x_list$query_name};
+      ")
+  } else {
+    tmp.query <- glue::glue("
+          SELECT DISTINCT ST_GeometryType({x_geom}) as geometry
+          FROM {x_list$query_name};
+      ")
+  }
+  
+  ## send the query, and return a factor vector
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+  feedback_query(quiet)
+  return(data_tbl$geometry)
+}
+
+
+
+
+
+
+#' Assemble polygons from multiple linestrings
+#'
+#' Takes a collection of linestrings or polygons and assembles them into polygons by 
+#' finding all closed rings formed by the network. Returns a GEOMETRYCOLLECTION containing 
+#' the resulting polygons.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @family polygon construction
+#' @seealso [ddbs_make_polygon()], [ddbs_build_area()]
+#' @export
+ddbs_polygonize <- function(
     x,
-    y,
     conn = NULL,
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    output = NULL,
     overwrite = FALSE,
-    quiet     = FALSE) {
+    quiet = FALSE) {
     
     deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(output, "output")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
 
+  
     # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names and CRS
-    x_list <- get_query_list(x, conn)
-    crs_x <- paste0("EPSG:", ddbs_crs(conn, x_list$query_name)$epsg)
-    ## CRS extraction depends if:
-    ## - starts with EPSG - it's an AUTH:CODE
-    ## - other character - it's a DuckDB table name
-    ## - other - it's an SF object
-    if (inherits(y, "character") && startsWith(y, "EPSG")) {
-      crs_y <- y
-    } else {
-      y_list <- get_query_list(y, conn)
-      crs_y <- paste0("EPSG:", ddbs_crs(conn, y_list$query_name)$epsg)
-    }
-    ## 1.3. if crs are the same, return warning
-    if (crs_x == crs_y) return(cli::cli_warn("The CRS of `x` and `y` is the same."))
 
-    # 2. Prepare params for query
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+    ## 1.1. Pre-extract attributes (CRS and geometry column name)
+    ## this step should be before normalize_spatial_input()
+    crs_x    <- ddbs_crs(x, conn)
+    sf_col_x <- attr(x, "sf_column")
+
+    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names
+    x <- normalize_spatial_input(x, conn)
+
+
+    # 2. Manage connection to DB
+
+    ## 2.1. Resolve connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    target_conn  <- resolve_conn$conn
+    x            <- resolve_conn$x
+    ## register cleanup of the connection
+    on.exit(resolve_conn$cleanup(), add = TRUE)
+
+    ## 2.2. Get query list of table names
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+
+
+    # 3. Prepare parameters for the query
+
+    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
-    ## remove CRS column from x_rest
-    x_rest <- x_rest[-grep(crs_column, x_rest)]
-    x_rest <- if (length(x_rest) > 0) paste0('"', x_rest, '",', collapse = ' ') else ""
-
-    ## 3. if name is not NULL (i.e. no SF returned)
+  
+    ## 3.2. Function to use
+    st_function <- glue::glue("ST_Polygonize(LIST({x_geom}))")
+  
+  
+    # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
         name_list <- get_query_name(name)
 
         ## handle overwrite
-        overwrite_table(name_list$query_name, conn, quiet, overwrite)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## create query (no st_as_text)
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            '{crs_y}' AS '{crs_column}',
-            ST_Transform({x_geom}, '{crs_x}', '{crs_y}') as {x_geom} 
+            SELECT {st_function} as {x_geom}
             FROM {x_list$query_name};
         ")
-        ## execute intersection query
-        DBI::dbExecute(conn, tmp.query)
+        ## execute query
+        DBI::dbExecute(target_conn, tmp.query)
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
+  
+    # 5. Get data frame
+  
+    ## 5.1. create query
     tmp.query <- glue::glue("
-        SELECT {x_rest}
-        '{crs_y}' AS '{crs_column}',
-        ST_AsWKB(ST_Transform({x_geom}, '{crs_x}', '{crs_y}')) as {x_geom} 
+        SELECT ST_AsWKB({st_function}) as {x_geom}
         FROM {x_list$query_name};
     ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    ## 5.2. retrieve results from the query
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    ## 5. convert to SF and return result
-    data_sf <- convert_to_sf_wkb(
+  
+    # 6. convert to SF and return result
+    data_sf <- ddbs_handle_output(
         data       = data_tbl,
-        crs        = crs,
+        conn       = target_conn,
+        output     = output,
+        crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
     feedback_query(quiet)
     return(data_sf)
+}
+
+
+
+
+
+#' Build polygon areas from multiple linestrings
+#'
+#' Constructs polygon or multipolygon geometries from a collection of linestrings, 
+#' handling intersections and creating unified areas. Returns POLYGON or MULTIPOLYGON 
+#' (not wrapped in a geometry collection). Requires MULTILINESTRING input - for 
+#' single linestrings, use [ddbs_make_polygon()].
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @family polygon construction
+#' @seealso [ddbs_make_polygon()], [ddbs_polygonize()]
+#' @export
+ddbs_build_area <- function(
+  x,
+  conn = NULL,
+  name = NULL,
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  output = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+  
+  
+  template_unary_ops(
+    x = x,
+    conn = conn,
+    name = name,
+    crs = crs,
+    crs_column = crs_column,
+    output = output,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_BuildArea",
+    other_args = NULL
+  )
+
+}
+
+
+
+
+
+#' Computes a Voronoi diagram from point geometries
+#'
+#' Returns a Voronoi diagram (Thiessen polygons) from a collection of points.
+#' Each polygon represents the region closer to one point than to any other
+#' point in the set. This function only works with MULTIPOINT geometries.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## create some points, and combine them to MULTIPOINT
+#' set.seed(42)
+#' n <- 1000
+#' points_ddbs <- data.frame(
+#'     id = 1:n,
+#'     x = runif(n, min = -20, max = 20),
+#'     y = runif(n, min = -20, max = 02)
+#' ) |>
+#'   ddbs_as_spatial(coords = c("x", "y"), crs = 4326) |> 
+#'   ddbs_combine()
+#' 
+#' ## create voronoi diagrama
+#' ddbs_voronoi(points_ddbs)
+#' }
+ddbs_voronoi <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+
+    # 0. Handle function-specific errors
+    assert_geom_type(x, conn, geom = "MULTIPOINT")
+
+    # 1. Run the template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_VoronoiDiagram",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+#' Extracts the endpoint of a linestring geometry
+#'
+#' Returns the last point of a LINESTRING geometry. This function only works
+#' with LINESTRING geometries (not MULTILINESTRING or other geometry types).
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @export
+#'
+#' @details
+#' This function wraps DuckDB Spatial's \code{ST_EndPoint}. Input geometries must be of
+#' type LINESTRING (MULTILINESTRING is not supported). For each input feature, the final
+#' coordinate of the LINESTRING is returned as a POINT geometry.
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## store in duckdb
+#' ddbs_write_vector(conn, rivers_ddbs, "rivers")
+#'
+#' ## extract end points
+#' ddbs_endpoint(conn = conn, "rivers")
+#'
+#' ## extract end points without using a connection
+#' ddbs_endpoint(rivers_ddbs)
+#' }
+ddbs_endpoint <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+
+    # 0. Handle function-specific error
+    assert_geom_type(x = x, conn = conn, geom = "LINESTRING", multi = FALSE)
+
+
+    # 1. Run the template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_EndPoint",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+
+#' Flips the X and Y coordinates of geometries
+#'
+#' Returns a geometry with the X and Y coordinates swapped. This is useful
+#' for correcting geometries where longitude and latitude are in the wrong
+#' order, or for converting between coordinate systems with different axis
+#' orders.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template crs
+#' @template output
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_output
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' # create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", 
+#'   package = "duckspatial")
+#' )
+#' 
+#' ## store in duckdb
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#'
+#' ## flip coordinates
+#' ddbs_flip_coordinates("argentina", conn)
+#'
+#' ## flip coordinates without using a connection
+#' ddbs_flip_coordinates(argentina_ddbs)
+#' }
+ddbs_flip_coordinates <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    output = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        crs = crs,
+        crs_column = crs_column,
+        output = output,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_FlipCoordinates",
+        other_args = NULL
+    )
+
 }

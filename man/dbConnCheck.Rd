@@ -7,7 +7,7 @@
 dbConnCheck(conn)
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database}
 }
 \value{
 TRUE (invisibly) for successful import

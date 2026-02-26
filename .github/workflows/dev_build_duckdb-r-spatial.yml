@@ -1,0 +1,291 @@
+name: Dev build duckdb-r + spatial
+
+on:
+  workflow_dispatch:
+    inputs:
+      duckdb_ref:
+        description: 'DuckDB Commit/Tag/Branch'
+        required: true
+        default: 'main'
+      duckdb_r_repo:
+        description: 'DuckDB R Repository'
+        required: true
+        default: 'duckdb/duckdb-r'
+      duckdb_r_ref:
+        description: 'DuckDB R Branch (for vendoring script)'
+        required: true
+        default: 'main'
+      spatial_repo:
+        description: 'DuckDB Spatial Repository'
+        required: true
+        default: 'duckdb/duckdb-spatial'
+      spatial_ref:
+        description: 'DuckDB Spatial Branch'
+        required: true
+        default: 'main'
+  schedule:
+    - cron: '0 4 * * 0'  # Runs at 04:00 UTC every Sunday
+
+jobs:
+  # ============================================================================
+  # JOB 1: Vendor DuckDB sources into duckdb-r (Linux only - cross-platform safe)
+  # ============================================================================
+  vendor:
+    name: Vendor DuckDB Sources
+    runs-on: ubuntu-latest
+    
+    outputs:
+      duckdb_sha: ${{ steps.duckdb_version.outputs.sha }}
+      duckdb_version: ${{ steps.duckdb_version.outputs.version }}
+    
+    steps:
+      - name: Checkout DuckDB
+        uses: actions/checkout@v4
+        with:
+          repository: duckdb/duckdb
+          ref: ${{ inputs.duckdb_ref || 'main' }}
+          path: duckdb
+          fetch-depth: 0
+
+      - name: Get DuckDB Version Info
+        id: duckdb_version
+        working-directory: duckdb
+        run: |
+          DUCKDB_SHA=$(git rev-parse HEAD)
+          DUCKDB_VERSION=$(git describe --tags --always)
+          echo "sha=$DUCKDB_SHA" >> $GITHUB_OUTPUT
+          echo "version=$DUCKDB_VERSION" >> $GITHUB_OUTPUT
+          echo "DuckDB SHA: $DUCKDB_SHA"
+          echo "DuckDB Version: $DUCKDB_VERSION"
+
+      - name: Checkout DuckDB R Package
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.duckdb_r_repo || 'duckdb/duckdb-r' }}
+          ref: ${{ inputs.duckdb_r_ref || 'main' }}
+          path: duckdb-r
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Vendor DuckDB into duckdb-r
+        working-directory: duckdb-r
+        run: |
+          echo "Vendoring DuckDB ${{ steps.duckdb_version.outputs.version }} into duckdb-r..."
+          scripts/vendor.sh ../duckdb
+          echo "Vendoring complete"
+
+      - name: Upload Vendored duckdb-r
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendored-duckdb-r
+          path: duckdb-r/
+          retention-days: 1
+
+  # ============================================================================
+  # JOB 2: Build DuckDB R Package + Spatial Extension on all platforms
+  # ============================================================================
+  build:
+    name: Build - ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    needs: vendor
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-latest
+            vcpkg_triplet: x64-linux-release
+            duckdb_platform: linux_amd64
+            r_binary_ext: tgz
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            vcpkg_triplet: arm64-linux-release
+            duckdb_platform: linux_arm64
+            r_binary_ext: tgz
+          - platform: macos-arm64
+            runner: macos-14
+            vcpkg_triplet: arm64-osx-release
+            duckdb_platform: osx_arm64
+            r_binary_ext: tgz
+          - platform: windows-x64
+            runner: windows-latest
+            vcpkg_triplet: x64-windows-static-md-release
+            duckdb_platform: windows_amd64
+            r_binary_ext: zip
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+      VCPKG_TARGET_TRIPLET: ${{ matrix.vcpkg_triplet }}
+      VCPKG_HOST_TRIPLET: ${{ matrix.vcpkg_triplet }}
+      GEN: ninja
+
+    steps:
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: Install Build Tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build build-essential cmake git \
+            libcurl4-openssl-dev libssl-dev python3
+
+      - name: Install Build Tools (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja cmake python3
+
+      - name: Install Build Tools (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install ninja cmake -y
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.platform }}-duckdb
+          max-size: 2G
+
+      # Download pre-vendored duckdb-r from the vendor job
+      - name: Download Vendored duckdb-r
+        uses: actions/download-artifact@v4
+        with:
+          name: vendored-duckdb-r
+          path: duckdb-r
+
+      # Install R package dependencies
+      - name: Install R Dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: duckdb-r
+          extra-packages: any::DBI
+          needs: build
+
+      # Build duckdb-r package
+      - name: Build DuckDB R Package
+        shell: bash
+        working-directory: duckdb-r
+        run: |
+          echo "Building DuckDB R package..."
+
+          # Set up ccache (Unix only)
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            export CCACHE_DIR="${{ github.workspace }}/.ccache"
+          fi
+
+          # Build source package
+          R CMD build .
+
+          # Install and build binary package
+          PKG_NAME=$(ls duckdb_*.tar.gz | head -n 1)
+          echo "Installing $PKG_NAME..."
+          R CMD INSTALL --build "$PKG_NAME"
+
+          # Collect artifacts
+          mkdir -p ${{ github.workspace }}/r-packages
+          cp duckdb_*.tar.gz ${{ github.workspace }}/r-packages/
+          cp duckdb_*.${{ matrix.r_binary_ext }} ${{ github.workspace }}/r-packages/ 2>/dev/null || true
+
+          echo "R package built successfully"
+          ls -lh ${{ github.workspace }}/r-packages/
+
+      # Checkout DuckDB for spatial extension build
+      - name: Checkout DuckDB
+        uses: actions/checkout@v4
+        with:
+          repository: duckdb/duckdb
+          ref: ${{ needs.vendor.outputs.duckdb_sha }}
+          path: duckdb
+          fetch-depth: 0
+
+      # Checkout duckdb-spatial
+      - name: Checkout DuckDB Spatial
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.spatial_repo || 'duckdb/duckdb-spatial' }}
+          ref: ${{ inputs.spatial_ref || 'main' }}
+          path: duckdb-spatial
+          submodules: false
+
+      # Update duckdb-spatial's duckdb submodule to match DuckDB commit
+      - name: Update DuckDB Submodule
+        shell: bash
+        working-directory: duckdb-spatial
+        run: |
+          echo "Initializing DuckDB submodule..."
+          git submodule update --init duckdb
+
+          echo "Updating duckdb submodule to ${{ needs.vendor.outputs.duckdb_sha }}..."
+          cd duckdb
+          git fetch origin ${{ needs.vendor.outputs.duckdb_sha }}
+          git checkout ${{ needs.vendor.outputs.duckdb_sha }}
+
+          echo "DuckDB submodule updated to:"
+          git describe --tags --always
+
+      # Initialize other submodules
+      - name: Initialize Extension CI Tools
+        shell: bash
+        working-directory: duckdb-spatial
+        run: |
+          git submodule update --init --recursive extension-ci-tools
+
+      # Setup vcpkg
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: ${{ github.workspace }}/vcpkg
+          vcpkgJsonGlob: 'duckdb-spatial/vcpkg.json'
+
+      # Build spatial extension
+      - name: Build Spatial Extension (Unix)
+        if: runner.os != 'Windows'
+        working-directory: duckdb-spatial
+        shell: bash
+        run: |
+          echo "Building spatial extension..."
+          export CCACHE_DIR="${{ github.workspace }}/.ccache"
+          make release
+
+      - name: Build Spatial Extension (Windows)
+        if: runner.os == 'Windows'
+        working-directory: duckdb-spatial
+        shell: bash
+        env:
+          MSYS_NO_PATHCONV: 1
+        run: |
+          echo "Building spatial extension..."
+          make release
+
+      # Verify outputs
+      - name: List Spatial Extension Output (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          echo "Spatial extension build output:"
+          ls -R duckdb-spatial/build/release/extension/spatial/
+
+      - name: List Spatial Extension Output (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "Spatial extension build output:"
+          dir duckdb-spatial\build\release\extension\spatial\ /s
+
+      # Upload artifacts
+      - name: Upload Spatial Extension Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spatial-extension-${{ matrix.platform }}
+          path: duckdb-spatial/build/release/extension/spatial/spatial.duckdb_extension
+
+      - name: Upload DuckDB R Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: duckdb-r-package-${{ matrix.platform }}
+          path: r-packages/duckdb_*.*

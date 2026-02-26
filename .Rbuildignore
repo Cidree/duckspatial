@@ -17,3 +17,7 @@ internal/*
 ^doc$
 ^docs$
 ^Meta$
+^\.sync$
+^tools$
+^vignettes/\.quarto$
+^vignettes/*_files$

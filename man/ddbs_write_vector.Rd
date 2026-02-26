@@ -14,7 +14,7 @@ ddbs_write_vector(
 )
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database}
 
 \item{data}{A \code{sf} object to write to the DuckDB database, or the path to
 a local file that can be read with \code{ST_READ}}
@@ -40,7 +40,7 @@ This function writes a Simple Features (SF) object into a DuckDB database as a n
 The table is created in the specified schema of the DuckDB database.
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 ## load packages
 library(duckspatial)
 library(sf)
@@ -66,5 +66,5 @@ ddbs_read_vector(conn, "points", crs = 4326)
 
 ## disconnect from db
 dbDisconnect(conn)
-\dontshow{\}) # examplesIf}
+}
 }

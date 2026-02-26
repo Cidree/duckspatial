@@ -8,3 +8,6 @@ internal/*
 private
 /doc/
 /Meta/
+.DS_Store
+inst/doc
+**/.quarto/

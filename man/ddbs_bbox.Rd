@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_extent_funs.R
 \name{ddbs_bbox}
 \alias{ddbs_bbox}
-\title{Returns the minimal bounding box enclosing the input geometry}
+\title{Get the bounding box of geometries}
 \usage{
 ddbs_bbox(
   x,
@@ -16,13 +16,18 @@ ddbs_bbox(
 )
 }
 \arguments{
-\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
+\item{x}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}
 Data is returned from this object.}
 
-\item{by_feature}{Boolean. The function defaults to \code{FALSE}, and returns a
-single bounding box for \code{x}. If \code{TRUE}, it return one bounding box for
-each feature.}
+\item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
+separately to each geometry. If \code{FALSE}, the geometric
+operation is applied to the data as a whole.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -32,10 +37,10 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{crs}{The coordinates reference system of the data. Specify if the data
+\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{a character string of length one specifying the column
+\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
@@ -46,31 +51,32 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-an \code{sf} object or \code{TRUE} (invisibly) for table creation
+A data frame or \code{TRUE} (invisibly) for table creation when name is not NULL.
 }
 \description{
-Returns the minimal bounding box enclosing the input geometry from a \code{sf} object
-or a DuckDB table. Returns the result as an \code{sf} object or creates a new
-table in the database.
+Returns the minimal rectangle that encloses the geometry, typically used
+to summarize its spatial extent.
 }
 \examples{
 \dontrun{
 ## load packages
 library(duckspatial)
-library(sf)
 
 ## read data
-argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson", 
+  package = "duckspatial")
+)
 
 # option 1: passing sf objects
-ddbs_bbox(argentina_sf)
+ddbs_bbox(argentina_ddbs)
 
 
 ## option 2: passing the names of tables in a duckdb db
 
 # creates a duckdb write sf to it
 conn <- duckspatial::ddbs_create_conn()
-ddbs_write_vector(conn, argentina_sf, "argentina_tbl", overwrite = TRUE)
+ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
 
 output2 <- ddbs_bbox(
     conn = conn,

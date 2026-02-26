@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_ops_unary.R
 \name{ddbs_concave_hull}
 \alias{ddbs_concave_hull}
-\title{Returns the concave hull enclosing the geometry}
+\title{Compute the concave hull of geometries}
 \usage{
 ddbs_concave_hull(
   x,
@@ -12,13 +12,19 @@ ddbs_concave_hull(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  output = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
 }
 \arguments{
-\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
+\item{x}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}
 Data is returned from this object.}
 
 \item{ratio}{Numeric. The ratio parameter dictates the level of concavity; \code{1}
@@ -36,12 +42,23 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{crs}{The coordinates reference system of the data. Specify if the data
+\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
-\item{crs_column}{a character string of length one specifying the column
+\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
+
+\item{output}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+\item \code{"tibble"}: Eagerly collected tibble without geometry
+\item \code{"raw"}: Eagerly collected tibble with WKB geometry (list of raw vectors)
+\item \code{"geoarrow"}: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)
+}
+Can be set globally via \code{\link{ddbs_options}(output_type = "...")} or
+per-function via this argument. Per-function overrides global setting.}
 
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
@@ -50,34 +67,38 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-an \code{sf} object or \code{TRUE} (invisibly) for table creation
+Depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
+\itemize{
+\item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected \code{sf} object in R memory.
+\item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
+\item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
+\item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
+}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Returns the concave hull enclosing the geometry from an \code{sf} object or
-from a DuckDB table using the spatial extension. Returns the result as an
-\code{sf} object or creates a new table in the database.
+Returns the concave hull that tightly encloses the geometry, capturing its overall
+shape more closely than a convex hull.
 }
 \examples{
 \dontrun{
-## load packages
+## load package
 library(duckspatial)
 library(sf)
 
 # create points data
 n <- 5
-points_sf <- data.frame(
-    id = 1,
-    x = runif(n, min = -180, max = 180),
-    y = runif(n, min = -90, max = 90)
-    ) |>
-    sf::st_as_sf(coords = c("x", "y"), crs = 4326) |>
-    st_geometry() |>
-    st_combine() |>
-    st_cast("MULTIPOINT") |>
-    st_as_sf()
+points_ddbs <- data.frame(
+  id = 1,
+  x = runif(n, min = -180, max = 180),
+  y = runif(n, min = -90, max = 90)
+) |>
+  ddbs_as_spatial(coords = c("x", "y"), crs = 4326) |>
+  ddbs_combine()
 
-# option 1: passing sf objects
-output1 <- duckspatial::ddbs_concave_hull(x = points_sf)
+# option 1: passing ddbs or sf objects
+output1 <- duckspatial::ddbs_concave_hull(points_ddbs, output = "sf")
 
 plot(output1)
 
@@ -88,13 +109,14 @@ plot(output1)
 conn <- duckspatial::ddbs_create_conn()
 
 # write sf to duckdb
-ddbs_write_vector(conn, points_sf, "points_tbl")
+ddbs_write_vector(conn, points_ddbs, "points_tbl")
 
 # spatial join
 output2 <- duckspatial::ddbs_concave_hull(
-    conn = conn,
-    x = "points_tbl"
-    )
+ conn = conn,
+ x = "points_tbl",
+ output = "sf"
+)
 
 plot(output2)
 

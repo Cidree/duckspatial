@@ -4,10 +4,11 @@
 \alias{ddbs_drivers}
 \title{Get list of GDAL drivers and file formats}
 \usage{
-ddbs_drivers(conn)
+ddbs_drivers(conn = NULL)
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database.
+If not specified (\code{conn = NULL}), uses the default connection created with \code{ddbs_default_conn()} (or a temporary one).}
 }
 \value{
 \code{data.frame}
@@ -16,17 +17,14 @@ ddbs_drivers(conn)
 Get list of GDAL drivers and file formats
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-## load packages
-library(duckdb)
+\dontrun{
+## load package
 library(duckspatial)
 
 ## database setup
-conn <- dbConnect(duckdb())
-ddbs_install(conn)
-ddbs_load(conn)
+conn <- ddbs_create_conn()
 
 ## check drivers
 ddbs_drivers(conn)
-\dontshow{\}) # examplesIf}
+}
 }

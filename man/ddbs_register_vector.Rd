@@ -7,7 +7,7 @@
 ddbs_register_vector(conn, data, name, overwrite = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database}
 
 \item{data}{A \code{sf} object to write to the DuckDB database, or the path to
 a local file that can be read with \code{ST_READ}}

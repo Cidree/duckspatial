@@ -1,0 +1,1 @@
+#' @param memory_limit_gb Numeric. Memory limit in GB. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use 80% of available operating system memory it detects (warning, on some shared HPC nodes the detected memory might be the full node memory, not the per-job allocation).

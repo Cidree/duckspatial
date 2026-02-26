@@ -2,34 +2,93 @@
 % Please edit documentation in R/ddbs_predicates.R
 \name{ddbs_predicate}
 \alias{ddbs_predicate}
-\title{Spatial predicate operations}
+\alias{ddbs_intersects}
+\alias{ddbs_covers}
+\alias{ddbs_touches}
+\alias{ddbs_is_within_distance}
+\alias{ddbs_disjoint}
+\alias{ddbs_within}
+\alias{ddbs_contains}
+\alias{ddbs_overlaps}
+\alias{ddbs_crosses}
+\alias{ddbs_equals}
+\alias{ddbs_covered_by}
+\alias{ddbs_intersects_extent}
+\alias{ddbs_contains_properly}
+\alias{ddbs_within_properly}
+\title{Evaluate spatial predicates between geometries}
 \usage{
 ddbs_predicate(
   x,
   y,
   predicate = "intersects",
   conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
   quiet = FALSE
 )
+
+ddbs_intersects(x, y, ...)
+
+ddbs_covers(x, y, ...)
+
+ddbs_touches(x, y, ...)
+
+ddbs_is_within_distance(x, y, distance = NULL, ...)
+
+ddbs_disjoint(x, y, ...)
+
+ddbs_within(x, y, ...)
+
+ddbs_contains(x, y, ...)
+
+ddbs_overlaps(x, y, ...)
+
+ddbs_crosses(x, y, ...)
+
+ddbs_equals(x, y, ...)
+
+ddbs_covered_by(x, y, ...)
+
+ddbs_intersects_extent(x, y, ...)
+
+ddbs_contains_properly(x, y, ...)
+
+ddbs_within_properly(x, y, ...)
 }
 \arguments{
-\item{x}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
+\item{x}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}
 Data is returned from this object.}
 
-\item{y}{An \code{sf} spatial object. Alternatively, it can be a string with the
-name of a table with geometry column within the DuckDB database \code{conn}.
-Data is returned from this object.}
+\item{y}{Input spatial data. Can be:
+\itemize{
+\item A \code{duckspatial_df} object (lazy spatial data frame via dbplyr)
+\item An \code{sf} object
+\item A \code{tbl_lazy} from dbplyr
+\item A character string naming a table/view in \code{conn}
+}}
 
 \item{predicate}{A geometry predicate function. Defaults to \code{intersects},
 a wrapper of \code{ST_Intersects}. See details for other options.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
+
+\item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
+
+\item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
+If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
 
 \item{id_x}{Character; optional name of the column in \code{x} whose values will
 be used to name the list elements. If \code{NULL}, integer row numbers of \code{x} are used.}
@@ -45,6 +104,8 @@ the coordinate system of the geometry (e.g. degrees or meters)}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
+
+\item{...}{Passed to \link{ddbs_predicate}}
 }
 \value{
 A \strong{list} of length equal to the number of rows in \code{x}.
@@ -65,10 +126,9 @@ the corresponding geometry of \code{x}, or
 If there's no match between \code{x} and \code{y} it returns \code{NULL}
 }
 \description{
-Computes spatial relationships between two geometry datasets using DuckDB's
-spatial extension. Returns a list where each element corresponds to a row of
-\code{x}, containing the indices (or IDs) of rows in \code{y} that satisfy the specified
-spatial predicate.
+Determines which geometries in one dataset satisfy a specified spatial
+relationship with geometries in another dataset, such as intersection,
+containment, or touching.
 }
 \details{
 This function provides a unified interface to all spatial predicate operations
@@ -104,33 +164,58 @@ values of an identifier column in \code{x} or \code{y}, respectively.
 ## Load packages
 library(duckspatial)
 library(dplyr)
-library(sf)
 
 ## create in-memory DuckDB database
 conn <- ddbs_create_conn(dbdir = "memory")
 
 ## read countries data, and rivers
-countries_sf <- read_sf(system.file("spatial/countries.geojson", package = "duckspatial")) |>
+countries_ddbs <- ddbs_open_dataset(
+  system.file("spatial/countries.geojson", 
+  package = "duckspatial")
+) |>
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
-rivers_sf <- st_read(system.file("spatial/rivers.geojson", package = "duckspatial")) |>
-  st_transform(st_crs(countries_sf))
+
+rivers_ddbs <- ddbs_open_dataset(
+  system.file("spatial/rivers.geojson", 
+  package = "duckspatial")
+) |>
+  ddbs_transform(ddbs_crs(countries_ddbs))
 
 ## Store in DuckDB
-ddbs_write_vector(conn, countries_sf, "countries")
-ddbs_write_vector(conn, rivers_sf, "rivers")
+ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_vector(conn, rivers_ddbs, "rivers")
 
 ## Example 1: Check which rivers intersect each country
-ddbs_predicate(countries_sf, rivers_sf, predicate = "intersects", conn)
+ddbs_predicate(countries_ddbs, rivers_ddbs, predicate = "intersects")
+ddbs_intersects(countries_ddbs, rivers_ddbs)
 
 ## Example 2: Find neighboring countries
-ddbs_predicate(countries_sf, countries_sf, predicate = "touches",
-               id_x = "NAME_ENGL", id_y = "NAME_ENGL")
+ddbs_predicate(
+  countries_ddbs, 
+  countries_ddbs, 
+  predicate = "touches",
+  id_x = "NAME_ENGL", 
+  id_y = "NAME_ENGL"
+)
+
+ddbs_touches(
+  countries_ddbs, 
+  countries_ddbs, 
+  id_x = "NAME_ENGL", 
+  id_y = "NAME_ENGL"
+)
 
 ## Example 3: Find rivers that don't intersect countries
-ddbs_predicate(countries_sf, rivers_sf, predicate = "disjoint",
-               id_x = "NAME_ENGL", id_y = "RIVER_NAME")
+ddbs_predicate(
+  countries_ddbs, 
+  rivers_ddbs, 
+  predicate = "disjoint",
+  id_x = "NAME_ENGL", 
+  id_y = "RIVER_NAME"
+)
 
 ## Example 4: Use table names inside duckdb
-ddbs_predicate("countries", "rivers", predicate = "within", conn, "NAME_ENGL")
+ddbs_predicate("countries", "rivers", predicate = "within", conn, id_x = "NAME_ENGL")
+ddbs_within("countries", "rivers", conn,  id_x = "NAME_ENGL")
 }
 }

@@ -2,21 +2,21 @@
 % Please edit documentation in R/ddbs_utils.R
 \name{ddbs_stop_conn}
 \alias{ddbs_stop_conn}
-\title{Close a duckdb connection}
+\title{Close a DuckDB connection}
 \usage{
 ddbs_stop_conn(conn)
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database}
+\item{conn}{A \code{DBIConnection} object to a DuckDB database}
 }
 \value{
 TRUE (invisibly) for successful disconnection
 }
 \description{
-Close a duckdb connection
+Close a DuckDB connection
 }
 \examples{
-\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+\dontrun{
 ## load packages
 library(duckspatial)
 
@@ -25,5 +25,5 @@ conn <- ddbs_create_conn(dbdir = "memory")
 
 ## close the connection
 ddbs_stop_conn(conn)
-\dontshow{\}) # examplesIf}
+}
 }

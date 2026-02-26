@@ -71,12 +71,12 @@ test_that("ddbs_interpolate_aw matches sf::st_interpolate_aw (Extensive / weight
   # This matches sf::st_interpolate_aw(extensive=TRUE).
 
   # 1. Run sf (defaults: keep_NA=FALSE)
-  res_sf <- sf::st_interpolate_aw(
+  res_sf <- suppressWarnings(sf::st_interpolate_aw(
     x = race["TOTAL_E"],
     to = wards,
     extensive = TRUE,
     keep_NA = FALSE
-  )
+  ))
 
   # 2. Run duckspatial
   res_duck <- ddbs_interpolate_aw(
@@ -117,11 +117,11 @@ test_that("ddbs_interpolate_aw matches sf::st_interpolate_aw (Intensive)", {
   race$density <- race$TOTAL_E / sf::st_area(race)
 
   # 1. Run sf
-  res_sf <- sf::st_interpolate_aw(
+  res_sf <- suppressWarnings(sf::st_interpolate_aw(
     x = race["density"],
     to = wards,
     extensive = FALSE
-  )
+  ))
 
   # 2. Run duckspatial
   res_duck <- ddbs_interpolate_aw(

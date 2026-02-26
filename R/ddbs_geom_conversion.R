@@ -1,250 +1,128 @@
-
-
-
-#' Convert geometries to Well-Known Text (WKT) format
+#' Convert geometries to standard interchange formats
 #'
-#' Converts spatial geometries to their Well-Known Text (WKT) representation.
-#' This function wraps DuckDB's ST_AsText spatial function.
+#' @description
+#' Convert spatial geometries to common interchange formats using DuckDB spatial
+#' serialization functions.
+#'
+#' * `ddbs_as_text()` – Convert geometries to Well-Known Text (WKT)
+#' * `ddbs_as_wkb()` – Convert geometries to Well-Known Binary (WKB)
+#' * `ddbs_as_hexwkb()` – Convert geometries to hexadecimal Well-Known Binary (HEXWKB)
+#' * `ddbs_as_geojson()` – Convert geometries to GeoJSON
 #'
 #' @template x
 #' @template conn_null
 #' @template quiet
 #'
-#' @returns A character vector containing WKT representations of the geometries
-#'
 #' @details
-#' Well-Known Text (WKT) is a text markup language for representing vector
-#' geometry objects. This function is useful for exporting geometries in a
-#' portable text format that can be used with other spatial tools and databases.
+#' These functions are thin wrappers around DuckDB spatial serialization
+#' functions (`ST_AsText`, `ST_AsWKB`, `ST_AsHEXWKB`, and `ST_AsGeoJSON`).
 #'
-#' @export
+#' They are useful for exporting geometries into widely supported formats for
+#' interoperability with external spatial tools, databases, and web services.
+#'
+#' @return
+#' Depending on the function:
+#' \itemize{
+#'   \item \code{ddbs_as_text()} returns a character vector of WKT geometries
+#'   \item \code{ddbs_as_wkb()} returns a list of raw vectors (binary WKB)
+#'   \item \code{ddbs_as_hexwkb()} returns a character vector of HEXWKB strings
+#'   \item \code{ddbs_as_geojson()} returns a character vector of GeoJSON strings
+#' }
 #'
 #' @examples
 #' \dontrun{
-#' ## load packages
 #' library(duckspatial)
-#' library(sf)
 #'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson", package = "duckspatial")
+#' )
 #'
-#' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
-#' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
-#'
-#' ## convert geometries to WKT
-#' wkt_text <- ddbs_as_text(conn = conn, "argentina")
-#'
-#' ## convert without using a connection
-#' wkt_text <- ddbs_as_text(argentina_sf)
+#' ddbs_as_text(argentina_ddbs)
+#' ddbs_as_wkb(argentina_ddbs)
+#' ddbs_as_hexwkb(argentina_ddbs)
+#' ddbs_as_geojson(argentina_ddbs)
 #' }
+#'
+#' @name ddbs_as_format
+#' @rdname ddbs_as_format
+NULL
+
+
+
+
+
+#' @rdname ddbs_as_format
+#' @export
 ddbs_as_text <- function(
   x,
   conn = NULL,
   quiet = FALSE) {
 
-  ## 0. Handle errors
-  assert_xy(x, "x")
-  assert_logic(quiet, "quiet")
-  assert_conn_character(conn, x)
+  template_geometry_conversion(
+    x = x,
+    conn = conn,
+    quiet = quiet,
+    fun = "ST_AsText"
+  )
 
-  # 1. Manage connection to DB
-  ## 1.1. check if connection is provided, otherwise create a temporary connection
-  is_duckdb_conn <- dbConnCheck(conn)
-  if (isFALSE(is_duckdb_conn)) {
-      conn <- duckspatial::ddbs_create_conn()
-      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-  }
-  ## 1.2. get query list of table names
-  x_list <- get_query_list(x, conn)
-
-  ## 2. get name of geometry column
-  x_geom <- get_geom_name(conn, x_list$query_name)
-  x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-  assert_geometry_column(x_geom, x_list)
-
-  # 3. Get data as vector
-  ## 3.1. create query
-  tmp.query <- glue::glue("
-      SELECT ST_AsText({x_geom}) as {x_geom}
-      FROM {x_list$query_name};
-  ")
-  ## 3.2. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(conn, tmp.query) |> 
-    as.vector()
-
-  feedback_query(quiet)
-  return(data_tbl)
 }
 
 
 
 
 
-
-#' Convert geometries to Well-Known Binary (WKB) format
-#'
-#' Converts spatial geometries to their Well-Known Binary (WKB) representation.
-#' This function wraps DuckDB's ST_AsWkb spatial function.
-#'
-#' @template x
-#' @template conn_null
-#' @template quiet
-#'
-#' @returns A list of raw vectors, where each element contains the WKB 
-#'  representation of a geometry
-#'
-#' @details
-#' Well-Known Binary (WKB) is a binary representation of vector geometry objects.
-#' WKB is more compact than WKT and is commonly used for efficient storage and
-#' transfer of spatial data between systems. Each geometry is returned as a raw
-#' vector of bytes.
-#'
+#' @rdname ddbs_as_format
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(duckspatial)
-#' library(sf)
-#'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
-#'
-#' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
-#' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
-#'
-#' ## convert geometries to WKB
-#' wkb_list <- ddbs_as_wkb(conn = conn, "argentina")
-#'
-#' ## convert without using a connection
-#' wkb_list <- ddbs_as_wkb(argentina_sf)
-#' }
 ddbs_as_wkb <- function(
-    x,
-    conn = NULL,
-    quiet = FALSE) {
+  x,
+  conn = NULL,
+  quiet = FALSE) {
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
+  template_geometry_conversion(
+    x = x,
+    conn = conn,
+    quiet = quiet,
+    fun = "ST_AsWKB"
+  )
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()
-        on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
-
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
-
-    # 3. Get data as list
-    ## 3.1. create query
-    tmp.query <- glue::glue("
-        SELECT ST_AsWkb({x_geom}) as geometry
-        FROM {x_list$query_name};
-    ")
-    ## 3.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query) 
-    data_lst <- data_tbl$geometry
-
-    feedback_query(quiet)
-    return(data_lst)
 }
 
 
 
 
 
-
-#' Convert geometries to hexadecimal Well-Known Binary (HEXWKB) format
-#'
-#' Converts spatial geometries to their hexadecimal Well-Known Binary (HEXWKB) 
-#' representation. This function wraps DuckDB's ST_AsHEXWKB spatial function.
-#'
-#' @template x
-#' @template conn_null
-#' @template quiet
-#'
-#' @returns A character vector containing hexadecimal-encoded WKB representations 
-#'   of the geometries
-#'
-#' @details
-#' HEXWKB is a hexadecimal string representation of Well-Known Binary (WKB) format.
-#' This encoding is human-readable (unlike raw WKB) while maintaining the compact
-#' binary structure. HEXWKB is commonly used in databases and web services for
-#' transmitting spatial data as text strings.
-#'
+#' @rdname ddbs_as_format
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load packages
-#' library(duckspatial)
-#' library(sf)
-#'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
-#'
-#' ## read data
-#' argentina_sf <- st_read(system.file("spatial/argentina.geojson", package = "duckspatial"))
-#'
-#' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
-#'
-#' ## convert geometries to HEXWKB
-#' hexwkb_text <- ddbs_as_hexwkb(conn = conn, "argentina")
-#'
-#' ## convert without using a connection
-#' hexwkb_text <- ddbs_as_hexwkb(argentina_sf)
-#' }
 ddbs_as_hexwkb <- function(
-    x,
-    conn = NULL,
-    quiet = FALSE) {
+  x,
+  conn = NULL,
+  quiet = FALSE) {
 
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_logic(quiet, "quiet")
-    assert_conn_character(conn, x)
+  template_geometry_conversion(
+    x = x,
+    conn = conn,
+    quiet = quiet,
+    fun = "ST_AsHEXWKB"
+  )
 
-    # 1. Manage connection to DB
-    ## 1.1. check if connection is provided, otherwise create a temporary connection
-    is_duckdb_conn <- dbConnCheck(conn)
-    if (isFALSE(is_duckdb_conn)) {
-        conn <- duckspatial::ddbs_create_conn()
-        on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-    }
-    ## 1.2. get query list of table names
-    x_list <- get_query_list(x, conn)
+}
 
-    ## 2. get name of geometry column
-    x_geom <- get_geom_name(conn, x_list$query_name)
-    x_rest <- get_geom_name(conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-    assert_geometry_column(x_geom, x_list)
 
-    # 3. Get data as list
-    ## 3.1. create query
-    tmp.query <- glue::glue("
-        SELECT ST_AsHEXWKB({x_geom}) as geometry
-        FROM {x_list$query_name};
-    ")
-    ## 3.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(conn, tmp.query) |> 
-      as.vector()
 
-    feedback_query(quiet)
-    return(data_tbl)
+
+
+#' @rdname ddbs_as_format
+#' @export
+ddbs_as_geojson <- function(
+  x,
+  conn = NULL,
+  quiet = FALSE) {
+
+  template_geometry_conversion(
+    x = x,
+    conn = conn,
+    quiet = quiet,
+    fun = "ST_AsGeoJSON"
+  )
+
 }

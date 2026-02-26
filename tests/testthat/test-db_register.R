@@ -152,3 +152,54 @@ test_that("error when view name exists and overwrite=FALSE", {
     )
 
 })
+
+# New tests for duckspatial_df and existing crs_duckspatial column ----
+
+test_that("can register duckspatial_df directly", {
+    # Create a duckspatial_df by reading from existing view
+    ddbs_register_vector(conn_test, points_sf, "points_for_lazy", overwrite = TRUE)
+    df_lazy <- ddbs_read_vector(conn_test, "points_for_lazy", crs = 4326) |>
+        as_duckspatial_df()
+
+    # Register duckspatial_df as new view
+    result <- ddbs_register_vector(conn_test, df_lazy, "lazy_view_direct", overwrite = TRUE)
+    expect_true(result)
+
+    # Verify view exists
+    arrow_views <- duckdb::duckdb_list_arrow(conn_test)
+    expect_true("lazy_view_direct" %in% arrow_views)
+
+    # Verify data is queryable
+    count_result <- DBI::dbGetQuery(conn_test, "SELECT COUNT(*) as n FROM lazy_view_direct")
+    expect_equal(count_result$n, nrow(points_sf))
+})
+
+test_that("handles sf with existing crs_duckspatial column", {
+    # Create sf with existing crs_duckspatial
+    points_with_crs <- points_sf
+    points_with_crs$crs_duckspatial <- "EPSG:4326"
+
+    # Should not error
+    result <- ddbs_register_vector(conn_test, points_with_crs, "crs_col_test", overwrite = TRUE)
+    expect_true(result)
+
+    # Verify view exists
+    arrow_views <- duckdb::duckdb_list_arrow(conn_test)
+    expect_true("crs_col_test" %in% arrow_views)
+
+    # Check only one crs_duckspatial column
+    columns <- DBI::dbListFields(conn_test, "crs_col_test")
+    expect_equal(sum(columns == "crs_duckspatial"), 1)
+})
+
+test_that("error for unsupported data types", {
+    expect_error(
+        ddbs_register_vector(conn_test, list(a = 1), "bad_input"),
+        "must be an"
+    )
+
+    expect_error(
+        ddbs_register_vector(conn_test, 123, "bad_input"),
+        "must be an"
+    )
+})
