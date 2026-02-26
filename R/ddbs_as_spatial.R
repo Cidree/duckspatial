@@ -152,23 +152,8 @@ ddbs_as_spatial <- function(
 
     
     # 5. Apply geospatial operation
-  
-    ## 5.1. Create the query based on output
-    if (mode == "duckspatial") {
-      view_name <- ddbs_temp_view_name()
-      tmp.query <- glue::glue("
-        CREATE TEMP VIEW {view_name} AS
-        {base.query}
-      ")
-    } else {
-      view_name <- NULL
-      tmp.query <- base.query
-    }
-  
-    ## 5.2. Handle the output
     result <- ddbs_handle_query(
-        query      = tmp.query,
-        view_name  = view_name,
+        query      = base.query,
         conn       = target_conn,
         mode       = mode,
         crs        = crs,

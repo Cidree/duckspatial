@@ -186,7 +186,6 @@ ddbs_union <- function(
       tmp.query <- build_union_query(
         by_feature = by_feature,
         mode       = "duckspatial",   # no WKB needed when writing to table
-        view_name  = NULL,
         name_query = name_list$query_name,
         x_geom     = x_geom,
         y_geom     = y_geom,
@@ -200,13 +199,10 @@ ddbs_union <- function(
       return(invisible(TRUE))
     }
 
-    ## In-memory result
-    view_name <- if (mode == "duckspatial") ddbs_temp_view_name() else NULL
-
-    tmp.query <- build_union_query(
+    ## Create the base query
+    base.query <- build_union_query(
       by_feature = by_feature,
       mode       = mode,
-      view_name  = view_name,
       name_query = NULL,
       x_geom     = x_geom,
       y_geom     = y_geom,
@@ -216,13 +212,12 @@ ddbs_union <- function(
     )
 
     result <- ddbs_handle_query(
-      query      = tmp.query,
-      view_name  = view_name,
-      conn       = target_conn,
-      mode       = mode,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
-      x_geom     = x_geom
+        query      = base.query,
+        conn       = target_conn,
+        mode       = mode,
+        crs        = if (!is.null(crs)) crs else crs_x,
+        crs_column = crs_column,
+        x_geom     = x_geom
     )
 
     return(result)
@@ -262,7 +257,6 @@ ddbs_union <- function(
     tmp.query <- build_union_query(
       by_feature = FALSE,
       mode       = "duckspatial",   # no WKB needed when writing to table
-      view_name  = NULL,
       name_query = name_list$query_name,
       x_geom     = x_geom,
       crs_column = crs_column,
@@ -274,13 +268,11 @@ ddbs_union <- function(
     return(invisible(TRUE))
   }
 
-  ## In-memory result
-  view_name <- if (mode == "duckspatial") ddbs_temp_view_name() else NULL
+  ## Create the base query
 
-  tmp.query <- build_union_query(
+  base.query <- build_union_query(
     by_feature = FALSE,
     mode       = mode,
-    view_name  = view_name,
     name_query = NULL,
     x_geom     = x_geom,
     crs_column = crs_column,
@@ -288,13 +280,12 @@ ddbs_union <- function(
   )
 
   result <- ddbs_handle_query(
-    query      = tmp.query,
-    view_name  = view_name,
-    conn       = target_conn,
-    mode       = mode,
-    crs        = if (!is.null(crs)) crs else crs_x,
-    crs_column = crs_column,
-    x_geom     = x_geom
+      query      = base.query,
+      conn       = target_conn,
+      mode       = mode,
+      crs        = if (!is.null(crs)) crs else crs_x,
+      crs_column = crs_column,
+      x_geom     = x_geom
   )
 
   return(result)
@@ -398,23 +389,8 @@ ddbs_combine <- function(
   
   
     # 5. Apply geospatial operation
-
-    ## 5.1. Create the query based on output
-    if (mode == "duckspatial") {
-      view_name <- ddbs_temp_view_name()
-      tmp.query <- glue::glue("
-        CREATE TEMP VIEW {view_name} AS
-        {base.query}
-      ")
-    } else {
-      view_name <- NULL
-      tmp.query <- base.query
-    }
-
-    ## 5.2. Handle the output
     result <- ddbs_handle_query(
-        query      = tmp.query,
-        view_name  = view_name,
+        query      = base.query,
         conn       = target_conn,
         mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
@@ -529,23 +505,8 @@ ddbs_union_agg <- function(
 
 
   # 4. Apply geospatial operation
-
-  ## 4.1. Create the query based on output
-  if (mode == "duckspatial") {
-    view_name <- ddbs_temp_view_name()
-    tmp.query <- glue::glue("
-      CREATE TEMP VIEW {view_name} AS
-      {base.query}
-    ")
-  } else {
-    view_name <- NULL
-    tmp.query <- base.query
-  }
-
-  ## 4.2. Handle the output
   result <- ddbs_handle_query(
-      query      = tmp.query,
-      view_name  = view_name,
+      query      = base.query,
       conn       = target_conn,
       mode       = mode,
       crs        = if (!is.null(crs)) crs else crs_x,

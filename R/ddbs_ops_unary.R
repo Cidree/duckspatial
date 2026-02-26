@@ -806,8 +806,7 @@ ddbs_transform <- function(
 
     ## warn if the crs is the same
     if (crs_x$input == crs_y$input) cli::cli_warn("The CRS of `x` and `y` is the same.")
-
-
+    
     # 3. Prepare parameters for the query
 
     ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
@@ -826,6 +825,18 @@ ddbs_transform <- function(
     } else {
         ""
     }
+
+    ## build the base query
+    ## always_xy assumes [northing, easting]
+    st_function <- glue::glue("ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)")
+    base.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            '{crs_y$input}' AS '{crs_column}',
+            {build_geom_query(st_function, mode)} as {x_geom} 
+        FROM 
+            {x_list$query_name};
+    ")
 
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -853,36 +864,8 @@ ddbs_transform <- function(
     }
 
     # 5. Apply geospatial operation
-  
-    ## 5.1. Create the query based on mode
-    ## always_xy assumes [northing, easting]
-    if (mode == "duckspatial") {
-      view_name <- ddbs_temp_view_name()
-      tmp.query <- glue::glue("
-        CREATE TEMP VIEW {view_name} AS
-            SELECT 
-                {x_rest}
-                '{crs_y$input}' AS '{crs_column}',
-                ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}') as {x_geom} 
-            FROM 
-                {x_list$query_name};
-        ")
-    } else {
-      view_name <- NULL
-      tmp.query <- glue::glue("
-        SELECT 
-            {x_rest}
-            '{crs_y$input}' AS '{crs_column}',
-            ST_AsWKB(ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)) as {x_geom} 
-        FROM 
-            {x_list$query_name};
-        ")
-    }
-  
-    ## 5.2. Handle the output
     result <- ddbs_handle_query(
-        query      = tmp.query,
-        view_name  = view_name,
+        query      = base.query,
         conn       = target_conn,
         mode       = mode,
         crs        = crs_y,
@@ -1100,23 +1083,8 @@ ddbs_polygonize <- function(
 
 
     # 5. Apply geospatial operation
-  
-    ## 5.1. Create the query based on mode
-    if (mode == "duckspatial") {
-      view_name <- ddbs_temp_view_name()
-      tmp.query <- glue::glue("
-        CREATE TEMP VIEW {view_name} AS
-        {base.query}
-      ")
-    } else {
-      view_name <- NULL
-      tmp.query <- base.query
-    }
-  
-    ## 5.2. Handle the output
     result <- ddbs_handle_query(
-        query      = tmp.query,
-        view_name  = view_name,
+        query      = base.query,
         conn       = target_conn,
         mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,

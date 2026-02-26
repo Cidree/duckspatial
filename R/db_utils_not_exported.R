@@ -1014,7 +1014,6 @@ ddbs_handle_output <- function(
 #' @returns Object of the specified mode type
 ddbs_handle_query <- function(
   query, 
-  view_name,
   conn, 
   mode = NULL, 
   crs = NULL, 
@@ -1023,7 +1022,6 @@ ddbs_handle_query <- function(
 ) { # nocov start
   
   # Resolve mode type: parameter > global option > default
-
   if (is.null(mode)) {
     mode <- getOption("duckspatial.mode", "duckspatial")
   }
@@ -1053,6 +1051,14 @@ ddbs_handle_query <- function(
     
   } else {
     # mode == "duckspatial"
+
+    # Create a view name and the query
+    view_name <- ddbs_temp_view_name()
+    query <- glue::glue("
+      CREATE TEMP VIEW {view_name} AS
+      {query};
+    ")
+
     # Create the view
     DBI::dbExecute(conn, query)
 
@@ -1449,7 +1455,6 @@ build_union_sql <- function(
 build_union_query <- function(
   by_feature, 
   mode, 
-  view_name, 
   name_query,
   x_geom, 
   y_geom = NULL, 
@@ -1470,8 +1475,6 @@ build_union_query <- function(
 
   prefix <- if (!is.null(name_query)) {
     glue::glue("CREATE TABLE {name_query} AS")
-  } else if (mode == "duckspatial") {
-    glue::glue("CREATE TEMP VIEW {view_name} AS")
   } else {
     ""
   }
