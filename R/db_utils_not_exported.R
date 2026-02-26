@@ -1055,7 +1055,7 @@ ddbs_handle_query <- function(
     # Create a view name and the query
     view_name <- ddbs_temp_view_name()
     query <- glue::glue("
-      CREATE TEMP VIEW {view_name} AS
+      CREATE TEMP TABLE {view_name} AS
       {query};
     ")
 
