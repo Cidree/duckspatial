@@ -23,7 +23,7 @@ test_that("ddbs_filter works with mixed inputs", {
     )
     
   # TEST 1: filter(sf, sf) -> covered implicitly by other tests, but good to have
-  res1 <- ddbs_filter(p_sf, c_sf, output = "sf")
+  res1 <- ddbs_filter(p_sf, c_sf, mode = "sf")
   expect_s3_class(res1, "sf")
   
   # TEST 2: filter(duckspatial_df, sf)

@@ -18,7 +18,7 @@ tester <- function(x = points_sf,
                    crs = NULL,
                    crs_column = "crs_duckspatial",
                    distance = NULL,
-                   output = "sf",
+                   mode = "sf",
                    overwrite = FALSE,
                    quiet = FALSE) {
     ddbs_filter(
@@ -30,7 +30,7 @@ tester <- function(x = points_sf,
         crs = crs,
         crs_column = crs_column,
         distance = distance,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet
     )
@@ -82,8 +82,7 @@ testthat::test_that("expected behavior", {
 
 
     # show and suppress messages
-    testthat::expect_message( tester() )
-    testthat::expect_no_message( tester(quiet = TRUE))
+    testthat::expect_no_message( tester() )
 
 
 })
@@ -169,7 +168,7 @@ testthat::test_that("ddbs_filter works with duckspatial_df inputs", {
   expect_s3_class(result2, "duckspatial_df")
   
   # 3. sf x duckspatial_df
-  withr::with_options(list(duckspatial.output_type = "sf"), {
+  withr::with_options(list(duckspatial.mode = "sf"), {
       r_sf <- ddbs_filter(points_small_sf, argentina_ds, predicate = "intersects")
       expect_s3_class(r_sf, "sf")
   })
@@ -202,16 +201,12 @@ testthat::test_that("ddbs_filter works with different predicates", {
 
 # output parameters ------------------------------------------------------------
 
-testthat::test_that("ddbs_filter respects output parameter", {
-  result_sf <- ddbs_filter(points_sf, argentina_sf, output = "sf")
+testthat::test_that("ddbs_filter respects mode parameter", {
+  result_sf <- ddbs_filter(points_sf, argentina_sf, mode = "sf")
   expect_s3_class(result_sf, "sf")
   
-  result_ds <- ddbs_filter(points_sf, argentina_sf, output = "duckspatial_df")
+  result_ds <- ddbs_filter(points_sf, argentina_sf, mode = "duckspatial")
   expect_s3_class(result_ds, "duckspatial_df")
-  
-  result_tibble <- ddbs_filter(points_sf, argentina_sf, output = "tibble")
-  expect_s3_class(result_tibble, "tbl_df")
-  expect_true(!inherits(result_tibble, "sf")) 
 })
 
 # error handling ---------------------------------------------------------------

@@ -16,11 +16,11 @@
 #' @template crs
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #'
 #' @template spatial_join_predicates
 #'
@@ -75,7 +75,7 @@ ddbs_filter <- function(
     crs = NULL,
     crs_column = "crs_duckspatial",
     distance = NULL,
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -85,7 +85,7 @@ ddbs_filter <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     
@@ -107,6 +107,10 @@ ddbs_filter <- function(
     # Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, validate character table names
     x <- normalize_spatial_input(x, conn_x)
     y <- normalize_spatial_input(y, conn_y)
+
+    ## Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
     
     # 3. Manage connection to DB
     ## 3.1. Resolve connections and handle imports
@@ -116,13 +120,14 @@ ddbs_filter <- function(
     # helper (defined in db_utils_not_exported.R) to maintain consistency with ddbs_join
     # and other two-input spatial functions. See tests/testthat/test-resolve_connections.R
     # for regression tests covering cross-connection scenarios.
-    
     target_conn <- resolve_res$conn
     x <- resolve_res$x
     y <- resolve_res$y
     
-    # Register cleanup
-    on.exit(resolve_res$cleanup(), add = TRUE)
+    ## register cleanup of the connection
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_res$cleanup(), add = TRUE)   
+    }
     
     ## 3.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
@@ -159,69 +164,8 @@ ddbs_filter <- function(
     ## 4.4. Format column lists for SQL
     x_rest <- if (length(x_rest_cols) > 0) paste0('v1."', x_rest_cols, '", ', collapse = '') else ""
 
-    ## 5. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## if distance is not specified, it will use ST_Within
-        if (sel_pred == "ST_DWithin") {
-
-            ## check the CRS units to use the right function
-            crs_units <- crs_x$units_gdal
-            if (crs_units != "metre") {
-                st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(v1.{x_geom}), ST_FlipCoordinates(v2.{y_geom}), {distance})")
-                if (crs_x$input != "EPSG:4326") {
-                    cli::cli_warn(
-                    "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
-                    )
-                }
-            } else {
-                st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
-            }
-
-            if (is.null(distance)) {
-                cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
-                distance <- 0
-            }
-
-            tmp.query <- glue::glue("
-                CREATE TABLE {name_list$query_name} AS
-                SELECT DISTINCT 
-                    {x_rest} 
-                    v1.{x_geom} AS {x_geom}
-                FROM 
-                    {x_list$query_name} v1, 
-                    {y_list$query_name} v2
-                WHERE 
-                    {st_predicate}
-            ")
-
-        } else {
-            tmp.query <- glue::glue("
-                CREATE TABLE {name_list$query_name} AS
-                SELECT DISTINCT 
-                    {x_rest} 
-                    v1.{x_geom} AS {x_geom}
-                FROM 
-                    {x_list$query_name} v1, 
-                    {y_list$query_name} v2
-                WHERE 
-                    {sel_pred}(v1.{x_geom}, v2.{y_geom})
-            ")
-        }
-
-        ## execute filter query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    ## 6. Get data frame
+    ## 4.5. Build base query
+    st_function <- glue::glue("v1.{x_geom}")
     if (sel_pred == "ST_DWithin") {
 
         ## check the CRS units to use the right function
@@ -243,45 +187,53 @@ ddbs_filter <- function(
             distance <- 0
         }
 
-        data_tbl <- DBI::dbGetQuery(
-            target_conn, glue::glue("
-                SELECT DISTINCT 
-                    {x_rest} 
-                    ST_AsWKB(v1.{x_geom}) AS {x_geom}
-                FROM 
-                    {x_list$query_name} v1, 
-                    {y_list$query_name} v2
-                WHERE 
-                    {st_predicate}
-            ")
-        )
-
     } else {
-        data_tbl <- DBI::dbGetQuery(
-            target_conn, glue::glue("
-                SELECT DISTINCT 
-                    {x_rest} 
-                    ST_AsWKB(v1.{x_geom}) AS {x_geom}
-                FROM 
-                    {x_list$query_name} v1, 
-                    {y_list$query_name} v2
-                WHERE 
-                    {sel_pred}(v1.{x_geom}, v2.{y_geom})
-            ")
-        )
+        st_predicate <- glue::glue("{sel_pred}(v1.{x_geom}, v2.{y_geom})")
     }
 
-    ## 7. Handle output based on output parameter
-    result <- ddbs_handle_output(
-        data       = data_tbl,
+    base.query <- glue::glue("
+        SELECT DISTINCT 
+            {x_rest} 
+            {build_geom_query(st_function, mode)} AS {x_geom}
+        FROM 
+            {x_list$query_name} v1, 
+            {y_list$query_name} v2
+        WHERE 
+            {st_predicate}
+    ")
+
+
+    # 5. if name is not NULL (i.e. no SF returned)
+    if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
+        ## handle overwrite
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
+
+        ## create query
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            {base.query}
+        ")        
+
+        ## execute filter query
+        DBI::dbExecute(target_conn, tmp.query)
+        feedback_query(quiet)
+        return(invisible(TRUE))
+    }
+
+    # 6. Apply geospatial operation 
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
     return(result)
 
 }
