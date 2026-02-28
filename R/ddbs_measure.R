@@ -303,12 +303,18 @@ ddbs_distance <- function(
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
   quiet = FALSE) {
 
   # 0. Handle errors
   assert_xy(x, "x")
   assert_xy(y, "y")
   assert_name(dist_type, "dist_type")
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
 
 
@@ -329,6 +335,9 @@ ddbs_distance <- function(
   ## validate character table names
   x <- normalize_spatial_input(x, conn_x)
   y <- normalize_spatial_input(y, conn_y)
+
+  ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
+  mode <- get_mode(mode, name)
 
 
   # 2. Manage connection to DB
@@ -438,32 +447,100 @@ ddbs_distance <- function(
     coords <- glue::glue("x.{x_geom}, y.{y_geom}")
   }
   
-  ## 3.2. create query
-  tmp.query <- glue::glue("
+  ## 3.2. Create query and get results based on mode
+  if (mode == "sf") {
+
+    ## Create the query
+    tmp.query <- glue::glue("
       SELECT {st_distance_fun}({coords}) as distance
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
-  ")
+    ")
 
-  ## 3.3. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+    ## Retrieve results
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  ## convert to matrix
-  # get number of rows
-  nrowx <- get_nrow(target_conn, x_list$query_name)
-  nrowy <- get_nrow(target_conn, y_list$query_name)
+    ## Cconvert to matrix
+    ## Get number of rows
+    nrowx <- get_nrow(target_conn, x_list$query_name)
+    nrowy <- get_nrow(target_conn, y_list$query_name)
 
-  ## convert results to matrix -> to list
-  ## return matrix if sparse = FALSE
-  dist_mat  <- matrix(
-      data_tbl[["distance"]],
-      nrow = nrowx,
-      ncol = nrowy,
-      byrow = TRUE
-  )
+    ## Convert results to matrix -> to list
+    ## Return sparse matrix
+    dist_mat  <- matrix(
+        data_tbl[["distance"]],
+        nrow = nrowx,
+        ncol = nrowy,
+        byrow = TRUE
+    )
 
-  ## set units
-  dist_mat <- units::set_units(dist_mat, "metre")
+    ## Set units and return the resulting matrix
+    dist_mat <- units::set_units(dist_mat, "metre")
+    return(dist_mat)
 
-  return(dist_mat)
+  } else {
+
+    # if (isTRUE(sparse)) {
+
+      ## Subqueries for generating row ids
+      x_query <- glue::glue("SELECT row_number() OVER () AS x_id, * FROM {x_list$query_name}")
+      y_query <- glue::glue("SELECT row_number() OVER () AS y_id, * FROM {y_list$query_name}")
+
+      ## Generate the query
+      view_name <- ddbs_temp_view_name()
+      tmp.query <- glue::glue("
+          CREATE TEMP TABLE {view_name} AS
+          SELECT 
+              x.x_id,
+              y.y_id,
+              {st_distance_fun}({coords}) AS distance
+          FROM ({x_query}) x
+          CROSS JOIN ({y_query}) y
+      ")
+
+      ## Create a table, and return a pointer to that table
+      DBI::dbExecute(target_conn, tmp.query)
+      dist_tbl <- dplyr::tbl(target_conn, view_name)
+      return(dist_tbl)
+
+    # } else {
+
+    #   # First get the y_ids to build the pivot column list
+    #   y_ids <- DBI::dbGetQuery(
+    #       target_conn, 
+    #       glue::glue("SELECT row_number() OVER () AS y_id FROM {y_list$query_name}")
+    #   )$y_id
+
+    #   pivot_cols <- paste0("y_", y_ids)
+    #   pivot_list <- paste(
+    #       glue::glue("SUM(CASE WHEN y_id = {y_ids} THEN distance END) AS y_{y_ids}"),
+    #       collapse = ",\n"
+    #   )
+
+    #   view_name <- ddbs_temp_view_name()
+    #   tmp.query <- glue::glue("
+    #       CREATE TEMP TABLE {view_name} AS
+    #       WITH long AS (
+    #           SELECT 
+    #               x.x_id,
+    #               y.y_id,
+    #               {st_distance_fun}({coords}) AS distance
+    #           FROM (SELECT row_number() OVER () AS x_id, * FROM {x_list$query_name}) x
+    #           CROSS JOIN (SELECT row_number() OVER () AS y_id, * FROM {y_list$query_name}) y
+    #       )
+    #       SELECT 
+    #           x_id,
+    #           {pivot_list}
+    #       FROM long
+    #       GROUP BY x_id
+    #       ORDER BY x_id
+    #   ")
+
+    #   DBI::dbExecute(target_conn, tmp.query)
+    #   dist_wide_tbl <- dplyr::tbl(target_conn, view_name)
+    #   return(dist_wide_tbl)
+    # }
+
+  }
+  
 }

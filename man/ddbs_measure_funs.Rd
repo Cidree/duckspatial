@@ -51,6 +51,9 @@ ddbs_distance(
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
   quiet = FALSE
 )
 }

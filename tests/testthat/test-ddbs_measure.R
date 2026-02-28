@@ -13,11 +13,15 @@ conn_test <- duckspatial::ddbs_create_conn()
 nc_4326_sf <- ddbs_transform(nc_sf, "EPSG:4326")
 nc_ddbs <- as_duckspatial_df(nc_4326_sf)
 
+## select a sample of points
+points_sample_sf <- head(points_sf, 10)
+points_sample_ddbs <- as_duckspatial_df(points_sample_sf)
+
 ## write some data
 duckspatial::ddbs_write_vector(conn_test, countries_sf, "countries")
 duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "nc")
 duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "rivers")
-duckspatial::ddbs_write_vector(conn_test, points_ddbs, "points")
+duckspatial::ddbs_write_vector(conn_test, points_sample_ddbs, "points")
 
 
 # 1. ddbs_area -----------------------------------------------------------
@@ -429,7 +433,7 @@ describe("ddbs_length()", {
     
     it("returns 0 for polygons and points", {
       output_polygons <- ddbs_length(countries_sf, new_column = NULL) |> as.numeric()
-      output_points   <- ddbs_length(points_sf, new_column = NULL) |> as.numeric()
+      output_points   <- ddbs_length(points_sample_sf, new_column = NULL) |> as.numeric()
       
       expect_true(all(output_polygons == 0))
       expect_true(all(output_points == 0))
@@ -644,32 +648,33 @@ describe("ddbs_distance()", {
   describe("expected behavior", {
     
     it("works on all formats", {
-      output_sf_ddbs   <- ddbs_distance(points_sf, points_ddbs)
-      output_ddbs_sf   <- ddbs_distance(points_ddbs, points_sf)
-      output_sf_sf     <- ddbs_distance(points_sf, points_sf)
-      output_ddbs_ddbs <- ddbs_distance(points_ddbs, points_ddbs)
-      output_conn_sf   <- ddbs_distance("points", points_sf, conn = conn_test)
-      output_sf_conn   <- ddbs_distance(points_sf, "points", conn = conn_test)
+      output_sf_ddbs   <- ddbs_distance(points_sample_sf, points_sample_ddbs) |> collect()
+      output_ddbs_sf   <- ddbs_distance(points_sample_ddbs, points_sample_sf) |> collect()
+      output_sf_sf     <- ddbs_distance(points_sample_sf, points_sample_sf) |> collect()
+      output_ddbs_ddbs <- ddbs_distance(points_sample_ddbs, points_sample_ddbs) |> collect()
+      output_conn_sf   <- ddbs_distance("points", points_sample_sf, conn = conn_test) |> collect()
+      ## This one retrieves the result in a different order, but same results
+      output_sf_conn   <- ddbs_distance(points_sample_sf, "points", conn = conn_test) |> collect()
       
       expect_equal(output_sf_ddbs, output_ddbs_sf)
       expect_equal(output_sf_ddbs, output_sf_sf)
       expect_equal(output_sf_ddbs, output_ddbs_ddbs)
       expect_equal(output_sf_ddbs, output_conn_sf)
-      expect_equal(output_sf_ddbs, output_sf_conn)
+      expect_equal(output_sf_ddbs, output_sf_conn |> dplyr::arrange(y_id, x_id))
     })
     
     it("warns when mixing DuckDB table with duckspatial_df from different connections", {
-      expect_warning(ddbs_distance("points", points_ddbs, conn = conn_test))
-      expect_warning(ddbs_distance(points_ddbs, "points", conn = conn_test))
+      expect_warning(ddbs_distance("points", points_sample_ddbs, conn = conn_test))
+      expect_warning(ddbs_distance(points_sample_ddbs, "points", conn = conn_test))
     })
 
     it("warns when using a geographic CRS different than WGS84", {
-      points_nad83 <- ddbs_transform(points_ddbs, "EPSG:4269") |> head()
+      points_nad83 <- ddbs_transform(points_sample_ddbs, "EPSG:4269") |> head()
       expect_warning(ddbs_distance(points_nad83, points_nad83))
     })
     
-    it("returns a units matrix", {
-      output <- ddbs_distance(points_sf, points_ddbs)
+    it("returns a units matrix with mode sf", {
+      output <- ddbs_distance(points_sample_sf, points_sample_ddbs, mode = "sf")
       expect_s3_class(output, "units")
       expect_equal(
         class(units::drop_units(output)), 
@@ -678,41 +683,41 @@ describe("ddbs_distance()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_distance(points_sf, points_ddbs))
-      expect_no_message(ddbs_distance(points_sf, points_ddbs, quiet = TRUE))
+      expect_message(ddbs_distance(points_sample_sf, points_sample_ddbs))
+      expect_no_message(ddbs_distance(points_sample_sf, points_sample_ddbs, quiet = TRUE))
     })
 
     it("works with dist_type = harvesine", {
-      haversine_res <- ddbs_distance(points_ddbs, points_ddbs, dist_type = "haversine")
-      expect_s3_class(haversine_res, "units")
+      haversine_res <- ddbs_distance(points_sample_ddbs, points_sample_ddbs, dist_type = "haversine")
+      expect_s3_class(haversine_res, "tbl_duckdb_connection")
     })
 
     it("works with dist_type = spheroid", {
-      spheroid_res <- ddbs_distance(points_ddbs, points_ddbs, dist_type = "spheroid")
-      expect_s3_class(spheroid_res, "units")
+      spheroid_res <- ddbs_distance(points_sample_ddbs, points_sample_ddbs, dist_type = "spheroid")
+      expect_s3_class(spheroid_res, "tbl_duckdb_connection")
     })
 
     it("works with dist_type = planar", {
-      points_3857_ddbs <- ddbs_transform(points_ddbs, "EPSG:3857")
+      points_3857_ddbs <- ddbs_transform(points_sample_ddbs, "EPSG:3857")
       planar_res <- ddbs_distance(points_3857_ddbs, points_3857_ddbs, dist_type = "planar")
-      expect_s3_class(planar_res, "units")
+      expect_s3_class(planar_res, "tbl_duckdb_connection")
     })
 
     it("works with dist_type = geos", {
-      points_3857_ddbs <- ddbs_transform(points_ddbs, "EPSG:3857")
+      points_3857_ddbs <- ddbs_transform(points_sample_ddbs, "EPSG:3857")
       geos_res <- ddbs_distance(points_3857_ddbs, points_3857_ddbs, dist_type = "geos")
-      expect_s3_class(geos_res, "units")
+      expect_s3_class(geos_res, "tbl_duckdb_connection")
     })
 
     it("works with default dist_type for geographic", {
-      spheroid_res <- ddbs_distance(points_ddbs, points_ddbs)
-      expect_s3_class(spheroid_res, "units")
+      spheroid_res <- ddbs_distance(points_sample_ddbs, points_sample_ddbs)
+      expect_s3_class(spheroid_res, "tbl_duckdb_connection")
     })
 
     it("works with default dist_type for projected", {
-      points_3857_ddbs <- ddbs_transform(points_ddbs, "EPSG:3857")
+      points_3857_ddbs <- ddbs_transform(points_sample_ddbs, "EPSG:3857")
       spheroid_res <- ddbs_distance(points_3857_ddbs, points_3857_ddbs)
-      expect_s3_class(spheroid_res, "units")
+      expect_s3_class(spheroid_res, "tbl_duckdb_connection")
     })
 
   })
@@ -723,30 +728,30 @@ describe("ddbs_distance()", {
   describe("errors", {
 
     it("validates dist_type argument", {
-      expect_error(ddbs_distance(points_sf, points_ddbs, dist_type = "best_dist"))
-      expect_error(ddbs_distance(points_sf, points_ddbs, dist_type = TRUE))
-      expect_error(ddbs_distance(points_sf, points_ddbs, dist_type = 5))
+      expect_error(ddbs_distance(points_sample_sf, points_sample_ddbs, dist_type = "best_dist"))
+      expect_error(ddbs_distance(points_sample_sf, points_sample_ddbs, dist_type = TRUE))
+      expect_error(ddbs_distance(points_sample_sf, points_sample_ddbs, dist_type = 5))
     })
 
     it("error when using planar/geos with geographic coords", {
-      expect_error(ddbs_distance(points_ddbs, points_ddbs, dist_type = "geos"))
-      expect_error(ddbs_distance(points_ddbs, points_ddbs, dist_type = "planar"))
+      expect_error(ddbs_distance(points_sample_ddbs, points_sample_ddbs, dist_type = "geos"))
+      expect_error(ddbs_distance(points_sample_ddbs, points_sample_ddbs, dist_type = "planar"))
     })
 
     it("error when using geogrpahic coords in geometry different than point", {
-      expect_error(ddbs_distance(points_ddbs, nc_4326_sf, dist_type = "haversine"))
-      expect_error(ddbs_distance(points_ddbs, nc_4326_sf, dist_type = "spheroid"))
+      expect_error(ddbs_distance(points_sample_ddbs, nc_4326_sf, dist_type = "haversine"))
+      expect_error(ddbs_distance(points_sample_ddbs, nc_4326_sf, dist_type = "spheroid"))
     })
 
     it("error when using haversine/spheroid in projected CRS", {
-      points_3857_ddbs <- ddbs_transform(points_ddbs, "EPSG:3857")
+      points_3857_ddbs <- ddbs_transform(points_sample_ddbs, "EPSG:3857")
       expect_error(ddbs_distance(points_3857_ddbs, points_3857_ddbs, dist_type = "haversine"))
       expect_error(ddbs_distance(points_3857_ddbs, points_3857_ddbs, dist_type = "spheroid"))
     })
     
     it("requires both x and y arguments", {
-      expect_error(ddbs_distance(x = points_ddbs))
-      expect_error(ddbs_distance(y = points_ddbs))
+      expect_error(ddbs_distance(x = points_sample_ddbs))
+      expect_error(ddbs_distance(y = points_sample_ddbs))
     })
     
     it("requires connection when using table names", {
@@ -754,29 +759,29 @@ describe("ddbs_distance()", {
     })
     
     it("requires matching CRS between x and y", {
-      points_3857_sf <- sf::st_transform(points_sf, "EPSG:3857")
+      points_3857_sf <- sf::st_transform(points_sample_sf, "EPSG:3857")
       
-      expect_error(ddbs_distance(points_sf, points_3857_sf))
-      expect_error(ddbs_distance(points_3857_sf, points_ddbs))
+      expect_error(ddbs_distance(points_sample_sf, points_3857_sf))
+      expect_error(ddbs_distance(points_3857_sf, points_sample_ddbs))
     })
     
     it("requires matching geometry types", {
-      expect_error(ddbs_distance(argentina_sf, points_ddbs))
-      expect_error(ddbs_distance(points_ddbs, argentina_sf))
-      expect_error(ddbs_distance(points_sf, sf::st_transform(rivers_sf, sf::st_crs(points_sf))))
+      expect_error(ddbs_distance(argentina_sf, points_sample_ddbs))
+      expect_error(ddbs_distance(points_sample_ddbs, argentina_sf))
+      expect_error(ddbs_distance(points_sample_sf, sf::st_transform(rivers_sf, sf::st_crs(points_sample_sf))))
     })
     
     it("validates x argument type", {
       expect_error(ddbs_distance(x = 999))
-      expect_error(ddbs_distance(x = "999", points_ddbs, conn = conn_test))
+      expect_error(ddbs_distance(x = "999", points_sample_ddbs, conn = conn_test))
     })
     
     it("validates conn argument type", {
-      expect_error(ddbs_distance(points_ddbs, points_ddbs, conn = 999))
+      expect_error(ddbs_distance(points_sample_ddbs, points_sample_ddbs, conn = 999))
     })
     
     it("validates quiet argument type", {
-      expect_error(ddbs_distance(points_ddbs, points_ddbs, quiet = 999))
+      expect_error(ddbs_distance(points_sample_ddbs, points_sample_ddbs, quiet = 999))
     })
   })
 })
