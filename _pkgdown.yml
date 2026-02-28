@@ -262,10 +262,7 @@ reference:
 - title: Measurements
   desc: Calculate areas, distances, lengths, and perimeters
   contents:
-  - ddbs_area
-  - ddbs_distance
-  - ddbs_length
-  - ddbs_perimeter
+  - ddbs_measure_funs
 
 - title: Database Utilities
   desc: Helper functions for managing DuckDB schemas and metadata

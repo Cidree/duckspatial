@@ -851,6 +851,19 @@ deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
 ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL, 
                                 crs_column = "crs_duckspatial", x_geom = "geometry") {
   # nocov start
+
+  # For simple data frames
+  if (is.null(crs) & length(x_geom) == 0) {
+    view_name <- ddbs_temp_view_name()
+    dplyr::copy_to(
+      conn,
+      data,
+      name = view_name
+    )
+
+    return(dplyr::tbl(conn, view_name))
+
+  }
   
   # Resolve output type: parameter > global option > default
 
@@ -998,6 +1011,9 @@ ddbs_default_conn <- function(create = TRUE) {
     conn <- ddbs_create_conn(dbdir = "memory")
     options(duckspatial_conn = conn)
   }
+
+  # Create macros for spatial extension
+  create_duckdb_macros(conn)
 
   conn
 }
@@ -1221,7 +1237,41 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 
 
 
-
+create_duckdb_macros <- function(conn) {
+  DBI::dbExecute(
+    conn,
+    "CREATE OR REPLACE MACRO ddbs_is_simple(geom) AS ST_IsSimple(geom);
+    CREATE OR REPLACE MACRO ddbs_is_valid(geom) AS ST_IsValid(geom);
+    CREATE OR REPLACE MACRO ddbs_is_closed(geom) AS ST_IsClosed(geom);
+    CREATE OR REPLACE MACRO ddbs_is_ring(geom) AS ST_IsRing(geom);
+    CREATE OR REPLACE MACRO ddbs_is_empty(geom) AS ST_IsEmpty(geom);
+    CREATE OR REPLACE MACRO ddbs_area(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Area_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Area(geom)
+      END
+    );
+    CREATE OR REPLACE MACRO ddbs_length(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Length_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Length(geom)
+      END
+    );
+    CREATE OR REPLACE MACRO ddbs_perimeter(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Perimeter_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Perimeter(geom)
+      END
+    );
+    CREATE OR REPLACE MACRO ddbs_union_agg(geom) AS ST_Union_Agg(geom);
+    CREATE OR REPLACE MACRO ddbs_union(geom) AS ST_Union_Agg(geom);
+    CREATE OR REPLACE MACRO 
+      ddbs_buffer(geometry, distance, num_triangles := 8, cap_style := 'CAP_ROUND', join_style := 'JOIN_ROUND', mitre_limit := 1) as 
+      ST_Buffer(geometry, distance, num_triangles, cap_style, join_style, mitre_limit)
+    "
+  )
+}
+  
 
 
 
