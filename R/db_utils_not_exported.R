@@ -886,83 +886,48 @@ deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
 #' Handle output type for duckspatial functions
 #'
 #' Converts a data frame/tibble result to the appropriate output type
-#' based on the `output` parameter or global options.
+#' based on the `mode` parameter or global options.
 #'
-#' @param data A data frame/tibble with a WKB geometry column
+#' @param query A query
 #' @param conn DuckDB connection
-#' @param output Character specifying output type: "duckspatial_df", "sf", or "tibble"
-#' @param crs CRS for the output (used for sf conversion)
-#' @param crs_column Column name containing CRS info (deprecated)
+#' @template mode
+#' @template crs
 #' @param x_geom Name of the geometry column
 #'
 #' @keywords internal
 #' @noRd
 #' @returns Object of the specified output type
 ddbs_handle_output <- function(
-  data, 
+  query, 
   conn, 
-  output = NULL, 
+  mode = NULL, 
   crs = NULL, 
   crs_column = "crs_duckspatial", 
   x_geom = "geometry"
 ) { # nocov start
   
-  # Resolve output type: parameter > global option > default
-
-  if (is.null(output)) {
-    output <- getOption("duckspatial.output_type", "duckspatial_df")
+  # Resolve mode type: parameter > global option > default
+  if (is.null(mode)) {
+    mode <- getOption("duckspatial.mode", "duckspatial")
   }
   
-  # Validate output type
-  valid_outputs <- c("duckspatial_df", "sf", "tibble", "raw", "geoarrow")
-  if (!output %in% valid_outputs) {
+  # Validate mode type
+  valid_modes <- c("duckspatial", "sf")
+  if (!mode %in% valid_modes) {
     cli::cli_abort(
-      "{.arg output} must be one of {.val {valid_outputs}}, not {.val {output}}."
+      "{.arg mode} must be one of {.val {valid_modes}}, not {.val {mode}}."
     )
   }
   
   # Handle based on output type
-  if (output == "tibble") {
-    # Remove geometry column and CRS column, return tibble
-    data[[x_geom]] <- NULL
-    if (crs_column %in% names(data)) {
-      data[[crs_column]] <- NULL
-    }
-    return(tibble::as_tibble(data))
-    
-  } else if (output == "raw") {
-    # Return directly (geometry is already WKB via collect)
-    return(tibble::as_tibble(data))
-      
-  } else if (output == "geoarrow") {
-    # Convert WKB to geoarrow_vctr
-    geom_data <- data[[x_geom]]
-    
-    # Needs geoarrow package
-    if (!requireNamespace("geoarrow", quietly = TRUE)) {
-      cli::cli_abort("Package {.pkg geoarrow} needed for output type 'geoarrow'.")
-    }
-    
-    if (!inherits(geom_data, "geoarrow_vctr")) {
-      # Strip blob attributes if present (DuckDB blobs sometimes have extra attrs)
-      attributes(geom_data) <- NULL
-      col_converted <- tryCatch({
-         geoarrow::as_geoarrow_vctr(
-            wk::new_wk_wkb(geom_data),
-            schema = geoarrow::geoarrow_wkb()
-         )
-      }, error = function(e) {
-         cli::cli_warn("Failed to convert to geoarrow: {conditionMessage(e)}")
-         geom_data
-      })
-      data[[x_geom]] <- col_converted
-    }
-    return(tibble::as_tibble(data))
+  if (mode == "sf") {
 
-  } else if (output == "sf") {
+    # Get the query
+    data_tbl <- DBI::dbGetQuery(conn, query)
+
     # Convert to sf object
     data_sf <- convert_to_sf_wkb(
-      data       = data,
+      data       = data_tbl,
       crs        = crs,
       crs_column = crs_column,
       x_geom     = x_geom
@@ -971,9 +936,13 @@ ddbs_handle_output <- function(
     
   } else {
     # output == "duckspatial_df"
+
+    # Get the data
+    data_tbl <- DBI::dbGetQuery(conn, query)
+
     # Convert to sf first, then wrap as duckspatial_df
     data_sf <- convert_to_sf_wkb(
-      data       = data,
+      data       = data_tbl,
       crs        = crs,
       crs_column = crs_column,
       x_geom     = x_geom
