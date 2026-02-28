@@ -14,7 +14,7 @@
 
 -   `ddbs_simplify()`: tolerance defaults to 0; gains a new argument `preserve_topology` specified before `conn` (#86).
 
--   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector (#83).
+-   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector. For materializing a vector in R, use `mode = "sf"` (#83).
 
 ## NEW FEATURES
 
@@ -41,6 +41,8 @@
 -   `ddbs_endpoint()`: extracts the endpoint of a linestring geometry (#91).
 
 -   `ddbs_flip_coordinates()`: swaps X and Y coordinates (#91).
+
+-   `ddbs_register_vector()`, `ddbs_write_vector()` and `ddbs_read_vector()` deprecated in favour of `ddbs_register_table()`, `ddbs_write_table()` and `ddbs_read_table()` (#100).
 
 ## MINOR CHANGES
 

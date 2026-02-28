@@ -987,7 +987,9 @@ ddbs_handle_query <- function(
   mode = NULL, 
   crs = NULL, 
   crs_column = "crs_duckspatial", 
-  x_geom = "geometry"
+  x_geom = "geometry",
+  fun_group = 1,
+  units = NULL
 ) { # nocov start
   
   # Resolve mode type: parameter > global option > default
@@ -1006,17 +1008,33 @@ ddbs_handle_query <- function(
   # Handle based on mode type
   if (mode == "sf") {
 
-    # Get the query
+    ## Get the query as a data frame
     data_tbl <- DBI::dbGetQuery(conn, query)
 
-    # Convert to sf object
-    data_sf <- convert_to_sf_wkb(
-      data       = data_tbl,
-      crs        = crs,
-      crs_column = crs_column,
-      x_geom     = x_geom
-    )
-    return(data_sf)
+    ## Manage sf output depending on the function group
+    ## - Group 1: functions that return a normal {sf} object (most of the funs)
+    ## - Group 2: functions that return a vector (units or not units)
+    if (fun_group == 1) {
+
+      ## Convert to sf object
+      data_sf <- convert_to_sf_wkb(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+      )
+      return(data_sf)
+
+    } else if (fun_group == 2) {
+      
+      ## Return units/non-units vector
+      if (is.null(units)) {
+        return(data_tbl[, 1])
+      } else {
+        return(units::as_units(data_tbl[, 1], units))
+      }
+      
+    }
     
   } else {
     # mode == "duckspatial"

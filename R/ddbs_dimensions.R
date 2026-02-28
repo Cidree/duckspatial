@@ -5,6 +5,11 @@
 #' @template x
 #' @template by_feature
 #' @template conn_null
+#' @template name
+#' @template new_column
+#' @template crs
+#' @template mode
+#' @template overwrite
 #' @template quiet
 #'
 #' @details
@@ -18,7 +23,13 @@
 #'   dimension typically represents a measurement along the geometry, such as distance
 #'   or time, and results in coordinates of the form (X, Y, M) or (X, Y, Z, M).
 #'
-#' @returns A logical vector
+#' @returns
+#' \itemize{
+#'   \item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+#'   \item \code{mode = "sf"}: An eagerly collected vector in R memory.
+#'   \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
+#' }
+#' 
 #' @examples
 #' \dontrun{
 #' ## load packages
@@ -53,14 +64,26 @@ NULL
 #' @export
 ddbs_has_z <- function(
   x,
-  by_feature = FALSE,
+  by_feature = TRUE,
   conn = NULL,
+  name = NULL,
+  new_column = "has_z",
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  mode = NULL,
+  overwrite = FALSE,
   quiet = FALSE) {
   
-  template_has(    
+  template_new_column(  
     x = x,
     by_feature = by_feature,
     conn = conn,
+    name = name,
+    new_column = new_column,
+    crs = crs,
+    crs_column = crs_column,
+    mode = mode,
+    overwrite = overwrite,
     quiet = quiet,
     fun = "ST_HasZ"
   )
@@ -74,14 +97,26 @@ ddbs_has_z <- function(
 #' @export
 ddbs_has_m <- function(
   x,
-  by_feature = FALSE,
+  by_feature = TRUE,
   conn = NULL,
+  name = NULL,
+  new_column = "has_m",
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  mode = NULL,
+  overwrite = FALSE,
   quiet = FALSE) {
   
-  template_has(    
+  template_new_column(  
     x = x,
     by_feature = by_feature,
     conn = conn,
+    name = name,
+    new_column = new_column,
+    crs = crs,
+    crs_column = crs_column,
+    mode = mode,
+    overwrite = overwrite,
     quiet = quiet,
     fun = "ST_HasM"
   )

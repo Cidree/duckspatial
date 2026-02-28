@@ -24,13 +24,9 @@
 #' @returns 
 #' For \code{ddbs_area}, \code{ddbs_length}, and \code{ddbs_perimeter}:
 #' \itemize{
-#'   \item When \code{new_column = NULL}: Returns a \code{units} vector in meters (length/perimeter) or square meters (area).
-#'   \item When \code{new_column} is specified: Output depends on the \code{mode} argument:
-#'     \itemize{
-#'       \item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
-#'       \item \code{sf}: An eagerly collected \code{sf} object in R memory.
-#'     }
-#'   \item When \code{name} is provided: Also writes to DuckDB and returns \code{TRUE} (invisibly).
+#'   \item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+#'   \item \code{mode = "sf"}: An eagerly collected vector in R memory.
+#'   \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
 #' }
 #' 
 #' For \code{ddbs_distance}: A \code{units} matrix in meters with dimensions nrow(x), nrow(y).

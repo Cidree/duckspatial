@@ -34,10 +34,10 @@ describe("ddbs_is_valid()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_valid(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_valid("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_valid(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_valid("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -56,7 +56,7 @@ describe("ddbs_is_valid()", {
     
     it("returns different output formats", {
       output_sf_fmt <- ddbs_is_valid(countries_2_ddbs, mode = "sf")
-      expect_s3_class(output_sf_fmt, "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
@@ -80,7 +80,7 @@ describe("ddbs_is_valid()", {
 
     it("matches sf::st_is_valid results", {
       ## Review why Antarctica is not valid in Duckdb, but it's valid in sf
-      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, new_column = NULL)
+      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, mode = "sf")
       sf_output <- sf::st_is_valid(countries_2_sf)
       
       expect_equal(output_ddbs_vec[-4], sf_output[-4])
@@ -140,10 +140,10 @@ describe("ddbs_is_simple()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_simple(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_simple("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_simple(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_simple("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -162,7 +162,7 @@ describe("ddbs_is_simple()", {
     
     it("returns different output formats", {
       output_sf_fmt <- ddbs_is_simple(countries_2_ddbs, mode = "sf")
-      expect_s3_class(output_sf_fmt, "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
@@ -185,7 +185,7 @@ describe("ddbs_is_simple()", {
     })
 
     it("matches sf::st_is_valid results", {
-      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, new_column = NULL)
+      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, mode = "sf")
       sf_output <- sf::st_is_simple(countries_2_sf)
       
       expect_equal(output_ddbs_vec, sf_output)
@@ -245,10 +245,10 @@ describe("ddbs_is_empty()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_empty(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_empty("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_empty(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_empty("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -267,7 +267,7 @@ describe("ddbs_is_empty()", {
     
     it("returns different output formats", {
       output_sf_fmt <- ddbs_is_empty(countries_2_ddbs, mode = "sf")
-      expect_s3_class(output_sf_fmt, "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
@@ -290,7 +290,7 @@ describe("ddbs_is_empty()", {
     })
 
     it("matches sf::st_is_valid results", {
-      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, new_column = NULL)
+      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, mode = "sf")
       sf_output <- sf::st_is_empty(countries_2_sf)
       
       expect_equal(output_ddbs_vec, sf_output)
@@ -350,10 +350,10 @@ describe("ddbs_is_ring()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_ring(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_ring(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_ring("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_ring(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_ring(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_ring("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -372,7 +372,7 @@ describe("ddbs_is_ring()", {
     
     it("returns different output formats", {
       output_sf_fmt <- ddbs_is_ring(countries_2_ddbs, mode = "sf")
-      expect_s3_class(output_sf_fmt, "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
@@ -400,7 +400,7 @@ describe("ddbs_is_ring()", {
         geometry = sf::st_sfc(sf::st_linestring(coords))
       )
 
-      expect_true(ddbs_is_ring(closed_ring_sf, new_column = NULL))
+      expect_true(ddbs_is_ring(closed_ring_sf, mode = "sf"))
 
     })
     
@@ -481,10 +481,10 @@ describe("ddbs_is_closed()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_closed(lines_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_closed(lines_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_closed("lines", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_closed(lines_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_closed(lines_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_closed("lines", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -503,7 +503,7 @@ describe("ddbs_is_closed()", {
     
     it("returns different output formats", {
       output_sf_fmt <- ddbs_is_closed(lines_ddbs, mode = "sf")
-      expect_s3_class(output_sf_fmt, "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
@@ -531,7 +531,7 @@ describe("ddbs_is_closed()", {
         geometry = sf::st_sfc(sf::st_linestring(coords))
       )
 
-      expect_true(ddbs_is_closed(closed_ring_sf, new_column = NULL))
+      expect_true(ddbs_is_closed(closed_ring_sf, mode = "sf"))
 
     })
     

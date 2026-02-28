@@ -35,14 +35,12 @@
 #'   and last coordinates are identical. Unlike `ddbs_is_ring()`, this does not check for
 #'   simplicity.
 #' 
-#' @returns When `new_column = NULL` it returns a logical vector. When `new_column` is not NULL, the
-#' output depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
-#'   \itemize{
-#'     \item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
-#'     \item \code{sf}: An eagerly collected \code{sf} object in R memory.
-#'   }
-#'   When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
-#' 
+#' @returns
+#' \itemize{
+#'   \item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+#'   \item \code{mode = "sf"}: An eagerly collected vector in R memory.
+#'   \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
+#' }
 #' 
 #' @examples
 #' \dontrun{

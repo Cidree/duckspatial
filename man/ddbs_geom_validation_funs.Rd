@@ -87,8 +87,8 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{new_column}{Name of the new column to create on the input data. If NULL,
-the function will return a vector with the result}
+\item{new_column}{Name of the new column to create on the input data. Ignored
+with \code{mode = "sf"}.}
 
 \item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
@@ -112,13 +112,11 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-When \code{new_column = NULL} it returns a logical vector. When \code{new_column} is not NULL, the
-output depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
 \itemize{
-\item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
-\item \code{sf}: An eagerly collected \code{sf} object in R memory.
+\item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+\item \code{mode = "sf"}: An eagerly collected vector in R memory.
+\item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
 }
-When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Functions to check various geometric properties and validity conditions of spatial

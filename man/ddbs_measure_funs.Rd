@@ -68,8 +68,8 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{new_column}{Name of the new column to create on the input data. If NULL,
-the function will return a vector with the result}
+\item{new_column}{Name of the new column to create on the input data. Ignored
+with \code{mode = "sf"}.}
 
 \item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
@@ -106,13 +106,9 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 \value{
 For \code{ddbs_area}, \code{ddbs_length}, and \code{ddbs_perimeter}:
 \itemize{
-\item When \code{new_column = NULL}: Returns a \code{units} vector in meters (length/perimeter) or square meters (area).
-\item When \code{new_column} is specified: Output depends on the \code{mode} argument:
-\itemize{
-\item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
-\item \code{sf}: An eagerly collected \code{sf} object in R memory.
-}
-\item When \code{name} is provided: Also writes to DuckDB and returns \code{TRUE} (invisibly).
+\item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+\item \code{mode = "sf"}: An eagerly collected vector in R memory.
+\item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
 }
 
 For \code{ddbs_distance}: A \code{units} matrix in meters with dimensions nrow(x), nrow(y).
