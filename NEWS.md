@@ -10,7 +10,7 @@
 
 -   `ddbs_union()`: is split into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
 
--   `ddbs_length()`, `ddbs_area()` and `ddbs_distance()`: now use by default the best DuckDB function (e.g. `ST_Area()` or `ST_Area_Spheroid()`) depending on the input's CRS. They also return a `duckspatial_df` object by default rather than a materialized vector (#80, #82).
+-   `ddbs_length()`, `ddbs_area()` and `ddbs_distance()`: now use by default the best DuckDB function (e.g. `ST_Area()` or `ST_Area_Spheroid()`) depending on the input's CRS. They also return a `duckspatial_df` object by default rather than a materialized vector. In the case of `ddbs_distance()`, it returns a `tbl_duckdb_connection` (#80, #82, #103).
 
 -   `ddbs_simplify()`: tolerance defaults to 0; gains a new argument `preserve_topology` specified before `conn` (#86).
 
