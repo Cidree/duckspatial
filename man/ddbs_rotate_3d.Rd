@@ -93,7 +93,7 @@ countries_ddbs <- ddbs_open_dataset(
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_table(conn, countries_ddbs, "countries")
 
 ## rotate 45 degrees around X axis (pitch)
 ddbs_rotate_3d(conn = conn, "countries", angle = 45, axis = "x")

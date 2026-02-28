@@ -14,7 +14,7 @@
 #' @template conn_null
 #' @template name
 #' @param crs_column \link{Deprecated} a character string of length one specifying the column
-#'        storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
+#'        storing the CRS (created automatically by \code{\link{ddbs_write_table}}).
 #'        Set to `NULL` if absent.
 #' @template mode
 #' @template overwrite
@@ -64,7 +64,7 @@
 #' )
 #'
 #' # read the spatial table
-#' ddbs_read_vector(conn, "cities_spatial")
+#' ddbs_read_table(conn, "cities_spatial")
 #' }
 ddbs_as_spatial <- function(
     x,

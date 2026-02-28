@@ -181,10 +181,10 @@ reference:
   desc: Read and write spatial data to and from DuckDB
   contents:
   - ddbs_open_dataset
-  - ddbs_read_vector
+  - ddbs_read_table
   - ddbs_write_dataset
-  - ddbs_write_vector
-  - ddbs_register_vector
+  - ddbs_write_table
+  - ddbs_register_table
 
 - title: Spatial Predicates
   desc: Test spatial relationships between geometries

@@ -281,7 +281,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
   df <- dplyr::collect(source_object)
   
   if (inherits(df, "sf")) {
-    duckspatial::ddbs_write_vector(target_conn, df, target_name, temp_view = TRUE)
+    duckspatial::ddbs_write_table(target_conn, df, target_name, temp_view = TRUE)
     cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
     return(list(name = target_name, method = "collect_and_write", data = df, cleanup = function() NULL))
   } else if (is.data.frame(df)) {
@@ -368,7 +368,7 @@ get_query_list <- function(x, conn) {
 
   if (inherits(x, "sf")) {
     temp_view_name <- ddbs_temp_view_name()
-    duckspatial::ddbs_write_vector(conn = conn, data = x, name = temp_view_name,
+    duckspatial::ddbs_write_table(conn = conn, data = x, name = temp_view_name,
                                     quiet = TRUE, temp_view = TRUE)
     x_list <- get_query_name(temp_view_name)
     x_list$cleanup <- function() {
@@ -469,7 +469,7 @@ get_query_list <- function(x, conn) {
 #     temp_view_name <- ddbs_temp_view_name()
 
 #     # Write table with the unique name
-#     duckspatial::ddbs_write_vector(
+#     duckspatial::ddbs_write_table(
 #       conn      = conn,
 #       data      = x,
 #       name      = temp_view_name,

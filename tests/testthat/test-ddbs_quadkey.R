@@ -15,7 +15,7 @@ rand_sf["var"] <- runif(100)
 rand_ddbs <- as_duckspatial_df(rand_sf)
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, rand_sf, "points")
+duckspatial::ddbs_write_table(conn_test, rand_sf, "points")
 
 
 # 1. ddbs_quadkey() --------------------------------------------------------

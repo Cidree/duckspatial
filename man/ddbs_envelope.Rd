@@ -97,7 +97,7 @@ env <- ddbs_envelope(x = argentina_ddbs, by_feature = TRUE)
 conn <- ddbs_create_conn(dbdir = "memory")
 
 # store in duckdb
-ddbs_write_vector(conn, argentina_ddbs, "argentina")
+ddbs_write_table(conn, argentina_ddbs, "argentina")
 
 # envelope for each feature
 env <- ddbs_envelope("argentina", conn, by_feature = TRUE)

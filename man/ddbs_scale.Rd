@@ -95,7 +95,7 @@ countries_ddbs <- ddbs_open_dataset(
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_table(conn, countries_ddbs, "countries")
 
 ## scale to 150\% in both directions
 ddbs_scale(conn = conn, "countries", x_scale = 1.5, y_scale = 1.5)

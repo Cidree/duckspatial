@@ -11,8 +11,8 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## write some data
-ddbs_write_vector(conn_test, argentina_sf, "argentina")
-ddbs_write_vector(conn_test, nc_sf, "nc")
+ddbs_write_table(conn_test, argentina_sf, "argentina")
+ddbs_write_table(conn_test, nc_sf, "nc")
 
 # 1. ddbs_rotate() -------------------------------------------------------
 

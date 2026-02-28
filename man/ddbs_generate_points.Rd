@@ -87,7 +87,7 @@ argentina_ddbs <- ddbs_open_dataset(
 )
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_ddbs, "argentina")
+ddbs_write_table(conn, argentina_ddbs, "argentina")
 
 ## generate 100 random points within each geometry
 ddbs_generate_points("argentina", n = 100, conn)

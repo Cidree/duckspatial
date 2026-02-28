@@ -10,7 +10,7 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina")
+duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina")
 
 
 # 1. ddbs_generate_points() ----------------------------------------------
@@ -54,7 +54,7 @@ describe("ddbs_generate_points()", {
 
     it("writes tables correctly to DuckDB", {
       output_ddbs <- ddbs_generate_points(argentina_ddbs, 50, seed = 123)
-      output_tbl <- ddbs_read_vector(conn_test, "generate_points")
+      output_tbl <- ddbs_read_table(conn_test, "generate_points")
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
         output_tbl$geometry

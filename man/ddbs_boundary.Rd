@@ -81,7 +81,7 @@ argentina_ddbs <- ddbs_open_dataset(
 )
 
 # store in duckdb
-ddbs_write_vector(conn, argentina_ddbs, "argentina")
+ddbs_write_table(conn, argentina_ddbs, "argentina")
 
 # boundary
 b <- ddbs_boundary(x = "argentina", conn)

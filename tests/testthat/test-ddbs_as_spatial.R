@@ -54,7 +54,7 @@ describe("ddbs_as_spatial()", {
     })
 
     it("writes tables correctly to DuckDB", {
-      output_tbl <- ddbs_read_vector(conn_test, "as_spatial")
+      output_tbl <- ddbs_read_table(conn_test, "as_spatial")
       expect_equal(
         ddbs_collect(ddbs_as_spatial(cities_tbl))$geometry,
         output_tbl$geometry
@@ -62,7 +62,7 @@ describe("ddbs_as_spatial()", {
     })
 
     it("handles different column names and CRS correctly", {
-      output_tbl <- ddbs_read_vector(conn_test, "as_spatial")
+      output_tbl <- ddbs_read_table(conn_test, "as_spatial")
       cities_3857 <- output_tbl |> 
         sf::st_transform("EPSG:3847") %>% 
         dplyr::mutate(

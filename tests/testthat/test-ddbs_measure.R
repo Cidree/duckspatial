@@ -18,10 +18,10 @@ points_sample_sf <- head(points_sf, 10)
 points_sample_ddbs <- as_duckspatial_df(points_sample_sf)
 
 ## write some data
-duckspatial::ddbs_write_vector(conn_test, countries_sf, "countries")
-duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "nc")
-duckspatial::ddbs_write_vector(conn_test, nc_ddbs, "rivers")
-duckspatial::ddbs_write_vector(conn_test, points_sample_ddbs, "points")
+duckspatial::ddbs_write_table(conn_test, countries_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, nc_ddbs, "nc")
+duckspatial::ddbs_write_table(conn_test, nc_ddbs, "rivers")
+duckspatial::ddbs_write_table(conn_test, points_sample_ddbs, "points")
 
 
 # 1. ddbs_area -----------------------------------------------------------
@@ -125,10 +125,10 @@ describe("ddbs_area()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_area(nc_4326_sf, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_area(nc_4326_sf, new_column = NULL) |> as.numeric()
       output_column <- ddbs_area(nc_4326_sf, new_column = "area_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$area_calc)
+      expect_identical(output_table, output_column$area_calc)
     })
   })
   
@@ -200,10 +200,10 @@ describe("ddbs_area()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_area(nc_ddbs, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_area(nc_ddbs, new_column = NULL) |> as.numeric()
       output_column <- ddbs_area(nc_ddbs, new_column = "area_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$area_calc)
+      expect_identical(output_table, output_column$area_calc)
     })
   })
   
@@ -243,7 +243,7 @@ describe("ddbs_area()", {
     })
 
     it("calculates area correctly on geographic CRS", {
-      duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina", overwrite = TRUE)
+      duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina", overwrite = TRUE)
       area_ddbs <- ddbs_area("argentina", conn_test, new_column = NULL)
       area_sf   <- sf::st_area(argentina_sf)
       
@@ -252,7 +252,7 @@ describe("ddbs_area()", {
     
     it("calculates area correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
-      duckspatial::ddbs_write_vector(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
+      duckspatial::ddbs_write_table(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
       area_ddbs <- ddbs_area("argentina", conn_test, new_column = NULL)
       area_sf   <- sf::st_area(argentina_3857_sf)
       
@@ -272,10 +272,10 @@ describe("ddbs_area()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_area("nc", conn = conn_test, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_area("nc", conn = conn_test, new_column = NULL) |> as.numeric()
       output_column <- ddbs_area("nc", conn = conn_test, new_column = "area_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$area_calc)
+      expect_identical(output_table, output_column$area_calc)
     })
   })
   
@@ -425,10 +425,10 @@ describe("ddbs_length()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_length(rivers_sf, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_length(rivers_sf, new_column = NULL) |> as.numeric()
       output_column <- ddbs_length(rivers_sf, new_column = "length_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$length_calc)
+      expect_identical(output_table, output_column$length_calc)
     })
     
     it("returns 0 for polygons and points", {
@@ -508,10 +508,10 @@ describe("ddbs_length()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_length(rivers_ddbs, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_length(rivers_ddbs, new_column = NULL) |> as.numeric()
       output_column <- ddbs_length(rivers_ddbs, new_column = "length_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$length_calc)
+      expect_identical(output_table, output_column$length_calc)
     })
   })
   
@@ -551,7 +551,7 @@ describe("ddbs_length()", {
     })
 
     it("calculates length correctly on geographic CRS", {
-      duckspatial::ddbs_write_vector(conn_test, rivers_sf, "rivers_4326")
+      duckspatial::ddbs_write_table(conn_test, rivers_sf, "rivers_4326")
       length_ddbs <- ddbs_length("rivers_4326", conn_test, new_column = NULL)
       length_sf   <- sf::st_length(rivers_sf)
       
@@ -560,7 +560,7 @@ describe("ddbs_length()", {
     
     it("calculates length correctly on projected CRS", {
       rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
-      duckspatial::ddbs_write_vector(conn_test, rivers_3857_sf, "rivers_3857")
+      duckspatial::ddbs_write_table(conn_test, rivers_3857_sf, "rivers_3857")
       length_ddbs <- ddbs_length("rivers_3857", conn_test, new_column = NULL)
       length_sf   <- sf::st_length(rivers_3857_sf)
       
@@ -580,10 +580,10 @@ describe("ddbs_length()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_length("rivers", conn = conn_test, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_length("rivers", conn = conn_test, new_column = NULL) |> as.numeric()
       output_column <- ddbs_length("rivers", conn = conn_test, new_column = "length_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$length_calc)
+      expect_identical(output_table, output_column$length_calc)
     })
   })
   
@@ -854,10 +854,10 @@ describe("ddbs_perimeter()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_perimeter(nc_4326_sf, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_perimeter(nc_4326_sf, new_column = NULL) |> as.numeric()
       output_column <- ddbs_perimeter(nc_4326_sf, new_column = "perimeter_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$perimeter_calc)
+      expect_identical(output_table, output_column$perimeter_calc)
     })
   })
   
@@ -929,10 +929,10 @@ describe("ddbs_perimeter()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_perimeter(nc_ddbs, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_perimeter(nc_ddbs, new_column = NULL) |> as.numeric()
       output_column <- ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$perimeter_calc)
+      expect_identical(output_table, output_column$perimeter_calc)
     })
   })
   
@@ -972,7 +972,7 @@ describe("ddbs_perimeter()", {
     })
 
     it("calculates perimeter correctly on geographic CRS", {
-      duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina", overwrite = TRUE)
+      duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina", overwrite = TRUE)
       perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_sf)
       
@@ -981,7 +981,7 @@ describe("ddbs_perimeter()", {
     
     it("calculates perimeter correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
-      duckspatial::ddbs_write_vector(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
+      duckspatial::ddbs_write_table(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
       perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, new_column = NULL)
       perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
       
@@ -1001,10 +1001,10 @@ describe("ddbs_perimeter()", {
     })
     
     it("produces identical results for vector and column outputs", {
-      output_vector <- ddbs_perimeter("nc", conn = conn_test, new_column = NULL) |> as.numeric()
+      output_table <- ddbs_perimeter("nc", conn = conn_test, new_column = NULL) |> as.numeric()
       output_column <- ddbs_perimeter("nc", conn = conn_test, new_column = "perimeter_calc", mode = NULL) |> st_as_sf()
       
-      expect_identical(output_vector, output_column$perimeter_calc)
+      expect_identical(output_table, output_column$perimeter_calc)
     })
   })
   

@@ -29,7 +29,7 @@
 #' )
 #' 
 #' # store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' # boundary
 #' b <- ddbs_boundary(x = "argentina", conn)
@@ -106,7 +106,7 @@ ddbs_boundary <- function(
 #' conn <- ddbs_create_conn(dbdir = "memory")
 #'
 #' # store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' # envelope for each feature
 #' env <- ddbs_envelope("argentina", conn, by_feature = TRUE)
@@ -278,7 +278,7 @@ ddbs_envelope <- function(
 #'
 #' # creates a duckdb write sf to it
 #' conn <- duckspatial::ddbs_create_conn()
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
+#' ddbs_write_table(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
 #'
 #' output2 <- ddbs_bbox(
 #'     conn = conn,

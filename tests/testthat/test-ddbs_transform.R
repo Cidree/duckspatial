@@ -11,11 +11,11 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- ddbs_create_conn()
 
 ## store countries
-ddbs_write_vector(conn_test, countries_sf, "countries")
+ddbs_write_table(conn_test, countries_sf, "countries")
 
 ## store countries with different CRS
 countries_3857_sf <- sf::st_transform(countries_sf, "EPSG:3857")
-ddbs_write_vector(conn_test, countries_3857_sf, "countries_3857_test")
+ddbs_write_table(conn_test, countries_3857_sf, "countries_3857_test")
 
 
 # 1. ddbs_transform() ----------------------------------------------------

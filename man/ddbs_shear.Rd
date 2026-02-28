@@ -98,7 +98,7 @@ countries_ddbs <- ddbs_open_dataset(
   filter(CNTR_ID \%in\% c("PT", "ES", "FR", "IT"))
 
 ## store in duckdb
-ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_table(conn, countries_ddbs, "countries")
 
 ## shear in X direction (creates italic-like effect)
 ddbs_shear(conn = conn, "countries", x_shear = 0.3, y_shear = 0)

@@ -51,8 +51,8 @@ testthat::test_that("expected behavior", {
 
     # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
-    ddbs_write_vector(conn_test, points_sf, "points", overwrite = TRUE)
-    ddbs_write_vector(conn_test, countries_sf, "countries", overwrite = TRUE)
+    ddbs_write_table(conn_test, points_sf, "points", overwrite = TRUE)
+    ddbs_write_table(conn_test, countries_sf, "countries", overwrite = TRUE)
 
     # spatial join
     output2 <- tester(
@@ -82,7 +82,7 @@ testthat::test_that("expected behavior", {
 
     # testthat::expect_true(is(output3 , 'sf'))
 
-    ddbs_read_vector(conn = conn_test, name = "test_result", crs = 4326)
+    ddbs_read_table(conn = conn_test, name = "test_result", crs = 4326)
 
 
     # show and suppress messages
@@ -162,8 +162,8 @@ testthat::test_that("ddbs_join works with duckspatial_df inputs", {
   )
   
   # Register points to the same connection as a duckspatial_df for consistent testing
-  ddbs_write_vector(conn, points_sf, "test_points")
-  points_ds <- ddbs_read_vector(conn, "test_points")
+  ddbs_write_table(conn, points_sf, "test_points")
+  points_ds <- ddbs_read_table(conn, "test_points")
   
   # 1. duckspatial_df x duckspatial_df
   # Using intersects

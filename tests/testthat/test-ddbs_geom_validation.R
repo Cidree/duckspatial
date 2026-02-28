@@ -21,7 +21,7 @@ countries_2_sf[nrow(countries_2_sf) + 1, ] <- countries_2_sf[nrow(countries_2_sf
 countries_2_ddbs <- countries_2_sf
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, countries_2_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, countries_2_sf, "countries")
 
 
 # 1. ddbs_is_valid() -----------------------------------------------------
@@ -70,7 +70,7 @@ describe("ddbs_is_valid()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_valid(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_valid_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_valid_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -176,7 +176,7 @@ describe("ddbs_is_simple()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_simple(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_simple_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_simple_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -281,7 +281,7 @@ describe("ddbs_is_empty()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_empty(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_empty_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_empty_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -386,7 +386,7 @@ describe("ddbs_is_ring()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_ring(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_ring_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_ring_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -475,7 +475,7 @@ describe("ddbs_is_closed()", {
   )
 
   lines_ddbs <- as_duckspatial_df(lines_sf)
-  ddbs_write_vector(conn_test, lines_ddbs, "lines")
+  ddbs_write_table(conn_test, lines_ddbs, "lines")
 
   ## EXPECTED BEHAVIOUR
   
@@ -517,7 +517,7 @@ describe("ddbs_is_closed()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_closed(lines_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_closed_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_closed_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,

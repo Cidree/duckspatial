@@ -48,7 +48,7 @@ conn <- ddbs_create_conn(dbdir = "memory")
 argentina_sf <- ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_table(conn, argentina_sf, "argentina")
 
 ## glimpse the inserted table
 ddbs_glimpse(conn, "argentina")

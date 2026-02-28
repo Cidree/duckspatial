@@ -92,7 +92,7 @@ argentina_ddbs <- ddbs_open_dataset(
 )
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_ddbs, "argentina")
+ddbs_write_table(conn, argentina_ddbs, "argentina")
 
 ## flip all features together as a whole (default)
 ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = FALSE)

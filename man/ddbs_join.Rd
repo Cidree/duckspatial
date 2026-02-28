@@ -151,8 +151,8 @@ output <- duckspatial::ddbs_join(
 # Alternative: using table names in a duckdb connection
 conn <- duckspatial::ddbs_create_conn()
 
-ddbs_write_vector(conn, points, "points", overwrite = TRUE)
-ddbs_write_vector(conn, countries_sf, "countries", overwrite = TRUE)
+ddbs_write_table(conn, points, "points", overwrite = TRUE)
+ddbs_write_table(conn, countries_sf, "countries", overwrite = TRUE)
 
 output2 <- ddbs_join(
     conn = conn,

@@ -6,7 +6,7 @@
 
 test_that("st_crs.duckspatial_df returns correct CRS", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -16,7 +16,7 @@ test_that("st_crs.duckspatial_df returns correct CRS", {
 
 test_that("st_bbox.duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
@@ -30,7 +30,7 @@ test_that("st_bbox.duckspatial_df works correctly", {
 
 test_that("st_geometry.duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
@@ -44,7 +44,7 @@ test_that("st_geometry.duckspatial_df works correctly", {
 
 test_that("st_as_sf.duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
@@ -58,7 +58,7 @@ test_that("st_as_sf.duckspatial_df works correctly", {
 
 test_that("print.duckspatial_df shows informative output", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -72,7 +72,7 @@ test_that("print.duckspatial_df shows informative output", {
 
 test_that("ddbs_geom_col returns correct geometry column name", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")

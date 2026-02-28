@@ -97,7 +97,7 @@
 #'   filter(NAME_ENGL != "Antarctica")
 #' 
 #' # Store in DuckDB
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #' 
 #' # Calculate area (adds a new column - area by default)
 #' ddbs_area("countries", conn)
@@ -132,7 +132,7 @@
 #'   as_duckspatial_df()
 #' 
 #' # Store in DuckDB
-#' ddbs_write_vector(conn, rivers_ddbs, "rivers")
+#' ddbs_write_table(conn, rivers_ddbs, "rivers")
 #' 
 #' # Calculate length (add a new column - length by default)
 #' ddbs_length("rivers", conn)
@@ -183,7 +183,7 @@
 #' )
 #' 
 #' # Option 3: Using DuckDB tables
-#' ddbs_write_vector(conn, points_sf, "points", overwrite = TRUE)
+#' ddbs_write_table(conn, points_sf, "points", overwrite = TRUE)
 #' dist_matrix_sph <- ddbs_distance(
 #'   conn = conn,
 #'   x = "points",

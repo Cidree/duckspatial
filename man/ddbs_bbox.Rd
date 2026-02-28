@@ -76,7 +76,7 @@ ddbs_bbox(argentina_ddbs)
 
 # creates a duckdb write sf to it
 conn <- duckspatial::ddbs_create_conn()
-ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
+ddbs_write_table(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
 
 output2 <- ddbs_bbox(
     conn = conn,

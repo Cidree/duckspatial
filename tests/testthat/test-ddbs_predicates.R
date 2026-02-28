@@ -11,9 +11,9 @@ conn_test <- duckspatial::ddbs_create_conn()
 conn_test_2 <- duckspatial::ddbs_create_conn()
 
 ## write data in the database
-ddbs_write_vector(conn_test, points_sf, "points")
-ddbs_write_vector(conn_test, argentina_ddbs, "argentina")
-ddbs_write_vector(conn_test_2, argentina_ddbs, "argentina")
+ddbs_write_table(conn_test, points_sf, "points")
+ddbs_write_table(conn_test, argentina_ddbs, "argentina")
+ddbs_write_table(conn_test_2, argentina_ddbs, "argentina")
 
 
 # 1. ddbs_predicate ------------------------------------------------------

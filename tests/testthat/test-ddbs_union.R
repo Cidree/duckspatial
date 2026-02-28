@@ -18,8 +18,8 @@ countries_group_sf <- countries_sf |>
 countries_group_ddbs <- as_duckspatial_df(countries_group_sf)
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, points_sf, "points")
-duckspatial::ddbs_write_vector(conn_test, countries_group_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, points_sf, "points")
+duckspatial::ddbs_write_table(conn_test, countries_group_sf, "countries")
 
 
 # 1. ddbs_union_agg() ----------------------------------------------------
@@ -78,7 +78,7 @@ describe("ddbs_union_agg()", {
     
     it("written table matches computed output", {
       output_conn <- ddbs_union_agg("countries", by = "n", conn = conn_test)
-      output_tbl  <- ddbs_read_vector(conn_test, "union_agg")
+      output_tbl  <- ddbs_read_table(conn_test, "union_agg")
       
       expect_equal(
         ddbs_collect(output_conn)$geometry,
@@ -213,7 +213,7 @@ describe("ddbs_union()", {
     
     it("written table matches computed output", {
       output_ddbs <- ddbs_union(countries_ddbs)
-      output_tbl  <- ddbs_read_vector(conn_test, "union_test")
+      output_tbl  <- ddbs_read_table(conn_test, "union_test")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -329,7 +329,7 @@ describe("ddbs_combine()", {
     
     it("written table matches computed output", {
       output_ddbs <- ddbs_combine(countries_ddbs)
-      output_tbl  <- ddbs_read_vector(conn_test, "combine")
+      output_tbl  <- ddbs_read_table(conn_test, "combine")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,

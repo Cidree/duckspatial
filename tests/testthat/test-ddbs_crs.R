@@ -15,7 +15,7 @@ test_that("ddbs_crs works for different input types", {
   expect_equal(ddbs_crs(nc_sf), sf::st_crs(nc_sf))
   
   # 2. duckspatial_df method
-  ddbs_write_vector(conn, nc_sf, "nc_data")
+  ddbs_write_table(conn, nc_sf, "nc_data")
   # Use default retrieval options
   nc_ds <- dplyr::tbl(conn, "nc_data") |> 
     as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))

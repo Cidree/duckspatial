@@ -34,9 +34,9 @@ conn_test <- duckspatial::ddbs_create_conn()
 conn_test_2 <- duckspatial::ddbs_create_conn()
 
 ## write data in the database
-ddbs_write_vector(conn_test, poly1_sf, "poly1")
-ddbs_write_vector(conn_test, poly2_sf, "poly2")
-ddbs_write_vector(conn_test_2, poly2_sf, "poly2")
+ddbs_write_table(conn_test, poly1_sf, "poly1")
+ddbs_write_table(conn_test, poly2_sf, "poly2")
+ddbs_write_table(conn_test_2, poly2_sf, "poly2")
 
 
 # 1. ddbs_intersection() -------------------------------------------------
@@ -93,7 +93,7 @@ describe("ddbs_intersection()", {
 
     it("writes a table correctly", {
       output_1 <- ddbs_intersection(poly1_sf, poly2_sf)
-      output_tbl <- ddbs_read_vector(conn_test, "intersection")
+      output_tbl <- ddbs_read_table(conn_test, "intersection")
       expect_equal(ddbs_collect(output_1)$geometry, output_tbl$geometry)
     })
 
@@ -198,7 +198,7 @@ describe("ddbs_difference()", {
 
     it("writes a table correctly", {
       output_1 <- ddbs_difference(poly1_sf, poly2_sf)
-      output_tbl <- ddbs_read_vector(conn_test, "difference")
+      output_tbl <- ddbs_read_table(conn_test, "difference")
       expect_equal(ddbs_collect(output_1)$geometry, output_tbl$geometry)
     })
 
@@ -294,7 +294,7 @@ describe("ddbs_sym_difference()", {
 
     it("writes a table correctly", {
       output_1 <- ddbs_sym_difference(poly1_sf, poly2_sf)
-      output_tbl <- ddbs_read_vector(conn_test, "symdifference")
+      output_tbl <- ddbs_read_table(conn_test, "symdifference")
       expect_equal(ddbs_collect(output_1)$geometry, output_tbl$geometry)
     })
 

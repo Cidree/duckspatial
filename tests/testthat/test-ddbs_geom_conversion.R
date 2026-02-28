@@ -10,7 +10,7 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## insert data
-ddbs_write_vector(conn_test, countries_sf, "countries")
+ddbs_write_table(conn_test, countries_sf, "countries")
 
 
 # 1. ddbs_as_text() ------------------------------------------------------

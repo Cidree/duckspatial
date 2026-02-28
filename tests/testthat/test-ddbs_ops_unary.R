@@ -10,9 +10,9 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, points_sf, "points")
-duckspatial::ddbs_write_vector(conn_test, argentina_sf, "argentina")
-duckspatial::ddbs_write_vector(conn_test, countries_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, points_sf, "points")
+duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina")
+duckspatial::ddbs_write_table(conn_test, countries_sf, "countries")
 
 
 # 1. ddbs_buffer() -------------------------------------------------------
@@ -50,7 +50,7 @@ describe("ddbs_buffer()", {
     
     it("writes tables to the database", {
       output_ddbs <- ddbs_buffer(points_ddbs, 50)
-      output_tbl <- ddbs_read_vector(conn_test, "buffer")
+      output_tbl <- ddbs_read_table(conn_test, "buffer")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -198,7 +198,7 @@ describe("ddbs_buffer()", {
         )
       )
       
-      output_custom_tbl <- ddbs_read_vector(conn_test, "buffer_custom")
+      output_custom_tbl <- ddbs_read_table(conn_test, "buffer_custom")
       expect_s3_class(output_custom_tbl, "sf")
     })
   })
@@ -406,7 +406,7 @@ describe("ddbs_centroid()", {
     
     it("writes tables to the database", {
       output_ddbs <- ddbs_centroid(argentina_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "centroid")
+      output_tbl <- ddbs_read_table(conn_test, "centroid")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -491,7 +491,7 @@ describe("ddbs_make_valid()", {
     
     it("writes tables to the database", {
       output_ddbs <- ddbs_make_valid(argentina_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "make_valid")
+      output_tbl <- ddbs_read_table(conn_test, "make_valid")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -574,7 +574,7 @@ describe("ddbs_simplify()", {
     
     it("writes tables to the database", {
       output_ddbs <- ddbs_simplify(argentina_ddbs, tolerance = 0.01)
-      output_tbl <- ddbs_read_vector(conn_test, "simplify")
+      output_tbl <- ddbs_read_table(conn_test, "simplify")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -662,7 +662,7 @@ describe("ddbs_exterior_ring()", {
     
     it("writes tables to the database", {
       output_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "exterior_ring")
+      output_tbl <- ddbs_read_table(conn_test, "exterior_ring")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -762,7 +762,7 @@ describe("ddbs_make_polygon()", {
     it("writes tables to the database", {
       ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
       output_ddbs <- ddbs_make_polygon(ext_ring_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "make_polygon")
+      output_tbl <- ddbs_read_table(conn_test, "make_polygon")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -859,7 +859,7 @@ describe("ddbs_convex_hull()", {
     
     it("writes tables to the database", {
       output_ddbs <- ddbs_convex_hull(argentina_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "convex_hull")
+      output_tbl <- ddbs_read_table(conn_test, "convex_hull")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -944,7 +944,7 @@ describe("ddbs_concave_hull()", {
     
     it("writes tables to the database", {
       output_ddbs <- ddbs_concave_hull(argentina_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "concave_hull")
+      output_tbl <- ddbs_read_table(conn_test, "concave_hull")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,

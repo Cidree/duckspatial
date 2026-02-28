@@ -69,7 +69,7 @@ ddbs_crs(nc_sf)
 
 # Method 3: table name in database
 conn <- ddbs_create_conn(dbdir = "memory")
-ddbs_write_vector(conn, nc_sf, "nc_table")
+ddbs_write_table(conn, nc_sf, "nc_table")
 ddbs_crs(conn, "nc_table")
 ddbs_stop_conn(conn)
 }

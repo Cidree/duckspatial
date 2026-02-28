@@ -10,7 +10,7 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, countries_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, countries_sf, "countries")
 
 
 # 1. ddbs_boundary() -------------------------------------------------------
@@ -54,7 +54,7 @@ describe("ddbs_boundary()", {
     })
 
     it("writes tables correctly to DuckDB", {
-      output_tbl <- ddbs_read_vector(conn_test, "boundary")
+      output_tbl <- ddbs_read_table(conn_test, "boundary")
       expect_equal(
         ddbs_collect(ddbs_boundary(countries_ddbs))$geometry,
         output_tbl$geometry
@@ -146,7 +146,7 @@ describe("ddbs_envelope()", {
     })
 
     it("writes tables correctly to DuckDB", {
-      output_tbl <- ddbs_read_vector(conn_test, "envelope")
+      output_tbl <- ddbs_read_table(conn_test, "envelope")
       expect_equal(
         ddbs_collect(ddbs_envelope(countries_ddbs))$geometry,
         output_tbl$geometry

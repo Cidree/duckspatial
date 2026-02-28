@@ -15,7 +15,7 @@ test_that("ddbs_filter works with mixed inputs", {
   
   # 2. duckspatial_df (lazy) in the same connection
   # (Requires writing first)
-  ddbs_write_vector(conn, p_sf, "points_lazy")
+  ddbs_write_table(conn, p_sf, "points_lazy")
   p_lazy <- dplyr::tbl(conn, "points_lazy") |> 
     as_duckspatial_df(
        geom_col = "geometry", 
@@ -49,7 +49,7 @@ test_that("ddbs_filter works with mixed inputs", {
   expect_false(is.na(sf::st_crs(res3))) 
   
   # TEST 4: filter(duckspatial_df, duckspatial_df)
-  ddbs_write_vector(conn, c_sf, "countries_lazy")
+  ddbs_write_table(conn, c_sf, "countries_lazy")
   c_lazy <- dplyr::tbl(conn, "countries_lazy") |>
     as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(c_sf))
     
@@ -70,12 +70,12 @@ test_that("ddbs_join works with mixed inputs and cross-connection", {
   c_sf <- countries_sf[1:5, ]
   
   # Setup: p_lazy in conn1
-  ddbs_write_vector(conn1, p_sf, "points_c1")
+  ddbs_write_table(conn1, p_sf, "points_c1")
   p_lazy1 <- dplyr::tbl(conn1, "points_c1") |>
     as_duckspatial_df(geom_col="geometry", crs=sf::st_crs(4326))
   
   # Setup: c_lazy in conn2
-  ddbs_write_vector(conn2, c_sf, "countries_c2")
+  ddbs_write_table(conn2, c_sf, "countries_c2")
   c_lazy2 <- dplyr::tbl(conn2, "countries_c2") |>
     as_duckspatial_df(geom_col="geometry", crs=sf::st_crs(4326))
   

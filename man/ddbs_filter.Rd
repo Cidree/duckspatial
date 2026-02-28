@@ -145,8 +145,8 @@ result <- ddbs_filter(countries_sf, argentina_sf, predicate = "touches")
 # Alternative: using table names in a duckdb connection
 conn <- ddbs_create_conn(dbdir = "memory")
 
-ddbs_write_vector(conn, countries_sf, "countries")
-ddbs_write_vector(conn, argentina_sf, "argentina")
+ddbs_write_table(conn, countries_sf, "countries")
+ddbs_write_table(conn, argentina_sf, "argentina")
 
 ddbs_filter(conn = conn, "countries", "argentina", predicate = "touches")
 }

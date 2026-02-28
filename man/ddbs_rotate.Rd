@@ -100,7 +100,7 @@ argentina_ddbs <- ddbs_open_dataset(
 )
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_ddbs, "argentina")
+ddbs_write_table(conn, argentina_ddbs, "argentina")
 
 ## rotate 45 degrees
 ddbs_rotate(conn = conn, "argentina", angle = 45)

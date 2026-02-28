@@ -53,8 +53,8 @@ testthat::test_that("expected behavior", {
 
     # option 2: passing the names of tables in a duckdb db, returing sf
     # write sf to duckdb
-    ddbs_write_vector(conn_test, points_sf, "points", overwrite = TRUE)
-    ddbs_write_vector(conn_test, argentina_sf, "argentina", overwrite = TRUE)
+    ddbs_write_table(conn_test, points_sf, "points", overwrite = TRUE)
+    ddbs_write_table(conn_test, argentina_sf, "argentina", overwrite = TRUE)
 
     # spatial filter
     output2 <- tester(
@@ -78,7 +78,7 @@ testthat::test_that("expected behavior", {
 
     testthat::expect_true(output3)
 
-    ddbs_read_vector(conn = conn_test, name = "filter_result", crs = 4326)
+    ddbs_read_table(conn = conn_test, name = "filter_result", crs = 4326)
 
 
     # show and suppress messages
@@ -155,8 +155,8 @@ testthat::test_that("ddbs_filter works with duckspatial_df inputs", {
   )
   
   # Register points to the same connection as a duckspatial_df
-  ddbs_write_vector(conn, points_small_sf, "test_points_filter")
-  points_ds <- ddbs_read_vector(conn, "test_points_filter")
+  ddbs_write_table(conn, points_small_sf, "test_points_filter")
+  points_ds <- ddbs_read_table(conn, "test_points_filter")
   
   # 1. duckspatial_df x duckspatial_df
   result1 <- ddbs_filter(points_ds, argentina_ds, predicate = "intersects")

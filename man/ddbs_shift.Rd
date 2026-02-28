@@ -87,7 +87,7 @@ argentina_ddbs <- ddbs_open_dataset(
 )
 
 ## store in duckdb
-ddbs_write_vector(conn, argentina_ddbs, "argentina")
+ddbs_write_table(conn, argentina_ddbs, "argentina")
 
 ## shift 10 degrees east and 5 degrees north
 ddbs_shift(conn = conn, "argentina", dx = 10, dy = 5)

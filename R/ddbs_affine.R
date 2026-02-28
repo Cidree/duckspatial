@@ -41,7 +41,7 @@
 #' )
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' ## rotate 45 degrees
 #' ddbs_rotate(conn = conn, "argentina", angle = 45)
@@ -269,7 +269,7 @@ ddbs_rotate <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #'
 #' ## rotate 45 degrees around X axis (pitch)
 #' ddbs_rotate_3d(conn = conn, "countries", angle = 45, axis = "x")
@@ -367,7 +367,7 @@ ddbs_rotate_3d <- function(
 #' )
 #' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' ## shift 10 degrees east and 5 degrees north
 #' ddbs_shift(conn = conn, "argentina", dx = 10, dy = 5)
@@ -455,7 +455,7 @@ ddbs_shift <- function(
 #' )
 #' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' ## flip all features together as a whole (default)
 #' ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = FALSE)
@@ -666,7 +666,7 @@ ddbs_flip <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #'
 #' ## scale to 150% in both directions
 #' ddbs_scale(conn = conn, "countries", x_scale = 1.5, y_scale = 1.5)
@@ -861,7 +861,7 @@ ddbs_scale <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #'
 #' ## shear in X direction (creates italic-like effect)
 #' ddbs_shear(conn = conn, "countries", x_shear = 0.3, y_shear = 0)
