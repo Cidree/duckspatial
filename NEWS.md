@@ -16,6 +16,8 @@
 
 -   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector. For materializing a vector in R, use `mode = "sf"` (#83).
 
+-    `ddbs_predicate()` and colleagues: they gain new arguments: name, mode, overwrite, and quiet. When `mode = "duckspatial"`, they return a lazy tbl backed by DuckDB. When `mode = "sf"`, they return a list/matrix (#105).
+
 ## NEW FEATURES
 
 -   `ddbs_as_spatial()`: converts a table with coordinates into a spatial object (#75).
