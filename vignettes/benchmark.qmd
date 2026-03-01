@@ -480,3 +480,78 @@ ggsave(
 ```
 
 ![Benchmark that compares dissolving geometries by group for duckspatial and sf](../man/figures/bench/bench-st-dissolve-faster-query.png){#fig-st-dissolve fig-align="center"}
+
+
+# Geometry predicates
+
+Geometry predicates are boolean functions that test spatial relationships between two geometries (they return true or false). They're fundamental to spatial queries, letting you filter or join data based on how geometries relate to one another in space.
+Common examples include: ST_Contains, ST_Within, ST_Touches, ST_Overlaps, ST_Crosses, ST_Disjoint, and ST_Equals.
+
+In the following example, we compare `ST_Intersects(geometry A, geometry B)`, which returns true if the two geometries share any point in common (their interiors or boundaries overlap in any way).
+
+-   Using 1 million points: {duckspatial} was about 28 times faster than {sf}, and allocated 4 times less memory.
+
+-   Using 3 million points: {duckspatial} was about 32 times faster than {sf}, and allocated 2 times less memory.
+
+```{r}
+#| message: false
+#| code-fold: true
+#| code-summary: "Benchmark code - ddbs_intersects"
+
+# Helper to run the benchmark
+run_predicate_benchmark <- function(points_sf) {
+  temp <- bench::mark(
+    iterations  = 1,
+    check       = FALSE,
+    duckspatial = ddbs_intersects(points_sf, polygons_sf),
+    sf          = st_intersects(points_sf, polygons_sf)
+  )
+  temp$n   <- nrow(points_sf)
+  temp$pkg <- c("duckspatial", "sf")
+  temp
+}
+
+# Run the benchmark
+df_bench_predicate <- lapply(
+  X   = list(points_sf_100k, points_sf_1mi, points_sf_3mi),
+  FUN = run_predicate_benchmark
+) |>
+  dplyr::bind_rows()
+```
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Generate the plots
+gg_predicate <- ggplot_benchmark(
+  data     = df_bench_predicate,
+  log      = FALSE,
+  show.legend = T,
+  subtitle = "A) Normal scale"
+)
+
+gg_predicate_log <- ggplot_benchmark(
+  data     = df_bench_predicate,
+  log      = TRUE,
+  show.legend = F,
+  subtitle = "B) Log scale"
+)
+
+# Assemble them in a single plot
+ggplot_assemble(
+  plot1 = gg_predicate,
+  plot2 = gg_predicate_log,
+  fun_name = "ddbs_intersects()"
+)
+
+# Export it
+ggsave(
+  filename = paste0("man/figures/bench/bench-st-intersects-", id_output, ".png"),
+  height   = 15,
+  width    = 30,
+  units    = "cm"
+)
+```
+
+![Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf](../man/figures/bench/bench-st-intersects-faster-query.png){#fig-st-intersects fig-align="center"}

@@ -261,7 +261,8 @@ Defaults to <code>FALSE</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Depends on the <code>mode</code> argument (or global preference set by <code><a href="ddbs_options.html">ddbs_options</a></code>):</p><ul><li><p><code>duckspatial</code> (default): A <code>duckspatial_df</code> (lazy spatial data frame) backed by dbplyr/DuckDB.</p></li>
-<li><p><code>sf</code>: An eagerly collected <code>sf</code> object in R memory.</p></li>
+<li><p><code>sf</code>: An eagerly collected object in R memory, that will return the same data type as the
+<code>sf</code> equivalent (e.g. <code>sf</code> or <code>units</code> vector).</p></li>
 </ul><p>When <code>name</code> is provided, the result is also written as a table or view in DuckDB and the function returns <code>TRUE</code> (invisibly).</p>
     </div>
     <div class="section level2">
