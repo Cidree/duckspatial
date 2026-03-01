@@ -886,8 +886,8 @@ ddbs_transform <- function(
 #' input features.
 #'
 #' @template x
-#' @template conn_null
 #' @template by_feature
+#' @template conn_null
 #'
 #' @returns A factor with geometry type(s)
 #' @export
@@ -912,8 +912,8 @@ ddbs_transform <- function(
 #' }
 ddbs_geometry_type <- function(
   x,
-  conn = NULL,
-  by_feature = TRUE) {
+  by_feature = TRUE,
+  conn = NULL) {
 
   ## 0. Handle errors
   assert_xy(x, "x")
