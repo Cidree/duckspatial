@@ -236,9 +236,22 @@ describe("ddbs_bbox()", {
       output_sf   <- ddbs_bbox(countries_sf)
       output_conn <- ddbs_bbox("countries", conn = conn_test)
 
-      expect_s3_class(output_ddbs, "data.frame")
+      expect_s3_class(output_ddbs, "bbox")
       expect_equal(output_ddbs, output_sf)
       expect_equal(output_ddbs, output_conn)
+    })
+
+    it("all output formats work", {
+      output_bbox    <- ddbs_bbox(countries_ddbs)
+      output_tbl_db  <- ddbs_bbox(countries_ddbs, by_feature = TRUE)
+      output_bbox_sf <- ddbs_bbox(countries_ddbs, mode = "sf")
+      output_tbl_sf  <- ddbs_bbox(countries_ddbs, by_feature = TRUE, mode = "sf")
+      
+      expect_s3_class(output_bbox, "bbox")
+      expect_s3_class(output_tbl_db, "tbl_duckdb_connection")
+      expect_s3_class(output_bbox_sf, "bbox")
+      expect_s3_class(output_tbl_sf, "data.frame")
+
     })
 
     it("shows and suppresses messages correctly", {
@@ -253,7 +266,17 @@ describe("ddbs_bbox()", {
 
     it("writes tables correctly to DuckDB", {
       output_tbl <- DBI::dbReadTable(conn_test, "bbox")
-      expect_equal(ddbs_bbox(countries_ddbs), output_tbl)
+      expect_equal(
+        ddbs_bbox(countries_ddbs, mode = "sf") |> as.numeric(), 
+        as.numeric(output_tbl)
+      )
+    })
+
+    it("same results as sf package", {
+      output_ddbs <- ddbs_bbox(countries_ddbs)
+      output_sf <- ddbs_bbox(countries_sf)
+
+      expect_equal(output_ddbs, output_sf)
     })
 
   })

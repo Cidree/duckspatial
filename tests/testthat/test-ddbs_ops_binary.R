@@ -113,8 +113,8 @@ describe("ddbs_intersection()", {
       
       ## Note that ddbs_intersection produces more accurate results,
       ## therefore, just check the bounding box
-      bbox_ddbs <- round(ddbs_bbox(ddbs_output))
-      bbox_sf   <- round(ddbs_bbox(sf_output))
+      bbox_ddbs <- round(ddbs_bbox(ddbs_output, mode = "sf"))
+      bbox_sf   <- round(ddbs_bbox(sf_output, mode = "sf"))
 
       expect_equal(bbox_ddbs, bbox_sf)
     })
@@ -218,8 +218,8 @@ describe("ddbs_difference()", {
       
       ## Note that ddbs_difference produces more accurate results,
       ## therefore, just check the bounding box
-      bbox_ddbs <- round(ddbs_bbox(ddbs_output))
-      bbox_sf   <- round(ddbs_bbox(sf_output))
+      bbox_ddbs <- round(ddbs_bbox(ddbs_output, mode = "sf"))
+      bbox_sf   <- round(ddbs_bbox(sf_output, mode = "sf"))
 
       expect_equal(bbox_ddbs, bbox_sf)
     })
@@ -314,8 +314,8 @@ describe("ddbs_sym_difference()", {
       
       ## Note that ddbs_sym_difference produces more accurate results,
       ## therefore, just check the bounding box
-      bbox_ddbs <- round(ddbs_bbox(ddbs_output))
-      bbox_sf   <- round(ddbs_bbox(sf_output))
+      bbox_ddbs <- round(ddbs_bbox(ddbs_output, mode = "sf"))
+      bbox_sf   <- round(ddbs_bbox(sf_output, mode = "sf"))
 
       expect_equal(bbox_ddbs, bbox_sf)
     })
@@ -326,8 +326,8 @@ describe("ddbs_sym_difference()", {
       output_yx <- ddbs_sym_difference(poly2_sf, poly1_sf)
       
       expect_equal(
-        ddbs_bbox(output_xy),
-        ddbs_bbox(output_yx)
+        ddbs_bbox(output_xy, mode = "sf"),
+        ddbs_bbox(output_yx, mode = "sf")
       )
     })
 

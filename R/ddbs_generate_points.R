@@ -93,7 +93,7 @@ ddbs_generate_points <- function(
   x_list <- get_query_list(x, target_conn)
   on.exit(x_list$cleanup(), add = TRUE)
   
-  bbox <- ddbs_bbox(x_list$query_name, conn = target_conn, quiet = TRUE)
+  bbox <- ddbs_bbox(x_list$query_name, by_feature = FALSE, conn = target_conn, quiet = TRUE)
   if (is.null(crs)) crs_data <- ddbs_crs(target_conn, x_list$query_name)$input else crs_data <- crs
 
 
@@ -102,9 +102,9 @@ ddbs_generate_points <- function(
   ## 2.1. Create the table and store it as a view
   view_name_tbl <- ddbs_temp_view_name()
   generate_points_query <- if (is.null(seed)) {
-    glue::glue("ST_GeneratePoints({{min_x: {bbox$min_x}, min_y: {bbox$min_y}, max_x: {bbox$max_x}, max_y: {bbox$max_y}}}::BOX_2D, {n}) as geometry")
+    glue::glue("ST_GeneratePoints({{min_x: {bbox$xmin}, min_y: {bbox$ymin}, max_x: {bbox$xmax}, max_y: {bbox$ymax}}}::BOX_2D, {n}) as geometry")
   } else {
-    glue::glue("ST_GeneratePoints({{min_x: {bbox$min_x}, min_y: {bbox$min_y}, max_x: {bbox$max_x}, max_y: {bbox$max_y}}}::BOX_2D, {n}, {seed}) as geometry")
+    glue::glue("ST_GeneratePoints({{min_x: {bbox$xmin}, min_y: {bbox$ymin}, max_x: {bbox$xmax}, max_y: {bbox$ymax}}}::BOX_2D, {n}, {seed}) as geometry")
   }
   tmp.query   <- glue::glue("
     CREATE TEMP VIEW '{view_name_tbl}' AS 

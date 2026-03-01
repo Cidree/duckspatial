@@ -245,18 +245,21 @@ ddbs_envelope <- function(
 
 #' Get the bounding box of geometries
 #'
-#' Returns the minimal rectangle that encloses the geometry, typically used 
-#' to summarize its spatial extent.
+#' Returns the minimal rectangle that encloses the geometry
 #'
 #' @template x
 #' @template by_feature
 #' @template conn_null
 #' @template name
 #' @template crs
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns A data frame or \code{TRUE} (invisibly) for table creation when name is not NULL.
+#' @returns 
+#' A `bbox` numeric vector with `by_feature = FALSE` 
+#' A `data.frame` or `lazy tbl` when `by_feature = TRUE`
+#' 
 #' @export
 #'
 #' @examples
@@ -272,7 +275,6 @@ ddbs_envelope <- function(
 #' 
 #' # option 1: passing sf objects
 #' ddbs_bbox(argentina_ddbs)
-#'
 #'
 #' ## option 2: passing the names of tables in a duckdb db
 #'
@@ -295,6 +297,7 @@ ddbs_bbox <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -306,6 +309,7 @@ ddbs_bbox <- function(
     assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
     assert_connflict(conn, xy = x, ref = "x")
@@ -320,6 +324,9 @@ ddbs_bbox <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+     ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -352,12 +359,12 @@ ddbs_bbox <- function(
         st_extent_clause <- glue::glue("ST_Extent_Agg({x_geom})")
     }
 
-    tmp.query <- glue::glue("
+    base.query <- glue::glue("
         SELECT
-            ST_XMin(ext) AS min_x,
-            ST_YMin(ext) AS min_y,
-            ST_XMax(ext) AS max_x,
-            ST_YMax(ext) AS max_y
+            ST_XMin(ext) AS xmin,
+            ST_YMin(ext) AS ymin,
+            ST_XMax(ext) AS xmax,
+            ST_YMax(ext) AS ymax
         FROM (
             SELECT {st_extent_clause} AS ext
             FROM {x_list$query_name}
@@ -375,13 +382,45 @@ ddbs_bbox <- function(
         overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
         ## execute area query
-        DBI::dbExecute(target_conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+        DBI::dbExecute(target_conn, glue::glue("CREATE TABLE {name_list$query_name} AS {base.query}"))
         feedback_query(quiet)
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+    # 4. Apply geospatial operation based on mode
+    if (mode == "sf" | isFALSE(by_feature)) {
+      
+        if (isTRUE(by_feature)) {
+          
+            return(DBI::dbGetQuery(target_conn, base.query))
+          
+        } else {
+          
+            ## Get data as a data frame
+            data_tbl <- DBI::dbGetQuery(target_conn, base.query)
+        
+            ## Convert to bbox class
+            bbox_vec <- structure(
+                unlist(data_tbl),
+                names = c("xmin", "ymin", "xmax", "ymax"),
+                class = "bbox",
+                crs   = crs_x
+            )      
+            return(bbox_vec)
+          
+        }
+      
+    } else {
 
-    return(data_tbl)
+        ## Generate the query
+        view_name <- ddbs_temp_view_name()
+        tmp.query <- glue::glue("CREATE TEMP TABLE {view_name} AS {base.query}")
+
+        ## Create a table, and return a pointer to that table
+        DBI::dbExecute(target_conn, tmp.query)
+        data_tbl <- dplyr::tbl(target_conn, view_name)
+        return(data_tbl)
+
+    }
+    
 }

@@ -11,6 +11,7 @@ ddbs_bbox(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -44,6 +45,14 @@ doesn't have a \code{crs_column}, and you know the CRS.}
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
 
+\item{mode}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+}
+Can be set globally via \code{\link{ddbs_options}(mode = "...")} or
+per-function via this argument. Per-function overrides global setting.}
+
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
@@ -51,11 +60,11 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
-A data frame or \code{TRUE} (invisibly) for table creation when name is not NULL.
+A \code{bbox} numeric vector with \code{by_feature = FALSE}
+A \code{data.frame} or \verb{lazy tbl} when \code{by_feature = TRUE}
 }
 \description{
-Returns the minimal rectangle that encloses the geometry, typically used
-to summarize its spatial extent.
+Returns the minimal rectangle that encloses the geometry
 }
 \examples{
 \dontrun{
@@ -70,7 +79,6 @@ argentina_ddbs <- ddbs_open_dataset(
 
 # option 1: passing sf objects
 ddbs_bbox(argentina_ddbs)
-
 
 ## option 2: passing the names of tables in a duckdb db
 
