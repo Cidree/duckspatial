@@ -10,6 +10,39 @@
   toset <- !(names(op_duckspatial) %in% names(op))
   if (any(toset)) options(op_duckspatial[toset])
   
+  # Allow dplyr to use duckspatial functions inside dplyr verbs
+  # with lazy tables. We need to create a macro for each function
+  # that we want to use within the verbs
+  target_conn <- ddbs_default_conn(create = TRUE)
+  DBI::dbExecute(
+    target_conn,
+    "CREATE OR REPLACE MACRO ddbs_is_simple(geom) AS ST_IsSimple(geom);
+    CREATE OR REPLACE MACRO ddbs_is_valid(geom) AS ST_IsValid(geom);
+    CREATE OR REPLACE MACRO ddbs_is_closed(geom) AS ST_IsClosed(geom);
+    CREATE OR REPLACE MACRO ddbs_is_ring(geom) AS ST_IsRing(geom);
+    CREATE OR REPLACE MACRO ddbs_is_empty(geom) AS ST_IsEmpty(geom);
+    CREATE OR REPLACE MACRO ddbs_area(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Area_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Area(geom)
+      END
+    );
+    CREATE OR REPLACE MACRO ddbs_length(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Length_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Length(geom)
+      END
+    );
+    CREATE OR REPLACE MACRO ddbs_perimeter(geom) AS (
+      CASE 
+        WHEN crs_duckspatial = 'EPSG:4326' THEN ST_Perimeter_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Perimeter(geom)
+      END
+    );
+    "
+  )
+
+  
   # Make internal duckdb functions available if needed
   # This serves as a reminder that we use asNamespace("duckdb") in the code
 }
