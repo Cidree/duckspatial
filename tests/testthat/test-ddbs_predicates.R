@@ -167,7 +167,7 @@ describe("ddbs_predicate()", {
 
       expect_equal(
         names(collect(output_sparse)),
-        c("x_id", "1")
+        c("id_x", "1")
       )
       
     })
@@ -179,7 +179,7 @@ describe("ddbs_predicate()", {
 
       expect_equal(
         names(collect(output_sparse)),
-        c("x_id", "y_id")
+        c("id_x", "id_y")
       )
       
     })

@@ -276,8 +276,8 @@ ddbs_predicate <- function(
   } else if (mode == "duckspatial") {
     
     ## Resolve identifiers
-    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS x_id" else glue::glue("{id_x} AS x_id")
-    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS y_id" else glue::glue("{id_y} AS y_id")
+    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{id_x} AS id_x")
+    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
 
     ## Name for the table to be created
     view_name <- ddbs_temp_view_name()
@@ -288,8 +288,8 @@ ddbs_predicate <- function(
       tmp.query <- glue::glue("
         CREATE TEMP TABLE {view_name} AS
         SELECT 
-          x.x_id,
-          y.y_id
+          x.id_x,
+          y.id_y
         FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
         CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
         WHERE {predicate_expr}
@@ -302,10 +302,10 @@ ddbs_predicate <- function(
       y_ids <- DBI::dbGetQuery(
         target_conn,
         glue::glue("SELECT {y_id_expr} FROM {y_list$query_name}")
-      )$y_id
+      )$id_y
       
       pivot_list <- paste(
-        glue::glue("SUM(CASE WHEN y_id = '{y_ids}' AND predicate THEN 1 ELSE 0 END)::BOOLEAN AS \"{y_ids}\""),
+        glue::glue("SUM(CASE WHEN id_y = '{y_ids}' AND predicate THEN 1 ELSE 0 END)::BOOLEAN AS \"{y_ids}\""),
         collapse = ",\n"
       )
       
@@ -314,18 +314,18 @@ ddbs_predicate <- function(
         CREATE TEMP TABLE {view_name} AS
         WITH long AS (
           SELECT 
-            x.x_id,
-            y.y_id,
+            x.id_x,
+            y.id_y,
             {predicate_expr} AS predicate
           FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
           CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
         )
         SELECT 
-          x_id,
+          id_x,
           {pivot_list}
         FROM long
-        GROUP BY x_id
-        ORDER BY x_id
+        GROUP BY id_x
+        ORDER BY id_x
       ")
       
      }

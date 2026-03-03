@@ -661,7 +661,7 @@ describe("ddbs_distance()", {
       expect_equal(output_sf_ddbs, output_sf_sf)
       expect_equal(output_sf_ddbs, output_ddbs_ddbs)
       expect_equal(output_sf_ddbs, output_conn_sf)
-      expect_equal(output_sf_ddbs, output_sf_conn |> dplyr::arrange(y_id, x_id))
+      expect_equal(output_sf_ddbs, output_sf_conn |> dplyr::arrange(id_y, id_x))
     })
     
     it("warns when mixing DuckDB table with duckspatial_df from different connections", {

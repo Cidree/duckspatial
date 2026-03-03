@@ -15,6 +15,10 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
+#' @param id_x Character; optional name of the column in `x` whose values will
+#' be used to name the list elements. If `NULL`, integer row numbers of `x` are used.
+#' @param id_y Character; optional name of the column in `y` whose values will
+#' replace the integer indices returned in each element of the list.
 #' @template new_column
 #' @template crs
 #' @template mode
@@ -299,6 +303,8 @@ ddbs_distance <- function(
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
   name = NULL,
   mode = NULL,
   overwrite = FALSE,
@@ -307,6 +313,8 @@ ddbs_distance <- function(
   # 0. Handle errors
   assert_xy(x, "x")
   assert_xy(y, "y")
+  assert_name(id_x, "id_x")
+  assert_name(id_y, "id_y")
   assert_name(dist_type, "dist_type")
   assert_name(name)
   assert_name(mode, "mode")
@@ -351,6 +359,10 @@ ddbs_distance <- function(
   on.exit(x_list$cleanup(), add = TRUE)
   y_list <- get_query_list(y, target_conn)
   on.exit(y_list$cleanup(), add = TRUE)
+  
+  ## check if id column name exists in x or y
+  assert_predicate_id(id_x, target_conn, x_list$query_name)
+  assert_predicate_id(id_y, target_conn, y_list$query_name)
 
   ## 2.3. CRS already extracted at start of function
   if (!is.null(crs_x) && !is.null(crs_y)) {
@@ -476,66 +488,27 @@ ddbs_distance <- function(
 
   } else {
 
-    # if (isTRUE(sparse)) {
+    ## Subqueries for generating row ids
+    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{id_x} AS id_x")
+    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
 
-      ## Subqueries for generating row ids
-      x_query <- glue::glue("SELECT row_number() OVER () AS x_id, * FROM {x_list$query_name}")
-      y_query <- glue::glue("SELECT row_number() OVER () AS y_id, * FROM {y_list$query_name}")
+    ## Generate the query
+    view_name <- ddbs_temp_view_name()
+    tmp.query <- glue::glue("
+        CREATE TEMP TABLE {view_name} AS
+        SELECT 
+            x.id_x,
+            y.id_y,
+            {st_distance_fun}({coords}) AS distance
+        FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
+        CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+    ")
 
-      ## Generate the query
-      view_name <- ddbs_temp_view_name()
-      tmp.query <- glue::glue("
-          CREATE TEMP TABLE {view_name} AS
-          SELECT 
-              x.x_id,
-              y.y_id,
-              {st_distance_fun}({coords}) AS distance
-          FROM ({x_query}) x
-          CROSS JOIN ({y_query}) y
-      ")
+    ## Create a table, and return a pointer to that table
+    DBI::dbExecute(target_conn, tmp.query)
+    dist_tbl <- dplyr::tbl(target_conn, view_name)
+    return(dist_tbl)
 
-      ## Create a table, and return a pointer to that table
-      DBI::dbExecute(target_conn, tmp.query)
-      dist_tbl <- dplyr::tbl(target_conn, view_name)
-      return(dist_tbl)
-
-    # } else {
-
-    #   # First get the y_ids to build the pivot column list
-    #   y_ids <- DBI::dbGetQuery(
-    #       target_conn, 
-    #       glue::glue("SELECT row_number() OVER () AS y_id FROM {y_list$query_name}")
-    #   )$y_id
-
-    #   pivot_cols <- paste0("y_", y_ids)
-    #   pivot_list <- paste(
-    #       glue::glue("SUM(CASE WHEN y_id = {y_ids} THEN distance END) AS y_{y_ids}"),
-    #       collapse = ",\n"
-    #   )
-
-    #   view_name <- ddbs_temp_view_name()
-    #   tmp.query <- glue::glue("
-    #       CREATE TEMP TABLE {view_name} AS
-    #       WITH long AS (
-    #           SELECT 
-    #               x.x_id,
-    #               y.y_id,
-    #               {st_distance_fun}({coords}) AS distance
-    #           FROM (SELECT row_number() OVER () AS x_id, * FROM {x_list$query_name}) x
-    #           CROSS JOIN (SELECT row_number() OVER () AS y_id, * FROM {y_list$query_name}) y
-    #       )
-    #       SELECT 
-    #           x_id,
-    #           {pivot_list}
-    #       FROM long
-    #       GROUP BY x_id
-    #       ORDER BY x_id
-    #   ")
-
-    #   DBI::dbExecute(target_conn, tmp.query)
-    #   dist_wide_tbl <- dplyr::tbl(target_conn, view_name)
-    #   return(dist_wide_tbl)
-    # }
 
   }
   

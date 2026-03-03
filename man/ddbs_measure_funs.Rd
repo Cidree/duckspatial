@@ -51,6 +51,8 @@ ddbs_distance(
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
   name = NULL,
   mode = NULL,
   overwrite = FALSE,
@@ -102,6 +104,12 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 
 \item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
 If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
+
+\item{id_x}{Character; optional name of the column in \code{x} whose values will
+be used to name the list elements. If \code{NULL}, integer row numbers of \code{x} are used.}
+
+\item{id_y}{Character; optional name of the column in \code{y} whose values will
+replace the integer indices returned in each element of the list.}
 }
 \value{
 For \code{ddbs_area}, \code{ddbs_length}, and \code{ddbs_perimeter}:
