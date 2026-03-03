@@ -191,10 +191,10 @@ ddbs_load(conn)
 
 ## Non-persistent database
 
-Once you have a connection, write spatial data into it with `ddbs_write_vector()`. It accepts both `sf` and `duckspatial_df` objects:
+Once you have a connection, write spatial data into it with `ddbs_write_table()`. It accepts both `sf` and `duckspatial_df` objects:
 
 ```{r}
-ddbs_write_vector(conn, countries_sf, name = "countries")
+ddbs_write_table(conn, countries_sf, name = "countries")
 ```
 
 Verify the table is there:
@@ -217,10 +217,10 @@ ddbs_make_valid("countries", conn = conn, name = "countries_valid")
 ddbs_union("countries_valid", conn = conn, name = "world")
 ```
 
-`ddbs_read_vector()` materialises a table directly as `sf` (not lazily), so the result can be passed straight to `plot()`:
+`ddbs_read_table()` materialises a table directly as `sf` (not lazily), so the result can be passed straight to `plot()`:
 
 ```{r}
-ddbs_read_vector(conn, "world") |>
+ddbs_read_table(conn, "world") |>
   plot()
 ```
 
@@ -256,7 +256,7 @@ world_ddbs <- ddbs_open_dataset(
   ddbs_union()
 
 ## write only the final result to the persistent database
-ddbs_write_vector(conn, world_ddbs, name = "world")
+ddbs_write_table(conn, world_ddbs, name = "world")
 
 ## close — "my_database.duckdb" will persist on disk
 ddbs_stop_conn(conn)

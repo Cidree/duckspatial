@@ -22,11 +22,11 @@
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -67,7 +67,7 @@ ddbs_buffer <- function(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
 
@@ -109,7 +109,7 @@ ddbs_buffer <- function(
     name = name,
     crs = crs,
     crs_column = crs_column,
-    output = output,
+    mode = mode,
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_Buffer",
@@ -131,11 +131,11 @@ ddbs_buffer <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -167,7 +167,7 @@ ddbs_centroid <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
     
@@ -177,7 +177,7 @@ ddbs_centroid <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_Centroid",
@@ -200,11 +200,11 @@ ddbs_centroid <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -236,7 +236,7 @@ ddbs_make_valid <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -246,7 +246,7 @@ ddbs_make_valid <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_MakeValid",
@@ -275,11 +275,11 @@ ddbs_make_valid <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -313,7 +313,7 @@ ddbs_simplify <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -339,7 +339,7 @@ ddbs_simplify <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = st_simplify_fun,
@@ -362,11 +362,11 @@ ddbs_simplify <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -398,7 +398,7 @@ ddbs_exterior_ring <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -411,7 +411,7 @@ ddbs_exterior_ring <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_ExteriorRing",
@@ -434,11 +434,11 @@ ddbs_exterior_ring <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @family polygon construction
 #' @seealso [ddbs_polygonize()], [ddbs_build_area()]
 #' @export
@@ -472,7 +472,7 @@ ddbs_make_polygon <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -485,7 +485,7 @@ ddbs_make_polygon <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_MakePolygon",
@@ -511,11 +511,11 @@ ddbs_make_polygon <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -535,7 +535,7 @@ ddbs_make_polygon <- function(
 #'   ddbs_combine()
 #'
 #' # option 1: passing ddbs or sf objects
-#' output1 <- duckspatial::ddbs_concave_hull(points_ddbs, output = "sf")
+#' output1 <- duckspatial::ddbs_concave_hull(points_ddbs, mode = "sf")
 #'
 #' plot(output1)
 #'
@@ -552,7 +552,7 @@ ddbs_make_polygon <- function(
 #' output2 <- duckspatial::ddbs_concave_hull(
 #'  conn = conn,
 #'  x = "points_tbl",
-#'  output = "sf"
+#'  mode = "sf"
 #' )
 #'
 #' plot(output2)
@@ -566,7 +566,7 @@ ddbs_concave_hull <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -584,7 +584,7 @@ ddbs_concave_hull <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_ConcaveHull",
@@ -605,11 +605,11 @@ ddbs_concave_hull <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -628,7 +628,7 @@ ddbs_concave_hull <- function(
 #' )
 #' 
 #' # option 1: passing sf objects
-#' output1 <- duckspatial::ddbs_convex_hull(x = argentina_ddbs, output = "sf")
+#' output1 <- duckspatial::ddbs_convex_hull(x = argentina_ddbs, mode = "sf")
 #'
 #' plot(output1["CNTR_NAME"])#' # store in duckdb
 #'
@@ -644,7 +644,7 @@ ddbs_concave_hull <- function(
 #' output2 <- duckspatial::ddbs_convex_hull(
 #'  conn = conn,
 #'  x = "argentina_tbl",
-#'  output = "sf"
+#'  mode = "sf"
 #' )
 #'
 #' plot(output2["CNTR_NAME"])
@@ -655,7 +655,7 @@ ddbs_convex_hull <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -665,7 +665,7 @@ ddbs_convex_hull <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_ConvexHull",
@@ -694,11 +694,11 @@ ddbs_convex_hull <- function(
 #' @template conn_x_conn_y
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -741,7 +741,7 @@ ddbs_transform <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
     
@@ -750,7 +750,7 @@ ddbs_transform <- function(
     ## 0. Handle errors
     assert_xy(x, "x")
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -772,6 +772,9 @@ ddbs_transform <- function(
     x <- normalize_spatial_input(x, conn_x)
     try(y <- normalize_spatial_input(y, conn_y), silent = TRUE)
 
+    ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
 
     # 2. Manage connection to DB
 
@@ -781,7 +784,9 @@ ddbs_transform <- function(
     x            <- resolve_conn$x
     y            <- resolve_conn$y
     ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_conn$cleanup(), add = TRUE)   
+    }
 
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
@@ -801,8 +806,7 @@ ddbs_transform <- function(
 
     ## warn if the crs is the same
     if (crs_x$input == crs_y$input) cli::cli_warn("The CRS of `x` and `y` is the same.")
-
-
+    
     # 3. Prepare parameters for the query
 
     ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
@@ -822,7 +826,19 @@ ddbs_transform <- function(
         ""
     }
 
-    ## 3. if name is not NULL (i.e. no SF returned)
+    ## build the base query
+    ## always_xy assumes [northing, easting]
+    st_function <- glue::glue("ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)")
+    base.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            '{crs_y$input}' AS '{crs_column}',
+            {build_geom_query(st_function, mode)} as {x_geom} 
+        FROM 
+            {x_list$query_name};
+    ")
+
+    # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
 
         ## convenient names of table and/or schema.table
@@ -847,32 +863,17 @@ ddbs_transform <- function(
         return(invisible(TRUE))
     }
 
-    # 4. Get data frame
-    ## 4.1. create query
-    ## always_xy assumes [northing, easting]
-    tmp.query <- glue::glue("
-        SELECT 
-            {x_rest}
-            '{crs_y$input}' AS '{crs_column}',
-            ST_AsWKB(ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)) as {x_geom} 
-        FROM 
-            {x_list$query_name};
-    ")
-    ## 4.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    ## 5. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = crs_y,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 
 
@@ -885,9 +886,8 @@ ddbs_transform <- function(
 #' input features.
 #'
 #' @template x
-#' @template conn_null
 #' @template by_feature
-#' @template quiet
+#' @template conn_null
 #'
 #' @returns A factor with geometry type(s)
 #' @export
@@ -912,15 +912,13 @@ ddbs_transform <- function(
 #' }
 ddbs_geometry_type <- function(
   x,
-  conn = NULL,
   by_feature = TRUE,
-  quiet = FALSE) {
+  conn = NULL) {
 
   ## 0. Handle errors
   assert_xy(x, "x")
   assert_conn_character(conn, x)
   assert_logic(by_feature, "by_feature")
-  assert_logic(quiet, "quiet")
   
 
   # 1. Manage connection to DB
@@ -970,7 +968,6 @@ ddbs_geometry_type <- function(
   
   ## send the query, and return a factor vector
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-  feedback_query(quiet)
   return(data_tbl$geometry)
 }
 
@@ -989,11 +986,11 @@ ddbs_geometry_type <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @family polygon construction
 #' @seealso [ddbs_make_polygon()], [ddbs_build_area()]
 #' @export
@@ -1003,7 +1000,7 @@ ddbs_polygonize <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -1011,9 +1008,10 @@ ddbs_polygonize <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -1028,6 +1026,9 @@ ddbs_polygonize <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -1050,8 +1051,14 @@ ddbs_polygonize <- function(
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
   
-    ## 3.2. Function to use
+    ## 3.2. Build base query
     st_function <- glue::glue("ST_Polygonize(LIST({x_geom}))")
+    base.query <- glue::glue("
+      SELECT 
+        {build_geom_query(st_function, mode)} as {x_geom}
+      FROM 
+        {x_list$query_name};
+    ")
   
   
     # 4. if name is not NULL (i.e. no SF returned)
@@ -1066,8 +1073,7 @@ ddbs_polygonize <- function(
         ## create query (no st_as_text)
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {st_function} as {x_geom}
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute query
         DBI::dbExecute(target_conn, tmp.query)
@@ -1075,31 +1081,18 @@ ddbs_polygonize <- function(
         return(invisible(TRUE))
     }
 
-  
-    # 5. Get data frame
-  
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT ST_AsWKB({st_function}) as {x_geom}
-        FROM {x_list$query_name};
-    ")
-  
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 
 
@@ -1117,11 +1110,11 @@ ddbs_polygonize <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @family polygon construction
 #' @seealso [ddbs_make_polygon()], [ddbs_polygonize()]
 #' @export
@@ -1131,7 +1124,7 @@ ddbs_build_area <- function(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -1142,7 +1135,7 @@ ddbs_build_area <- function(
     name = name,
     crs = crs,
     crs_column = crs_column,
-    output = output,
+    mode = mode,
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_BuildArea",
@@ -1165,11 +1158,11 @@ ddbs_build_area <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -1200,7 +1193,7 @@ ddbs_voronoi <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
 
@@ -1215,7 +1208,7 @@ ddbs_voronoi <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_VoronoiDiagram",
@@ -1236,11 +1229,11 @@ ddbs_voronoi <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @details
@@ -1277,7 +1270,7 @@ ddbs_endpoint <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
 
@@ -1293,7 +1286,7 @@ ddbs_endpoint <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_EndPoint",
@@ -1317,11 +1310,11 @@ ddbs_endpoint <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -1353,7 +1346,7 @@ ddbs_flip_coordinates <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
 
@@ -1363,7 +1356,7 @@ ddbs_flip_coordinates <- function(
         name = name,
         crs = crs,
         crs_column = crs_column,
-        output = output,
+        mode = mode,
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_FlipCoordinates",

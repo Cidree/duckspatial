@@ -9,7 +9,7 @@
 #' @template name
 #' @template new_column
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
@@ -35,17 +35,12 @@
 #'   and last coordinates are identical. Unlike `ddbs_is_ring()`, this does not check for
 #'   simplicity.
 #' 
-#' @returns When `new_column = NULL` it returns a logical vector. When `new_column` is not NULL, the
-#' output depends on the \code{output} argument (or global preference set by \code{\link{ddbs_options}}):
-#'   \itemize{
-#'     \item \code{duckspatial_df} (default): A lazy spatial data frame backed by dbplyr/DuckDB.
-#'     \item \code{sf}: An eagerly collected \code{sf} object in R memory.
-#'     \item \code{tibble}: An eagerly collected \code{tibble} without geometry in R memory.
-#'     \item \code{raw}: An eagerly collected \code{tibble} with WKB geometry (no conversion).
-#'     \item \code{geoarrow}: An eagerly collected \code{tibble} with geometry converted to \code{geoarrow_vctr}.
-#'   }
-#'   When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
-#' 
+#' @returns
+#' \itemize{
+#'   \item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+#'   \item \code{mode = "sf"}: An eagerly collected vector in R memory.
+#'   \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
+#' }
 #' 
 #' @examples
 #' \dontrun{
@@ -94,7 +89,7 @@ ddbs_is_simple <- function(
   new_column = "is_simple",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -105,7 +100,7 @@ ddbs_is_simple <- function(
     new_column = new_column,
     crs = crs,
     crs_column = crs_column,
-    output = output,
+    mode = mode,
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_IsSimple"
@@ -126,7 +121,7 @@ ddbs_is_valid <- function(
   new_column = "is_valid",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -137,7 +132,7 @@ ddbs_is_valid <- function(
     new_column = new_column,
     crs = crs,
     crs_column = crs_column,
-    output = output,
+    mode = mode,
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_IsValid"
@@ -157,7 +152,7 @@ ddbs_is_closed <- function(
   new_column = "is_closed",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -168,7 +163,7 @@ ddbs_is_closed <- function(
     new_column = new_column,
     crs = crs,
     crs_column = crs_column,
-    output = output,
+    mode = mode,
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_IsClosed"
@@ -188,7 +183,7 @@ ddbs_is_empty <- function(
   new_column = "is_empty",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -199,7 +194,7 @@ ddbs_is_empty <- function(
     new_column = new_column,
     crs = crs,
     crs_column = crs_column,
-    output = output,
+    mode = mode,
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_IsEmpty"
@@ -220,7 +215,7 @@ ddbs_is_ring <- function(
   new_column = "is_ring",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -231,7 +226,7 @@ ddbs_is_ring <- function(
     new_column = new_column,
     crs = crs,
     crs_column = crs_column,
-    output = output,
+    mode = mode,
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_IsRing"

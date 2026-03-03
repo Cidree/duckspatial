@@ -19,11 +19,11 @@
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -41,7 +41,7 @@
 #' )
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' ## rotate 45 degrees
 #' ddbs_rotate(conn = conn, "argentina", angle = 45)
@@ -63,7 +63,7 @@ ddbs_rotate <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -76,7 +76,7 @@ ddbs_rotate <- function(
     assert_logic(by_feature, "by_feature")
     assert_name(name)
     assert_conn_character(conn, x)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -107,6 +107,9 @@ ddbs_rotate <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -180,6 +183,13 @@ ddbs_rotate <- function(
         )
     }
 
+    ## 3.6. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(rotation_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
+
   
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -193,9 +203,7 @@ ddbs_rotate <- function(
         ## create query
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest} 
-            {rotation_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute rotation query
         DBI::dbExecute(target_conn, tmp.query)
@@ -203,32 +211,21 @@ ddbs_rotate <- function(
         return(invisible(TRUE))
     }
 
+    # 5. Apply geospatial operation
   
-    # 5. Get data frame
+    
   
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({rotation_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-  
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-  
-    # 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    ## 5.1. Create the query based on output
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 
 
@@ -248,11 +245,11 @@ ddbs_rotate <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -272,7 +269,7 @@ ddbs_rotate <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #'
 #' ## rotate 45 degrees around X axis (pitch)
 #' ddbs_rotate_3d(conn = conn, "countries", angle = 45, axis = "x")
@@ -295,7 +292,7 @@ ddbs_rotate_3d <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
 
@@ -323,7 +320,7 @@ ddbs_rotate_3d <- function(
       name = name,
       crs = crs,
       crs_column = crs_column,
-      output = output,
+      mode = mode,
       overwrite = overwrite,
       quiet = quiet,
       fun = glue::glue("ST_Rotate{axis}"),
@@ -348,11 +345,11 @@ ddbs_rotate_3d <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -370,7 +367,7 @@ ddbs_rotate_3d <- function(
 #' )
 #' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' ## shift 10 degrees east and 5 degrees north
 #' ddbs_shift(conn = conn, "argentina", dx = 10, dy = 5)
@@ -386,7 +383,7 @@ ddbs_shift <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -408,7 +405,7 @@ ddbs_shift <- function(
       name = name,
       crs = crs,
       crs_column = crs_column,
-      output = output,
+      mode = mode,
       overwrite = overwrite,
       quiet = quiet,
       fun = "ST_Affine",
@@ -436,11 +433,11 @@ ddbs_shift <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -458,7 +455,7 @@ ddbs_shift <- function(
 #' )
 #' 
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
 #' ## flip all features together as a whole (default)
 #' ddbs_flip(conn = conn, "argentina", direction = "horizontal", by_feature = FALSE)
@@ -477,7 +474,7 @@ ddbs_flip <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -488,9 +485,10 @@ ddbs_flip <- function(
     direction <- match.arg(direction)
     assert_name(direction, "direction")
     assert_logic(by_feature, "by_feature")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -505,6 +503,9 @@ ddbs_flip <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -582,7 +583,14 @@ ddbs_flip <- function(
         }
     }
 
+    ## 3.4. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(flip_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
   
+
     # 4. if name is not NULL
     if (!is.null(name)) {
 
@@ -595,9 +603,7 @@ ddbs_flip <- function(
         ## create query 
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {flip_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute flip query
         DBI::dbExecute(target_conn, tmp.query)
@@ -605,32 +611,18 @@ ddbs_flip <- function(
         return(invisible(TRUE))
     }
 
-  
-    # 5. Get data frame
-  
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({flip_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-  
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  
-    # 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 
 
@@ -650,11 +642,11 @@ ddbs_flip <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -674,7 +666,7 @@ ddbs_flip <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #'
 #' ## scale to 150% in both directions
 #' ddbs_scale(conn = conn, "countries", x_scale = 1.5, y_scale = 1.5)
@@ -698,7 +690,7 @@ ddbs_scale <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -709,9 +701,10 @@ ddbs_scale <- function(
     assert_numeric(x_scale, "x_scale")
     assert_numeric(y_scale, "y_scale")
     assert_logic(by_feature, "by_feature")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -726,6 +719,9 @@ ddbs_scale <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -780,6 +776,13 @@ ddbs_scale <- function(
         )
     }
 
+    ## 3.4. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(scale_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
+
   
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -793,9 +796,7 @@ ddbs_scale <- function(
         ## create query 
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {scale_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute scale query
         DBI::dbExecute(target_conn, tmp.query)
@@ -803,31 +804,17 @@ ddbs_scale <- function(
         return(invisible(TRUE))
     }
 
-  
-    # 5. Get data frame
-  
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({scale_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-  
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    # 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 
 
@@ -850,11 +837,11 @@ ddbs_scale <- function(
 #' @template conn_null
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #' @export
 #'
 #' @examples
@@ -874,7 +861,7 @@ ddbs_scale <- function(
 #'   filter(CNTR_ID %in% c("PT", "ES", "FR", "IT"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #'
 #' ## shear in X direction (creates italic-like effect)
 #' ddbs_shear(conn = conn, "countries", x_shear = 0.3, y_shear = 0)
@@ -897,7 +884,7 @@ ddbs_shear <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -908,9 +895,10 @@ ddbs_shear <- function(
     assert_numeric(x_shear, "x_shear")
     assert_numeric(y_shear, "y_shear")
     assert_logic(by_feature, "by_feature")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -925,6 +913,9 @@ ddbs_shear <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -975,6 +966,13 @@ ddbs_shear <- function(
         )
     }
 
+    ## 3.4. Build base query
+    base.query <- glue::glue("
+      SELECT {x_rest}
+      {build_geom_query(shear_expr, mode)} as {x_geom}
+      FROM {x_list$query_name};
+    ")
+
 
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -988,9 +986,7 @@ ddbs_shear <- function(
         ## create query 
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT {x_rest}
-            {shear_expr} as {x_geom} 
-            FROM {x_list$query_name};
+            {base.query}
         ")
         ## execute shear query
         DBI::dbExecute(target_conn, tmp.query)
@@ -998,29 +994,17 @@ ddbs_shear <- function(
         return(invisible(TRUE))
     }
 
-
-    # 5. Get data frame
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT {x_rest}
-        ST_AsWKB({shear_expr}) as {x_geom} 
-        FROM {x_list$query_name};
-    ")
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-    # 6. convert to target output
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }
 

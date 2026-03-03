@@ -7,7 +7,7 @@ test_that("duckspatial_df uses efficient SQL render fallback when source_table i
   
   # Setup: Create a table and a duckspatial_df from a query
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   # Create a query-based duckspatial_df (no direct source table)
   # This typically results in source_table=NULL in as_duckspatial_df
@@ -38,7 +38,7 @@ test_that("duckspatial_df uses efficient SQL render fallback when source_table i
   
   # REGRESSION CHECK:
   # The efficient method creates a VIEW using SQL.
-  # The inefficient method used duckdb_register_arrow (via ddbs_write_vector(temp_view=TRUE)),
+  # The inefficient method used duckdb_register_arrow (via ddbs_write_table(temp_view=TRUE)),
   # which creates a replacement scan view (typically no SQL definition in duckdb_views or different).
   
   # Let's inspect the view definition

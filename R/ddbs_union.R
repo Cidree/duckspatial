@@ -27,7 +27,7 @@
 #' @template conn_x_conn_y
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
@@ -47,7 +47,7 @@
 #' without dissolving shared boundaries. This is faster than union but preserves all
 #' original geometry boundaries.
 #'
-#' @template returns_output
+#' @template returns_mode
 #'
 #' @examples
 #' \dontrun{
@@ -93,259 +93,203 @@ NULL
 #' @export
 ddbs_union <- function(
   x,
-  y = NULL,
-  by_feature = FALSE,
-  conn = NULL,
-  conn_x = NULL,
-  conn_y = NULL,
-  name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
-  output = NULL,
-  overwrite = FALSE,
-  quiet = FALSE) {
-  
+  y           = NULL,
+  by_feature  = FALSE,
+  conn        = NULL,
+  conn_x      = NULL,
+  conn_y      = NULL,
+  name        = NULL,
+  crs         = NULL,
+  crs_column  = "crs_duckspatial",
+  mode        = NULL,
+  overwrite   = FALSE,
+  quiet       = FALSE) {
+
   deprecate_crs(crs_column, crs)
 
-  ## 0. Handle errors
+  ## 0. Validate inputs
   assert_xy(x, "x")
   assert_logic(by_feature, "by_feature")
   assert_name(name)
-  assert_name(output, "output")
+  assert_name(mode, "mode")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
-  if (isTRUE(by_feature) & is.null(y)) cli::cli_warn("When {.arg y} is NULL, {.arg by_feature = TRUE} is ignored.")
+  if (isTRUE(by_feature) && is.null(y)) {
+    cli::cli_warn("When {.arg y} is NULL, {.arg by_feature = TRUE} is ignored.")
+  }
 
   ## Pre-extract `x` attributes (CRS and geometry column name)
-  crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
+  crs_x    <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
   sf_col_x <- attr(x, "sf_column")
 
 
-  # 1. Handle ST_Union(x, y) - pairwise union of two geometries
+  # ------------------------------------------------------------------
+  # 1. Pairwise union: ST_Union(x, y)
+  # ------------------------------------------------------------------
   if (!is.null(y)) {
-    
-    ## Check y
+
+    ## Validate y
     assert_xy(y, "y")
     assert_conn_character(conn, y)
-  
-    ## 1.1. Pre-extract `y` attributes
-    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
+
+    ## Pre-extract `y` attributes
+    crs_y    <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
     sf_col_y <- attr(y, "sf_column")
-  
-    ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
+
+    ## Resolve conn_x/conn_y defaults from conn for character inputs
     if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
     if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
-  
-    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
+
+    ## Normalize inputs
     x <- normalize_spatial_input(x, conn_x)
     y <- normalize_spatial_input(y, conn_y)
-  
-    ## 1.4. Resolve connections and handle imports
+
+    ## Resolve connections
     resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     y            <- resolve_conn$y
     ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
-  
-    ## 1.5. Get query list of table names
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_conn$cleanup(), add = TRUE)   
+    }
+
+    ## Get query names
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
     y_list <- get_query_list(y, target_conn)
     on.exit(y_list$cleanup(), add = TRUE)
-  
-    ## 1.6. CRS already extracted at start of function
+
+    ## CRS check
     if (!is.null(crs_x) && !is.null(crs_y)) {
-        if (!crs_equal(crs_x, crs_y)) {
-            cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
-        }
+      if (!crs_equal(crs_x, crs_y)) {
+        cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
+      }
     } else {
-        assert_crs(target_conn, x_list$query_name, y_list$query_name)
+      assert_crs(target_conn, x_list$query_name, y_list$query_name)
     }
-    
-    ## 1.7. Get names of geometry columns (use saved sf_col_x from before 
-    ## transformation)
+
+    ## Geometry column names
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
-    
-    ## 1.8. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
-    y_rest <- get_geom_name(target_conn, y_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v2")
-    
-    ## 1.9. if name is not NULL
-    if (!is.null(name)) {
-      ## convenient names of table and/or schema.table
-      name_list <- get_query_name(name)
 
-      ## handle overwrite
+    ## Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
+    ## Named table: write and return
+    if (!is.null(name)) {
+      name_list <- get_query_name(name)
       overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
-      ## create query for pairwise union
-      ## assuming row-wise union based on row number
-      if (isTRUE(by_feature)) {
-        tmp.query <- glue::glue("
-          SELECT
-            ROW_NUMBER() OVER () as row_id,
-            v1.{crs_column},
-            ST_Union(v1.{x_geom}, v2.{y_geom}) as {x_geom}
-          FROM
-            (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) v1
-          JOIN
-            (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_list$query_name}) v2
-          ON v1.rn = v2.rn;
-        ")
-      } else {
-        # Aggregate union - dissolves all geometries into one
-        tmp.query <- glue::glue("
-          SELECT
-            1 as row_id,
-            v1.{crs_column},
-            ST_Union_Agg(geom) as {x_geom}
-          FROM (
-            SELECT {crs_column}, {x_geom} as geom FROM {x_list$query_name}
-            UNION ALL
-            SELECT {crs_column}, {y_geom} as geom FROM {y_list$query_name}
-          ) v1
-          GROUP BY v1.{crs_column};
-        ")
-      }
-      
-      ## execute union query
-      DBI::dbExecute(target_conn, glue::glue("CREATE TABLE {name_list$query_name} AS {tmp.query}"))
+      tmp.query <- build_union_query(
+        by_feature = by_feature,
+        mode       = "duckspatial",   # no WKB needed when writing to table
+        name_query = name_list$query_name,
+        x_geom     = x_geom,
+        y_geom     = y_geom,
+        crs_column = crs_column,
+        x_query    = x_list$query_name,
+        y_query    = y_list$query_name
+      )
+
+      DBI::dbExecute(target_conn, tmp.query)
       feedback_query(quiet)
       return(invisible(TRUE))
-
-    }
-    
-    ## 1.10. Create the base query with ST_AsWKB
-    if (isTRUE(by_feature)) {
-      tmp.query <- glue::glue("
-        SELECT
-          ROW_NUMBER() OVER () as row_id,
-          v1.{crs_column},
-          ST_AsWKB(ST_Union(v1.{x_geom}, v2.{y_geom})) as {x_geom}
-        FROM
-          (SELECT ROW_NUMBER() OVER () as rn, * FROM {x_list$query_name}) v1
-        JOIN
-          (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_list$query_name}) v2
-        ON v1.rn = v2.rn;
-      ")
-    } else {
-      # Aggregate union - dissolves all geometries into one
-      tmp.query <- glue::glue("
-        SELECT
-          1 as row_id,
-          v1.{crs_column},
-          ST_AsWKB(ST_Union_Agg(geom)) as {x_geom}
-        FROM (
-          SELECT {crs_column}, {x_geom} as geom FROM {x_list$query_name}
-          UNION ALL
-          SELECT {crs_column}, {y_geom} as geom FROM {y_list$query_name}
-        ) v1
-        GROUP BY v1.{crs_column};
-      ")
     }
 
-    ## send the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+    ## Create the base query
+    base.query <- build_union_query(
+      by_feature = by_feature,
+      mode       = mode,
+      name_query = NULL,
+      x_geom     = x_geom,
+      y_geom     = y_geom,
+      crs_column = crs_column,
+      x_query    = x_list$query_name,
+      y_query    = y_list$query_name
+    )
 
-    ## 1.11. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
+
   }
 
 
-  # 2. Handle ST_Union(x)
-  
-  ## 2.1. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-  ## validate character table names
+  # ------------------------------------------------------------------
+  # 2. Aggregate union: ST_Union(x)
+  # ------------------------------------------------------------------
+
+  ## Normalize input
   x <- normalize_spatial_input(x, conn)
 
-  ## 2.2. Resolve connections and handle imports
+  ## Resolve connection
   resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
-  ## register cleanup of the connection
   on.exit(resolve_conn$cleanup(), add = TRUE)
 
-  ## 2.3. Get query list of table names
+  ## Get query name
   x_list <- get_query_list(x, target_conn)
   on.exit(x_list$cleanup(), add = TRUE)
 
-  ## 2.4. Get names of geometry columns (use saved sf_col_x from before transformation)
+  ## Geometry column name
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 2.5. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
+  ## Resolve mode
+  if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
 
-
-  # 3. if name is not NULL (i.e. no SF returned)
+  ## Named table: write and return
   if (!is.null(name)) {
-    
-    ## convenient names of table and/or schema.table
     name_list <- get_query_name(name)
-
-    ## handle overwrite
     overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
-    ## create query
-    ## Union all geometries into a single geometry
-    tmp.query <- glue::glue("
-      CREATE TABLE {name_list$query_name} AS
-      SELECT 
-        FIRST({crs_column}) as {crs_column}, 
-        ST_Union_Agg({x_geom}) as {x_geom}
-      FROM 
-        {x_list$query_name};
-    ")
+    tmp.query <- build_union_query(
+      by_feature = FALSE,
+      mode       = "duckspatial",   # no WKB needed when writing to table
+      name_query = name_list$query_name,
+      x_geom     = x_geom,
+      crs_column = crs_column,
+      x_query    = x_list$query_name
+    )
 
-    ## execute union query
     DBI::dbExecute(target_conn, tmp.query)
     feedback_query(quiet)
     return(invisible(TRUE))
-
   }
 
+  ## Create the base query
 
-  # 4. Create the base query
-  ## if by = NULL, aggregate all geometries together
-  tmp.query <- glue::glue("
-      SELECT
-        FIRST({crs_column}) as {crs_column}, 
-        ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom}
-      FROM {x_list$query_name};
-  ")
+  base.query <- build_union_query(
+    by_feature = FALSE,
+    mode       = mode,
+    name_query = NULL,
+    x_geom     = x_geom,
+    crs_column = crs_column,
+    x_query    = x_list$query_name
+  )
 
-  ## send the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-  # 5. Convert to SF and return result
-  data_sf <- ddbs_handle_output(
-      data       = data_tbl,
+  result <- ddbs_handle_query(
+      query      = base.query,
       conn       = target_conn,
-      output     = output,
+      mode       = mode,
       crs        = if (!is.null(crs)) crs else crs_x,
       crs_column = crs_column,
       x_geom     = x_geom
   )
 
-  feedback_query(quiet)
-  return(data_sf)
-
+  return(result)
+  
 }
 
 
@@ -359,7 +303,7 @@ ddbs_combine <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -367,9 +311,10 @@ ddbs_combine <- function(
 
     ## 0. Handle errors
     assert_xy(x, "x")
+    assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
   
@@ -384,6 +329,9 @@ ddbs_combine <- function(
     ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names
     x <- normalize_spatial_input(x, conn)
+
+    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
 
 
     # 2. Manage connection to DB
@@ -405,6 +353,16 @@ ddbs_combine <- function(
     ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
+  
+    ## 3.2. Build base query
+    st_function <- glue::glue("ST_Collect(LIST({x_geom}))")
+    base.query <- glue::glue("
+      SELECT
+        FIRST({crs_column}) as {crs_column},
+        {build_geom_query(st_function, mode)} AS {x_geom}
+      FROM
+        {x_list$query_name};
+    ")
 
 
     # 4. if name is not NUL
@@ -419,11 +377,7 @@ ddbs_combine <- function(
         ## create the query
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT
-                ST_Collect(LIST({x_geom})) as {x_geom},
-                FIRST({crs_column}) as {crs_column}
-            FROM
-                {x_list$query_name};
+            {base.query}
         ")
 
         ## execute the query
@@ -432,35 +386,20 @@ ddbs_combine <- function(
         return(invisible(TRUE))
     
     }
-
   
-    # 5. Get data
-
-    ## 5.1. Create the query
-    tmp.query <- glue::glue("
-        SELECT
-            ST_AsWKB(ST_Collect(LIST({x_geom}))) as {x_geom},
-            FIRST({crs_column}) as {crs_column}
-        FROM
-            {x_list$query_name};
-    ")
-
-    ## 5.2. Get the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
   
-    # 6. Convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
+  
 }
 
 
@@ -474,7 +413,7 @@ ddbs_union_agg <- function(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
@@ -482,9 +421,10 @@ ddbs_union_agg <- function(
 
   ## 0. Handle errors
   assert_xy(x, "x")
+  assert_conn_x_name(conn, x, name)
   assert_conn_character(conn, x)
   assert_name(name)
-  assert_name(output, "output")
+  assert_name(mode, "mode")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
 
@@ -499,6 +439,9 @@ ddbs_union_agg <- function(
   ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
   ## validate character table names
   x <- normalize_spatial_input(x, conn)
+
+  ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
+  mode <- get_mode(mode, name)
 
 
   # 2. Manage connection to DB
@@ -524,6 +467,19 @@ ddbs_union_agg <- function(
   ## 3.2. Get names of the rest of the groupping columns
   by_cols <- paste0(by, collapse = ", ")
 
+  ## 3.3. Build base query
+  st_function <- glue::glue("ST_Union_Agg({x_geom})")
+  base.query <- glue::glue("
+    SELECT 
+      {by_cols}, 
+      FIRST({crs_column}) as {crs_column},
+      {build_geom_query(st_function, mode)} AS {x_geom}
+    FROM 
+      {x_list$query_name}
+    GROUP BY 
+      {by_cols};
+  ")
+
 
   # 3. if name is not NULL (i.e. no SF returned)
   if (!is.null(name)) {
@@ -537,12 +493,7 @@ ddbs_union_agg <- function(
     ## Union of geometries grouped by specified columns
     tmp.query <- glue::glue("
       CREATE TABLE {name_list$query_name} AS
-      SELECT 
-        {by_cols}, 
-        FIRST({crs_column}) as {crs_column},
-        ST_Union_Agg({x_geom}) as {x_geom}
-      FROM {x_list$query_name}
-      GROUP BY {by_cols};
+      {base.query}
     ")
 
     ## execute union query
@@ -553,33 +504,16 @@ ddbs_union_agg <- function(
   }
 
 
-  # 4. Create the base query
-
-  ## create the query based on if other_cols has at least one column
-  tmp.query <- glue::glue("
-    SELECT 
-      {by_cols}, 
-      FIRST({crs_column}) as {crs_column},
-      ST_AsWKB(ST_Union_Agg({x_geom})) as {x_geom}
-    FROM {x_list$query_name}
-    GROUP BY {by_cols};
-  ")          
-
-  ## send the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-  # 5. Convert to SF and return result
-  data_sf <- ddbs_handle_output(
-      data       = data_tbl,
+  # 4. Apply geospatial operation
+  result <- ddbs_handle_query(
+      query      = base.query,
       conn       = target_conn,
-      output     = output,
+      mode       = mode,
       crs        = if (!is.null(crs)) crs else crs_x,
       crs_column = crs_column,
       x_geom     = x_geom
   )
 
-  feedback_query(quiet)
-  return(data_sf)
+  return(result)
   
 }

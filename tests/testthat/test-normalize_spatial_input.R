@@ -8,9 +8,9 @@ test_that("normalize_spatial_input works for duckspatial_df objects", {
   conn <- duckspatial:::ddbs_temp_conn()
   
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
-  duckspatial::ddbs_write_vector(conn, sf_obj, "test_table")
+  duckspatial::ddbs_write_table(conn, sf_obj, "test_table")
   
-  ds_df <- duckspatial::ddbs_read_vector(conn, "test_table")
+  ds_df <- duckspatial::ddbs_read_table(conn, "test_table")
   expect_identical(duckspatial:::normalize_spatial_input(ds_df), ds_df)
 })
 
@@ -18,7 +18,7 @@ test_that("normalize_spatial_input works for tbl_duckdb_connection objects", {
   conn <- duckspatial:::ddbs_temp_conn()
   
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
-  duckspatial::ddbs_write_vector(conn, sf_obj, "test_table")
+  duckspatial::ddbs_write_table(conn, sf_obj, "test_table")
   
   tbl_obj <- dplyr::tbl(conn, "test_table")
   result <- duckspatial:::normalize_spatial_input(tbl_obj)
@@ -51,7 +51,7 @@ test_that("normalize_spatial_input works for duckspatial::ddbs_open_dataset inpu
   # Create a distinct temporary parquet file
   conn <- duckspatial:::ddbs_temp_conn()
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(1, 1))), b = 2) # Different data
-  duckspatial::ddbs_write_vector(conn, sf_obj, "test_table_2")
+  duckspatial::ddbs_write_table(conn, sf_obj, "test_table_2")
   
   tmp_file_ds <- tempfile(fileext = ".parquet")
   DBI::dbExecute(conn, glue::glue("COPY test_table_2 TO '{tmp_file_ds}' (FORMAT PARQUET)"))

@@ -181,10 +181,10 @@ reference:
   desc: Read and write spatial data to and from DuckDB
   contents:
   - ddbs_open_dataset
-  - ddbs_read_vector
+  - ddbs_read_table
   - ddbs_write_dataset
-  - ddbs_write_vector
-  - ddbs_register_vector
+  - ddbs_write_table
+  - ddbs_register_table
 
 - title: Spatial Predicates
   desc: Test spatial relationships between geometries
@@ -262,10 +262,7 @@ reference:
 - title: Measurements
   desc: Calculate areas, distances, lengths, and perimeters
   contents:
-  - ddbs_area
-  - ddbs_distance
-  - ddbs_length
-  - ddbs_perimeter
+  - ddbs_measure_funs
 
 - title: Database Utilities
   desc: Helper functions for managing DuckDB schemas and metadata

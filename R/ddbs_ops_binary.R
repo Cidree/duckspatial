@@ -20,11 +20,11 @@
 #' @template conn_x_conn_y
 #' @template name
 #' @template crs
-#' @template output
+#' @template mode
 #' @template overwrite
 #' @template quiet
 #'
-#' @template returns_output
+#' @template returns_mode
 #'
 #' @examples
 #' \dontrun{
@@ -104,7 +104,7 @@ ddbs_intersection <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -114,7 +114,7 @@ ddbs_intersection <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -136,6 +136,9 @@ ddbs_intersection <- function(
     x <- normalize_spatial_input(x, conn_x)
     y <- normalize_spatial_input(y, conn_y)
 
+    ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
 
     # 2. Manage connection to DB
 
@@ -145,7 +148,9 @@ ddbs_intersection <- function(
     x            <- resolve_conn$x
     y            <- resolve_conn$y
     ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_conn$cleanup(), add = TRUE)   
+    }
 
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
@@ -174,6 +179,19 @@ ddbs_intersection <- function(
     ## 3.2. Get names of the rest of the columns
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
 
+    ## 3.3. Build the base query
+    st_function <- glue::glue("ST_Intersection(v1.{x_geom}, v2.{y_geom})")
+    base.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            {build_geom_query(st_function, mode)} AS {x_geom}
+        FROM 
+            {x_list$query_name} v1,
+            {y_list$query_name} v2
+        WHERE 
+            ST_Intersects(v2.{y_geom}, v1.{x_geom});
+    ")
+
 
     # 4. if name is not NULL (i.e. no SF returned)
     if (!is.null(name)) {
@@ -187,15 +205,7 @@ ddbs_intersection <- function(
         ## create query
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS 
-            SELECT 
-                {x_rest}
-                ST_Intersection(v1.{x_geom}, 
-                v2.{y_geom}) AS {x_geom}
-            FROM 
-                {x_list$query_name} v1,
-                {y_list$query_name} v2
-            WHERE 
-                ST_Intersects(v2.{y_geom}, v1.{x_geom})
+            {base.query}
         ")
         ## execute intersection query
         DBI::dbExecute(target_conn, tmp.query)
@@ -204,36 +214,17 @@ ddbs_intersection <- function(
     }
 
 
-    # 5. Get data fram
-
-    ## 5.1. create query
-    tmp.query <- glue::glue("
-        SELECT 
-            {x_rest}
-            ST_AsWKB(ST_Intersection(v1.{x_geom}, v2.{y_geom})) AS {x_geom}
-        FROM 
-            {x_list$query_name} v1, 
-            {y_list$query_name} v2
-        WHERE 
-            ST_Intersects(v2.{y_geom}, v1.{x_geom})
-    ")
-
-    ## 5.2. retrieve results of the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-
-    # 6. convert to SF and return result
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
-
-    feedback_query(quiet)
-    return(data_sf)
+    
+    return(result)
 }
 
 
@@ -252,7 +243,7 @@ ddbs_difference <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -262,7 +253,7 @@ ddbs_difference <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -284,6 +275,9 @@ ddbs_difference <- function(
     x <- normalize_spatial_input(x, conn_x)
     y <- normalize_spatial_input(y, conn_y)
 
+    ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
 
     # 2. Manage connection to DB
 
@@ -293,7 +287,9 @@ ddbs_difference <- function(
     x            <- resolve_conn$x
     y            <- resolve_conn$y
     ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_conn$cleanup(), add = TRUE)   
+    }
 
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
@@ -322,46 +318,9 @@ ddbs_difference <- function(
     ## 3.2. Get names of the rest of the columns
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
 
-
-    # 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            WITH diff_geom AS (
-                SELECT 
-                    {x_rest}
-                    ST_Difference(
-                        ST_MakeValid(v1.{x_geom}),
-                        ST_MakeValid(v2.{y_geom})
-                    ) AS {x_geom}
-                FROM 
-                    {x_list$query_name} v1, 
-                    {y_list$query_name} v2
-            )
-            SELECT * FROM diff_geom
-            WHERE NOT ST_IsEmpty({x_geom});
-        ")
-
-        ## execute query
-        DBI::dbExecute(target_conn, tmp.query)
-
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-
-    # 5. Get data frame
-
-    ## 5.1. create query
-    tmp.query <- glue::glue("
+    ## 3.3. Build base query
+    st_function <- glue::glue("{x_geom}")
+    base.query <- glue::glue("
         WITH diff_geom AS (
             SELECT 
                 {x_rest}
@@ -381,27 +340,45 @@ ddbs_difference <- function(
         )
         SELECT 
             {x_rest}
-            ST_AsWKB({x_geom}) AS {x_geom}
+            {build_geom_query(st_function, mode)} as {x_geom}
         FROM diff_geom v1;
     ")
 
-    ## 5.2. retrieve results from the query
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+
+    # 4. if name is not NULL (i.e. no SF returned)
+    if (!is.null(name)) {
+
+        ## convenient names of table and/or schema.table
+        name_list <- get_query_name(name)
+
+        ## handle overwrite
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
+
+        ## create query
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            {base.query}
+        ")
+
+        ## execute query
+        DBI::dbExecute(target_conn, tmp.query)
+
+        feedback_query(quiet)
+        return(invisible(TRUE))
+    }
 
 
-    # 6. convert to SF
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    ## return result
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 
 }
 
@@ -420,7 +397,7 @@ ddbs_sym_difference <- function(
     name = NULL,
     crs = NULL,
     crs_column = "crs_duckspatial",
-    output = NULL,
+    mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
@@ -430,7 +407,7 @@ ddbs_sym_difference <- function(
     assert_xy(x, "x")
     assert_xy(y, "y")
     assert_name(name)
-    assert_name(output, "output")
+    assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
@@ -452,6 +429,9 @@ ddbs_sym_difference <- function(
     x <- normalize_spatial_input(x, conn_x)
     y <- normalize_spatial_input(y, conn_y)
 
+    ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
+    mode <- get_mode(mode, name)
+
 
     # 2. Manage connection to DB
 
@@ -461,7 +441,9 @@ ddbs_sym_difference <- function(
     x            <- resolve_conn$x
     y            <- resolve_conn$y
     ## register cleanup of the connection
-    on.exit(resolve_conn$cleanup(), add = TRUE)
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_conn$cleanup(), add = TRUE)   
+    }
 
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
@@ -490,42 +472,9 @@ ddbs_sym_difference <- function(
     ## 3.2. Get names of the rest of the columns
     x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
 
-
-    # 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-        name_list <- get_query_name(name)
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            WITH symdiff_geom AS (
-                SELECT 
-                    {x_rest}
-                    ST_Union(
-                        ST_Difference(
-                            ST_MakeValid(v1.{x_geom}),
-                            ST_MakeValid(v2.{y_geom})
-                        ),
-                        ST_Difference(
-                            ST_MakeValid(v2.{y_geom}),
-                            ST_MakeValid(v1.{x_geom})
-                        )
-                    ) AS {x_geom}
-                FROM 
-                    {x_list$query_name} v1, 
-                    {y_list$query_name} v2
-            )
-            SELECT * FROM symdiff_geom
-            WHERE NOT ST_IsEmpty({x_geom});
-        ")
-
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 5. Get data frame
-    tmp.query <- glue::glue("
+    ## 3.3. Build the base query
+    st_function <- glue::glue("{x_geom}")
+    base.query <- glue::glue("
         WITH symdiff_geom AS (
             SELECT 
                 {x_rest}
@@ -557,22 +506,36 @@ ddbs_sym_difference <- function(
         )
         SELECT 
             {x_rest}
-            ST_AsWKB({x_geom}) AS {x_geom}
+            {build_geom_query(st_function, mode)} AS {x_geom}
         FROM symdiff_geom v1;
     ")
 
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-    # 6. convert to SF
-    data_sf <- ddbs_handle_output(
-        data       = data_tbl,
+    # 4. if name is not NULL (i.e. no SF returned)
+    if (!is.null(name)) {
+        name_list <- get_query_name(name)
+        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
+
+        tmp.query <- glue::glue("
+            CREATE TABLE {name_list$query_name} AS
+            {base.query}
+        ")
+
+        DBI::dbExecute(target_conn, tmp.query)
+        feedback_query(quiet)
+        return(invisible(TRUE))
+    }
+
+
+    # 5. Apply geospatial operation
+    result <- ddbs_handle_query(
+        query      = base.query,
         conn       = target_conn,
-        output     = output,
+        mode       = mode,
         crs        = if (!is.null(crs)) crs else crs_x,
         crs_column = crs_column,
         x_geom     = x_geom
     )
 
-    feedback_query(quiet)
-    return(data_sf)
+    return(result)
 }

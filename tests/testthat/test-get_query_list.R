@@ -24,7 +24,7 @@ test_that("get_query_list handles duckspatial_df with source_table", {
   
   conn <- ddbs_temp_conn()
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-  ddbs_write_vector(conn, nc_sf, "nc_source", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_source", quiet = TRUE)
   
   ds <- as_duckspatial_df("nc_source", conn = conn, crs = sf::st_crs(nc_sf))
   
@@ -45,7 +45,7 @@ test_that("get_query_list handles duckspatial_df WITHOUT source_table (efficient
   
   conn <- ddbs_temp_conn()
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   # Create query-based duckspatial_df
   lazy_tbl <- dplyr::tbl(conn, "nc_test") |> dplyr::filter(AREA > 0)

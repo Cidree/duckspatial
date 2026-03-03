@@ -1,10 +1,10 @@
 
-#' Load spatial vector data from DuckDB into R
+#' Reads a vectorial table from DuckDB into R
 #'
 #' Retrieves the data from a DuckDB table, view, or Arrow view with a geometry
 #' column, and converts it to an R \code{sf} object. This function works with
-#' both persistent tables created by \code{ddbs_write_vector} and temporary
-#' Arrow views created by \code{ddbs_register_vector}.
+#' both persistent tables created by \code{ddbs_write_table} and temporary
+#' Arrow views created by \code{ddbs_register_table}.
 #'
 #' @template conn
 #' @template name
@@ -37,16 +37,16 @@
 #'
 #' ## Example 1: Write and read persistent table
 #' ddbs_write_vector(conn, sf_points, "points")
-#' ddbs_read_vector(conn, "points", crs = 4326)
+#' ddbs_read_table(conn, "points", crs = 4326)
 #'
 #' ## Example 2: Register and read Arrow view (faster, temporary)
 #' ddbs_register_vector(conn, sf_points, "points_view")
-#' ddbs_read_vector(conn, "points_view", crs = 4326)
+#' ddbs_read_table(conn, "points_view", crs = 4326)
 #'
 #' ## disconnect from db
 #' ddbs_stop_conn(conn)
 #' }
-ddbs_read_vector <- function(
+ddbs_read_table <- function(
     conn,
     name,
     crs = NULL,
@@ -172,4 +172,43 @@ ddbs_read_vector <- function(
     }
     return(data_sf)
 
+}
+
+
+
+
+
+#' Load spatial vector data from DuckDB into R
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `ddbs_read_vector()` was renamed to \code{\link{ddbs_read_table}}.
+#'
+#' @inheritParams ddbs_read_table
+#' @returns an sf object
+#' @export
+#' @keywords internal
+ddbs_read_vector <- function(
+    conn,
+    name,
+    crs = NULL,
+    crs_column = "crs_duckspatial",
+    clauses = NULL,
+    quiet = FALSE) {
+    
+    lifecycle::deprecate_soft(
+        when    = "1.0.0",
+        what    = "ddbs_read_vector()",
+        with    = "ddbs_read_table()"
+    )
+    
+    ddbs_read_table(
+        conn       = conn,
+        name       = name,
+        crs        = crs,
+        crs_column = crs_column,
+        clauses    = clauses,
+        quiet      = quiet
+    )
 }

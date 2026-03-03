@@ -11,8 +11,8 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## write some data
-ddbs_write_vector(conn_test, argentina_sf, "argentina")
-ddbs_write_vector(conn_test, nc_sf, "nc")
+ddbs_write_table(conn_test, argentina_sf, "argentina")
+ddbs_write_table(conn_test, nc_sf, "nc")
 
 # 1. ddbs_rotate() -------------------------------------------------------
 
@@ -47,13 +47,8 @@ describe("ddbs_rotate()", {
     })
 
     it("returns different output formats for ddbs input", {
-      output_geoarrow <- ddbs_rotate(argentina_ddbs, 45, output = "geoarrow")
-      output_sf       <- ddbs_rotate(argentina_ddbs, 45, output = "sf")
-      output_raw      <- ddbs_rotate(argentina_ddbs, 45, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_rotate(argentina_ddbs, 45, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on sf input", {
@@ -71,13 +66,8 @@ describe("ddbs_rotate()", {
     })
 
     it("returns different output formats for sf input", {
-      output_geoarrow <- ddbs_rotate(argentina_sf, 45, output = "geoarrow")
-      output_sf       <- ddbs_rotate(argentina_sf, 45, output = "sf")
-      output_raw      <- ddbs_rotate(argentina_sf, 45, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_rotate(argentina_sf, 45, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on DuckDB table input", {
@@ -95,17 +85,12 @@ describe("ddbs_rotate()", {
     })
 
     it("returns different output formats for DuckDB table input", {
-      output_geoarrow <- ddbs_rotate("argentina", 45, conn = conn_test, output = "geoarrow")
-      output_sf       <- ddbs_rotate("argentina", 45, conn = conn_test, output = "sf")
-      output_raw      <- ddbs_rotate("argentina", 45, conn = conn_test, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_rotate("argentina", 45, conn = conn_test, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_rotate(argentina_ddbs, 50))
+      expect_no_message(ddbs_rotate(argentina_ddbs, 50))
       expect_message(ddbs_rotate("argentina", 50, conn = conn_test, name = "rotated"))
       expect_message(ddbs_rotate("argentina", 50, conn = conn_test, name = "rotated", overwrite = TRUE))
       expect_true(ddbs_rotate("argentina", 50, conn = conn_test, name = "rotated2"))
@@ -206,13 +191,8 @@ describe("ddbs_rotate_3d()", {
     })
 
     it("returns different output formats for ddbs input", {
-      output_geoarrow <- ddbs_rotate_3d(argentina_ddbs, 45, output = "geoarrow")
-      output_sf       <- ddbs_rotate_3d(argentina_ddbs, 45, output = "sf")
-      output_raw      <- ddbs_rotate_3d(argentina_ddbs, 45, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_rotate_3d(argentina_ddbs, 45, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on sf input", {
@@ -230,13 +210,8 @@ describe("ddbs_rotate_3d()", {
     })
 
     it("returns different output formats for sf input", {
-      output_geoarrow <- ddbs_rotate_3d(argentina_sf, 45, output = "geoarrow")
-      output_sf       <- ddbs_rotate_3d(argentina_sf, 45, output = "sf")
-      output_raw      <- ddbs_rotate_3d(argentina_sf, 45, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_rotate_3d(argentina_sf, 45, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on DuckDB table input", {
@@ -254,17 +229,12 @@ describe("ddbs_rotate_3d()", {
     })
 
     it("returns different output formats for DuckDB table input", {
-      output_geoarrow <- ddbs_rotate_3d("argentina", 45, conn = conn_test, output = "geoarrow")
-      output_sf       <- ddbs_rotate_3d("argentina", 45, conn = conn_test, output = "sf")
-      output_raw      <- ddbs_rotate_3d("argentina", 45, conn = conn_test, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_rotate_3d("argentina", 45, conn = conn_test, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_rotate_3d(argentina_ddbs, 50))
+      expect_no_message(ddbs_rotate_3d(argentina_ddbs, 50))
       expect_message(ddbs_rotate_3d("argentina", 50, conn = conn_test, name = "rotated_3d"))
       expect_message(ddbs_rotate_3d("argentina", 50, conn = conn_test, name = "rotated_3d", overwrite = TRUE))
       expect_true(ddbs_rotate_3d("argentina", 50, conn = conn_test, name = "rotated_3d2"))
@@ -366,13 +336,8 @@ describe("ddbs_shift()", {
     })
 
     it("returns different output formats for ddbs input", {
-      output_geoarrow <- ddbs_shift(argentina_ddbs, 45, output = "geoarrow")
-      output_sf       <- ddbs_shift(argentina_ddbs, 45, output = "sf")
-      output_raw      <- ddbs_shift(argentina_ddbs, 45, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_shift(argentina_ddbs, 45, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on sf input", {
@@ -388,13 +353,8 @@ describe("ddbs_shift()", {
     })
 
     it("returns different output formats for sf input", {
-      output_geoarrow <- ddbs_shift(argentina_sf, 45, output = "geoarrow")
-      output_sf       <- ddbs_shift(argentina_sf, 45, output = "sf")
-      output_raw      <- ddbs_shift(argentina_sf, 45, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_shift(argentina_sf, 45, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on DuckDB table input", {
@@ -410,17 +370,12 @@ describe("ddbs_shift()", {
     })
 
     it("returns different output formats for DuckDB table input", {
-      output_geoarrow <- ddbs_shift("argentina", 45, conn = conn_test, output = "geoarrow")
-      output_sf       <- ddbs_shift("argentina", 45, conn = conn_test, output = "sf")
-      output_raw      <- ddbs_shift("argentina", 45, conn = conn_test, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_shift("argentina", 45, conn = conn_test, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_shift(argentina_ddbs, 50))
+      expect_no_message(ddbs_shift(argentina_ddbs, 50))
       expect_message(ddbs_shift("argentina", 50, conn = conn_test, name = "shift"))
       expect_message(ddbs_shift("argentina", 50, conn = conn_test, name = "shift", overwrite = TRUE))
       expect_true(ddbs_shift("argentina", 50, conn = conn_test, name = "shift2"))
@@ -518,13 +473,8 @@ describe("ddbs_flip()", {
     })
 
     it("returns different output formats for ddbs input", {
-      output_geoarrow <- ddbs_flip(argentina_ddbs, output = "geoarrow")
-      output_sf       <- ddbs_flip(argentina_ddbs, output = "sf")
-      output_raw      <- ddbs_flip(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_flip(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on sf input", {
@@ -540,13 +490,8 @@ describe("ddbs_flip()", {
     })
 
     it("returns different output formats for sf input", {
-      output_geoarrow <- ddbs_flip(argentina_sf, output = "geoarrow")
-      output_sf       <- ddbs_flip(argentina_sf, output = "sf")
-      output_raw      <- ddbs_flip(argentina_sf, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_flip(argentina_sf, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on DuckDB table input", {
@@ -562,17 +507,12 @@ describe("ddbs_flip()", {
     })
 
     it("returns different output formats for DuckDB table input", {
-      output_geoarrow <- ddbs_flip("nc", conn = conn_test, output = "geoarrow")
-      output_sf       <- ddbs_flip("nc", conn = conn_test, output = "sf")
-      output_raw      <- ddbs_flip("nc", conn = conn_test, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_flip("nc", conn = conn_test, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_flip(nc_ddbs))
+      expect_no_message(ddbs_flip(nc_ddbs))
       expect_message(ddbs_flip("nc", conn = conn_test, name = "flip"))
       expect_message(ddbs_flip("nc", conn = conn_test, name = "flip", overwrite = TRUE))
       expect_true(ddbs_flip("nc", conn = conn_test, name = "flip2"))
@@ -667,13 +607,8 @@ describe("ddbs_scale()", {
     })
 
     it("returns different output formats for ddbs input", {
-      output_geoarrow <- ddbs_scale(argentina_ddbs, output = "geoarrow")
-      output_sf       <- ddbs_scale(argentina_ddbs, output = "sf")
-      output_raw      <- ddbs_scale(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_scale(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on sf input", {
@@ -687,13 +622,8 @@ describe("ddbs_scale()", {
     })
 
     it("returns different output formats for sf input", {
-      output_geoarrow <- ddbs_scale(argentina_sf, output = "geoarrow")
-      output_sf       <- ddbs_scale(argentina_sf, output = "sf")
-      output_raw      <- ddbs_scale(argentina_sf, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_scale(argentina_sf, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on DuckDB table input", {
@@ -707,17 +637,12 @@ describe("ddbs_scale()", {
     })
 
     it("returns different output formats for DuckDB table input", {
-      output_geoarrow <- ddbs_scale("nc", conn = conn_test, output = "geoarrow")
-      output_sf       <- ddbs_scale("nc", conn = conn_test, output = "sf")
-      output_raw      <- ddbs_scale("nc", conn = conn_test, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_scale("nc", conn = conn_test, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_scale(nc_ddbs))
+      expect_no_message(ddbs_scale(nc_ddbs))
       expect_message(ddbs_scale("nc", conn = conn_test, name = "shear"))
       expect_message(ddbs_scale("nc", conn = conn_test, name = "shear", overwrite = TRUE))
       expect_true(ddbs_scale("nc", conn = conn_test, name = "shear2"))
@@ -816,13 +741,8 @@ describe("ddbs_shear()", {
     })
 
     it("returns different output formats for ddbs input", {
-      output_geoarrow <- ddbs_shear(argentina_ddbs, output = "geoarrow")
-      output_sf       <- ddbs_shear(argentina_ddbs, output = "sf")
-      output_raw      <- ddbs_shear(argentina_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_shear(argentina_ddbs, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on sf input", {
@@ -836,13 +756,8 @@ describe("ddbs_shear()", {
     })
 
     it("returns different output formats for sf input", {
-      output_geoarrow <- ddbs_shear(argentina_sf, output = "geoarrow")
-      output_sf       <- ddbs_shear(argentina_sf, output = "sf")
-      output_raw      <- ddbs_shear(argentina_sf, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_shear(argentina_sf, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("works on DuckDB table input", {
@@ -856,17 +771,12 @@ describe("ddbs_shear()", {
     })
 
     it("returns different output formats for DuckDB table input", {
-      output_geoarrow <- ddbs_shear("nc", conn = conn_test, output = "geoarrow")
-      output_sf       <- ddbs_shear("nc", conn = conn_test, output = "sf")
-      output_raw      <- ddbs_shear("nc", conn = conn_test, output = "raw")
-
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
+      output_sf <- ddbs_shear("nc", conn = conn_test, mode = "sf")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_shear(nc_ddbs))
+      expect_no_message(ddbs_shear(nc_ddbs))
       expect_message(ddbs_shear("nc", conn = conn_test, name = "scale"))
       expect_message(ddbs_shear("nc", conn = conn_test, name = "scale", overwrite = TRUE))
       expect_true(ddbs_shear("nc", conn = conn_test, name = "scale2"))

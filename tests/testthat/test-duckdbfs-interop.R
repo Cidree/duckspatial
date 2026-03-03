@@ -12,7 +12,7 @@ test_that("normalize_spatial_input works for duckdbfs::open_dataset inputs", {
 
   conn <- ddbs_temp_conn()
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
-  ddbs_write_vector(conn, sf_obj, "test_table")
+  ddbs_write_table(conn, sf_obj, "test_table")
 
   tmp_file <- tempfile(fileext = ".parquet")
   DBI::dbExecute(conn, glue::glue("COPY test_table TO '{tmp_file}' (FORMAT PARQUET)"))

@@ -10,7 +10,7 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## insert data
-ddbs_write_vector(conn_test, countries_sf, "countries")
+ddbs_write_table(conn_test, countries_sf, "countries")
 
 
 # 1. ddbs_as_text() ------------------------------------------------------
@@ -33,9 +33,8 @@ describe("ddbs_as_text()", {
       expect_equal(output_sf, output_conn)
     })
 
-    it("shows and suppresses messages correctly", {
-      expect_message(ddbs_as_text(countries_sf))
-      expect_no_message(ddbs_as_text(countries_sf, quiet = TRUE))
+    it("doesn't display a message", {
+      expect_no_message(ddbs_as_text(countries_sf))
     })
 
   })
@@ -46,7 +45,6 @@ describe("ddbs_as_text()", {
     it("throws errors for invalid inputs", {
       expect_error(ddbs_as_text(x = 999))
       expect_error(ddbs_as_text(countries_ddbs, conn = 999))
-      expect_error(ddbs_as_text(argentina_ddbs, quiet = 999))
       expect_error(ddbs_as_text(x = "999", conn = conn_test))
     })
 
@@ -81,8 +79,7 @@ describe("ddbs_as_wkb()", {
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_as_wkb(countries_sf))
-      expect_no_message(ddbs_as_wkb(countries_sf, quiet = TRUE))
+      expect_no_message(ddbs_as_wkb(countries_sf))
     })
 
     it("matches SF WKB output at first and last elements", {
@@ -102,7 +99,6 @@ describe("ddbs_as_wkb()", {
     it("throws errors for invalid inputs", {
       expect_error(ddbs_as_wkb(x = 999))
       expect_error(ddbs_as_wkb(countries_ddbs, conn = 999))
-      expect_error(ddbs_as_wkb(argentina_ddbs, quiet = 999))
       expect_error(ddbs_as_wkb(x = "999", conn = conn_test))
     })
 
@@ -133,8 +129,7 @@ describe("ddbs_as_hexwkb()", {
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_as_hexwkb(countries_sf))
-      expect_no_message(ddbs_as_hexwkb(countries_sf, quiet = TRUE))
+      expect_no_message(ddbs_as_hexwkb(countries_sf))
     })
 
     it("matches SF HEX WKB output at first and last elements", {
@@ -155,7 +150,6 @@ describe("ddbs_as_hexwkb()", {
     it("throws errors for invalid inputs", {
       expect_error(ddbs_as_hexwkb(x = 999))
       expect_error(ddbs_as_hexwkb(countries_ddbs, conn = 999))
-      expect_error(ddbs_as_hexwkb(argentina_ddbs, quiet = 999))
       expect_error(ddbs_as_hexwkb(x = "999", conn = conn_test))
     })
 

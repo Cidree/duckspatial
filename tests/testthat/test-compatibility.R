@@ -15,24 +15,24 @@ test_that("Compatibility: Arrow Views behave like Persistent Tables", {
 
     # 1. Register as Arrow View
     expect_no_error(
-        ddbs_register_vector(conn, data_sf, "view_test", overwrite = TRUE)
+        ddbs_register_table(conn, data_sf, "view_test", overwrite = TRUE)
     )
 
     # 2. Test ddbs_crs on View
     expect_no_error(crs_out <- ddbs_crs(conn, "view_test"))
     expect_equal(crs_out, sf::st_crs(4326))
 
-    # 3. Test ddbs_read_vector on View
+    # 3. Test ddbs_read_table on View
     # Should handle WKB conversion automatically and preserve "my_custom_geom"
-    read_view <- ddbs_read_vector(conn, "view_test")
+    read_view <- ddbs_read_table(conn, "view_test")
 
     expect_s3_class(read_view, "sf")
     # expect_equal(attr(read_view, "sf_column"), "my_custom_geom")
     expect_equal(nrow(read_view), 5)
 
     # 4. Verify Data Integrity vs Persistent Table
-    ddbs_write_vector(conn, data_sf, "table_test", overwrite = TRUE)
-    read_table <- ddbs_read_vector(conn, "table_test")
+    ddbs_write_table(conn, data_sf, "table_test", overwrite = TRUE)
+    read_table <- ddbs_read_table(conn, "table_test")
 
     # Compare View result vs Table result
     # (Ignore attribute order if necessary, but data should match)
@@ -57,8 +57,8 @@ test_that("Round trip: write -> read for various geometry types", {
         table_name <- paste0("rt_write_", name)
 
         # Write -> Read
-        ddbs_write_vector(conn, data, table_name, overwrite = TRUE)
-        result <- ddbs_read_vector(conn, table_name)
+        ddbs_write_table(conn, data, table_name, overwrite = TRUE)
+        result <- ddbs_read_table(conn, table_name)
 
         # Verification
         expect_s3_class(result, "sf")
@@ -85,8 +85,8 @@ test_that("Round trip: register -> read for various geometry types", {
         view_name <- paste0("rt_register_", name)
 
         # Register -> Read
-        ddbs_register_vector(conn, data, view_name, overwrite = TRUE)
-        result <- ddbs_read_vector(conn, view_name)
+        ddbs_register_table(conn, data, view_name, overwrite = TRUE)
+        result <- ddbs_read_table(conn, view_name)
 
         # Verification
         expect_s3_class(result, "sf")
@@ -104,8 +104,8 @@ test_that("Compatibility: Writing from file path and reading back", {
     table_name <- "countries_from_file_compat"
 
     # Write from file, then read back
-    ddbs_write_vector(conn, file_path, table_name, overwrite = TRUE)
-    read_data <- ddbs_read_vector(conn, table_name)
+    ddbs_write_table(conn, file_path, table_name, overwrite = TRUE)
+    read_data <- ddbs_read_table(conn, table_name)
 
     # Read the original file directly with sf for comparison
     original_sf <- sf::st_read(file_path, quiet = TRUE)

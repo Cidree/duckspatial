@@ -251,8 +251,8 @@ test_that("ddbs_interpolate_aw respects na.rm=TRUE", {
 
 test_that("ddbs_interpolate_aw handles projection via join_crs", {
   conn <- ddbs_create_conn()
-  ddbs_write_vector(conn, wards, "wards_tbl", overwrite = TRUE)
-  ddbs_write_vector(conn, race, "race_tbl", overwrite = TRUE)
+  ddbs_write_table(conn, wards, "wards_tbl", overwrite = TRUE)
+  ddbs_write_table(conn, race, "race_tbl", overwrite = TRUE)
 
   # Run with explicit reprojection to Mercator (3857)
   res_proj <- ddbs_interpolate_aw(
@@ -293,7 +293,7 @@ test_that("ddbs_interpolate_aw handles output to table", {
   expect_true("result_table" %in% DBI::dbListTables(conn))
 
   # Check content
-  res <- ddbs_read_vector(conn, "result_table", crs = sf::st_crs(wards))
+  res <- ddbs_read_table(conn, "result_table", crs = sf::st_crs(wards))
   expect_true("TOTAL_E" %in% names(res))
   expect_equal(nrow(res), nrow(wards))
 

@@ -6,7 +6,7 @@
 
 test_that("new_duckspatial_df creates valid duckspatial_df objects", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   lazy_tbl <- dplyr::tbl(conn, "nc_test")
   
@@ -26,7 +26,7 @@ test_that("new_duckspatial_df creates valid duckspatial_df objects", {
 
 test_that("new_duckspatial_df avoids double wrapping", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   lazy_tbl <- dplyr::tbl(conn, "nc_test")
   result1 <- new_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
@@ -61,7 +61,7 @@ test_that("as_duckspatial_df.sf works correctly", {
 
 test_that("as_duckspatial_df.tbl_duckdb_connection works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   lazy_tbl <- dplyr::tbl(conn, "nc_test")
   result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
@@ -72,7 +72,7 @@ test_that("as_duckspatial_df.tbl_duckdb_connection works correctly", {
 
 test_that("as_duckspatial_df.tbl_lazy works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   lazy_tbl <- dplyr::tbl(conn, "nc_test") |> dplyr::filter(AREA > 0)
   result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
@@ -83,7 +83,7 @@ test_that("as_duckspatial_df.tbl_lazy works correctly", {
 
 test_that("as_duckspatial_df.character works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   result <- as_duckspatial_df("nc_test", conn = conn, crs = sf::st_crs(nc_sf))
   
@@ -126,7 +126,7 @@ test_that("as_duckspatial_df.data.frame works with sfc columns", {
 
 test_that("is_duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   lazy_tbl <- dplyr::tbl(conn, "nc_test")
   result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))

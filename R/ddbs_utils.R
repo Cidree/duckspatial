@@ -87,7 +87,7 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
 #'
 #' # Method 3: table name in database
 #' conn <- ddbs_create_conn(dbdir = "memory")
-#' ddbs_write_vector(conn, nc_sf, "nc_table")
+#' ddbs_write_table(conn, nc_sf, "nc_table")
 #' ddbs_crs(conn, "nc_table")
 #' ddbs_stop_conn(conn)
 #' }
@@ -352,8 +352,8 @@ ddbs_crs.default <- function(x, ...) {
 #' )
 #' 
 #' ## insert into the database
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
-#' ddbs_write_vector(conn, countries_ddbs, "countries")
+#' ddbs_write_table(conn, argentina_ddbs, "argentina")
+#' ddbs_write_table(conn, countries_ddbs, "countries")
 #' 
 #' ## list tables in the database
 #' ddbs_list_tables(conn)
@@ -393,7 +393,7 @@ ddbs_list_tables <- function(conn) {
 #' argentina_sf <- ddbs_open_dataset(system.file("spatial/argentina.geojson", package = "duckspatial"))
 #'
 #' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_sf, "argentina")
+#' ddbs_write_table(conn, argentina_sf, "argentina")
 #'
 #' ## glimpse the inserted table
 #' ddbs_glimpse(conn, "argentina")

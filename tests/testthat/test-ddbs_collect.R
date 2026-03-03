@@ -8,7 +8,7 @@ test_that("ddbs_collect supports all output formats", {
   
   # Setup data
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)[1:5,]
-  ddbs_write_vector(conn, nc_sf, "nc_data")
+  ddbs_write_table(conn, nc_sf, "nc_data")
   
   nc_lazy <- dplyr::tbl(conn, "nc_data") |> 
     as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))
@@ -49,7 +49,7 @@ test_that("st_as_sf.duckspatial_df delegates to collect(as='sf')", {
   on.exit(ddbs_stop_conn(conn))
   
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)[1:5,]
-  ddbs_write_vector(conn, nc_sf, "nc_as_sf")
+  ddbs_write_table(conn, nc_sf, "nc_as_sf")
   nc_lazy <- dplyr::tbl(conn, "nc_as_sf") |> as_duckspatial_df(geom_col="geometry", crs=sf::st_crs(nc_sf))
   
   res <- sf::st_as_sf(nc_lazy)

@@ -25,11 +25,14 @@ ddbs_predicate(
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
+  name = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
-  quiet = FALSE
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = TRUE
 )
 
 ddbs_intersects(x, y, ...)
@@ -90,17 +93,33 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 \item{conn_y}{A \code{DBIConnection} object to a DuckDB database for the input \code{y}.
 If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{y}.}
 
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
+
 \item{id_x}{Character; optional name of the column in \code{x} whose values will
 be used to name the list elements. If \code{NULL}, integer row numbers of \code{x} are used.}
 
 \item{id_y}{Character; optional name of the column in \code{y} whose values will
 replace the integer indices returned in each element of the list.}
 
-\item{sparse}{A logical value. If \code{TRUE}, it returns a sparse index list. If \code{FALSE},
-it returns a dense logical matrix.}
+\item{sparse}{A logical value. If \code{TRUE}, it returns a sparse table/list. If \code{FALSE},
+it returns a wide table/matrix.}
 
 \item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)}
+
+\item{mode}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+}
+Can be set globally via \code{\link{ddbs_options}(mode = "...")} or
+per-function via this argument. Per-function overrides global setting.}
+
+\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
+to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
@@ -108,22 +127,12 @@ Defaults to \code{FALSE}.}
 \item{...}{Passed to \link{ddbs_predicate}}
 }
 \value{
-A \strong{list} of length equal to the number of rows in \code{x}.
+Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
 \itemize{
-\item Each element contains:
-\itemize{
-\item \strong{integer vector} of row indices of \code{y} that satisfy the predicate with
-the corresponding geometry of \code{x}, or
-\item \strong{character vector} if \code{id_y} is supplied.
+\item \code{duckspatial} (default): A \code{tbl_duckdb_connection} (lazy data frame) backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected list.
 }
-\item The names of the list elements:
-\itemize{
-\item are integer row numbers of \code{x}, or
-\item the values of \code{id_x} if provided.
-}
-}
-
-If there's no match between \code{x} and \code{y} it returns \code{NULL}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Determines which geometries in one dataset satisfy a specified spatial

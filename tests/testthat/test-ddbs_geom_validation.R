@@ -21,7 +21,7 @@ countries_2_sf[nrow(countries_2_sf) + 1, ] <- countries_2_sf[nrow(countries_2_sf
 countries_2_ddbs <- countries_2_sf
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, countries_2_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, countries_2_sf, "countries")
 
 
 # 1. ddbs_is_valid() -----------------------------------------------------
@@ -34,10 +34,10 @@ describe("ddbs_is_valid()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_valid(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_valid("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_valid(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_valid("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -55,17 +55,12 @@ describe("ddbs_is_valid()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_valid(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_valid(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_valid(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-      expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
+      output_sf_fmt <- ddbs_is_valid(countries_2_ddbs, mode = "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_valid(countries_2_ddbs))
+      expect_no_message(ddbs_is_valid(countries_2_ddbs))
       expect_message(ddbs_is_valid("countries", conn = conn_test, name = "is_valid_tbl"))
       expect_message(ddbs_is_valid("countries", conn = conn_test, name = "is_valid_tbl", overwrite = TRUE))
       expect_true(ddbs_is_valid("countries", conn = conn_test, name = "is_valid_tbl2"))
@@ -75,7 +70,7 @@ describe("ddbs_is_valid()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_valid(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_valid_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_valid_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -85,7 +80,7 @@ describe("ddbs_is_valid()", {
 
     it("matches sf::st_is_valid results", {
       ## Review why Antarctica is not valid in Duckdb, but it's valid in sf
-      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, new_column = NULL)
+      output_ddbs_vec <- ddbs_is_valid(countries_2_ddbs, mode = "sf")
       sf_output <- sf::st_is_valid(countries_2_sf)
       
       expect_equal(output_ddbs_vec[-4], sf_output[-4])
@@ -145,10 +140,10 @@ describe("ddbs_is_simple()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_simple(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_simple("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_simple(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_simple("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -166,17 +161,12 @@ describe("ddbs_is_simple()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_simple(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_simple(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_simple(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-      expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
+      output_sf_fmt <- ddbs_is_simple(countries_2_ddbs, mode = "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_simple(countries_2_ddbs))
+      expect_no_message(ddbs_is_simple(countries_2_ddbs))
       expect_message(ddbs_is_simple("countries", conn = conn_test, name = "is_simple_tbl"))
       expect_message(ddbs_is_simple("countries", conn = conn_test, name = "is_simple_tbl", overwrite = TRUE))
       expect_true(ddbs_is_simple("countries", conn = conn_test, name = "is_simple_tbl2"))
@@ -186,7 +176,7 @@ describe("ddbs_is_simple()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_simple(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_simple_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_simple_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -195,7 +185,7 @@ describe("ddbs_is_simple()", {
     })
 
     it("matches sf::st_is_valid results", {
-      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, new_column = NULL)
+      output_ddbs_vec <- ddbs_is_simple(countries_2_ddbs, mode = "sf")
       sf_output <- sf::st_is_simple(countries_2_sf)
       
       expect_equal(output_ddbs_vec, sf_output)
@@ -255,10 +245,10 @@ describe("ddbs_is_empty()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_empty(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_empty("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_empty(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_empty("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -276,17 +266,12 @@ describe("ddbs_is_empty()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_empty(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_empty(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_empty(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-      expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
+      output_sf_fmt <- ddbs_is_empty(countries_2_ddbs, mode = "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_empty(countries_2_ddbs))
+      expect_no_message(ddbs_is_empty(countries_2_ddbs))
       expect_message(ddbs_is_empty("countries", conn = conn_test, name = "is_empty_tbl"))
       expect_message(ddbs_is_empty("countries", conn = conn_test, name = "is_empty_tbl", overwrite = TRUE))
       expect_true(ddbs_is_empty("countries", conn = conn_test, name = "is_empty_tbl2"))
@@ -296,7 +281,7 @@ describe("ddbs_is_empty()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_empty(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_empty_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_empty_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -305,7 +290,7 @@ describe("ddbs_is_empty()", {
     })
 
     it("matches sf::st_is_valid results", {
-      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, new_column = NULL)
+      output_ddbs_vec <- ddbs_is_empty(countries_2_ddbs, mode = "sf")
       sf_output <- sf::st_is_empty(countries_2_sf)
       
       expect_equal(output_ddbs_vec, sf_output)
@@ -365,10 +350,10 @@ describe("ddbs_is_ring()", {
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_ring(countries_2_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_ring(countries_2_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_ring("countries", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_ring(countries_2_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_ring(countries_2_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_ring("countries", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -386,17 +371,12 @@ describe("ddbs_is_ring()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_ring(countries_2_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_ring(countries_2_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_ring(countries_2_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-      expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
+      output_sf_fmt <- ddbs_is_ring(countries_2_ddbs, mode = "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_ring(countries_2_ddbs))
+      expect_no_message(ddbs_is_ring(countries_2_ddbs))
       expect_message(ddbs_is_ring("countries", conn = conn_test, name = "is_ring_tbl"))
       expect_message(ddbs_is_ring("countries", conn = conn_test, name = "is_ring_tbl", overwrite = TRUE))
       expect_true(ddbs_is_ring("countries", conn = conn_test, name = "is_ring_tbl2"))
@@ -406,7 +386,7 @@ describe("ddbs_is_ring()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_ring(countries_2_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_ring_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_ring_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -420,7 +400,7 @@ describe("ddbs_is_ring()", {
         geometry = sf::st_sfc(sf::st_linestring(coords))
       )
 
-      expect_true(ddbs_is_ring(closed_ring_sf, new_column = NULL))
+      expect_true(ddbs_is_ring(closed_ring_sf, mode = "sf"))
 
     })
     
@@ -495,16 +475,16 @@ describe("ddbs_is_closed()", {
   )
 
   lines_ddbs <- as_duckspatial_df(lines_sf)
-  ddbs_write_vector(conn_test, lines_ddbs, "lines")
+  ddbs_write_table(conn_test, lines_ddbs, "lines")
 
   ## EXPECTED BEHAVIOUR
   
   describe("expected behavior", {
     
-    it("returns logical vector on all formats with NULL", {
-      output_ddbs_vec <- ddbs_is_closed(lines_ddbs, new_column = NULL)
-      output_sf_vec   <- ddbs_is_closed(lines_sf, new_column =  NULL)
-      output_conn_vec <- ddbs_is_closed("lines", conn = conn_test, new_column = NULL)
+    it("returns logical vector on all formats with sf", {
+      output_ddbs_vec <- ddbs_is_closed(lines_ddbs, mode = "sf")
+      output_sf_vec   <- ddbs_is_closed(lines_sf, mode = "sf")
+      output_conn_vec <- ddbs_is_closed("lines", conn = conn_test, mode = "sf")
 
       expect_type(output_ddbs_vec, "logical")
       expect_equal(output_ddbs_vec, output_sf_vec)
@@ -522,17 +502,12 @@ describe("ddbs_is_closed()", {
     })
     
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_is_closed(lines_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_is_closed(lines_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_is_closed(lines_ddbs, output = "raw")
-      
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
-      expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
+      output_sf_fmt <- ddbs_is_closed(lines_ddbs, mode = "sf")
+      expect_type(output_sf_fmt, "logical")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_is_closed(lines_ddbs))
+      expect_no_message(ddbs_is_closed(lines_ddbs))
       expect_message(ddbs_is_closed("lines", conn = conn_test, name = "is_closed_tbl"))
       expect_message(ddbs_is_closed("lines", conn = conn_test, name = "is_closed_tbl", overwrite = TRUE))
       expect_true(ddbs_is_closed("lines", conn = conn_test, name = "is_closed_tbl2"))
@@ -542,7 +517,7 @@ describe("ddbs_is_closed()", {
     
     it("saves to database table correctly", {
       output_ddbs <- ddbs_is_closed(lines_ddbs)
-      output_tbl <- ddbs_read_vector(conn_test, "is_closed_tbl")
+      output_tbl <- ddbs_read_table(conn_test, "is_closed_tbl")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -556,7 +531,7 @@ describe("ddbs_is_closed()", {
         geometry = sf::st_sfc(sf::st_linestring(coords))
       )
 
-      expect_true(ddbs_is_closed(closed_ring_sf, new_column = NULL))
+      expect_true(ddbs_is_closed(closed_ring_sf, mode = "sf"))
 
     })
     
