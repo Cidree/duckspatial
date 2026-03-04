@@ -17,7 +17,7 @@
   [\#63](https://github.com/Cidree/duckspatial/issues/63)).
 
 - Polymorphic API: some functions such as
-  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md)
+  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   can be used inside {dplyr} verbs, such as
   `mutate(area = ddbs_area(geometry)`
   ([\#92](https://github.com/Cidree/duckspatial/issues/92)).
@@ -34,15 +34,19 @@
   [`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
   ([\#77](https://github.com/Cidree/duckspatial/issues/77)).
 
-- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md),
-  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md)
+- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   and
-  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_distance.md):
+  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
   now use by default the best DuckDB function (e.g. `ST_Area()` or
   `ST_Area_Spheroid()`) depending on the input’s CRS. They also return a
-  `duckspatial_df` object by default rather than a materialized vector
+  `duckspatial_df` object by default rather than a materialized vector.
+  In the case of
+  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  it returns a `tbl_duckdb_connection`
   ([\#80](https://github.com/Cidree/duckspatial/issues/80),
-  [\#82](https://github.com/Cidree/duckspatial/issues/82)).
+  [\#82](https://github.com/Cidree/duckspatial/issues/82),
+  [\#103](https://github.com/Cidree/duckspatial/issues/103)).
 
 - [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md):
   tolerance defaults to 0; gains a new argument `preserve_topology`
@@ -51,13 +55,20 @@
 
 - [`ddbs_is_simple()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md),
   [`ddbs_is_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md),
-  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md),
-  [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md),
-  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_distance.md):
+  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
   the `new_column` argument now defaults to a column name, as we now
   encourage the users to keep most of the work within DuckDB, rather
-  than materialize a vector
+  than materialize a vector. For materializing a vector in R, use
+  `mode = "sf"`
   ([\#83](https://github.com/Cidree/duckspatial/issues/83)).
+
+- [`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  and colleagues: they gain new arguments: name, mode, overwrite, and
+  quiet. When `mode = "duckspatial"`, they return a lazy tbl backed by
+  DuckDB. When `mode = "sf"`, they return a list/matrix
+  ([\#105](https://github.com/Cidree/duckspatial/issues/105)).
 
 ### NEW FEATURES
 
@@ -73,7 +84,7 @@
   converts the geometry to geojson format
   ([\#84](https://github.com/Cidree/duckspatial/issues/84)).
 
-- [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_perimeter.md):
+- [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
   calculates the perimeter of polygons
   ([\#89](https://github.com/Cidree/duckspatial/issues/89)).
 
@@ -117,6 +128,17 @@
   swaps X and Y coordinates
   ([\#91](https://github.com/Cidree/duckspatial/issues/91)).
 
+- [`ddbs_register_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_register_vector.md),
+  [`ddbs_write_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)
+  and
+  [`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md)
+  deprecated in favour of
+  [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md),
+  [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
+  and
+  [`ddbs_read_table()`](https://cidree.github.io/duckspatial/reference/ddbs_read_table.md)
+  ([\#100](https://github.com/Cidree/duckspatial/issues/100)).
+
 ### MINOR CHANGES
 
 - Improve the documentation of the functions
@@ -137,10 +159,10 @@
 
 ### BUG FIXES
 
-- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md),
-  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md)
+- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   and
-  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_distance.md)
+  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   were calculating the wrong measure when the CRS was geographic
   ([\#82](https://github.com/Cidree/duckspatial/issues/82)).
 
@@ -218,15 +240,15 @@ Learn more about this version
   new function to perform spatial join operations
   ([\#6](https://github.com/Cidree/duckspatial/issues/6)).
 
-- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md):
+- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
   adds a new column with the length of the geometries
   ([\#17](https://github.com/Cidree/duckspatial/issues/17)).
 
-- [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md):
+- [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
   adds a new column with the area of the geometries
   ([\#17](https://github.com/Cidree/duckspatial/issues/17)).
 
-- [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_distance.md):
+- [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
   calculates the distance between two geometries
   ([\#34](https://github.com/Cidree/duckspatial/issues/34)).
 

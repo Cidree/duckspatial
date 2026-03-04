@@ -40,8 +40,8 @@ argentina_ddbs <- ddbs_open_dataset(
 )
 
 ## insert into the database
-ddbs_write_vector(conn, argentina_ddbs, "argentina")
-ddbs_write_vector(conn, countries_ddbs, "countries")
+ddbs_write_table(conn, argentina_ddbs, "argentina")
+ddbs_write_table(conn, countries_ddbs, "countries")
 
 ## list tables in the database
 ddbs_list_tables(conn)

@@ -6,7 +6,7 @@ the input features.
 ## Usage
 
 ``` r
-ddbs_geometry_type(x, conn = NULL, by_feature = TRUE, quiet = FALSE)
+ddbs_geometry_type(x, by_feature = TRUE, conn = NULL)
 ```
 
 ## Arguments
@@ -25,21 +25,16 @@ ddbs_geometry_type(x, conn = NULL, by_feature = TRUE, quiet = FALSE)
 
   Data is returned from this object.
 
-- conn:
-
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
-
 - by_feature:
 
   Logical. If `TRUE`, the geometric operation is applied separately to
   each geometry. If `FALSE`, the geometric operation is applied to the
   data as a whole.
 
-- quiet:
+- conn:
 
-  A logical value. If `TRUE`, suppresses any informational messages.
-  Defaults to `FALSE`.
+  A connection object to a DuckDB database. If `NULL`, the function runs
+  on a temporary DuckDB database.
 
 ## Value
 

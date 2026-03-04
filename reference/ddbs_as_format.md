@@ -15,13 +15,13 @@ spatial serialization functions.
 ## Usage
 
 ``` r
-ddbs_as_text(x, conn = NULL, quiet = FALSE)
+ddbs_as_text(x, conn = NULL)
 
-ddbs_as_wkb(x, conn = NULL, quiet = FALSE)
+ddbs_as_wkb(x, conn = NULL)
 
-ddbs_as_hexwkb(x, conn = NULL, quiet = FALSE)
+ddbs_as_hexwkb(x, conn = NULL)
 
-ddbs_as_geojson(x, conn = NULL, quiet = FALSE)
+ddbs_as_geojson(x, conn = NULL)
 ```
 
 ## Arguments
@@ -44,11 +44,6 @@ ddbs_as_geojson(x, conn = NULL, quiet = FALSE)
 
   A connection object to a DuckDB database. If `NULL`, the function runs
   on a temporary DuckDB database.
-
-- quiet:
-
-  A logical value. If `TRUE`, suppresses any informational messages.
-  Defaults to `FALSE`.
 
 ## Value
 

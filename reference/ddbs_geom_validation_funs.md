@@ -13,7 +13,7 @@ ddbs_is_simple(
   new_column = "is_simple",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -25,7 +25,7 @@ ddbs_is_valid(
   new_column = "is_valid",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -37,7 +37,7 @@ ddbs_is_closed(
   new_column = "is_closed",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -49,7 +49,7 @@ ddbs_is_empty(
   new_column = "is_empty",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -61,7 +61,7 @@ ddbs_is_ring(
   new_column = "is_ring",
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -97,8 +97,8 @@ ddbs_is_ring(
 
 - new_column:
 
-  Name of the new column to create on the input data. If NULL, the
-  function will return a vector with the result
+  Name of the new column to create on the input data. Ignored with
+  `mode = "sf"`.
 
 - crs:
 
@@ -114,25 +114,17 @@ ddbs_is_ring(
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
 
-- output:
+- mode:
 
   Character. Controls the return type. Options:
 
-  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
+  - `"duckspatial"` (default): Lazy spatial data frame backed by
     dbplyr/DuckDB
 
   - `"sf"`: Eagerly collected sf object (uses memory)
 
-  - `"tibble"`: Eagerly collected tibble without geometry
-
-  - `"raw"`: Eagerly collected tibble with WKB geometry (list of raw
-    vectors)
-
-  - `"geoarrow"`: Eagerly collected tibble with geoarrow geometry
-    (geoarrow_vctr)
-
   Can be set globally via
-  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(output_type = "...")`
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(mode = "...")`
   or per-function via this argument. Per-function overrides global
   setting.
 
@@ -148,26 +140,13 @@ ddbs_is_ring(
 
 ## Value
 
-When `new_column = NULL` it returns a logical vector. When `new_column`
-is not NULL, the output depends on the `output` argument (or global
-preference set by
-[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
+- `mode = "duckspatial"` (default): A `duckspatial_df` (lazy spatial
+  data frame) backed by dbplyr/DuckDB.
 
-- `duckspatial_df` (default): A lazy spatial data frame backed by
-  dbplyr/DuckDB.
+- `mode = "sf"`: An eagerly collected vector in R memory.
 
-- `sf`: An eagerly collected `sf` object in R memory.
-
-- `tibble`: An eagerly collected `tibble` without geometry in R memory.
-
-- `raw`: An eagerly collected `tibble` with WKB geometry (no
-  conversion).
-
-- `geoarrow`: An eagerly collected `tibble` with geometry converted to
-  `geoarrow_vctr`.
-
-When `name` is provided, the result is also written as a table or view
-in DuckDB and the function returns `TRUE` (invisibly).
+- When `name` is provided: writes the table in the DuckDB connection and
+  returns `TRUE` (invisibly).
 
 ## Details
 

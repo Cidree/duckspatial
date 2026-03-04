@@ -1,7 +1,6 @@
 # Get the bounding box of geometries
 
-Returns the minimal rectangle that encloses the geometry, typically used
-to summarize its spatial extent.
+Returns the minimal rectangle that encloses the geometry
 
 ## Usage
 
@@ -13,6 +12,7 @@ ddbs_bbox(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -66,6 +66,20 @@ ddbs_bbox(
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
 
+- mode:
+
+  Character. Controls the return type. Options:
+
+  - `"duckspatial"` (default): Lazy spatial data frame backed by
+    dbplyr/DuckDB
+
+  - `"sf"`: Eagerly collected sf object (uses memory)
+
+  Can be set globally via
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(mode = "...")`
+  or per-function via this argument. Per-function overrides global
+  setting.
+
 - overwrite:
 
   Boolean. whether to overwrite the existing table if it exists.
@@ -78,8 +92,8 @@ ddbs_bbox(
 
 ## Value
 
-A data frame or `TRUE` (invisibly) for table creation when name is not
-NULL.
+A `bbox` numeric vector with `by_feature = FALSE` A `data.frame` or
+`lazy tbl` when `by_feature = TRUE`
 
 ## Examples
 
@@ -97,12 +111,11 @@ argentina_ddbs <- ddbs_open_dataset(
 # option 1: passing sf objects
 ddbs_bbox(argentina_ddbs)
 
-
 ## option 2: passing the names of tables in a duckdb db
 
 # creates a duckdb write sf to it
 conn <- duckspatial::ddbs_create_conn()
-ddbs_write_vector(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
+ddbs_write_table(conn, argentina_ddbs, "argentina_tbl", overwrite = TRUE)
 
 output2 <- ddbs_bbox(
     conn = conn,

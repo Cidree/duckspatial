@@ -168,7 +168,7 @@ geometries using DuckDB's spatial extension.</p>
 <span>  new_column <span class="op">=</span> <span class="st">"is_simple"</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
-<span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
@@ -180,7 +180,7 @@ geometries using DuckDB's spatial extension.</p>
 <span>  new_column <span class="op">=</span> <span class="st">"is_valid"</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
-<span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
@@ -192,7 +192,7 @@ geometries using DuckDB's spatial extension.</p>
 <span>  new_column <span class="op">=</span> <span class="st">"is_closed"</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
-<span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
@@ -204,7 +204,7 @@ geometries using DuckDB's spatial extension.</p>
 <span>  new_column <span class="op">=</span> <span class="st">"is_empty"</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
-<span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
@@ -216,7 +216,7 @@ geometries using DuckDB's spatial extension.</p>
 <span>  new_column <span class="op">=</span> <span class="st">"is_ring"</span>,</span>
 <span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
-<span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -247,8 +247,8 @@ names. If <code>NULL</code> (the default), the function returns the result as an
 
 
 <dt id="arg-new-column">new_column<a class="anchor" aria-label="anchor" href="#arg-new-column"></a></dt>
-<dd><p>Name of the new column to create on the input data. If NULL,
-the function will return a vector with the result</p></dd>
+<dd><p>Name of the new column to create on the input data. Ignored
+with <code>mode = "sf"</code>.</p></dd>
 
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
@@ -262,13 +262,10 @@ storing the CRS (created automatically by <code><a href="ddbs_write_vector.html"
 Set to <code>NULL</code> if absent.</p></dd>
 
 
-<dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
-<dd><p>Character. Controls the return type. Options:</p><ul><li><p><code>"duckspatial_df"</code> (default): Lazy spatial data frame backed by dbplyr/DuckDB</p></li>
+<dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
+<dd><p>Character. Controls the return type. Options:</p><ul><li><p><code>"duckspatial"</code> (default): Lazy spatial data frame backed by dbplyr/DuckDB</p></li>
 <li><p><code>"sf"</code>: Eagerly collected sf object (uses memory)</p></li>
-<li><p><code>"tibble"</code>: Eagerly collected tibble without geometry</p></li>
-<li><p><code>"raw"</code>: Eagerly collected tibble with WKB geometry (list of raw vectors)</p></li>
-<li><p><code>"geoarrow"</code>: Eagerly collected tibble with geoarrow geometry (geoarrow_vctr)</p></li>
-</ul><p>Can be set globally via <code><a href="ddbs_options.html">ddbs_options</a>(output_type = "...")</code> or
+</ul><p>Can be set globally via <code><a href="ddbs_options.html">ddbs_options</a>(mode = "...")</code> or
 per-function via this argument. Per-function overrides global setting.</p></dd>
 
 
@@ -284,14 +281,11 @@ Defaults to <code>FALSE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>When <code>new_column = NULL</code> it returns a logical vector. When <code>new_column</code> is not NULL, the
-output depends on the <code>output</code> argument (or global preference set by <code><a href="ddbs_options.html">ddbs_options</a></code>):</p><ul><li><p><code>duckspatial_df</code> (default): A lazy spatial data frame backed by dbplyr/DuckDB.</p></li>
-<li><p><code>sf</code>: An eagerly collected <code>sf</code> object in R memory.</p></li>
-<li><p><code>tibble</code>: An eagerly collected <code>tibble</code> without geometry in R memory.</p></li>
-<li><p><code>raw</code>: An eagerly collected <code>tibble</code> with WKB geometry (no conversion).</p></li>
-<li><p><code>geoarrow</code>: An eagerly collected <code>tibble</code> with geometry converted to <code>geoarrow_vctr</code>.</p></li>
-</ul><p>When <code>name</code> is provided, the result is also written as a table or view in DuckDB and the function returns <code>TRUE</code> (invisibly).</p>
-    </div>
+
+<ul><li><p><code>mode = "duckspatial"</code> (default): A <code>duckspatial_df</code> (lazy spatial data frame) backed by dbplyr/DuckDB.</p></li>
+<li><p><code>mode = "sf"</code>: An eagerly collected vector in R memory.</p></li>
+<li><p>When <code>name</code> is provided: writes the table in the DuckDB connection and returns <code>TRUE</code> (invisibly).</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>These functions provide different types of geometric validation. Note that by default,

@@ -1,9 +1,9 @@
 # Register an SF Object as an Arrow Table in DuckDB
 
-This function registers a Simple Features (SF) object as a temporary
-Arrow-backed view in a DuckDB database. This is a zero-copy operation
-and is significantly faster than `ddbs_write_vector` for workflows that
-do not require data to be permanently materialized in the database.
+**\[deprecated\]**
+
+`ddbs_register_vector()` was renamed to
+[`ddbs_register_table`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md).
 
 ## Usage
 
@@ -42,22 +42,3 @@ ddbs_register_vector(conn, data, name, overwrite = FALSE, quiet = FALSE)
 ## Value
 
 TRUE (invisibly) on successful registration.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-library(duckspatial)
-library(sf)
-
-conn <- ddbs_create_conn("memory")
-
-nc <- st_read(system.file("shape/nc.shp", package="sf"), quiet = TRUE)
-
-ddbs_register_vector(conn, nc, "nc_arrow_view")
-
-dbGetQuery(conn, "SELECT COUNT(*) FROM nc_arrow_view;")
-
-ddbs_stop_conn(conn, shutdown = TRUE)
-} # }
-```

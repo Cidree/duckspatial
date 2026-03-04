@@ -177,6 +177,8 @@ conn <- ddbs_create_conn()
 
 # Write layers to DuckDB
 ddbs_write_vector(conn, nc, "nc_table", overwrite = TRUE)
+#> Warning: `ddbs_write_vector()` was deprecated in duckspatial 1.0.0.
+#> ℹ Please use `ddbs_write_table()` instead.
 #> ℹ Table <nc_table> dropped
 #> ✔ Table nc_table successfully imported
 ddbs_write_vector(conn, grid, "grid_table", overwrite = TRUE)
@@ -214,6 +216,8 @@ We can now query this table or read it back later.
 ``` r
 # Read the result back from the database
 final_sf <- ddbs_read_vector(conn, "nc_grid_births")
+#> Warning: `ddbs_read_vector()` was deprecated in duckspatial 1.0.0.
+#> ℹ Please use `ddbs_read_table()` instead.
 #> ✔ table nc_grid_births successfully imported.
 
 head(final_sf)

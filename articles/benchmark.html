@@ -183,7 +183,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Benchmark</h1>
 
 
-      <p class="date">2026-02-26</p>
+      <p class="date">2026-03-04</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/benchmark.qmd" class="external-link"><code>vignettes/benchmark.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -200,163 +200,176 @@
 <p>{duckspatial} is substantially faster and allocates far less memory than {sf} in almost all cases, with the advantage becoming more pronounced on larger datasets. The one exception is pairwise distance calculation, where {sf} retains a memory advantage for Euclidean distances.</p>
 </section><section class="section level3"><h3 id="prepare-data">Prepare data<a class="anchor" aria-label="anchor" href="#prepare-data"></a>
 </h3>
+<p>We are going to test the speed of a a bunch of functions using simulated data. We use the <code>make_points()</code> function to generate <code>n</code> random points within the globe, and 10,000 random rectangles.</p>
 <div class="cell">
 <details class="code-fold"><summary>Set-up</summary><div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Load necessary packages</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bench.r-lib.org/" class="external-link">bench</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>scipen <span class="op">=</span> <span class="fl">999</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Country polygons (257 features)</span></span>
-<span><span class="va">countries_sf</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"spatial/countries.geojson"</span>, package <span class="op">=</span> <span class="st">"duckspatial"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Random point datasets of increasing size</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">make_points</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n</span>,</span>
-<span>    x  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">180</span>, max <span class="op">=</span> <span class="fl">180</span><span class="op">)</span>,</span>
-<span>    y  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">90</span>,  max <span class="op">=</span> <span class="fl">90</span><span class="op">)</span></span>
+<span><span class="co"># Function to generate random points</span></span>
+<span><span class="va">make_points</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_points</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">points_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>      id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n_points</span>,</span>
+<span>      x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n_points</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">180</span>, max <span class="op">=</span> <span class="fl">180</span><span class="op">)</span>,</span>
+<span>      y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n_points</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">90</span>, max <span class="op">=</span> <span class="fl">90</span><span class="op">)</span>,</span>
+<span>      value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n_points</span>, mean <span class="op">=</span> <span class="fl">100</span>, sd <span class="op">=</span> <span class="fl">15</span><span class="op">)</span>,</span>
+<span>      category <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span><span class="op">)</span>, <span class="va">n_points</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">points_sf_100k</span> <span class="op">&lt;-</span> <span class="fu">make_points</span><span class="op">(</span><span class="fl">10e4</span><span class="op">)</span></span>
-<span><span class="va">points_sf_1mi</span>  <span class="op">&lt;-</span> <span class="fu">make_points</span><span class="op">(</span><span class="fl">10e5</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># Generate datasets of different sizes</span></span>
+<span><span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_seed.html" class="external-link">with_seed</a></span><span class="op">(</span><span class="fl">27</span>, <span class="op">{</span></span>
+<span>  <span class="va">points_sf_100k</span> <span class="op">&lt;-</span> <span class="fu">make_points</span><span class="op">(</span><span class="fl">1e5</span><span class="op">)</span></span>
+<span>  <span class="va">points_sf_1mi</span>  <span class="op">&lt;-</span> <span class="fu">make_points</span><span class="op">(</span><span class="fl">1e6</span><span class="op">)</span></span>
+<span>  <span class="va">points_sf_3mi</span>  <span class="op">&lt;-</span> <span class="fu">make_points</span><span class="op">(</span><span class="fl">3e6</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Generate polygons</span></span>
+<span><span class="co"># Create large polygon dataset (e.g., administrative regions, zones, etc.)</span></span>
+<span><span class="va">n_polygons</span> <span class="op">&lt;-</span> <span class="fl">10000</span></span>
+<span><span class="va">polygons_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">vector</a></span><span class="op">(</span><span class="st">"list"</span>, <span class="va">n_polygons</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">n_polygons</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Random center point with buffer from edges</span></span>
+<span>  <span class="va">center_x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">170</span>, max <span class="op">=</span> <span class="fl">170</span><span class="op">)</span></span>
+<span>  <span class="va">center_y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">80</span>, max <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Create simple rectangular polygons to avoid geometry issues</span></span>
+<span>  <span class="va">width</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span>, min <span class="op">=</span> <span class="fl">0.5</span>, max <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span>  <span class="va">height</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span>, min <span class="op">=</span> <span class="fl">0.5</span>, max <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Create rectangle coordinates (must be closed: first point = last point)</span></span>
+<span>  <span class="va">x_coords</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="va">center_x</span> <span class="op">-</span> <span class="va">width</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_x</span> <span class="op">+</span> <span class="va">width</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_x</span> <span class="op">+</span> <span class="va">width</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_x</span> <span class="op">-</span> <span class="va">width</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_x</span> <span class="op">-</span> <span class="va">width</span><span class="op">/</span><span class="fl">2</span>  <span class="co"># Close the polygon</span></span>
+<span>  <span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">y_coords</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="va">center_y</span> <span class="op">-</span> <span class="va">height</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_y</span> <span class="op">-</span> <span class="va">height</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_y</span> <span class="op">+</span> <span class="va">height</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_y</span> <span class="op">+</span> <span class="va">height</span><span class="op">/</span><span class="fl">2</span>,</span>
+<span>    <span class="va">center_y</span> <span class="op">-</span> <span class="va">height</span><span class="op">/</span><span class="fl">2</span>  <span class="co"># Close the polygon</span></span>
+<span>  <span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Create polygon matrix</span></span>
+<span>  <span class="va">coords</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">x_coords</span>, <span class="va">y_coords</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Create polygon (wrapped in list as required by st_polygon)</span></span>
+<span>  <span class="va">polygons_list</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st.html" class="external-link">st_polygon</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">coords</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">polygons_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/sf.html" class="external-link">st_sf</a></span><span class="op">(</span></span>
+<span>  poly_id    <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n_polygons</span>,</span>
+<span>  region     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"East"</span>, <span class="st">"West"</span><span class="op">)</span>, <span class="va">n_polygons</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">:</span><span class="fl">1000000</span>, <span class="va">n_polygons</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  geometry   <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/sfc.html" class="external-link">st_sfc</a></span><span class="op">(</span><span class="va">polygons_list</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
 </section><section class="section level2"><h2 id="spatial-join">Spatial join<a class="anchor" aria-label="anchor" href="#spatial-join"></a>
 </h2>
+<p>The spatial join aims to bring the attributes of a dataset to another dataset based in a spatial predicate. One example would be to have an <code>x</code> dataset with points that represent observations of wolves. In an <code>y</code> dataset, we could have polygons with attributes describing the geopraphical location (e.g. the name of the country, the name of the region..). So, by using a <code>ST_Join(x, y, "intersects")</code>, we would assign the attributes of <code>y</code> to <code>x</code> according to where the observation of the wolf fall.</p>
+<p>This operation can be intensive. In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-join" class="quarto-xref">Figure 1</a>.</p>
+<ul>
+<li><p>Using 1 million points: {duckspatial} was about 40 times faster than {sf}, and allocated 13 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 40 times faster than {sf}, and allocated 11 times less memory.</p></li>
+</ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">run_join_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span> <span class="op">{</span></span>
+<details class="code-fold"><summary>Benchmark code - ddbs_join</summary><div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Helper to run the benchmark</span></span>
+<span><span class="va">run_join_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://bench.r-lib.org/reference/mark.html" class="external-link">mark</a></span><span class="op">(</span></span>
-<span>    iterations <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>    check      <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>    duckspatial <span class="op">=</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>
-<span>      x    <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      y    <span class="op">=</span> <span class="va">countries_sf</span>,</span>
-<span>      join <span class="op">=</span> <span class="st">"within"</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    sf <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">st_join</a></span><span class="op">(</span></span>
-<span>      x    <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      y    <span class="op">=</span> <span class="va">countries_sf</span>,</span>
-<span>      join <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="va"><a href="https://r-spatial.github.io/sf/reference/geos_binary_pred.html" class="external-link">st_within</a></span></span>
-<span>    <span class="op">)</span></span>
+<span>    iterations  <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    check       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span>, join <span class="op">=</span> <span class="st">"within"</span><span class="op">)</span>,</span>
+<span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">st_join</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span>, join <span class="op">=</span> <span class="va">st_within</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span></span>
 <span><span class="op">}</span></span>
 <span></span>
+<span><span class="co"># Run the benchmark</span></span>
 <span><span class="va">df_bench_join</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
-<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span><span class="op">)</span>,</span>
+<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span>, <span class="va">points_sf_3mi</span><span class="op">)</span>,</span>
 <span>  FUN <span class="op">=</span> <span class="va">run_join_benchmark</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="cell">
-<details class="code-fold"><summary>Figure Code</summary><div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">df_bench_join</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
-<span>    size <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
-<span>      x     <span class="op">=</span> <span class="va">mem_alloc</span>,</span>
-<span>      y     <span class="op">=</span> <span class="va">median</span>,</span>
-<span>      color <span class="op">=</span> <span class="va">pkg</span>,</span>
-<span>      shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">n</span>, big.mark <span class="op">=</span> <span class="st">"."</span><span class="op">)</span></span>
-<span>    <span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    color <span class="op">=</span> <span class="st">"Package"</span>,</span>
-<span>    shape <span class="op">=</span> <span class="st">"Data size"</span>,</span>
-<span>    y     <span class="op">=</span> <span class="st">"Computation time (seconds)"</span>,</span>
-<span>    x     <span class="op">=</span> <span class="st">"Memory allocated"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<p><img src="../reference/figures/bench/spatial-join-bench.png"></p>
-<p>Working with 10 million points, {duckspatial} was <strong>76% faster</strong> and used <strong>2.6× less memory</strong> than {sf}.</p>
+<div id="fig-st-join" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-join-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../reference/figures/bench/bench-st-join-faster-query.png" class="quarto-figure quarto-figure-center">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-join-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 1: Benchmark that compares spatial join for duckspatial and sf
+</figcaption></figure>
+</div>
 </section><section class="section level2"><h2 id="spatial-filter">Spatial filter<a class="anchor" aria-label="anchor" href="#spatial-filter"></a>
 </h2>
+<p>The spatial filter aims to filter rows of <code>x</code> based in a spatial relationship with <code>y</code>. For example, let’s imagine that we have an <code>x</code> dataset with observations of wolves all around the world, and we want to filter only those that are in a specific country, for instance in Spain. If the dataset has this attritbute, we can just do it with a simple <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>, but, if the wolves datase doesn’t include a column with the country, we can use a spatial filter. For that, we need a second dataset <code>y</code> with the boundaries of Spain, and by using <code>ST_Filter(x, y, "intersects")</code>, we would filter only those wolves observations that intersects with the Spain’s polygon.</p>
+<p>In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-filter" class="quarto-xref">Figure 2</a>.</p>
+<ul>
+<li><p>Using 1 million points: {duckspatial} was about 20 times faster than {sf}, and allocated 4 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 25 times faster than {sf}, and allocated 4 times less memory.</p></li>
+</ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">run_filter_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span> <span class="op">{</span></span>
+<details class="code-fold"><summary>Benchmark code - ddbs_filter</summary><div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Helper to run the benchmark</span></span>
+<span><span class="va">run_filter_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://bench.r-lib.org/reference/mark.html" class="external-link">mark</a></span><span class="op">(</span></span>
-<span>    iterations <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>    check      <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>    duckspatial <span class="op">=</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_filter.html">ddbs_filter</a></span><span class="op">(</span></span>
-<span>      x <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      y <span class="op">=</span> <span class="va">countries_sf</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    sf <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">st_filter</a></span><span class="op">(</span></span>
-<span>      x <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      y <span class="op">=</span> <span class="va">countries_sf</span></span>
-<span>    <span class="op">)</span></span>
+<span>    iterations  <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    check       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_filter.html">ddbs_filter</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span>,</span>
+<span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">st_filter</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span></span>
 <span><span class="op">}</span></span>
 <span></span>
+<span><span class="co"># Run the benchmark</span></span>
 <span><span class="va">df_bench_filter</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
-<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span><span class="op">)</span>,</span>
+<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span>, <span class="va">points_sf_3mi</span><span class="op">)</span>,</span>
 <span>  FUN <span class="op">=</span> <span class="va">run_filter_benchmark</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="cell">
-<details class="code-fold"><summary>Figure Code</summary><div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">df_bench_filter</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
-<span>    size <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
-<span>      x     <span class="op">=</span> <span class="va">mem_alloc</span>,</span>
-<span>      y     <span class="op">=</span> <span class="va">median</span>,</span>
-<span>      color <span class="op">=</span> <span class="va">pkg</span>,</span>
-<span>      shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">n</span>, big.mark <span class="op">=</span> <span class="st">"."</span><span class="op">)</span></span>
-<span>    <span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    color <span class="op">=</span> <span class="st">"Package"</span>,</span>
-<span>    shape <span class="op">=</span> <span class="st">"Data size"</span>,</span>
-<span>    y     <span class="op">=</span> <span class="st">"Computation time (seconds)"</span>,</span>
-<span>    x     <span class="op">=</span> <span class="st">"Memory allocated"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<p><img src="../reference/figures/bench/spatial-filter-bench.png"></p>
+<div id="fig-st-filter" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-filter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../reference/figures/bench/bench-st-filter-faster-query.png" class="quarto-figure quarto-figure-center">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-filter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 2: Benchmark that compares spatial filter for duckspatial and sf
+</figcaption></figure>
+</div>
 </section><section class="section level2"><h2 id="spatial-distances">Spatial distances<a class="anchor" aria-label="anchor" href="#spatial-distances"></a>
 </h2>
-<p>Note that this benchmark uses spherical (Haversine) distances for {duckspatial} and Great Circle distances for {sf}. {sf} retains a memory advantage when computing Euclidean distances.</p>
+<p>The <code>ST_Distance(x, y)</code> calculates the distance between each observation in <code>x</code> against each observation in <code>y</code>. The default {duckspatial} mode will return a lazy table with three columns: (id_x) the id of the row in <code>x</code>; (id_y) the id of the row in <code>y</code>; (distance) the actual distance between those pair of observations. In the case of <code>mode = 'sf'</code>, the result will be a sparse matrix. Note that {duckspatial} will use by default the best distance for the input CRS and geometry type.</p>
+<p>When calculating the distance between 10,000 pairs of points, {duckspatial} is slightly faster (1.5 times), but must more memory efficient (&gt; 700 times).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/s2.html" class="external-link">sf_use_s2</a></span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
+<details class="code-fold"><summary>Benchmark code - ddbs_distance</summary><div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Helper to run the benchmark</span></span>
 <span><span class="va">run_distance_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span>  <span class="va">points_sf</span> <span class="op">&lt;-</span> <span class="fu">make_points</span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="va">points_sf</span> <span class="op">&lt;-</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_seed.html" class="external-link">with_seed</a></span><span class="op">(</span><span class="fl">27</span>, <span class="fu">make_points</span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://bench.r-lib.org/reference/mark.html" class="external-link">mark</a></span><span class="op">(</span></span>
-<span>    iterations <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>    check      <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>    duckspatial <span class="op">=</span> <span class="fu">duckspatial</span><span class="fu">::</span><span class="fu"><a href="../reference/ddbs_distance.html">ddbs_distance</a></span><span class="op">(</span></span>
-<span>      x         <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      y         <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      dist_type <span class="op">=</span> <span class="st">"haversine"</span></span>
-<span>    <span class="op">)</span>,</span>
-<span>    sf <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_distance</a></span><span class="op">(</span></span>
-<span>      x     <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      y     <span class="op">=</span> <span class="va">points_sf</span>,</span>
-<span>      which <span class="op">=</span> <span class="st">"Great Circle"</span></span>
-<span>    <span class="op">)</span></span>
+<span>    iterations  <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    check       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_measure_funs.html">ddbs_distance</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">points_sf</span><span class="op">)</span>,</span>
+<span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_distance</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="va">n</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
@@ -364,33 +377,100 @@
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">df_bench_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
-<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">1000</span>, <span class="fl">10000</span><span class="op">)</span>,</span>
+<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">5000</span>, <span class="fl">10000</span><span class="op">)</span>,</span>
 <span>  FUN <span class="op">=</span> <span class="va">run_distance_benchmark</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="cell">
-<details class="code-fold"><summary>Figure Code</summary><div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">df_bench_distance</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
-<span>    size <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
-<span>      x     <span class="op">=</span> <span class="va">mem_alloc</span>,</span>
-<span>      y     <span class="op">=</span> <span class="va">median</span>,</span>
-<span>      color <span class="op">=</span> <span class="va">pkg</span>,</span>
-<span>      shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">n</span>, big.mark <span class="op">=</span> <span class="st">"."</span><span class="op">)</span></span>
-<span>    <span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    color <span class="op">=</span> <span class="st">"Package"</span>,</span>
-<span>    shape <span class="op">=</span> <span class="st">"Data size"</span>,</span>
-<span>    y     <span class="op">=</span> <span class="st">"Computation time (seconds)"</span>,</span>
-<span>    x     <span class="op">=</span> <span class="st">"Memory allocated"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<p><img src="../reference/figures/bench/spatial-distances-bench.png"></p>
+<div id="fig-st-distance" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../reference/figures/bench/bench-st-distance-faster-query.png" class="quarto-figure quarto-figure-center">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 3: Benchmark that compares spatial distance for duckspatial and sf
+</figcaption></figure>
+</div>
+</section><section class="section level2"><h2 id="dissolving-geometries">Dissolving geometries<a class="anchor" aria-label="anchor" href="#dissolving-geometries"></a>
+</h2>
+<p>Dissolving geometries consist in merging/aggregating geometries that share a common attribute into a single geometry per group.</p>
+<p>In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-dissolve" class="quarto-xref">Figure 4</a>.</p>
+<ul>
+<li><p>Using 1 million points: {duckspatial} was about 4 times faster than {sf}, and allocated 8 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 4 times faster than {sf}, and allocated 7 times less memory.</p></li>
+</ul>
+<div class="cell">
+<details class="code-fold"><summary>Benchmark code - ddbs_union_agg</summary><div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Helper to run the benchmark</span></span>
+<span><span class="va">run_union_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://bench.r-lib.org/reference/mark.html" class="external-link">mark</a></span><span class="op">(</span></span>
+<span>    iterations  <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    check       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_union_funs.html">ddbs_union_agg</a></span><span class="op">(</span><span class="va">points_sf</span>, by <span class="op">=</span> <span class="st">"category"</span><span class="op">)</span>,</span>
+<span>    sf          <span class="op">=</span> <span class="va">points_sf</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">category</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>geometry <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_combine.html" class="external-link">st_union</a></span><span class="op">(</span><span class="va">geometry</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
+<span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
+<span>  <span class="va">temp</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Run the benchmark</span></span>
+<span><span class="va">df_bench_union</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
+<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span>, <span class="va">points_sf_3mi</span><span class="op">)</span>,</span>
+<span>  FUN <span class="op">=</span> <span class="va">run_union_benchmark</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</details>
+</div>
+<div id="fig-st-dissolve" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-dissolve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../reference/figures/bench/bench-st-dissolve-faster-query.png" class="quarto-figure quarto-figure-center">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-dissolve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 4: Benchmark that compares dissolving geometries by group for duckspatial and sf
+</figcaption></figure>
+</div>
+</section><section class="section level2"><h2 id="geometry-predicates">Geometry predicates<a class="anchor" aria-label="anchor" href="#geometry-predicates"></a>
+</h2>
+<p>Geometry predicates are boolean functions that test spatial relationships between two geometries (they return true or false). They’re fundamental to spatial queries, letting you filter or join data based on how geometries relate to one another in space. Common examples include: ST_Contains, ST_Within, ST_Touches, ST_Overlaps, ST_Crosses, ST_Disjoint, and ST_Equals.</p>
+<p>In the following example, we compare <code>ST_Intersects(geometry A, geometry B)</code>, which returns true if the two geometries share any point in common (their interiors or boundaries overlap in any way).</p>
+<ul>
+<li><p>Using 1 million points: {duckspatial} was about 28 times faster than {sf}, and allocated 4 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 32 times faster than {sf}, and allocated 2 times less memory.</p></li>
+</ul>
+<div class="cell">
+<details class="code-fold"><summary>Benchmark code - ddbs_intersects</summary><div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Helper to run the benchmark</span></span>
+<span><span class="va">run_predicate_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://bench.r-lib.org/reference/mark.html" class="external-link">mark</a></span><span class="op">(</span></span>
+<span>    iterations  <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    check       <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_predicate.html">ddbs_intersects</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span>,</span>
+<span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_binary_pred.html" class="external-link">st_intersects</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
+<span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
+<span>  <span class="va">temp</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Run the benchmark</span></span>
+<span><span class="va">df_bench_predicate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
+<span>  X   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">points_sf_100k</span>, <span class="va">points_sf_1mi</span>, <span class="va">points_sf_3mi</span><span class="op">)</span>,</span>
+<span>  FUN <span class="op">=</span> <span class="va">run_predicate_benchmark</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</details>
+</div>
+<div id="fig-st-intersects" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-intersects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../reference/figures/bench/bench-st-intersects-faster-query.png" class="quarto-figure quarto-figure-center">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-intersects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 5: Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf
+</figcaption></figure>
+</div>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

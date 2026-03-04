@@ -26,13 +26,13 @@ Read and write spatial data to and from DuckDB
 
 - [`ddbs_open_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.md)
   : Open spatial dataset lazily via DuckDB
-- [`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md)
-  : Load spatial vector data from DuckDB into R
+- [`ddbs_read_table()`](https://cidree.github.io/duckspatial/reference/ddbs_read_table.md)
+  : Reads a vectorial table from DuckDB into R
 - [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
   : Write spatial dataset to disk
-- [`ddbs_write_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)
+- [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
   : Write an SF Object to a DuckDB Database
-- [`ddbs_register_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_register_vector.md)
+- [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md)
   : Register an SF Object as an Arrow Table in DuckDB
 
 ## Spatial Predicates
@@ -186,14 +186,11 @@ Rotate, scale, shear, and shift geometries
 
 Calculate areas, distances, lengths, and perimeters
 
-- [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_area.md)
-  : Calculate the area of geometries
-- [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_distance.md)
-  : Calculate the distance between geometries
-- [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_length.md)
-  : Calculate the length of geometries
-- [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_perimeter.md)
-  : Calculate the perimeter of geometries
+- [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  : Calculate geometric measurements
 
 ## Database Utilities
 

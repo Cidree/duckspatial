@@ -14,11 +14,14 @@ ddbs_predicate(
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
+  name = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
-  quiet = FALSE
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = TRUE
 )
 
 ddbs_intersects(x, y, ...)
@@ -98,6 +101,13 @@ ddbs_within_properly(x, y, ...)
   A `DBIConnection` object to a DuckDB database for the input `y`. If
   `NULL` (default), it is resolved from `conn` or extracted from `y`.
 
+- name:
+
+  A character string of length one specifying the name of the table, or
+  a character string of length two specifying the schema and table
+  names. If `NULL` (the default), the function returns the result as an
+  `sf` object
+
 - id_x:
 
   Character; optional name of the column in `x` whose values will be
@@ -111,14 +121,33 @@ ddbs_within_properly(x, y, ...)
 
 - sparse:
 
-  A logical value. If `TRUE`, it returns a sparse index list. If
-  `FALSE`, it returns a dense logical matrix.
+  A logical value. If `TRUE`, it returns a sparse table/list. If
+  `FALSE`, it returns a wide table/matrix.
 
 - distance:
 
   a numeric value specifying the distance for ST_DWithin. Units
   correspond to the coordinate system of the geometry (e.g. degrees or
   meters)
+
+- mode:
+
+  Character. Controls the return type. Options:
+
+  - `"duckspatial"` (default): Lazy spatial data frame backed by
+    dbplyr/DuckDB
+
+  - `"sf"`: Eagerly collected sf object (uses memory)
+
+  Can be set globally via
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(mode = "...")`
+  or per-function via this argument. Per-function overrides global
+  setting.
+
+- overwrite:
+
+  Boolean. whether to overwrite the existing table if it exists.
+  Defaults to `FALSE`. This argument is ignored when `name` is `NULL`.
 
 - quiet:
 
@@ -131,22 +160,16 @@ ddbs_within_properly(x, y, ...)
 
 ## Value
 
-A **list** of length equal to the number of rows in `x`.
+Depends on the `mode` argument (or global preference set by
+[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
 
-- Each element contains:
+- `duckspatial` (default): A `tbl_duckdb_connection` (lazy data frame)
+  backed by dbplyr/DuckDB.
 
-  - **integer vector** of row indices of `y` that satisfy the predicate
-    with the corresponding geometry of `x`, or
+- `sf`: An eagerly collected list.
 
-  - **character vector** if `id_y` is supplied.
-
-- The names of the list elements:
-
-  - are integer row numbers of `x`, or
-
-  - the values of `id_x` if provided.
-
-If there's no match between `x` and `y` it returns `NULL`
+When `name` is provided, the result is also written as a table or view
+in DuckDB and the function returns `TRUE` (invisibly).
 
 ## Details
 

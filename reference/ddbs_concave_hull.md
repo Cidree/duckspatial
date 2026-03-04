@@ -14,7 +14,7 @@ ddbs_concave_hull(
   name = NULL,
   crs = NULL,
   crs_column = "crs_duckspatial",
-  output = NULL,
+  mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -73,25 +73,17 @@ ddbs_concave_hull(
   [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
   Set to `NULL` if absent.
 
-- output:
+- mode:
 
   Character. Controls the return type. Options:
 
-  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
+  - `"duckspatial"` (default): Lazy spatial data frame backed by
     dbplyr/DuckDB
 
   - `"sf"`: Eagerly collected sf object (uses memory)
 
-  - `"tibble"`: Eagerly collected tibble without geometry
-
-  - `"raw"`: Eagerly collected tibble with WKB geometry (list of raw
-    vectors)
-
-  - `"geoarrow"`: Eagerly collected tibble with geoarrow geometry
-    (geoarrow_vctr)
-
   Can be set globally via
-  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(output_type = "...")`
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(mode = "...")`
   or per-function via this argument. Per-function overrides global
   setting.
 
@@ -107,21 +99,14 @@ ddbs_concave_hull(
 
 ## Value
 
-Depends on the `output` argument (or global preference set by
+Depends on the `mode` argument (or global preference set by
 [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
 
-- `duckspatial_df` (default): A lazy spatial data frame backed by
-  dbplyr/DuckDB.
+- `duckspatial` (default): A `duckspatial_df` (lazy spatial data frame)
+  backed by dbplyr/DuckDB.
 
-- `sf`: An eagerly collected `sf` object in R memory.
-
-- `tibble`: An eagerly collected `tibble` without geometry in R memory.
-
-- `raw`: An eagerly collected `tibble` with WKB geometry (no
-  conversion).
-
-- `geoarrow`: An eagerly collected `tibble` with geometry converted to
-  `geoarrow_vctr`.
+- `sf`: An eagerly collected object in R memory, that will return the
+  same data type as the `sf` equivalent (e.g. `sf` or `units` vector).
 
 When `name` is provided, the result is also written as a table or view
 in DuckDB and the function returns `TRUE` (invisibly).
@@ -145,7 +130,7 @@ points_ddbs <- data.frame(
   ddbs_combine()
 
 # option 1: passing ddbs or sf objects
-output1 <- duckspatial::ddbs_concave_hull(points_ddbs, output = "sf")
+output1 <- duckspatial::ddbs_concave_hull(points_ddbs, mode = "sf")
 
 plot(output1)
 
@@ -162,7 +147,7 @@ ddbs_write_vector(conn, points_ddbs, "points_tbl")
 output2 <- duckspatial::ddbs_concave_hull(
  conn = conn,
  x = "points_tbl",
- output = "sf"
+ mode = "sf"
 )
 
 plot(output2)

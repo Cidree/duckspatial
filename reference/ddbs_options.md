@@ -5,7 +5,7 @@ Get or set global duckspatial options
 ## Usage
 
 ``` r
-ddbs_options(output_type = NULL)
+ddbs_options(output_type = NULL, mode = NULL)
 ```
 
 ## Arguments
@@ -29,6 +29,17 @@ ddbs_options(output_type = NULL)
 
   If `NULL` (the default), the existing option is not changed.
 
+- mode:
+
+  Character. Controls the return type. Options:
+
+  - `"duckspatial"` (default): Lazy spatial data frame backed by
+    dbplyr/DuckDB
+
+  - `"sf"`: Eagerly collected sf object (uses memory)
+
+  If `NULL` (the default), the existing option is not changed.
+
 ## Value
 
 Invisibly returns a list containing the currently set options.
@@ -37,8 +48,8 @@ Invisibly returns a list containing the currently set options.
 
 ``` r
 if (FALSE) { # \dontrun{
-# Set default output to sf
-ddbs_options(output_type = "sf")
+# Set default mode to sf
+ddbs_options(mode = "sf")
 
 # Set default output to tibble
 ddbs_options(output_type = "tibble")

@@ -23,6 +23,7 @@ ddbs_sitrep()
 #> ── Global Options ──
 #> 
 #> • Output Type: "duckspatial_df"
+#> • Mode: "duckspatial (default)"
 #> 
 #> ── Default Connection ──
 #> 

@@ -76,8 +76,8 @@ Like this:
 
 ``` r
 # write data to DuckDB
-ddbs_write_vector(conn, points_sf,   "points",    overwrite = TRUE)
-ddbs_write_vector(conn, countries_sf, "countries", overwrite = TRUE)
+ddbs_write_table(conn, points_sf,   "points",    overwrite = TRUE)
+ddbs_write_table(conn, countries_sf, "countries", overwrite = TRUE)
 
 # spatial join inside DuckDB; result returned as sf
 out_sf2 <- ddbs_join(

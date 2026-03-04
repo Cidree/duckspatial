@@ -183,7 +183,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Getting started</h1>
 
 
-      <p class="date">2026-02-26</p>
+      <p class="date">2026-03-04</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/duckspatial.qmd" class="external-link"><code>vignettes/duckspatial.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -239,7 +239,7 @@
 <span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
-<span><span class="co">#&gt; # Source:   table&lt;temp_view_40a9d6b0_8a3b_478d_aa52_d4c6a25c4608&gt; [?? x 7]</span></span>
+<span><span class="co">#&gt; # Source:   table&lt;temp_view_9e1e2dc9_1a6d_47e9_86ed_db2f95d21a86&gt; [?? x 7]</span></span>
 <span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
 <span><span class="co">#&gt;    CNTR_ID NAME_ENGL            ISO3_CODE CNTR_NAME       FID   date       geom </span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;                &lt;chr&gt;     &lt;chr&gt;           &lt;chr&gt; &lt;date&gt;     &lt;lis&gt;</span></span>
@@ -327,7 +327,6 @@
 <code class="sourceCode R"><span><span class="va">countries_ddbs</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_valid</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">is_valid</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ✔ Query successful</span></span>
 <span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
 <span><span class="co">#&gt; # ● CRS: EPSG:4326 </span></span>
 <span><span class="co">#&gt; # ● Geometry column: geometry </span></span>
@@ -338,10 +337,10 @@
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # Source:   SQL [?? x 9]</span></span>
 <span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
-<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;lgl&gt;    &lt;list&gt;  </span></span>
-<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    &lt;raw&gt;   </span></span>
-<span><span class="co">#&gt; # ℹ 1 more variable: crs_duckspatial &lt;chr&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       crs_duckspatial</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;          </span></span>
+<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 EPSG:4326      </span></span>
+<span><span class="co">#&gt; # ℹ 2 more variables: is_valid &lt;lgl&gt;, geometry &lt;list&gt;</span></span></code></pre></div>
 </div>
 <p>Antarctica has invalid geometries (likely self-intersections). We can repair them with <code><a href="../reference/ddbs_make_valid.html">ddbs_make_valid()</a></code> before computing the union, and because <code>duckspatial_df</code> objects are lazy, we can chain both steps in a single pipe:</p>
 <div class="cell">
@@ -349,8 +348,6 @@
 <code class="sourceCode R"><span><span class="va">world_ddbs</span> <span class="op">&lt;-</span> <span class="va">countries_ddbs</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/ddbs_make_valid.html">ddbs_make_valid</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/ddbs_union_funs.html">ddbs_union</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ✔ Query successful</span></span>
-<span><span class="co">#&gt; ✔ Query successful</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">world_ddbs</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
@@ -361,11 +358,11 @@
 <span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
-<span><span class="co">#&gt; # Source:   table&lt;temp_view_9a83e127_3852_490b_8b63_7e28b46efec6&gt; [?? x 2]</span></span>
+<span><span class="co">#&gt; # Source:   table&lt;temp_view_0381f495_2ff6_40c4_8f6f_430c2cb053c8&gt; [?? x 2]</span></span>
 <span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
-<span><span class="co">#&gt;   geometry        crs_duckspatial</span></span>
-<span><span class="co">#&gt;   &lt;list&gt;          &lt;chr&gt;          </span></span>
-<span><span class="co">#&gt; 1 &lt;raw [195,104]&gt; EPSG:4326</span></span></code></pre></div>
+<span><span class="co">#&gt;   crs_duckspatial geometry       </span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;           &lt;list&gt;         </span></span>
+<span><span class="co">#&gt; 1 EPSG:4326       &lt;raw [195,104]&gt;</span></span></code></pre></div>
 </div>
 <p>The result is still a lazy <code>duckspatial_df</code>. To visualise it we need to pull the data into R as an <code>sf</code> object. Any of the following three calls do that:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -389,9 +386,9 @@
 <span><span class="co">#&gt; Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187</span></span>
 <span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
-<span><span class="co">#&gt;                                                         geometry crs_duckspatial</span></span>
-<span><span class="co">#&gt; *                                             &lt;MULTIPOLYGON [°]&gt; &lt;chr&gt;          </span></span>
-<span><span class="co">#&gt; 1 (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.48… EPSG:4326</span></span></code></pre></div>
+<span><span class="co">#&gt;   crs_duckspatial                                                       geometry</span></span>
+<span><span class="co">#&gt; * &lt;chr&gt;                                                       &lt;MULTIPOLYGON [°]&gt;</span></span>
+<span><span class="co">#&gt; 1 EPSG:4326       (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.48…</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
@@ -435,10 +432,10 @@
 <span><span class="fu"><a href="../reference/ddbs_load.html">ddbs_load</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></code></pre></div>
 </section><section class="level2"><h3 id="non-persistent-database">Non-persistent database<a class="anchor" aria-label="anchor" href="#non-persistent-database"></a>
 </h3>
-<p>Once you have a connection, write spatial data into it with <code><a href="../reference/ddbs_write_vector.html">ddbs_write_vector()</a></code>. It accepts both <code>sf</code> and <code>duckspatial_df</code> objects:</p>
+<p>Once you have a connection, write spatial data into it with <code><a href="../reference/ddbs_write_table.html">ddbs_write_table()</a></code>. It accepts both <code>sf</code> and <code>duckspatial_df</code> objects:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, name <span class="op">=</span> <span class="st">"countries"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_write_table.html">ddbs_write_table</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, name <span class="op">=</span> <span class="st">"countries"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ✔ Table countries successfully imported</span></span></code></pre></div>
 </div>
 <p>Verify the table is there:</p>
@@ -453,7 +450,6 @@
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_valid</a></span><span class="op">(</span><span class="st">"countries"</span>, conn <span class="op">=</span> <span class="va">conn</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">is_valid</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ✔ Query successful</span></span>
 <span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
 <span><span class="co">#&gt; # ● CRS: EPSG:4326 </span></span>
 <span><span class="co">#&gt; # ● Geometry column: geometry </span></span>
@@ -464,10 +460,10 @@
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # Source:   SQL [?? x 9]</span></span>
 <span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
-<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;lgl&gt;    &lt;list&gt;  </span></span>
-<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    &lt;raw&gt;   </span></span>
-<span><span class="co">#&gt; # ℹ 1 more variable: crs_duckspatial &lt;chr&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       crs_duckspatial</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;          </span></span>
+<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 EPSG:4326      </span></span>
+<span><span class="co">#&gt; # ℹ 2 more variables: is_valid &lt;lgl&gt;, geometry &lt;list&gt;</span></span></code></pre></div>
 </div>
 <p>You can write intermediate results as named tables in the database by passing a <code>name</code> argument:</p>
 <div class="cell">
@@ -477,10 +473,10 @@
 <span><span class="fu"><a href="../reference/ddbs_union_funs.html">ddbs_union</a></span><span class="op">(</span><span class="st">"countries_valid"</span>, conn <span class="op">=</span> <span class="va">conn</span>, name <span class="op">=</span> <span class="st">"world"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ✔ Query successful</span></span></code></pre></div>
 </div>
-<p><code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code> materialises a table directly as <code>sf</code> (not lazily), so the result can be passed straight to <code><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot()</a></code>:</p>
+<p><code><a href="../reference/ddbs_read_table.html">ddbs_read_table()</a></code> materialises a table directly as <code>sf</code> (not lazily), so the result can be passed straight to <code><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot()</a></code>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_read_vector.html">ddbs_read_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="st">"world"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ddbs_read_table.html">ddbs_read_table</a></span><span class="op">(</span><span class="va">conn</span>, <span class="st">"world"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ✔ table world successfully imported.</span></span></code></pre></div>
 <div class="cell-output-display">
@@ -516,7 +512,7 @@
 <span>  <span class="fu"><a href="../reference/ddbs_union_funs.html">ddbs_union</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## write only the final result to the persistent database</span></span>
-<span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">world_ddbs</span>, name <span class="op">=</span> <span class="st">"world"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ddbs_write_table.html">ddbs_write_table</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">world_ddbs</span>, name <span class="op">=</span> <span class="st">"world"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## close — "my_database.duckdb" will persist on disk</span></span>
 <span><span class="fu"><a href="../reference/ddbs_stop_conn.html">ddbs_stop_conn</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></code></pre></div>

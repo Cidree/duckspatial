@@ -183,7 +183,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Areal Interpolation</h1>
 
 
-      <p class="date">2026-02-26</p>
+      <p class="date">2026-03-04</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/aw_interpolation.qmd" class="external-link"><code>vignettes/aw_interpolation.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -332,6 +332,8 @@
 <span></span>
 <span><span class="co"># Write layers to DuckDB</span></span>
 <span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">nc</span>, <span class="st">"nc_table"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: `ddbs_write_vector()` was deprecated in duckspatial 1.0.0.</span></span>
+<span><span class="co">#&gt; ℹ Please use `ddbs_write_table()` instead.</span></span>
 <span><span class="co">#&gt; ℹ Table &lt;nc_table&gt; dropped</span></span>
 <span><span class="co">#&gt; ✔ Table nc_table successfully imported</span></span>
 <span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">grid</span>, <span class="st">"grid_table"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -365,6 +367,8 @@
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Read the result back from the database</span></span>
 <span><span class="va">final_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_read_vector.html">ddbs_read_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="st">"nc_grid_births"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: `ddbs_read_vector()` was deprecated in duckspatial 1.0.0.</span></span>
+<span><span class="co">#&gt; ℹ Please use `ddbs_read_table()` instead.</span></span>
 <span><span class="co">#&gt; ✔ table nc_grid_births successfully imported.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">final_sf</span><span class="op">)</span></span>

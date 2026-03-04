@@ -171,11 +171,14 @@ containment, or touching.</p>
 <span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  conn_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  conn_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  id_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  id_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sparse <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  distance <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">ddbs_intersects</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -247,6 +250,13 @@ If <code>NULL</code> (default), it is resolved from <code>conn</code> or extract
 If <code>NULL</code> (default), it is resolved from <code>conn</code> or extracted from <code>y</code>.</p></dd>
 
 
+<dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
+<dd><p>A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If <code>NULL</code> (the default), the function returns the result as an
+<code>sf</code> object</p></dd>
+
+
 <dt id="arg-id-x">id_x<a class="anchor" aria-label="anchor" href="#arg-id-x"></a></dt>
 <dd><p>Character; optional name of the column in <code>x</code> whose values will
 be used to name the list elements. If <code>NULL</code>, integer row numbers of <code>x</code> are used.</p></dd>
@@ -258,13 +268,25 @@ replace the integer indices returned in each element of the list.</p></dd>
 
 
 <dt id="arg-sparse">sparse<a class="anchor" aria-label="anchor" href="#arg-sparse"></a></dt>
-<dd><p>A logical value. If <code>TRUE</code>, it returns a sparse index list. If <code>FALSE</code>,
-it returns a dense logical matrix.</p></dd>
+<dd><p>A logical value. If <code>TRUE</code>, it returns a sparse table/list. If <code>FALSE</code>,
+it returns a wide table/matrix.</p></dd>
 
 
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
 <dd><p>a numeric value specifying the distance for ST_DWithin. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)</p></dd>
+
+
+<dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
+<dd><p>Character. Controls the return type. Options:</p><ul><li><p><code>"duckspatial"</code> (default): Lazy spatial data frame backed by dbplyr/DuckDB</p></li>
+<li><p><code>"sf"</code>: Eagerly collected sf object (uses memory)</p></li>
+</ul><p>Can be set globally via <code><a href="ddbs_options.html">ddbs_options</a>(mode = "...")</code> or
+per-function via this argument. Per-function overrides global setting.</p></dd>
+
+
+<dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
+<dd><p>Boolean. whether to overwrite the existing table if it exists. Defaults
+to <code>FALSE</code>. This argument is ignored when <code>name</code> is <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -278,14 +300,9 @@ Defaults to <code>FALSE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <strong>list</strong> of length equal to the number of rows in <code>x</code>.</p><ul><li><p>Each element contains:</p><ul><li><p><strong>integer vector</strong> of row indices of <code>y</code> that satisfy the predicate with
-the corresponding geometry of <code>x</code>, or</p></li>
-<li><p><strong>character vector</strong> if <code>id_y</code> is supplied.</p></li>
-</ul></li>
-<li><p>The names of the list elements:</p><ul><li><p>are integer row numbers of <code>x</code>, or</p></li>
-<li><p>the values of <code>id_x</code> if provided.</p></li>
-</ul></li>
-</ul><p>If there's no match between <code>x</code> and <code>y</code> it returns <code>NULL</code></p>
+    <p>Depends on the <code>mode</code> argument (or global preference set by <code><a href="ddbs_options.html">ddbs_options</a></code>):</p><ul><li><p><code>duckspatial</code> (default): A <code>tbl_duckdb_connection</code> (lazy data frame) backed by dbplyr/DuckDB.</p></li>
+<li><p><code>sf</code>: An eagerly collected list.</p></li>
+</ul><p>When <code>name</code> is provided, the result is also written as a table or view in DuckDB and the function returns <code>TRUE</code> (invisibly).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

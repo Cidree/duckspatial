@@ -183,7 +183,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Spatial joins</h1>
 
 
-      <p class="date">2026-02-26</p>
+      <p class="date">2026-03-04</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/spatial_joins.qmd" class="external-link"><code>vignettes/spatial_joins.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -250,8 +250,8 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># write data to DuckDB</span></span>
-<span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">points_sf</span>,   <span class="st">"points"</span>,    overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, <span class="st">"countries"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ddbs_write_table.html">ddbs_write_table</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">points_sf</span>,   <span class="st">"points"</span>,    overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ddbs_write_table.html">ddbs_write_table</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">countries_sf</span>, <span class="st">"countries"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># spatial join inside DuckDB; result returned as sf</span></span>
 <span><span class="va">out_sf2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span></span>

@@ -69,7 +69,7 @@ print(countries_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_40a9d6b0_8a3b_478d_aa52_d4c6a25c4608> [?? x 7]
+#> # Source:   table<temp_view_9e1e2dc9_1a6d_47e9_86ed_db2f95d21a86> [?? x 7]
 #> # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]
 #>    CNTR_ID NAME_ENGL            ISO3_CODE CNTR_NAME       FID   date       geom 
 #>    <chr>   <chr>                <chr>     <chr>           <chr> <date>     <lis>
@@ -154,7 +154,6 @@ runs inside DuckDB:
 countries_ddbs |>
   ddbs_is_valid() |>
   filter(!is_valid)
-#> ✔ Query successful
 #> # A duckspatial lazy spatial table
 #> # ● CRS: EPSG:4326 
 #> # ● Geometry column: geometry 
@@ -165,10 +164,10 @@ countries_ddbs |>
 #> #
 #> # Source:   SQL [?? x 9]
 #> # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]
-#>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry
-#>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <list>  
-#> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <raw>   
-#> # ℹ 1 more variable: crs_duckspatial <chr>
+#>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       crs_duckspatial
+#>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <chr>          
+#> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 EPSG:4326      
+#> # ℹ 2 more variables: is_valid <lgl>, geometry <list>
 ```
 
 Antarctica has invalid geometries (likely self-intersections). We can
@@ -181,8 +180,6 @@ lazy, we can chain both steps in a single pipe:
 world_ddbs <- countries_ddbs |>
   ddbs_make_valid() |>
   ddbs_union()
-#> ✔ Query successful
-#> ✔ Query successful
 
 print(world_ddbs)
 #> # A duckspatial lazy spatial table
@@ -193,11 +190,11 @@ print(world_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_9a83e127_3852_490b_8b63_7e28b46efec6> [?? x 2]
+#> # Source:   table<temp_view_0381f495_2ff6_40c4_8f6f_430c2cb053c8> [?? x 2]
 #> # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]
-#>   geometry        crs_duckspatial
-#>   <list>          <chr>          
-#> 1 <raw [195,104]> EPSG:4326
+#>   crs_duckspatial geometry       
+#>   <chr>           <list>         
+#> 1 EPSG:4326       <raw [195,104]>
 ```
 
 The result is still a lazy `duckspatial_df`. To visualise it we need to
@@ -226,9 +223,9 @@ print(world_sf)
 #> Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187
 #> Geodetic CRS:  WGS 84
 #> # A tibble: 1 × 2
-#>                                                         geometry crs_duckspatial
-#> *                                             <MULTIPOLYGON [°]> <chr>          
-#> 1 (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.48… EPSG:4326
+#>   crs_duckspatial                                                       geometry
+#> * <chr>                                                       <MULTIPOLYGON [°]>
+#> 1 EPSG:4326       (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.48…
 ```
 
 ``` r
@@ -286,11 +283,11 @@ ddbs_load(conn)
 ### Non-persistent database
 
 Once you have a connection, write spatial data into it with
-[`ddbs_write_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md).
+[`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md).
 It accepts both `sf` and `duckspatial_df` objects:
 
 ``` r
-ddbs_write_vector(conn, countries_sf, name = "countries")
+ddbs_write_table(conn, countries_sf, name = "countries")
 #> ✔ Table countries successfully imported
 ```
 
@@ -309,7 +306,6 @@ pair:
 ``` r
 ddbs_is_valid("countries", conn = conn) |>
   filter(!is_valid)
-#> ✔ Query successful
 #> # A duckspatial lazy spatial table
 #> # ● CRS: EPSG:4326 
 #> # ● Geometry column: geometry 
@@ -320,10 +316,10 @@ ddbs_is_valid("countries", conn = conn) |>
 #> #
 #> # Source:   SQL [?? x 9]
 #> # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]
-#>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry
-#>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <list>  
-#> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <raw>   
-#> # ℹ 1 more variable: crs_duckspatial <chr>
+#>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       crs_duckspatial
+#>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <chr>          
+#> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 EPSG:4326      
+#> # ℹ 2 more variables: is_valid <lgl>, geometry <list>
 ```
 
 You can write intermediate results as named tables in the database by
@@ -336,13 +332,13 @@ ddbs_union("countries_valid", conn = conn, name = "world")
 #> ✔ Query successful
 ```
 
-[`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md)
+[`ddbs_read_table()`](https://cidree.github.io/duckspatial/reference/ddbs_read_table.md)
 materialises a table directly as `sf` (not lazily), so the result can be
 passed straight to
 [`plot()`](https://rspatial.github.io/terra/reference/plot.html):
 
 ``` r
-ddbs_read_vector(conn, "world") |>
+ddbs_read_table(conn, "world") |>
   plot()
 #> ✔ table world successfully imported.
 ```
@@ -382,7 +378,7 @@ world_ddbs <- ddbs_open_dataset(
   ddbs_union()
 
 ## write only the final result to the persistent database
-ddbs_write_vector(conn, world_ddbs, name = "world")
+ddbs_write_table(conn, world_ddbs, name = "world")
 
 ## close — "my_database.duckdb" will persist on disk
 ddbs_stop_conn(conn)
