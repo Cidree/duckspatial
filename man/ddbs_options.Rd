@@ -4,7 +4,7 @@
 \alias{ddbs_options}
 \title{Get or set global duckspatial options}
 \usage{
-ddbs_options(output_type = NULL)
+ddbs_options(output_type = NULL, mode = NULL)
 }
 \arguments{
 \item{output_type}{Character string. Controls the default return type for spatial operations.
@@ -17,6 +17,13 @@ Must be one of:
 \item \code{"geoarrow"}: Eagerly collected \code{tibble} with geometry as \code{geoarrow_vctr}.
 }
 If \code{NULL} (the default), the existing option is not changed.}
+
+\item{mode}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+}
+If \code{NULL} (the default), the existing option is not changed.}
 }
 \value{
 Invisibly returns a list containing the currently set options.
@@ -26,8 +33,8 @@ Get or set global duckspatial options
 }
 \examples{
 \dontrun{
-# Set default output to sf
-ddbs_options(output_type = "sf")
+# Set default mode to sf
+ddbs_options(mode = "sf")
 
 # Set default output to tibble
 ddbs_options(output_type = "tibble")

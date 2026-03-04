@@ -15,7 +15,7 @@ tester <- function(data = points_sf,
                    conn = conn_test,
                    overwrite = FALSE,
                    quiet = FALSE) {
-    ddbs_register_vector(
+    ddbs_register_table(
         conn,
         data,
         name,
@@ -43,13 +43,13 @@ test_that("can register sf object as arrow view", {
 
 })
 
-test_that("can read registered view back with ddbs_read_vector", {
+test_that("can read registered view back with ddbs_read_table", {
 
     # register sf object as view
-    ddbs_register_vector(conn_test, points_sf, "points_view2", overwrite = TRUE)
+    ddbs_register_table(conn_test, points_sf, "points_view2", overwrite = TRUE)
 
     # read back
-    result <- ddbs_read_vector(conn_test, "points_view2", crs = 4326)
+    result <- ddbs_read_table(conn_test, "points_view2", crs = 4326)
   
 
     # check that result is sf object
@@ -66,7 +66,7 @@ test_that("can read registered view back with ddbs_read_vector", {
 test_that("crs_duckspatial column is created with SRID", {
 
     # register sf object with known EPSG CRS
-    ddbs_register_vector(conn_test, points_sf, "points_crs_test", overwrite = TRUE)
+    ddbs_register_table(conn_test, points_sf, "points_crs_test", overwrite = TRUE)
 
     # query the crs_duckspatial column
     crs_result <- DBI::dbGetQuery(
@@ -82,15 +82,15 @@ test_that("crs_duckspatial column is created with SRID", {
 test_that("overwrite=TRUE replaces existing view", {
 
     # register first view
-    ddbs_register_vector(conn_test, points_sf, "overwrite_test", overwrite = FALSE)
+    ddbs_register_table(conn_test, points_sf, "overwrite_test", overwrite = FALSE)
 
     # try to register again without overwrite - should error
     expect_error(
-        ddbs_register_vector(conn_test, countries_sf, "overwrite_test", overwrite = FALSE)
+        ddbs_register_table(conn_test, countries_sf, "overwrite_test", overwrite = FALSE)
     )
 
     # register again with overwrite - should succeed
-    result <- ddbs_register_vector(conn_test, countries_sf, "overwrite_test", overwrite = TRUE)
+    result <- ddbs_register_table(conn_test, countries_sf, "overwrite_test", overwrite = TRUE)
     expect_true(result)
 
     # check that the view now contains countries data
@@ -105,7 +105,7 @@ test_that("can register sf object from file path", {
     file_path <- system.file("spatial/countries.geojson", package = "duckspatial")
 
     # register from file path
-    result <- ddbs_register_vector(conn_test, file_path, "countries_from_file", overwrite = TRUE)
+    result <- ddbs_register_table(conn_test, file_path, "countries_from_file", overwrite = TRUE)
 
     expect_true(result)
 
@@ -118,7 +118,7 @@ test_that("can register sf object from file path", {
 test_that("registered view contains geometry column", {
 
     # register sf object
-    ddbs_register_vector(conn_test, points_sf, "geom_test", overwrite = TRUE)
+    ddbs_register_table(conn_test, points_sf, "geom_test", overwrite = TRUE)
 
     # check columns
     columns <- DBI::dbListFields(conn_test, "geom_test")
@@ -130,7 +130,7 @@ test_that("registered view contains geometry column", {
 
 test_that("registered view contains CRS column or has CRS (in duckdb 1.5+)", {
     # register sf object
-    ddbs_register_vector(conn_test, points_sf, "crs_test", overwrite = TRUE)
+    ddbs_register_table(conn_test, points_sf, "crs_test", overwrite = TRUE)
 
     # check columns
     columns <- DBI::dbListFields(conn_test, "crs_test")
@@ -143,11 +143,11 @@ test_that("registered view contains CRS column or has CRS (in duckdb 1.5+)", {
 test_that("error when view name exists and overwrite=FALSE", {
 
     # register first view
-    ddbs_register_vector(conn_test, points_sf, "duplicate_test", overwrite = TRUE)
+    ddbs_register_table(conn_test, points_sf, "duplicate_test", overwrite = TRUE)
 
     # try to register again - should error
     expect_error(
-        ddbs_register_vector(conn_test, points_sf, "duplicate_test", overwrite = FALSE),
+        ddbs_register_table(conn_test, points_sf, "duplicate_test", overwrite = FALSE),
         "overwrite = TRUE"
     )
 
@@ -157,12 +157,12 @@ test_that("error when view name exists and overwrite=FALSE", {
 
 test_that("can register duckspatial_df directly", {
     # Create a duckspatial_df by reading from existing view
-    ddbs_register_vector(conn_test, points_sf, "points_for_lazy", overwrite = TRUE)
-    df_lazy <- ddbs_read_vector(conn_test, "points_for_lazy", crs = 4326) |>
+    ddbs_register_table(conn_test, points_sf, "points_for_lazy", overwrite = TRUE)
+    df_lazy <- ddbs_read_table(conn_test, "points_for_lazy", crs = 4326) |>
         as_duckspatial_df()
 
     # Register duckspatial_df as new view
-    result <- ddbs_register_vector(conn_test, df_lazy, "lazy_view_direct", overwrite = TRUE)
+    result <- ddbs_register_table(conn_test, df_lazy, "lazy_view_direct", overwrite = TRUE)
     expect_true(result)
 
     # Verify view exists
@@ -180,7 +180,7 @@ test_that("handles sf with existing crs_duckspatial column", {
     points_with_crs$crs_duckspatial <- "EPSG:4326"
 
     # Should not error
-    result <- ddbs_register_vector(conn_test, points_with_crs, "crs_col_test", overwrite = TRUE)
+    result <- ddbs_register_table(conn_test, points_with_crs, "crs_col_test", overwrite = TRUE)
     expect_true(result)
 
     # Verify view exists
@@ -194,12 +194,12 @@ test_that("handles sf with existing crs_duckspatial column", {
 
 test_that("error for unsupported data types", {
     expect_error(
-        ddbs_register_vector(conn_test, list(a = 1), "bad_input"),
+        ddbs_register_table(conn_test, list(a = 1), "bad_input"),
         "must be an"
     )
 
     expect_error(
-        ddbs_register_vector(conn_test, 123, "bad_input"),
+        ddbs_register_table(conn_test, 123, "bad_input"),
         "must be an"
     )
 })

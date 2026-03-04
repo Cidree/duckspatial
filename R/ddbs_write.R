@@ -5,10 +5,12 @@
 #'
 #' @template conn
 #' @param data A \code{sf} object to write to the DuckDB database, or the path to
-#'        a local file that can be read with `ST_READ`
+#' a local file that can be read with `ST_READ`
 #' @template name
 #' @template overwrite
-#' @param temp_view If `TRUE`, registers the `sf` object as a temporary Arrow-backed database 'view' using `ddbs_register_vector` instead of creating a persistent table. This is much faster but the view will not persist. Defaults to `FALSE`.
+#' @param temp_view If `TRUE`, registers the `sf` object as a temporary Arrow-backed database 'view' 
+#' using `ddbs_register_table` instead of creating a persistent table. This is much faster but the view 
+#' will not persist. Defaults to `FALSE`.
 #' @template quiet
 #'
 #' @returns TRUE (invisibly) for successful import
@@ -34,15 +36,15 @@
 #' sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
 #'
 #' ## insert data into the database
-#' ddbs_write_vector(conn, sf_points, "points")
+#' ddbs_write_table(conn, sf_points, "points")
 #'
 #' ## read data back into R
-#' ddbs_read_vector(conn, "points", crs = 4326)
+#' ddbs_write_table(conn, "points", crs = 4326)
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
 #' }
-ddbs_write_vector <- function(
+ddbs_write_table <- function(
     conn,
     data,
     name,
@@ -56,7 +58,7 @@ ddbs_write_vector <- function(
 
     ## Handle temp_view
     if (temp_view) {
-        return(ddbs_register_vector(conn, data, name, overwrite, quiet))
+        return(ddbs_register_table(conn, data, name, overwrite, quiet))
     }
 
     # Handle duckspatial_df/tbl_lazy - try cross-connection import first
@@ -243,4 +245,42 @@ ddbs_write_vector <- function(
 
     return(invisible(TRUE))
 
+}
+
+
+
+
+#' Write an SF Object to a DuckDB Database
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `ddbs_write_vector()` was renamed to \code{\link{ddbs_write_table}}.
+#'
+#' @inheritParams ddbs_write_table
+#' @returns TRUE (invisibly) for successful import
+#' @export
+#' @keywords internal
+ddbs_write_vector <- function(
+    conn,
+    data,
+    name,
+    overwrite = FALSE,
+    temp_view = FALSE,
+    quiet = FALSE) {
+    
+    lifecycle::deprecate_soft(
+        when    = "1.0.0",
+        what    = "ddbs_write_vector()",
+        with    = "ddbs_write_table()"
+    )
+    
+    ddbs_write_table(
+        conn = conn,
+        data = data,
+        name = name,
+        overwrite = overwrite,
+        temp_view = temp_view,
+        quiet = quiet
+    )
 }

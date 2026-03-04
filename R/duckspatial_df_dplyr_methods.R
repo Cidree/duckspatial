@@ -306,7 +306,7 @@ glimpse.duckspatial_df <- function(x, width = NULL, ...) {
   crs <- attr(x, "crs")
   geom_col <- attr(x, "sf_column")
   bbox <- st_bbox(x)
-  geomtype <- ddbs_geometry_type(x, by_feature = FALSE, quiet = TRUE) |> 
+  geomtype <- ddbs_geometry_type(x, by_feature = FALSE) |> 
     as.character()
   
   # Strip class to delegate to dplyr's glimpse.tbl_lazy

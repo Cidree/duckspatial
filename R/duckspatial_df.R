@@ -74,7 +74,7 @@ as_duckspatial_df.sf <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ..
   
   # Register sf as temp view
   view_name <- ddbs_temp_view_name()
-  ddbs_write_vector(
+  ddbs_write_table(
     conn = conn,
     data = x,
     name = view_name,

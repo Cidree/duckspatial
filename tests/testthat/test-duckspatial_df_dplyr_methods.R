@@ -10,7 +10,7 @@
 
 test_that("dplyr verbs preserve duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -38,7 +38,7 @@ test_that("dplyr verbs preserve duckspatial_df class", {
 
 test_that("group_by preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -52,7 +52,7 @@ test_that("group_by preserves duckspatial_df class", {
 
 test_that("summarize preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -67,7 +67,7 @@ test_that("summarize preserves duckspatial_df class", {
 
 test_that("distinct preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -80,7 +80,7 @@ test_that("distinct preserves duckspatial_df class", {
 
 test_that("rename preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -93,7 +93,7 @@ test_that("rename preserves duckspatial_df class", {
 
 test_that("slice_min preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -106,7 +106,7 @@ test_that("slice_min preserves duckspatial_df class", {
 
 test_that("head preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -120,7 +120,7 @@ test_that("head preserves duckspatial_df class", {
 
 test_that("chained dplyr operations preserve duckspatial_df class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -147,7 +147,7 @@ test_that("chained dplyr operations preserve duckspatial_df class", {
 
 test_that("ddbs_collect works with duckspatial_df", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))
@@ -164,7 +164,7 @@ test_that("ddbs_collect works with duckspatial_df", {
 
 test_that("compute.duckspatial_df forces execution and preserves class", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
@@ -179,7 +179,7 @@ test_that("compute.duckspatial_df forces execution and preserves class", {
 
 test_that("compute.duckspatial_df simplifies query plan", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry") |>
@@ -198,7 +198,7 @@ test_that("compute.duckspatial_df simplifies query plan", {
 
 test_that("ddbs_compute wrapper works correctly", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
@@ -217,7 +217,7 @@ test_that("ddbs_compute wrapper works correctly", {
 
 test_that("left_join.duckspatial_df preserves spatial attributes", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))
@@ -235,7 +235,7 @@ test_that("left_join.duckspatial_df preserves spatial attributes", {
 
 test_that("inner_join.duckspatial_df preserves spatial attributes", {
   conn <- ddbs_temp_conn()
-  ddbs_write_vector(conn, nc_sf, "nc_test", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   nc_lazy <- dplyr::tbl(conn, "nc_test") |>
     as_duckspatial_df(crs = sf::st_crs(nc_sf))

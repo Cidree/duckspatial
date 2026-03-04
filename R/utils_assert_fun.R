@@ -223,7 +223,7 @@ assert_geom_type <- function(x, conn, geom, multi = FALSE) { # nocov start
   }
   
   ## get the unique geometry types
-  geom_type <- ddbs_geometry_type(x, conn, by_feature = FALSE, quiet = TRUE)
+  geom_type <- ddbs_geometry_type(x, conn, by_feature = FALSE)
   
   ## check geometry type
   invalid_types <- setdiff(geom_type, geom)
@@ -235,4 +235,17 @@ assert_geom_type <- function(x, conn, geom, multi = FALSE) { # nocov start
     ))
   }
   
+} # nocov end
+
+
+assert_conn_x_name <- function(conn, x, name) { # nocov start
+
+  if (!is.null(conn) && is.null(name) && !is.character(x)) {
+    cli::cli_abort("If {.arg conn} is not NULL, {.arg x} or {.arg name} must be a table name.")
+  }
+
+  if (!is.null(name) && is.null(conn)) {
+    cli::cli_abort("If {.arg name} is not NULL, {.arg conn} must be a valid connection.")
+  }
+
 } # nocov end

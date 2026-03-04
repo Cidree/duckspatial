@@ -38,39 +38,8 @@ Defaults to \code{FALSE}.}
 an sf object
 }
 \description{
-Retrieves the data from a DuckDB table, view, or Arrow view with a geometry
-column, and converts it to an R \code{sf} object. This function works with
-both persistent tables created by \code{ddbs_write_vector} and temporary
-Arrow views created by \code{ddbs_register_vector}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{ddbs_read_vector()} was renamed to \code{\link{ddbs_read_table}}.
 }
-\examples{
-\dontrun{
-## load packages
-library(duckspatial)
-library(sf)
-
-# create a duckdb database in memory (with spatial extension)
-conn <- ddbs_create_conn(dbdir = "memory")
-
-## create random points
-random_points <- data.frame(
-  id = 1:5,
-  x = runif(5, min = -180, max = 180),
-  y = runif(5, min = -90, max = 90)
-)
-
-## convert to sf
-sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
-
-## Example 1: Write and read persistent table
-ddbs_write_vector(conn, sf_points, "points")
-ddbs_read_vector(conn, "points", crs = 4326)
-
-## Example 2: Register and read Arrow view (faster, temporary)
-ddbs_register_vector(conn, sf_points, "points_view")
-ddbs_read_vector(conn, "points_view", crs = 4326)
-
-## disconnect from db
-ddbs_stop_conn(conn)
-}
-}
+\keyword{internal}

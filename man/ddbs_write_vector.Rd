@@ -27,7 +27,9 @@ names. If \code{NULL} (the default), the function returns the result as an
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
-\item{temp_view}{If \code{TRUE}, registers the \code{sf} object as a temporary Arrow-backed database 'view' using \code{ddbs_register_vector} instead of creating a persistent table. This is much faster but the view will not persist. Defaults to \code{FALSE}.}
+\item{temp_view}{If \code{TRUE}, registers the \code{sf} object as a temporary Arrow-backed database 'view'
+using \code{ddbs_register_table} instead of creating a persistent table. This is much faster but the view
+will not persist. Defaults to \code{FALSE}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
@@ -36,35 +38,8 @@ Defaults to \code{FALSE}.}
 TRUE (invisibly) for successful import
 }
 \description{
-This function writes a Simple Features (SF) object into a DuckDB database as a new table.
-The table is created in the specified schema of the DuckDB database.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{ddbs_write_vector()} was renamed to \code{\link{ddbs_write_table}}.
 }
-\examples{
-\dontrun{
-## load packages
-library(duckspatial)
-library(sf)
-
-# create a duckdb database in memory (with spatial extension)
-conn <- ddbs_create_conn(dbdir = "memory")
-
-## create random points
-random_points <- data.frame(
-  id = 1:5,
-  x = runif(5, min = -180, max = 180),  # Random longitude values
-  y = runif(5, min = -90, max = 90)     # Random latitude values
-)
-
-## convert to sf
-sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
-
-## insert data into the database
-ddbs_write_vector(conn, sf_points, "points")
-
-## read data back into R
-ddbs_read_vector(conn, "points", crs = 4326)
-
-## disconnect from db
-dbDisconnect(conn)
-}
-}
+\keyword{internal}

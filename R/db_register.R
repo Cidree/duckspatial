@@ -2,10 +2,10 @@
 #'
 #' This function registers a Simple Features (SF) object as a temporary Arrow-backed
 #' view in a DuckDB database. This is a zero-copy operation and is significantly
-#' faster than `ddbs_write_vector` for workflows that do not require data to be
+#' faster than `ddbs_write_table` for workflows that do not require data to be
 #' permanently materialized in the database.
 #'
-#' @inheritParams ddbs_write_vector
+#' @inheritParams ddbs_write_table
 #' @returns TRUE (invisibly) on successful registration.
 #' @export
 #' @examples
@@ -17,13 +17,13 @@
 #'
 #' nc <- st_read(system.file("shape/nc.shp", package="sf"), quiet = TRUE)
 #'
-#' ddbs_register_vector(conn, nc, "nc_arrow_view")
+#' ddbs_register_table(conn, nc, "nc_arrow_view")
 #'
 #' dbGetQuery(conn, "SELECT COUNT(*) FROM nc_arrow_view;")
 #'
 #' ddbs_stop_conn(conn, shutdown = TRUE)
 #'}
-ddbs_register_vector <- function(
+ddbs_register_table <- function(
     conn,
     data,
     name,
@@ -144,4 +144,40 @@ ddbs_register_vector <- function(
     }
 
     invisible(TRUE)
+}
+
+
+
+
+#' Register an SF Object as an Arrow Table in DuckDB
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `ddbs_register_vector()` was renamed to \code{\link{ddbs_register_table}}.
+#'
+#' @inheritParams ddbs_register_table
+#' @returns TRUE (invisibly) on successful registration.
+#' @export
+#' @keywords internal
+ddbs_register_vector <- function(
+    conn,
+    data,
+    name,
+    overwrite = FALSE,
+    quiet = FALSE) {
+    
+    lifecycle::deprecate_soft(
+        when    = "1.0.0",
+        what    = "ddbs_register_vector()",
+        with    = "ddbs_register_table()"
+    )
+    
+    ddbs_register_table(
+        conn = conn,
+        data = data,
+        name = name,
+        overwrite = overwrite,
+        quiet = quiet
+    )
 }

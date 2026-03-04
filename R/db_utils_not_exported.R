@@ -281,7 +281,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
   df <- dplyr::collect(source_object)
   
   if (inherits(df, "sf")) {
-    duckspatial::ddbs_write_vector(target_conn, df, target_name, temp_view = TRUE)
+    duckspatial::ddbs_write_table(target_conn, df, target_name, temp_view = TRUE)
     cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
     return(list(name = target_name, method = "collect_and_write", data = df, cleanup = function() NULL))
   } else if (is.data.frame(df)) {
@@ -356,6 +356,88 @@ get_query_name <- function(name) {  # nocov start
 
 
 
+#' Get names for the query
+#'
+#' @param x sf, duckspatial_df, tbl_lazy, or character
+#' @template conn_null
+#'
+#' @keywords internal
+#' @noRd
+#' @returns list with fixed names
+get_query_list <- function(x, conn) {
+
+  if (inherits(x, "sf")) {
+    temp_view_name <- ddbs_temp_view_name()
+    duckspatial::ddbs_write_table(conn = conn, data = x, name = temp_view_name,
+                                    quiet = TRUE, temp_view = TRUE)
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+      tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
+    }
+    x_list$owned <- FALSE   # created here, caller should not clean up
+    return(x_list)
+
+  } else if (inherits(x, "duckspatial_df")) {
+    source_table <- attr(x, "source_table")
+    if (!is.null(source_table)) {
+      remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
+      if (!is.null(remote_name_result) &&
+          !inherits(remote_name_result, "sql") &&
+          as.character(remote_name_result) == source_table) {
+        result <- get_query_name(source_table)
+        result$cleanup <- function() NULL
+        result$owned <- TRUE
+        return(result)
+      }
+    }
+    ## Modified by dplyr verbs: render to a new temp view
+    temp_view_name <- ddbs_temp_view_name()
+    query_sql <- dbplyr::sql_render(x, con = conn)
+    DBI::dbExecute(conn, glue::glue(
+      "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS {query_sql}"
+    ))
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
+
+    return(x_list)
+
+  } else if (inherits(x, "tbl_lazy")) {
+    temp_view_name <- ddbs_temp_view_name()
+    query_sql <- dbplyr::sql_render(x)
+    DBI::dbExecute(conn, glue::glue(
+      "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS {query_sql}"
+    ))
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
+    return(x_list)
+
+  } else if (inherits(x, "data.frame")) {
+    temp_view_name <- ddbs_temp_view_name()
+    duckdb::duckdb_register(conn, temp_view_name, x)
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+      tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
+    return(x_list)
+
+  } else {
+    ## Character table name: pre-existing, never clean up
+    x_list <- get_query_name(x)
+    x_list$cleanup <- function() NULL
+    x_list$owned <- TRUE
+    return(x_list)
+  }
+}
+
 
 
 #' Get names for the query
@@ -377,158 +459,126 @@ get_query_name <- function(name) {  # nocov start
 #   on.exit(result$cleanup(), add = TRUE)
 #   # ... use result$query_name ...
 #   # ... use result$query_name ...
-get_query_list <- function(x, conn) {
+# get_query_list <- function(x, conn) {
 
-  cleanup <- function() NULL  # default no-op
+#   cleanup <- function() NULL  # default no-op
   
-  if (inherits(x, "sf")) {
+#   if (inherits(x, "sf")) {
 
-    ## generate a unique temporary view name
-    temp_view_name <- paste0(
-      "temp_view_",
-      gsub("-", "_", uuid::UUIDgenerate())
-    )
+#     ## generate a unique temporary view name
+#     temp_view_name <- ddbs_temp_view_name()
 
-    # Write table with the unique name
-    duckspatial::ddbs_write_vector(
-      conn      = conn,
-      data      = x,
-      name      = temp_view_name,
-      quiet     = TRUE,
-      temp_view = TRUE
-    )
+#     # Write table with the unique name
+#     duckspatial::ddbs_write_table(
+#       conn      = conn,
+#       data      = x,
+#       name      = temp_view_name,
+#       quiet     = TRUE,
+#       temp_view = TRUE
+#     )
 
-    cleanup <- function() {
-      # Try DROP VIEW first
-      tryCatch(
-        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-        error = function(e) NULL
-      )
-      # Also try unregistering arrow (needed for temp_view=TRUE from ddbs_write_vector)
-      tryCatch(
-        duckdb::duckdb_unregister_arrow(conn, temp_view_name),
-        error = function(e) NULL
-      )
-    }
+#     x_list <- get_query_name(temp_view_name)
 
-    x_list <- get_query_name(temp_view_name)
+#     x_list$cleanup <- function() {NULL}
 
-  } else if (inherits(x, "duckspatial_df")) {
+#     return(x_list)
+
+#   } else if (inherits(x, "duckspatial_df")) {
     
-    # 1. OPTIMIZATION: Check if we have an unmodified direct source table/view
-    # This optimization is ONLY valid when the lazy query hasn't been modified.
-    #
-    # When dplyr verbs (filter, select, mutate, etc.) are applied, the lazy query
-    # changes but source_table attribute may still point to original table.
-    # We detect modification by comparing source_table with dbplyr::remote_name():
-    # - If remote_name returns the same table name, query is unmodified
-    # - If remote_name returns sql() or NULL, query has been modified via dplyr verbs
-    source_table <- attr(x, "source_table")
-    if (!is.null(source_table)) {
-      remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
+#     # 1. OPTIMIZATION: Check if we have an unmodified direct source table/view
+#     # This optimization is ONLY valid when the lazy query hasn't been modified.
+#     #
+#     # When dplyr verbs (filter, select, mutate, etc.) are applied, the lazy query
+#     # changes but source_table attribute may still point to original table.
+#     # We detect modification by comparing source_table with dbplyr::remote_name():
+#     # - If remote_name returns the same table name, query is unmodified
+#     # - If remote_name returns sql() or NULL, query has been modified via dplyr verbs
+#     source_table <- attr(x, "source_table")
+#     if (!is.null(source_table)) {
+#       remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
       
-      # Only use optimization if remote_name matches source_table exactly
-      # (i.e., the query hasn't been modified by dplyr verbs)
-      if (!is.null(remote_name_result) && 
-          !inherits(remote_name_result, "sql") &&
-          as.character(remote_name_result) == source_table) {
-        result <- get_query_name(source_table)
-        result$cleanup <- function() NULL
-        return(result)
-      }
-      # Otherwise, fall through to SQL render path below
-    }
+#       # Only use optimization if remote_name matches source_table exactly
+#       # (i.e., the query hasn't been modified by dplyr verbs)
+#       if (!is.null(remote_name_result) && 
+#           !inherits(remote_name_result, "sql") &&
+#           as.character(remote_name_result) == source_table) {
+#         result <- get_query_name(source_table)
+#         result$cleanup <- function() NULL
+#         return(result)
+#       }
+#       # Otherwise, fall through to SQL render path below
+#     }
     
-    # 2. SQL render (efficient lazy evaluation)
-    # NOTE: Replaced inefficient collect-and-upload fallback with SQL render.
-    # Regression test: tests/testthat/test-regression-inefficient-fallback.R
-    # duckspatial_df inherits from tbl_lazy, so sql_render always works
-    temp_view_name <- paste0(
-      "temp_view_",
-      gsub("-", "_", uuid::UUIDgenerate())
-    )
+#     # 2. SQL render (efficient lazy evaluation)
+#     # NOTE: Replaced inefficient collect-and-upload fallback with SQL render.
+#     # Regression test: tests/testthat/test-regression-inefficient-fallback.R
+#     # duckspatial_df inherits from tbl_lazy, so sql_render always works
+#     temp_view_name <- ddbs_temp_view_name()
     
-    query_sql <- dbplyr::sql_render(x, con = conn)
+#     query_sql <- dbplyr::sql_render(x, con = conn)
     
-    view_query <- glue::glue("
-      CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
-      {query_sql}
-    ")
-    DBI::dbExecute(conn, view_query)
+#     view_query <- glue::glue("
+#       CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
+#       {query_sql}
+#     ")
+#     DBI::dbExecute(conn, view_query)
     
-    cleanup <- function() {
-      tryCatch(
-        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-        error = function(e) NULL
-      )
-    }
+#     cleanup <- function() {
+#       tryCatch(
+#         DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+#         error = function(e) NULL
+#       )
+#     }
     
-    x_list <- get_query_name(temp_view_name)
-    x_list$cleanup <- cleanup
-    return(x_list)
+#     x_list <- get_query_name(temp_view_name)
+#     x_list$cleanup <- cleanup
+#     return(x_list)
 
-  } else if (inherits(x, "tbl_lazy")) {
+#   } else if (inherits(x, "tbl_lazy")) {
     
-    ## For dbplyr tbl_lazy, we can use sql_render
-    temp_view_name <- paste0(
-      "temp_view_",
-      gsub("-", "_", uuid::UUIDgenerate())
-    )
+#     ## For dbplyr tbl_lazy, we can use sql_render
+#     temp_view_name <- ddbs_temp_view_name()
     
-    # Get the SQL query from the lazy table
-    query_sql <- dbplyr::sql_render(x)
+#     # Get the SQL query from the lazy table
+#     query_sql <- dbplyr::sql_render(x)
     
-    # Create temp view from the query
-    view_query <- glue::glue("
-      CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
-      {query_sql}
-    ")
-    DBI::dbExecute(conn, view_query)
+#     # Create temp view from the query
+#     view_query <- glue::glue("
+#       CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
+#       {query_sql}
+#     ")
+#     DBI::dbExecute(conn, view_query)
     
-    cleanup <- function() {
-      tryCatch(
-        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-        error = function(e) NULL
-      )
-    }
+#     cleanup <- function() {
+#       tryCatch(
+#         DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
+#         error = function(e) NULL
+#       )
+#     }
     
-    x_list <- get_query_name(temp_view_name)
+#     x_list <- get_query_name(temp_view_name)
 
-  } else if (inherits(x, "data.frame")) {
+#   } else if (inherits(x, "data.frame")) {
 
-    ## generate a unique temporary view name
-    temp_view_name <- paste0(
-      "temp_view_",
-      gsub("-", "_", uuid::UUIDgenerate())
-    )
+#     ## generate a unique temporary view name
+#     temp_view_name <- ddbs_temp_view_name()
 
-    ## register the view
-    duckdb::duckdb_register(conn, temp_view_name, x)
+#     ## register the view
+#     duckdb::duckdb_register(conn, temp_view_name, x)
 
-    cleanup <- function() {
-      # Try DROP VIEW first
-      tryCatch(
-        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-        error = function(e) NULL
-      )
-      # Also try unregistering arrow (needed for temp_view=TRUE from ddbs_write_vector)
-      tryCatch(
-        duckdb::duckdb_unregister_arrow(conn, temp_view_name),
-        error = function(e) NULL
-      )
-    }
+#     cleanup <- function() {NULL}
 
-    x_list <- get_query_name(temp_view_name)
+#     x_list <- get_query_name(temp_view_name)
 
-  } else {
-    x_list <- get_query_name(x)
-  }
+#   } else {
+#     x_list <- get_query_name(x)
+#   }
 
-  # Add cleanup function to result
-  x_list$cleanup <- cleanup
-  return(x_list)
+#   # Add cleanup function to result
+#   x_list$cleanup <- cleanup
+#   return(x_list)
 
-}
+# }
 
 
 
@@ -836,78 +886,48 @@ deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
 #' Handle output type for duckspatial functions
 #'
 #' Converts a data frame/tibble result to the appropriate output type
-#' based on the `output` parameter or global options.
+#' based on the `mode` parameter or global options.
 #'
-#' @param data A data frame/tibble with a WKB geometry column
+#' @param query A query
 #' @param conn DuckDB connection
-#' @param output Character specifying output type: "duckspatial_df", "sf", or "tibble"
-#' @param crs CRS for the output (used for sf conversion)
-#' @param crs_column Column name containing CRS info (deprecated)
+#' @template mode
+#' @template crs
 #' @param x_geom Name of the geometry column
 #'
 #' @keywords internal
 #' @noRd
 #' @returns Object of the specified output type
-ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL, 
-                                crs_column = "crs_duckspatial", x_geom = "geometry") {
-  # nocov start
+ddbs_handle_output <- function(
+  query, 
+  conn, 
+  mode = NULL, 
+  crs = NULL, 
+  crs_column = "crs_duckspatial", 
+  x_geom = "geometry"
+) { # nocov start
   
-  # Resolve output type: parameter > global option > default
-
-  if (is.null(output)) {
-    output <- getOption("duckspatial.output_type", "duckspatial_df")
+  # Resolve mode type: parameter > global option > default
+  if (is.null(mode)) {
+    mode <- getOption("duckspatial.mode", "duckspatial")
   }
   
-  # Validate output type
-  valid_outputs <- c("duckspatial_df", "sf", "tibble", "raw", "geoarrow")
-  if (!output %in% valid_outputs) {
+  # Validate mode type
+  valid_modes <- c("duckspatial", "sf")
+  if (!mode %in% valid_modes) {
     cli::cli_abort(
-      "{.arg output} must be one of {.val {valid_outputs}}, not {.val {output}}."
+      "{.arg mode} must be one of {.val {valid_modes}}, not {.val {mode}}."
     )
   }
   
   # Handle based on output type
-  if (output == "tibble") {
-    # Remove geometry column and CRS column, return tibble
-    data[[x_geom]] <- NULL
-    if (crs_column %in% names(data)) {
-      data[[crs_column]] <- NULL
-    }
-    return(tibble::as_tibble(data))
-    
-  } else if (output == "raw") {
-    # Return directly (geometry is already WKB via collect)
-    return(tibble::as_tibble(data))
-      
-  } else if (output == "geoarrow") {
-    # Convert WKB to geoarrow_vctr
-    geom_data <- data[[x_geom]]
-    
-    # Needs geoarrow package
-    if (!requireNamespace("geoarrow", quietly = TRUE)) {
-      cli::cli_abort("Package {.pkg geoarrow} needed for output type 'geoarrow'.")
-    }
-    
-    if (!inherits(geom_data, "geoarrow_vctr")) {
-      # Strip blob attributes if present (DuckDB blobs sometimes have extra attrs)
-      attributes(geom_data) <- NULL
-      col_converted <- tryCatch({
-         geoarrow::as_geoarrow_vctr(
-            wk::new_wk_wkb(geom_data),
-            schema = geoarrow::geoarrow_wkb()
-         )
-      }, error = function(e) {
-         cli::cli_warn("Failed to convert to geoarrow: {conditionMessage(e)}")
-         geom_data
-      })
-      data[[x_geom]] <- col_converted
-    }
-    return(tibble::as_tibble(data))
+  if (mode == "sf") {
 
-  } else if (output == "sf") {
+    # Get the query
+    data_tbl <- DBI::dbGetQuery(conn, query)
+
     # Convert to sf object
     data_sf <- convert_to_sf_wkb(
-      data       = data,
+      data       = data_tbl,
       crs        = crs,
       crs_column = crs_column,
       x_geom     = x_geom
@@ -916,9 +936,13 @@ ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL,
     
   } else {
     # output == "duckspatial_df"
+
+    # Get the data
+    data_tbl <- DBI::dbGetQuery(conn, query)
+
     # Convert to sf first, then wrap as duckspatial_df
     data_sf <- convert_to_sf_wkb(
-      data       = data,
+      data       = data_tbl,
       crs        = crs,
       crs_column = crs_column,
       x_geom     = x_geom
@@ -939,6 +963,110 @@ ddbs_handle_output <- function(data, conn, output = NULL, crs = NULL,
   }
   # nocov end
 }
+
+
+
+
+#' Handle output type for duckspatial functions
+#'
+#' Returns a `sf` or a `duckspatial_df` from a query, depending
+#' on the `mode` parameter or global options.
+#'
+#' @param query A query
+#' @param conn DuckDB connection
+#' @template mode
+#' @template crs
+#' @param x_geom Name of the geometry column
+#'
+#' @keywords internal
+#' @noRd
+#' @returns Object of the specified mode type
+ddbs_handle_query <- function(
+  query, 
+  conn, 
+  mode = NULL, 
+  crs = NULL, 
+  crs_column = "crs_duckspatial", 
+  x_geom = "geometry",
+  fun_group = 1,
+  units = NULL
+) { # nocov start
+  
+  # Resolve mode type: parameter > global option > default
+  if (is.null(mode)) {
+    mode <- getOption("duckspatial.mode", "duckspatial")
+  }
+  
+  # Validate mode type
+  valid_modes <- c("duckspatial", "sf")
+  if (!mode %in% valid_modes) {
+    cli::cli_abort(
+      "{.arg mode} must be one of {.val {valid_modes}}, not {.val {mode}}."
+    )
+  }
+  
+  # Handle based on mode type
+  if (mode == "sf") {
+
+    ## Get the query as a data frame
+    data_tbl <- DBI::dbGetQuery(conn, query)
+
+    ## Manage sf output depending on the function group
+    ## - Group 1: functions that return a normal {sf} object (most of the funs)
+    ## - Group 2: functions that return a vector (units or not units)
+    if (fun_group == 1) {
+
+      ## Convert to sf object
+      data_sf <- convert_to_sf_wkb(
+        data       = data_tbl,
+        crs        = crs,
+        crs_column = crs_column,
+        x_geom     = x_geom
+      )
+      return(data_sf)
+
+    } else if (fun_group == 2) {
+      
+      ## Return units/non-units vector
+      if (is.null(units)) {
+        return(data_tbl[, 1])
+      } else {
+        return(units::as_units(data_tbl[, 1], units))
+      }
+      
+    }
+    
+  } else {
+    # mode == "duckspatial"
+
+    # Create a view name and the query
+    view_name <- ddbs_temp_view_name()
+    query <- glue::glue("
+      CREATE TEMP TABLE {view_name} AS
+      {query};
+    ")
+    # on.exit(DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {view_name}")))
+
+    # Create the view
+    DBI::dbExecute(conn, query)
+
+    # Open lazily as duckspatial_df
+    # This could be replaced by ddbs_open_table()
+    lazy_tbl <- dplyr::tbl(conn, view_name)
+
+    result <- new_duckspatial_df(
+      lazy_tbl, 
+      crs = crs, 
+      geom_col = x_geom, 
+      source_table = ddbs_temp_view_name()
+    )
+    
+    return(result)
+  }
+  # nocov end
+}
+
+
 
 #' Get CRS from a spatial file
 #'
@@ -1220,10 +1348,132 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 
 
 
+#' Builds query in geometries
+#' 
+#' @param fun Duckdb spatial function
+#' @template mode
+#'
+#' @keywords internal
+#' @noRd
+build_geom_query <- function(fun, mode) {
+  if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
+  if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else fun
+}
+
+
+#' Gets the current mode
+#' 
+#' @param mode duckspatial, sf or NULL
+#'
+#' @keywords internal
+#' @noRd
+get_mode <- function(mode, name) {
+
+  ## If name is not NULL, the geospatial operations will create a new table,
+  ## so we are interested in the duckspatial version (i.e. not add ST_AsWKB())
+  ## This is the same as ignoring the option
+  if (!is.null(name)) {
+    return("duckspatial")
+  } 
+
+  ## Get the current option
+  if (is.null(mode)) {
+    mode <- getOption("duckspatial.mode", "duckspatial")
+  }
+
+  return(mode)
+
+}
+
+
+
+#' Builds verbose query of ddbs_union
+#'
+#' @keywords internal
+#' @noRd
+build_union_sql <- function(
+  by_feature, 
+  x_geom, 
+  y_geom = NULL,
+  crs_column, 
+  x_query, 
+  y_query = NULL) {
+  if (!is.null(y_query)) {
+    if (by_feature) {
+      list(
+        geom_call = glue::glue("ST_Union(v1.{x_geom}, v2.{y_geom})"),
+        geom_alias = x_geom,
+        from      = glue::glue(
+          "(SELECT ROW_NUMBER() OVER () as rn, * FROM {x_query}) v1
+           JOIN (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_query}) v2
+           ON v1.rn = v2.rn"
+        ),
+        group_by  = ""
+      )
+    } else {
+      list(
+        geom_call  = glue::glue("ST_Union_Agg(geom)"),
+        geom_alias = x_geom,
+        from       = glue::glue(
+          "(SELECT {crs_column}, {x_geom} as geom FROM {x_query}
+            UNION ALL
+            SELECT {crs_column}, {y_geom} as geom FROM {y_query}) v1"
+        ),
+        group_by   = glue::glue("GROUP BY v1.{crs_column}")
+      )
+    }
+  } else {
+    list(
+      geom_call  = glue::glue("ST_Union_Agg({x_geom})"),
+      geom_alias = x_geom,
+      from       = x_query,
+      group_by   = ""
+    )
+  }
+}
 
 
 
 
+
+#' Builds verbose query of ddbs_union
+#'
+#' @keywords internal
+#' @noRd
+build_union_query <- function(
+  by_feature, 
+  mode, 
+  name_query,
+  x_geom, 
+  y_geom = NULL, 
+  crs_column,
+  x_query, 
+  y_query = NULL) {
+
+  parts     <- build_union_sql(by_feature, x_geom, y_geom, crs_column, x_query, y_query)
+  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, mode)} as {parts$geom_alias}")
+
+  if (!is.null(y_query)) {
+    row_id  <- if (by_feature) "ROW_NUMBER() OVER () as row_id," else "1 as row_id,"
+    crs_sel <- glue::glue("v1.{crs_column},")
+  } else {
+    row_id  <- ""
+    crs_sel <- glue::glue("FIRST({crs_column}) as {crs_column},")
+  }
+
+  prefix <- if (!is.null(name_query)) {
+    glue::glue("CREATE TABLE {name_query} AS")
+  } else {
+    ""
+  }
+
+  glue::glue("
+    {prefix}
+    SELECT {row_id} {crs_sel} {geom_expr}
+    FROM {parts$from}
+    {parts$group_by};
+  ")
+}
 
 
 

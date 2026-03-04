@@ -57,6 +57,7 @@ Suggests:
     ggplot2 (>= 3.3.1),
     knitr,
     lwgeom,
+    patchwork,
     quadkeyr,
     quarto,
     rmarkdown,

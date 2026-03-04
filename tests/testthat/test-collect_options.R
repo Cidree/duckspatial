@@ -8,7 +8,7 @@ test_that("collect.duckspatial_df respects global options", {
   
   # Setup data
   nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)[1:5,]
-  ddbs_write_vector(conn, nc_sf, "nc_test_opts")
+  ddbs_write_table(conn, nc_sf, "nc_test_opts")
   
   # Create duckspatial_df
   x <- dplyr::tbl(conn, "nc_test_opts") |> 

@@ -6,9 +6,31 @@
 \alias{ddbs_has_m}
 \title{Check geometry dimensions}
 \usage{
-ddbs_has_z(x, by_feature = FALSE, conn = NULL, quiet = FALSE)
+ddbs_has_z(
+  x,
+  by_feature = TRUE,
+  conn = NULL,
+  name = NULL,
+  new_column = "has_z",
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
 
-ddbs_has_m(x, by_feature = FALSE, conn = NULL, quiet = FALSE)
+ddbs_has_m(
+  x,
+  by_feature = TRUE,
+  conn = NULL,
+  name = NULL,
+  new_column = "has_m",
+  crs = NULL,
+  crs_column = "crs_duckspatial",
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -27,11 +49,41 @@ operation is applied to the data as a whole.}
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
+\item{name}{A character string of length one specifying the name of the table,
+or a character string of length two specifying the schema and table
+names. If \code{NULL} (the default), the function returns the result as an
+\code{sf} object}
+
+\item{new_column}{Name of the new column to create on the input data. Ignored
+with \code{mode = "sf"}.}
+
+\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
+doesn't have a \code{crs_column}, and you know the CRS.}
+
+\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
+storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
+Set to \code{NULL} if absent.}
+
+\item{mode}{Character. Controls the return type. Options:
+\itemize{
+\item \code{"duckspatial"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
+}
+Can be set globally via \code{\link{ddbs_options}(mode = "...")} or
+per-function via this argument. Per-function overrides global setting.}
+
+\item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
+to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
+
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
 }
 \value{
-A logical vector
+\itemize{
+\item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+\item \code{mode = "sf"}: An eagerly collected vector in R memory.
+\item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
+}
 }
 \description{
 Functions to check whether geometries have Z (elevation) or M (measure) dimensions

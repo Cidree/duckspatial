@@ -12,9 +12,12 @@
 #' @template predicate
 #' @template conn_null
 #' @template conn_x_conn_y
+#' @template name
 #' @template predicate_args
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
+#' @template mode
+#' @template overwrite
 #' @template quiet
 #' @param ... Passed to [ddbs_predicate]
 #'
@@ -47,19 +50,12 @@
 #' `id_x` or `id_y` may be used to replace the default integer indices with the
 #' values of an identifier column in `x` or `y`, respectively.
 #'
-#' @returns
-#' A **list** of length equal to the number of rows in `x`.
-#'
-#' - Each element contains:
-#'   - **integer vector** of row indices of `y` that satisfy the predicate with
-#'     the corresponding geometry of `x`, or
-#'   - **character vector** if `id_y` is supplied.
-#'
-#' - The names of the list elements:
-#'   - are integer row numbers of `x`, or
-#'   - the values of `id_x` if provided.
-#'
-#' If there's no match between `x` and `y` it returns `NULL`
+#' @returns Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
+#' \itemize{
+#'   \item \code{duckspatial} (default): A \code{tbl_duckdb_connection} (lazy data frame) backed by dbplyr/DuckDB.
+#'   \item \code{sf}: An eagerly collected list.
+#' }
+#' When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 #' 
 #' @export
 #'
@@ -136,11 +132,14 @@ ddbs_predicate <- function(
   conn = NULL,
   conn_x = NULL,
   conn_y = NULL,
+  name = NULL,
   id_x = NULL,
   id_y = NULL,
   sparse = TRUE,
   distance = NULL,
-  quiet = FALSE) {
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = TRUE) {
 
   
   ## 0. Handle errors
@@ -149,6 +148,9 @@ ddbs_predicate <- function(
   assert_name(id_x, "id_x")
   assert_name(id_y, "id_y")
   assert_logic(sparse, "sparse")
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
 
   ## Validate predicate early (it aborts on invalid)
@@ -173,6 +175,9 @@ ddbs_predicate <- function(
   x <- normalize_spatial_input(x, conn_x)
   y <- normalize_spatial_input(y, conn_y)
 
+  ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
+  mode <- get_mode(mode, name)
+
 
   # 2. Manage connection to DB
 
@@ -182,7 +187,9 @@ ddbs_predicate <- function(
   x            <- resolve_conn$x
   y            <- resolve_conn$y
   ## register cleanup of the connection
-  on.exit(resolve_conn$cleanup(), add = TRUE)
+  if (any(is.null(conn_x), is.null(conn_y))) {
+      on.exit(resolve_conn$cleanup(), add = TRUE)   
+  }
 
   ## 2.2. Get query list of table names
   x_list <- get_query_list(x, target_conn)
@@ -216,58 +223,121 @@ ddbs_predicate <- function(
   x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
   
-  # 4. Get data frame
-  ## 4.1. create query
+ # 4. Build predicate expression
   if (st_predicate == "ST_DWithin") {
-
+    
     ## check the CRS units to use the right function
     crs_units <- crs_x$units_gdal
     if (crs_units != "metre") {
-      st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
+      predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
       if (crs_x$input != "EPSG:4326") {
         cli::cli_warn(
           "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
         )
       }
     } else {
-      st_predicate <- glue::glue("ST_DWithin(x.{x_geom}, y.{y_geom}, {distance})")
+      predicate_expr <- glue::glue("ST_DWithin(x.{x_geom}, y.{y_geom}, {distance})")
     }
-
-    ## if distance is not specified, it will use ST_Within
+    
     if (is.null(distance)) {
       cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
       distance <- 0
     }
-
-    tmp.query <- glue::glue("
-      SELECT {st_predicate} as predicate
-      FROM {x_list$query_name} x
-      CROSS JOIN {y_list$query_name} y
-    ")
-
+    
   } else {
+    predicate_expr <- glue::glue("{st_predicate}(x.{x_geom}, y.{y_geom})")
+  }
+
+
+  # 5. Build query and return based on mode
+  ## - mode sf: it will return a list-like object
+  ## - mode duckspatial: it will return a lazy-tbl object
+  if (mode == "sf") {
+    
+    ## materialize full predicate matrix and reframe as sf/sparse when required
     tmp.query <- glue::glue("
-      SELECT {st_predicate}(x.{x_geom}, y.{y_geom}) as predicate
+      SELECT {predicate_expr} AS predicate
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
     ")
+    
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+    
+    result <- reframe_predicate_data(
+      conn   = target_conn,
+      data   = data_tbl,
+      x_list = x_list,
+      y_list = y_list,
+      id_x   = id_x,
+      id_y   = id_y,
+      sparse = sparse
+    )
+    
+  } else if (mode == "duckspatial") {
+    
+    ## Resolve identifiers
+    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{id_x} AS id_x")
+    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
+
+    ## Name for the table to be created
+    view_name <- ddbs_temp_view_name()
+
+     if (sparse) {
+    
+      ## long format - only TRUE pairs
+      tmp.query <- glue::glue("
+        CREATE TEMP TABLE {view_name} AS
+        SELECT 
+          x.id_x,
+          y.id_y
+        FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
+        CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+        WHERE {predicate_expr}
+      ")
+      
+    } else {
+      
+      ## Wide format - all pairs with TRUE/FALSE
+      ## need to fetch y_ids eagerly to build pivot columns
+      y_ids <- DBI::dbGetQuery(
+        target_conn,
+        glue::glue("SELECT {y_id_expr} FROM {y_list$query_name}")
+      )$id_y
+      
+      pivot_list <- paste(
+        glue::glue("SUM(CASE WHEN id_y = '{y_ids}' AND predicate THEN 1 ELSE 0 END)::BOOLEAN AS \"{y_ids}\""),
+        collapse = ",\n"
+      )
+      
+      ## Generate the query
+      tmp.query <- glue::glue("
+        CREATE TEMP TABLE {view_name} AS
+        WITH long AS (
+          SELECT 
+            x.id_x,
+            y.id_y,
+            {predicate_expr} AS predicate
+          FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
+          CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+        )
+        SELECT 
+          id_x,
+          {pivot_list}
+        FROM long
+        GROUP BY id_x
+        ORDER BY id_x
+      ")
+      
+     }
+    
+    ## Create a table, and return a pointer to that table
+    DBI::dbExecute(target_conn, tmp.query)
+    result <- dplyr::tbl(target_conn, view_name)
+    
   }
-  ## 4.2. retrieve results from the query
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  # 5. Reframe data
-  result_lst <- reframe_predicate_data(
-    conn   = target_conn,
-    data   = data_tbl,
-    x_list = x_list,
-    y_list = y_list,
-    id_x   = id_x,
-    id_y   = id_y,
-    sparse = sparse
-  )
+  return(result)
 
-  feedback_query(quiet)
-  return(result_lst)
 }
 
 

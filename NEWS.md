@@ -10,11 +10,13 @@
 
 -   `ddbs_union()`: is split into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
 
--   `ddbs_length()`, `ddbs_area()` and `ddbs_distance()`: now use by default the best DuckDB function (e.g. `ST_Area()` or `ST_Area_Spheroid()`) depending on the input's CRS. They also return a `duckspatial_df` object by default rather than a materialized vector (#80, #82).
+-   `ddbs_length()`, `ddbs_area()` and `ddbs_distance()`: now use by default the best DuckDB function (e.g. `ST_Area()` or `ST_Area_Spheroid()`) depending on the input's CRS. They also return a `duckspatial_df` object by default rather than a materialized vector. In the case of `ddbs_distance()`, it returns a `tbl_duckdb_connection` (#80, #82, #103).
 
 -   `ddbs_simplify()`: tolerance defaults to 0; gains a new argument `preserve_topology` specified before `conn` (#86).
 
--   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector (#83).
+-   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector. For materializing a vector in R, use `mode = "sf"` (#83).
+
+-    `ddbs_predicate()` and colleagues: they gain new arguments: name, mode, overwrite, and quiet. When `mode = "duckspatial"`, they return a lazy tbl backed by DuckDB. When `mode = "sf"`, they return a list/matrix (#105).
 
 ## NEW FEATURES
 
@@ -41,6 +43,8 @@
 -   `ddbs_endpoint()`: extracts the endpoint of a linestring geometry (#91).
 
 -   `ddbs_flip_coordinates()`: swaps X and Y coordinates (#91).
+
+-   `ddbs_register_vector()`, `ddbs_write_vector()` and `ddbs_read_vector()` deprecated in favour of `ddbs_register_table()`, `ddbs_write_table()` and `ddbs_read_table()` (#100).
 
 ## MINOR CHANGES
 

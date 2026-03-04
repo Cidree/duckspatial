@@ -10,7 +10,7 @@ testthat::skip_if_not_installed("duckdb")
 conn_test <- duckspatial::ddbs_create_conn()
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, countries_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, countries_sf, "countries")
 
 
 # 1. ddbs_boundary() -------------------------------------------------------
@@ -39,17 +39,12 @@ describe("ddbs_boundary()", {
     })
 
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_boundary(countries_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_boundary(countries_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_boundary(countries_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_boundary(countries_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_boundary(countries_ddbs))
+      expect_no_message(ddbs_boundary(countries_ddbs))
       expect_message(ddbs_boundary("countries", conn = conn_test, name = "boundary"))
       expect_message(ddbs_boundary("countries", conn = conn_test, name = "boundary", overwrite = TRUE))
       expect_true(ddbs_boundary("countries", conn = conn_test, name = "boundary2"))
@@ -59,7 +54,7 @@ describe("ddbs_boundary()", {
     })
 
     it("writes tables correctly to DuckDB", {
-      output_tbl <- ddbs_read_vector(conn_test, "boundary")
+      output_tbl <- ddbs_read_table(conn_test, "boundary")
       expect_equal(
         ddbs_collect(ddbs_boundary(countries_ddbs))$geometry,
         output_tbl$geometry
@@ -136,17 +131,12 @@ describe("ddbs_envelope()", {
     })
 
     it("returns different output formats", {
-      output_geoarrow_fmt <- ddbs_envelope(countries_ddbs, output = "geoarrow")
-      output_sf_fmt       <- ddbs_envelope(countries_ddbs, output = "sf")
-      output_raw_fmt      <- ddbs_envelope(countries_ddbs, output = "raw")
-
-      expect_s3_class(output_geoarrow_fmt$geometry, "geoarrow_vctr")
+      output_sf_fmt <- ddbs_envelope(countries_ddbs, mode = "sf")
       expect_s3_class(output_sf_fmt, "sf")
-      expect_s3_class(output_raw_fmt, "tbl_df")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_envelope(countries_ddbs))
+      expect_no_message(ddbs_envelope(countries_ddbs))
       expect_message(ddbs_envelope("countries", conn = conn_test, name = "envelope"))
       expect_message(ddbs_envelope("countries", conn = conn_test, name = "envelope", overwrite = TRUE))
       expect_true(ddbs_envelope("countries", conn = conn_test, name = "envelope2"))
@@ -156,7 +146,7 @@ describe("ddbs_envelope()", {
     })
 
     it("writes tables correctly to DuckDB", {
-      output_tbl <- ddbs_read_vector(conn_test, "envelope")
+      output_tbl <- ddbs_read_table(conn_test, "envelope")
       expect_equal(
         ddbs_collect(ddbs_envelope(countries_ddbs))$geometry,
         output_tbl$geometry
@@ -246,13 +236,26 @@ describe("ddbs_bbox()", {
       output_sf   <- ddbs_bbox(countries_sf)
       output_conn <- ddbs_bbox("countries", conn = conn_test)
 
-      expect_s3_class(output_ddbs, "data.frame")
+      expect_s3_class(output_ddbs, "bbox")
       expect_equal(output_ddbs, output_sf)
       expect_equal(output_ddbs, output_conn)
     })
 
+    it("all output formats work", {
+      output_bbox    <- ddbs_bbox(countries_ddbs)
+      output_tbl_db  <- ddbs_bbox(countries_ddbs, by_feature = TRUE)
+      output_bbox_sf <- ddbs_bbox(countries_ddbs, mode = "sf")
+      output_tbl_sf  <- ddbs_bbox(countries_ddbs, by_feature = TRUE, mode = "sf")
+      
+      expect_s3_class(output_bbox, "bbox")
+      expect_s3_class(output_tbl_db, "tbl_duckdb_connection")
+      expect_s3_class(output_bbox_sf, "bbox")
+      expect_s3_class(output_tbl_sf, "data.frame")
+
+    })
+
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_bbox(countries_ddbs))
+      expect_no_message(ddbs_bbox(countries_ddbs))
       expect_message(ddbs_bbox("countries", conn = conn_test, name = "bbox"))
       expect_message(ddbs_bbox("countries", conn = conn_test, name = "bbox", overwrite = TRUE))
       expect_true(ddbs_bbox("countries", conn = conn_test, name = "bbox2"))
@@ -263,7 +266,17 @@ describe("ddbs_bbox()", {
 
     it("writes tables correctly to DuckDB", {
       output_tbl <- DBI::dbReadTable(conn_test, "bbox")
-      expect_equal(ddbs_bbox(countries_ddbs), output_tbl)
+      expect_equal(
+        ddbs_bbox(countries_ddbs, mode = "sf") |> as.numeric(), 
+        as.numeric(output_tbl)
+      )
+    })
+
+    it("same results as sf package", {
+      output_ddbs <- ddbs_bbox(countries_ddbs)
+      output_sf <- ddbs_bbox(countries_sf)
+
+      expect_equal(output_ddbs, output_sf)
     })
 
   })

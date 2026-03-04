@@ -8,13 +8,13 @@
 \alias{ddbs_as_geojson}
 \title{Convert geometries to standard interchange formats}
 \usage{
-ddbs_as_text(x, conn = NULL, quiet = FALSE)
+ddbs_as_text(x, conn = NULL)
 
-ddbs_as_wkb(x, conn = NULL, quiet = FALSE)
+ddbs_as_wkb(x, conn = NULL)
 
-ddbs_as_hexwkb(x, conn = NULL, quiet = FALSE)
+ddbs_as_hexwkb(x, conn = NULL)
 
-ddbs_as_geojson(x, conn = NULL, quiet = FALSE)
+ddbs_as_geojson(x, conn = NULL)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -28,9 +28,6 @@ Data is returned from this object.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
-
-\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
-Defaults to \code{FALSE}.}
 }
 \value{
 Depending on the function:

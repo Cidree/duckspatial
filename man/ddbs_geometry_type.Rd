@@ -4,7 +4,7 @@
 \alias{ddbs_geometry_type}
 \title{Get the geometry type of features}
 \usage{
-ddbs_geometry_type(x, conn = NULL, by_feature = TRUE, quiet = FALSE)
+ddbs_geometry_type(x, by_feature = TRUE, conn = NULL)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -16,15 +16,12 @@ ddbs_geometry_type(x, conn = NULL, by_feature = TRUE, quiet = FALSE)
 }
 Data is returned from this object.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
-
 \item{by_feature}{Logical. If \code{TRUE}, the geometric operation is applied
 separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
-\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
-Defaults to \code{FALSE}.}
+\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
+runs on a temporary DuckDB database.}
 }
 \value{
 A factor with geometry type(s)

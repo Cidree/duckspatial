@@ -18,8 +18,8 @@ countries_group_sf <- countries_sf |>
 countries_group_ddbs <- as_duckspatial_df(countries_group_sf)
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, points_sf, "points")
-duckspatial::ddbs_write_vector(conn_test, countries_group_sf, "countries")
+duckspatial::ddbs_write_table(conn_test, points_sf, "points")
+duckspatial::ddbs_write_table(conn_test, countries_group_sf, "countries")
 
 
 # 1. ddbs_union_agg() ----------------------------------------------------
@@ -28,7 +28,7 @@ duckspatial::ddbs_write_vector(conn_test, countries_group_sf, "countries")
 
 ## expected behaviour
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 1.5: there must be the same number of rows as the number of groups (2)
@@ -54,20 +54,16 @@ describe("ddbs_union_agg()", {
       )
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_union_agg(countries_group_ddbs, "n", output = NULL)
-      output_geoarrow <- ddbs_union_agg(countries_group_ddbs, "n", output = "geoarrow")
-      output_sf       <- ddbs_union_agg(countries_group_ddbs, "n", output = "sf")
-      output_raw      <- ddbs_union_agg(countries_group_ddbs, "n", output = "raw")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_ddbs <- ddbs_union_agg(countries_group_ddbs, "n", mode = NULL)
+      output_sf <- ddbs_union_agg(countries_group_ddbs, "n", mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_union_agg(countries_group_ddbs, "n"))
+      expect_no_message(ddbs_union_agg(countries_group_ddbs, "n"))
       expect_message(ddbs_union_agg("countries", "n", conn = conn_test, name = "union_agg"))
       expect_message(ddbs_union_agg("countries", "n", conn = conn_test, name = "union_agg", overwrite = TRUE))
       
@@ -82,7 +78,7 @@ describe("ddbs_union_agg()", {
     
     it("written table matches computed output", {
       output_conn <- ddbs_union_agg("countries", by = "n", conn = conn_test)
-      output_tbl  <- ddbs_read_vector(conn_test, "union_agg")
+      output_tbl  <- ddbs_read_table(conn_test, "union_agg")
       
       expect_equal(
         ddbs_collect(output_conn)$geometry,
@@ -147,7 +143,7 @@ describe("ddbs_union_agg()", {
 
 ## expected behaviour
 ## - CHECK 1.1: works on all formats (3 function ways)
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 1.5: check number of rows of the result
@@ -189,20 +185,16 @@ describe("ddbs_union()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_union(countries_ddbs, output = NULL)
-      output_geoarrow <- ddbs_union(countries_ddbs, output = "geoarrow")
-      output_sf       <- ddbs_union(countries_ddbs, output = "sf")
-      output_raw      <- ddbs_union(countries_ddbs, output = "raw")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_ddbs <- ddbs_union(countries_ddbs, mode = NULL)
+      output_sf <- ddbs_union(countries_ddbs, mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_union(countries_ddbs))
+      expect_no_message(ddbs_union(countries_ddbs))
       expect_message(ddbs_union("countries", conn = conn_test, name = "union_test"))
       expect_message(ddbs_union("countries", conn = conn_test, name = "union_test", overwrite = TRUE))
       
@@ -221,7 +213,7 @@ describe("ddbs_union()", {
     
     it("written table matches computed output", {
       output_ddbs <- ddbs_union(countries_ddbs)
-      output_tbl  <- ddbs_read_vector(conn_test, "union_test")
+      output_tbl  <- ddbs_read_table(conn_test, "union_test")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,
@@ -292,7 +284,7 @@ describe("ddbs_union()", {
 
 ## expected behaviour
 ## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
 ## - CHECK 1.3: messages work
 ## - CHECK 1.4: writting table works
 ## - CHECK 1:5: always returns 1 row
@@ -313,20 +305,16 @@ describe("ddbs_combine()", {
       expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
     })
     
-    it("returns different output formats (duckspatial_df, geoarrow, sf, tbl)", {
-      output_ddbs     <- ddbs_combine(countries_ddbs, output = NULL)
-      output_geoarrow <- ddbs_combine(countries_ddbs, output = "geoarrow")
-      output_sf       <- ddbs_combine(countries_ddbs, output = "sf")
-      output_raw      <- ddbs_combine(countries_ddbs, output = "raw")
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_ddbs <- ddbs_combine(countries_ddbs, mode = NULL)
+      output_sf <- ddbs_combine(countries_ddbs, mode = "sf")
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_s3_class(output_geoarrow$geometry, "geoarrow_vctr")
       expect_s3_class(output_sf, "sf")
-      expect_s3_class(output_raw, "tbl_df")
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_combine(countries_ddbs))
+      expect_no_message(ddbs_combine(countries_ddbs))
       expect_message(ddbs_combine("countries", conn = conn_test, name = "combine"))
       expect_message(ddbs_combine("countries", conn = conn_test, name = "combine", overwrite = TRUE))
       
@@ -341,7 +329,7 @@ describe("ddbs_combine()", {
     
     it("written table matches computed output", {
       output_ddbs <- ddbs_combine(countries_ddbs)
-      output_tbl  <- ddbs_read_vector(conn_test, "combine")
+      output_tbl  <- ddbs_read_table(conn_test, "combine")
       
       expect_equal(
         ddbs_collect(output_ddbs)$geometry,

@@ -15,7 +15,7 @@ rand_sf["var"] <- runif(100)
 rand_ddbs <- as_duckspatial_df(rand_sf)
 
 ## write data
-duckspatial::ddbs_write_vector(conn_test, rand_sf, "points")
+duckspatial::ddbs_write_table(conn_test, rand_sf, "points")
 
 
 # 1. ddbs_quadkey() --------------------------------------------------------
@@ -61,7 +61,7 @@ describe("ddbs_quadkey()", {
     })
     
     it("shows and suppresses messages correctly", {
-      expect_message(ddbs_quadkey(rand_ddbs, level = 1))
+      expect_no_message(ddbs_quadkey(rand_ddbs, level = 1))
       expect_message(ddbs_quadkey("points", conn = conn_test, name = "quadkey"))
       expect_message(ddbs_quadkey("points", conn = conn_test, name = "quadkey", overwrite = TRUE))
       
