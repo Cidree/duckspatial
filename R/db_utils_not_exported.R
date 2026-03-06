@@ -991,6 +991,21 @@ ddbs_handle_query <- function(
   fun_group = 1,
   units = NULL
 ) { # nocov start
+
+  # First, handle simple data frames
+  if (is.null(crs) & length(x_geom) == 0) {
+
+    ## Create the table
+    view_name <- ddbs_temp_view_name()
+    DBI::dbExecute(
+      conn, 
+      glue::glue("CREATE TEMP TABLE {view_name} AS {query};")
+    )
+
+    ## Return a lazy table
+    return(dplyr::tbl(conn, view_name))
+
+  }
   
   # Resolve mode type: parameter > global option > default
   if (is.null(mode)) {
