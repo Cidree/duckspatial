@@ -296,6 +296,14 @@ head.duckspatial_df <- function(x, n = 6L, ...) {
   result
 }
 
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr count
+count.duckspatial_df <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) {
+  # count() aggregates — intentionally drops spatial class (no geometry)
+  class(x) <- setdiff(class(x), "duckspatial_df")
+  dplyr::count(x, ..., wt = {{ wt }}, sort = sort, name = name)
+}
 
 
 #' @rdname duckspatial_df_dplyr
@@ -391,4 +399,31 @@ compute.duckspatial_df <- function(x, name = NULL, temporary = TRUE, ...) {
   
   # Re-wrap as duckspatial_df with preserved metadata
   new_duckspatial_df(result, crs = crs, geom_col = geom_col, source_table = new_source)
+}
+
+
+# =============================================================================
+# slice - functions to select rows
+# =============================================================================
+
+
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr distinct
+distinct.duckspatial_df <- function(.data, ..., .keep_all = FALSE) {
+  crs <- attr(.data, "crs")
+  geom_col <- attr(.data, "sf_column")
+  class(.data) <- setdiff(class(.data), "duckspatial_df")
+  out <- dplyr::distinct(.data, ..., .keep_all = .keep_all)
+
+  ## if geometry column is in the table, return duckspatial_df
+  ## otherwise, return a lazy tbl
+  if (geom_col %in% colnames(out)) {
+    class(out) <- c("duckspatial_df", class(out))
+    attr(out, "sf_column") <- geom_col
+    attr(out, "crs") <- crs
+    out
+  } else {
+    out
+  }
 }
