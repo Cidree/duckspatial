@@ -6,8 +6,10 @@
 \alias{left_join.duckspatial_df}
 \alias{inner_join.duckspatial_df}
 \alias{head.duckspatial_df}
+\alias{count.duckspatial_df}
 \alias{glimpse.duckspatial_df}
 \alias{compute.duckspatial_df}
+\alias{distinct.duckspatial_df}
 \title{dplyr methods for duckspatial_df}
 \usage{
 \method{dplyr_reconstruct}{duckspatial_df}(data, template)
@@ -38,9 +40,13 @@
 
 \method{head}{duckspatial_df}(x, n = 6L, ...)
 
+\method{count}{duckspatial_df}(x, ..., wt = NULL, sort = FALSE, name = NULL)
+
 \method{glimpse}{duckspatial_df}(x, width = NULL, ...)
 
 \method{compute}{duckspatial_df}(x, name = NULL, temporary = TRUE, ...)
+
+\method{distinct}{duckspatial_df}(.data, ..., .keep_all = FALSE)
 }
 \arguments{
 \item{x}{A \code{duckspatial_df} object}

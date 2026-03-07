@@ -10,16 +10,16 @@ Authors@R: c(
         comment = c(ORCID = "0000-0002-3310-3052")
     ),
     person(
-        "Rafael H. M.", "Pereira", , 
-        "rafa.pereira.br@gmail.com", 
-        role = "aut",
-        comment = c(ORCID = "0000-0003-2125-7465")
-    ),
-    person(
         "Egor", "Kotov", , 
         "kotov.egor@gmail.com", 
         role = "aut",
         comment = c(ORCID = "0000-0001-6690-5345")
+    ),
+    person(
+        "Rafael H. M.", "Pereira", , 
+        "rafa.pereira.br@gmail.com", 
+        role = "aut",
+        comment = c(ORCID = "0000-0003-2125-7465")
     ))
 Description: Fast & memory-efficient functions to analyze and manipulate large 
              spatial data data sets. It leverages the fast analytical 

@@ -4,7 +4,13 @@
 \alias{ddbs_install}
 \title{Checks and installs the Spatial extension}
 \usage{
-ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
+ddbs_install(
+  conn,
+  upgrade = FALSE,
+  quiet = FALSE,
+  extension = "spatial",
+  community = FALSE
+)
 }
 \arguments{
 \item{conn}{A \code{DBIConnection} object to a DuckDB database}
@@ -15,6 +21,8 @@ ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 Defaults to \code{FALSE}.}
 
 \item{extension}{name of the extension to install, default is "spatial"}
+
+\item{community}{Logical. If TRUE, installs a community extension}
 }
 \value{
 TRUE (invisibly) for successful installation
@@ -32,6 +40,9 @@ conn <- duckdb::dbConnect(duckdb::duckdb())
 
 # install the spatial extension
 ddbs_install(conn)
+
+# install the h3 community extension
+ddbs_install(conn, extension = "h3", community = TRUE)
 
 # disconnect from db
 duckdb::dbDisconnect(conn)

@@ -9,6 +9,7 @@
 \alias{ddbs_crs.duckdb_connection}
 \alias{ddbs_crs.numeric}
 \alias{ddbs_crs.crs}
+\alias{ddbs_crs.data.frame}
 \alias{ddbs_crs.default}
 \title{Check CRS of spatial objects or database tables}
 \usage{
@@ -27,6 +28,8 @@ ddbs_crs(x, ...)
 \method{ddbs_crs}{numeric}(x, ...)
 
 \method{ddbs_crs}{crs}(x, ...)
+
+\method{ddbs_crs}{data.frame}(x, ...)
 
 \method{ddbs_crs}{default}(x, ...)
 }
