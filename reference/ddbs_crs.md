@@ -29,6 +29,9 @@ ddbs_crs(x, ...)
 # S3 method for class 'crs'
 ddbs_crs(x, ...)
 
+# S3 method for class 'data.frame'
+ddbs_crs(x, ...)
+
 # Default S3 method
 ddbs_crs(x, ...)
 ```

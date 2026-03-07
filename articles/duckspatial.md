@@ -69,7 +69,7 @@ print(countries_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_9e1e2dc9_1a6d_47e9_86ed_db2f95d21a86> [?? x 7]
+#> # Source:   table<temp_view_5e4829c2_66a7_4ae5_a11f_da6f8332b676> [?? x 7]
 #> # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]
 #>    CNTR_ID NAME_ENGL            ISO3_CODE CNTR_NAME       FID   date       geom 
 #>    <chr>   <chr>                <chr>     <chr>           <chr> <date>     <lis>
@@ -190,7 +190,7 @@ print(world_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_0381f495_2ff6_40c4_8f6f_430c2cb053c8> [?? x 2]
+#> # Source:   table<temp_view_682dbfb5_0d5a_42d9_9f21_6b9370480c6e> [?? x 2]
 #> # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]
 #>   crs_duckspatial geometry       
 #>   <chr>           <list>         
