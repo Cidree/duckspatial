@@ -315,7 +315,7 @@ ddbs_crs.crs <- function(x, ...) {
 #' @export
 #' @rdname ddbs_crs
 ddbs_crs.data.frame <- function(x, ...) {
-  return(NULL)
+  return(sf::st_crs(NA))
 }
 
 

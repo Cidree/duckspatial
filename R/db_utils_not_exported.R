@@ -993,7 +993,7 @@ ddbs_handle_query <- function(
 ) { # nocov start
 
   # First, handle simple data frames
-  if (is.null(crs) & length(x_geom) == 0) {
+  if (is.na(crs) & length(x_geom) == 0) {
 
     ## Create the table
     view_name <- ddbs_temp_view_name()
