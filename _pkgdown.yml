@@ -74,6 +74,10 @@ template:
         color: #0A7EA4 !important;
       }
 
+      .navbar .text-muted {
+        color: rgba(255,255,255,0.60) !important;
+      }
+
       /* ── Vignette TOC ────────────────────────────────────────────── */
       /* Shared structure */
       #toc a,
