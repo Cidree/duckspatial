@@ -231,6 +231,7 @@ reference:
   contents:
   - ddbs_transform
   - ddbs_flip_coordinates
+  - ddbs_xy
 
 - title: Geometry Validation
   desc: Check and repair geometry validity and dimensionality
