@@ -46,6 +46,8 @@
 
 -   `ddbs_register_vector()`, `ddbs_write_vector()` and `ddbs_read_vector()` deprecated in favour of `ddbs_register_table()`, `ddbs_write_table()` and `ddbs_read_table()` (#100).
 
+-   `ddbs_x()` and `ddbs_y()`: extract the `x` and `y` coordinates of points (#108).
+
 ## MINOR CHANGES
 
 -   Improve the documentation of the functions (#85).
