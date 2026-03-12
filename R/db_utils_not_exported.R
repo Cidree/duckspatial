@@ -1484,3 +1484,16 @@ build_union_query <- function(
 
 
 
+get_table_crs <- function(conn, geom_name, table_name) {
+
+  DBI::dbGetQuery(
+    conn,
+    glue::glue("
+        SELECT 
+            ST_CRS({geom_name}) AS crs 
+        FROM 
+            {table_name}
+        LIMIT 1;")
+    )$crs
+
+}

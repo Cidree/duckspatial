@@ -153,15 +153,11 @@ ddbs_read_table <- function(
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
   
     ## Get the CRS
-    crs <- DBI::dbGetQuery(
-        conn,
-        glue::glue("
-        SELECT 
-            ST_CRS({geom_name}) AS crs 
-        FROM 
-            {name_list$query_name}
-        LIMIT 1;")
-    )$crs
+    crs <- get_table_crs(
+        conn = conn,
+        geom_name = geom_name,
+        table_name = name_list$query_name
+    )
 
     ## 5. convert to SF
     data_sf <- convert_to_sf_wkb(
