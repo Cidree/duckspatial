@@ -311,9 +311,9 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NU
         cli::cli_abort("The table <{x}> does not exist.")
     }
     other_cols <- if (rest) {
-        info_tbl[!info_tbl$column_type == "GEOMETRY", "column_name"]
+        info_tbl[!grepl("GEOMETRY", info_tbl$column_type, ignore.case = TRUE), "column_name"]
     } else {
-        info_tbl[info_tbl$column_type == "GEOMETRY", "column_name"]
+        info_tbl[grepl("GEOMETRY", info_tbl$column_type, ignore.case = TRUE), "column_name"]
     }
 
     # collapse columns with quoted names
@@ -665,22 +665,10 @@ get_st_predicate <- function(predicate) { # nocov start
 #'
 #' @keywords internal
 #' @returns sf
-convert_to_sf_wkb <- function(data, crs, crs_column, x_geom) { # nocov start
+convert_to_sf_wkb <- function(data, crs, x_geom) { # nocov start
 
   # 1. Resolve CRS
-  # If CRS is passed explicitly, use it.
-  # Otherwise, try to find it in the dataframe column 'crs_column'
   target_crs <- crs
-  if (is.null(target_crs)) {
-    if (!is.null(crs_column) && crs_column %in% names(data)) {
-      # Assume CRS is consistent across the table, take first non-NA
-      val <- stats::na.omit(data[[crs_column]])[1]
-      if (!is.na(val)) target_crs <- as.character(val)
-
-      # Remove the CRS column from output
-      data[[crs_column]] <- NULL
-    }
-  }
 
   # Add warning if still no CRS found
   if (is.null(target_crs)) {
@@ -985,8 +973,7 @@ ddbs_handle_query <- function(
   query, 
   conn, 
   mode = NULL, 
-  crs = NULL, 
-  crs_column = "crs_duckspatial", 
+  crs = NULL,
   x_geom = "geometry",
   fun_group = 1,
   units = NULL
@@ -1035,7 +1022,6 @@ ddbs_handle_query <- function(
       data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
-        crs_column = crs_column,
         x_geom     = x_geom
       )
       return(data_sf)
@@ -1053,7 +1039,6 @@ ddbs_handle_query <- function(
     
   } else {
     # mode == "duckspatial"
-
     # Create a view name and the query
     view_name <- ddbs_temp_view_name()
     query <- glue::glue("
@@ -1067,7 +1052,14 @@ ddbs_handle_query <- function(
 
     # Open lazily as duckspatial_df
     # This could be replaced by ddbs_open_table()
-    lazy_tbl <- dplyr::tbl(conn, view_name)
+
+    ## NOTE FOR DUCKDB 1.5 - The geometry type is still not recognized
+    ## by dplyr
+    # lazy_tbl <- dplyr::tbl(conn, view_name)
+    lazy_tbl <- dplyr::tbl(conn, dplyr::sql(glue::glue("
+      SELECT * EXCLUDE {x_geom}, ST_AsWKB({x_geom}) AS geometry 
+      FROM {view_name}
+    ")))
 
     result <- new_duckspatial_df(
       lazy_tbl, 
