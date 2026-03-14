@@ -21,7 +21,6 @@
 #' the mitre point to the corner radius. Default is 1.0.
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -65,8 +64,6 @@ ddbs_buffer <- function(
   mitre_limit = 1.0,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -107,8 +104,6 @@ ddbs_buffer <- function(
     x = x,
     conn = conn,
     name = name,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -130,7 +125,6 @@ ddbs_buffer <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -165,8 +159,6 @@ ddbs_centroid <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
@@ -175,8 +167,6 @@ ddbs_centroid <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,

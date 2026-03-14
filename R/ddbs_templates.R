@@ -5,7 +5,6 @@
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -19,15 +18,11 @@ template_unary_ops <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE,
     fun,
     other_args = NULL) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -63,6 +58,7 @@ template_unary_ops <- function(
     ## register cleanup of the connection
     on.exit(resolve_conn$cleanup(), add = TRUE)
 
+
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
@@ -97,6 +93,10 @@ template_unary_ops <- function(
     }
   
     ## 3.5. Build base query
+  
+    # data_crs   <- sf::st_crs(crs_x, parameters = TRUE)
+    # geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+    # build_geom_query()
     st_function <- glue::glue("{fun}({args})")
     base.query <- glue::glue("
       SELECT {x_rest}
@@ -131,8 +131,7 @@ template_unary_ops <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 

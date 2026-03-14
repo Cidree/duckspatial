@@ -51,7 +51,7 @@ normalize_spatial_input <- function(x, conn = NULL) {
     if (is.null(conn)) {
       cli::cli_abort("{.arg conn} required when using character table names.")
     }
-    if (!DBI::dbExistsTable(conn, x)) {
+    if (!table_exists(conn, x)) {
       cli::cli_abort("Table or view {.val {x}} does not exist in connection.")
     }
     return(x)
@@ -59,6 +59,20 @@ normalize_spatial_input <- function(x, conn = NULL) {
   
   # Unsupported type - let downstream handle/error
   x
+}
+
+
+table_exists <- function(conn, name, schema = "main") {
+  DBI::dbGetQuery(
+    conn,
+    sprintf(
+      "SELECT EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema='%s' AND table_name='%s'
+       )",
+      schema, name
+    )
+  )[1,1]
 }
 
 #' Get DuckDB connection from an object
@@ -1052,14 +1066,7 @@ ddbs_handle_query <- function(
 
     # Open lazily as duckspatial_df
     # This could be replaced by ddbs_open_table()
-
-    ## NOTE FOR DUCKDB 1.5 - The geometry type is still not recognized
-    ## by dplyr
-    # lazy_tbl <- dplyr::tbl(conn, view_name)
-    lazy_tbl <- dplyr::tbl(conn, dplyr::sql(glue::glue("
-      SELECT * EXCLUDE {x_geom}, ST_AsWKB({x_geom}) AS geometry 
-      FROM {view_name}
-    ")))
+    lazy_tbl <- dplyr::tbl(conn, view_name)
 
     result <- new_duckspatial_df(
       lazy_tbl, 
@@ -1067,6 +1074,15 @@ ddbs_handle_query <- function(
       geom_col = x_geom, 
       source_table = ddbs_temp_view_name()
     )
+
+    ## TODO - REVIEW FOR DUCKDB 1.5
+    ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
+    ## when building the duckspatial_df. Now we convert it back to geometry
+    DBI::dbExecute(conn, glue::glue("
+      ALTER TABLE {dbplyr::remote_name(result)}
+      ALTER COLUMN {x_geom} SET DATA TYPE GEOMETRY
+      USING ST_GeomFROMWKB({x_geom});
+    "))
     
     return(result)
   }
@@ -1266,6 +1282,7 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
     } else {
         ddbs_default_conn()
     }
+  
     
     # 2.1 Validate target connection
     if (!DBI::dbIsValid(target_conn)) {
@@ -1364,7 +1381,8 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 #' @noRd
 build_geom_query <- function(fun, mode) {
   if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
-  if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else fun
+  glue::glue("ST_AsWKB({fun})") 
+  # if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else glue::glue("{fun}")
 }
 
 
@@ -1496,4 +1514,11 @@ get_table_crs <- function(conn, geom_name, table_name) {
         LIMIT 1;")
     )$crs
 
+}
+
+
+
+get_geometry_type_duckdb <- function(x) {
+  data_crs   <- sf::st_crs(x, parameters = TRUE)
+  glue::glue("GEOMETRY('{data_crs$srid}')")
 }

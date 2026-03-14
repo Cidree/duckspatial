@@ -203,8 +203,9 @@ print.duckspatial_df <- function(x, ..., n = 10) {
 
   ## get metadata for the header
   geom_col <- attr(x, "sf_column") %||% "geom"
-  crs <- st_crs(x)
-  bbox <- st_bbox(x)
+  crs <- ddbs_crs(x)
+  # bbox <- st_bbox(x)
+  bbox <- ddbs_bbox(x)
   geomtype <- ddbs_geometry_type(x, by_feature = FALSE)
   
   ## header with visual separator
@@ -229,8 +230,13 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   
   ## print preview
   tryCatch({
-    class(x) <- setdiff(class(x), "duckspatial_df")
-    print(x, n = n)
+    remote_name <- dbplyr::remote_name(x)
+    head_data <- dplyr::tbl(
+      dbplyr::remote_con(x),
+      dplyr::sql(glue::glue("SELECT * REPLACE (ST_AsWKB(geometry) AS geometry)
+      FROM {remote_name} LIMIT {n}"))
+    )
+    print(head_data, n = n)
   }, error = function(e) {
     cat(cli::col_yellow("\u26a0 Preview unavailable\n"))
   })
