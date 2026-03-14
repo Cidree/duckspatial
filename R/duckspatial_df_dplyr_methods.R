@@ -106,10 +106,6 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
       conn <- dbplyr::remote_con(x_lazy)
       query_sql <- dbplyr::sql_render(x_lazy)
       
-      # Check column type in the lazy table
-      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
-      cached_type <- attr(x, "geom_type")
-      
       # Inject ST_AsWKB() conversion
       # We use dbplyr::sql to pass the raw SQL function
       # We assume the column name is safe or quoted by dbplyr if we used sym?
@@ -219,7 +215,6 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
   convert_to_sf_wkb(
     data = collected,
     crs = crs_obj,
-    crs_column = NULL,
     x_geom = geom_col
   )
 }
