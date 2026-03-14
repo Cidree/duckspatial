@@ -251,7 +251,6 @@ ddbs_envelope <- function(
 #' @template by_feature
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -295,13 +294,9 @@ ddbs_bbox <- function(
     by_feature = FALSE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")

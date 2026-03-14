@@ -51,7 +51,7 @@ normalize_spatial_input <- function(x, conn = NULL) {
     if (is.null(conn)) {
       cli::cli_abort("{.arg conn} required when using character table names.")
     }
-    if (!DBI::dbExistsTable(conn, x)) {
+    if (!table_exists(conn, x)) {
       cli::cli_abort("Table or view {.val {x}} does not exist in connection.")
     }
     return(x)
@@ -59,6 +59,20 @@ normalize_spatial_input <- function(x, conn = NULL) {
   
   # Unsupported type - let downstream handle/error
   x
+}
+
+
+table_exists <- function(conn, name, schema = "main") {
+  DBI::dbGetQuery(
+    conn,
+    sprintf(
+      "SELECT EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema='%s' AND table_name='%s'
+       )",
+      schema, name
+    )
+  )[1,1]
 }
 
 #' Get DuckDB connection from an object
@@ -311,9 +325,9 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NU
         cli::cli_abort("The table <{x}> does not exist.")
     }
     other_cols <- if (rest) {
-        info_tbl[!info_tbl$column_type == "GEOMETRY", "column_name"]
+        info_tbl[!grepl("GEOMETRY", info_tbl$column_type, ignore.case = TRUE), "column_name"]
     } else {
-        info_tbl[info_tbl$column_type == "GEOMETRY", "column_name"]
+        info_tbl[grepl("GEOMETRY", info_tbl$column_type, ignore.case = TRUE), "column_name"]
     }
 
     # collapse columns with quoted names
@@ -665,22 +679,10 @@ get_st_predicate <- function(predicate) { # nocov start
 #'
 #' @keywords internal
 #' @returns sf
-convert_to_sf_wkb <- function(data, crs, crs_column, x_geom) { # nocov start
+convert_to_sf_wkb <- function(data, crs, x_geom) { # nocov start
 
   # 1. Resolve CRS
-  # If CRS is passed explicitly, use it.
-  # Otherwise, try to find it in the dataframe column 'crs_column'
   target_crs <- crs
-  if (is.null(target_crs)) {
-    if (!is.null(crs_column) && crs_column %in% names(data)) {
-      # Assume CRS is consistent across the table, take first non-NA
-      val <- stats::na.omit(data[[crs_column]])[1]
-      if (!is.na(val)) target_crs <- as.character(val)
-
-      # Remove the CRS column from output
-      data[[crs_column]] <- NULL
-    }
-  }
 
   # Add warning if still no CRS found
   if (is.null(target_crs)) {
@@ -985,8 +987,7 @@ ddbs_handle_query <- function(
   query, 
   conn, 
   mode = NULL, 
-  crs = NULL, 
-  crs_column = "crs_duckspatial", 
+  crs = NULL,
   x_geom = "geometry",
   fun_group = 1,
   units = NULL
@@ -1035,7 +1036,6 @@ ddbs_handle_query <- function(
       data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
-        crs_column = crs_column,
         x_geom     = x_geom
       )
       return(data_sf)
@@ -1053,7 +1053,6 @@ ddbs_handle_query <- function(
     
   } else {
     # mode == "duckspatial"
-
     # Create a view name and the query
     view_name <- ddbs_temp_view_name()
     query <- glue::glue("
@@ -1075,6 +1074,15 @@ ddbs_handle_query <- function(
       geom_col = x_geom, 
       source_table = ddbs_temp_view_name()
     )
+
+    ## TODO - REVIEW FOR DUCKDB 1.5
+    ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
+    ## when building the duckspatial_df. Now we convert it back to geometry
+    DBI::dbExecute(conn, glue::glue("
+      ALTER TABLE {dbplyr::remote_name(result)}
+      ALTER COLUMN {x_geom} SET DATA TYPE GEOMETRY
+      USING ST_GeomFROMWKB({x_geom});
+    "))
     
     return(result)
   }
@@ -1274,6 +1282,7 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
     } else {
         ddbs_default_conn()
     }
+  
     
     # 2.1 Validate target connection
     if (!DBI::dbIsValid(target_conn)) {
@@ -1370,11 +1379,23 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 #'
 #' @keywords internal
 #' @noRd
-build_geom_query <- function(fun, mode) {
-  if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
-  if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else fun
+build_geom_query <- function(fun, name, crs) {
+  if (is.null(name)) {
+    ## If not creating a table, fallback to BLOB
+    glue::glue("ST_AsWKB({fun})")
+  } else {
+    ## When creating a table in a connection, we preserve the CRS
+    ## in the geometry column
+    data_crs   <- sf::st_crs(crs, parameters = TRUE)
+    geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+    glue::glue("{fun}::{geom_field}")
+  }
 }
-
+# build_geom_query <- function(fun, mode) {
+#   if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
+#   glue::glue("ST_AsWKB({fun})") 
+#   # if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else glue::glue("{fun}")
+# }
 
 #' Gets the current mode
 #' 
@@ -1492,3 +1513,23 @@ build_union_query <- function(
 
 
 
+get_table_crs <- function(conn, geom_name, table_name) {
+
+  DBI::dbGetQuery(
+    conn,
+    glue::glue("
+        SELECT 
+            ST_CRS({geom_name}) AS crs 
+        FROM 
+            {table_name}
+        LIMIT 1;")
+    )$crs
+
+}
+
+
+
+get_geometry_type_duckdb <- function(x) {
+  data_crs   <- sf::st_crs(x, parameters = TRUE)
+  glue::glue("GEOMETRY('{data_crs$srid}')")
+}

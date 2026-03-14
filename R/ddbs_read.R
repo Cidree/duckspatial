@@ -8,7 +8,6 @@
 #'
 #' @template conn
 #' @template name
-#' @template crs
 #' @param clauses character, additional SQL code to modify the query from the
 #' table (e.g. "WHERE ...", "ORDER BY...")
 #' @template quiet
@@ -49,13 +48,8 @@
 ddbs_read_table <- function(
     conn,
     name,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     clauses = NULL,
     quiet = FALSE) {
-    
-    
-    deprecate_crs(crs_column, crs)
     
     # 0. Handle errors
     dbConnCheck(conn)
@@ -157,12 +151,18 @@ ddbs_read_table <- function(
     )
     tmp.query <- paste(tmp.query, clauses)
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    ## Get the CRS
+    crs <- get_table_crs(
+        conn = conn,
+        geom_name = geom_name,
+        table_name = name_list$query_name
+    )
 
     ## 5. convert to SF
     data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
-        crs_column = crs_column,
         x_geom     = geom_name
     )
 
