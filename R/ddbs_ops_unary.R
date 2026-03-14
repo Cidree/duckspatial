@@ -189,7 +189,6 @@ ddbs_centroid <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -224,8 +223,6 @@ ddbs_make_valid <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -234,8 +231,6 @@ ddbs_make_valid <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -264,7 +259,6 @@ ddbs_make_valid <- function(
 #' remains valid (slower).
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -301,8 +295,6 @@ ddbs_simplify <- function(
     preserve_topology = FALSE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -327,8 +319,6 @@ ddbs_simplify <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -351,7 +341,6 @@ ddbs_simplify <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -386,8 +375,6 @@ ddbs_exterior_ring <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -399,8 +386,6 @@ ddbs_exterior_ring <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -423,7 +408,6 @@ ddbs_exterior_ring <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -460,8 +444,6 @@ ddbs_make_polygon <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -473,8 +455,6 @@ ddbs_make_polygon <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -500,7 +480,6 @@ ddbs_make_polygon <- function(
 #'        contain holes.
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -521,7 +500,7 @@ ddbs_make_polygon <- function(
 #'   x = runif(n, min = -180, max = 180),
 #'   y = runif(n, min = -90, max = 90)
 #' ) |>
-#'   ddbs_as_spatial(coords = c("x", "y"), crs = 4326) |>
+#'   ddbs_as_spatial(coords = c("x", "y")) |>
 #'   ddbs_combine()
 #'
 #' # option 1: passing ddbs or sf objects
@@ -554,8 +533,6 @@ ddbs_concave_hull <- function(
     allow_holes = TRUE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -572,8 +549,6 @@ ddbs_concave_hull <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -594,7 +569,6 @@ ddbs_concave_hull <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -643,8 +617,6 @@ ddbs_convex_hull <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -653,8 +625,6 @@ ddbs_convex_hull <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -729,13 +699,9 @@ ddbs_transform <- function(
     conn_x = NULL,
     conn_y = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -804,17 +770,7 @@ ddbs_transform <- function(
     assert_geometry_column(x_geom, x_list)
 
     ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
-
-    ## remove CRS column from x_rest
-    x_rest <- setdiff(x_rest, crs_column)
-    
-    x_rest <- if (length(x_rest) > 0) {
-        x_rest <- paste0('"', x_rest, '"', collapse = ', ')
-        x_rest <- paste0(x_rest, ", ")
-    } else {
-        ""
-    }
+    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
     ## build the base query
     ## always_xy assumes [northing, easting]
@@ -822,8 +778,7 @@ ddbs_transform <- function(
     base.query <- glue::glue("
         SELECT 
             {x_rest}
-            '{crs_y$input}' AS '{crs_column}',
-            {build_geom_query(st_function, mode)} as {x_geom} 
+            {build_geom_query(st_function, name, crs_y)} as {x_geom} 
         FROM 
             {x_list$query_name};
     ")
@@ -859,7 +814,6 @@ ddbs_transform <- function(
         conn       = target_conn,
         mode       = mode,
         crs        = crs_y,
-        crs_column = crs_column,
         x_geom     = x_geom
     )
 
@@ -975,7 +929,6 @@ ddbs_geometry_type <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -988,13 +941,9 @@ ddbs_polygonize <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -1045,7 +994,7 @@ ddbs_polygonize <- function(
     st_function <- glue::glue("ST_Polygonize(LIST({x_geom}))")
     base.query <- glue::glue("
       SELECT 
-        {build_geom_query(st_function, mode)} as {x_geom}
+        {build_geom_query(st_function, name, crs_x)} as {x_geom}
       FROM 
         {x_list$query_name};
     ")
@@ -1077,8 +1026,7 @@ ddbs_polygonize <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -1099,7 +1047,6 @@ ddbs_polygonize <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -1112,8 +1059,6 @@ ddbs_build_area <- function(
   x,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -1123,8 +1068,6 @@ ddbs_build_area <- function(
     x = x,
     conn = conn,
     name = name,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -1147,7 +1090,6 @@ ddbs_build_area <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -1181,8 +1123,6 @@ ddbs_voronoi <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -1196,8 +1136,6 @@ ddbs_voronoi <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -1218,7 +1156,6 @@ ddbs_voronoi <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -1258,8 +1195,6 @@ ddbs_endpoint <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -1274,8 +1209,6 @@ ddbs_endpoint <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -1299,7 +1232,6 @@ ddbs_endpoint <- function(
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -1334,8 +1266,6 @@ ddbs_flip_coordinates <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -1344,8 +1274,6 @@ ddbs_flip_coordinates <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,

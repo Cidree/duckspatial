@@ -93,14 +93,12 @@ template_unary_ops <- function(
     }
   
     ## 3.5. Build base query
-  
-    # data_crs   <- sf::st_crs(crs_x, parameters = TRUE)
-    # geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
-    # build_geom_query()
+    ## As for duckdb 1.5 - uses ST_AsWKB for data retrieved in R
+    ## uses GEOMETRY('auth:code') for table creation
     st_function <- glue::glue("{fun}({args})")
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(st_function, mode)} as {x_geom}
+      {build_geom_query(st_function, name, crs_x)} as {x_geom}
       FROM {x_list$query_name};
     ")
   

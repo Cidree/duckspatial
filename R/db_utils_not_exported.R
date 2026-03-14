@@ -1379,12 +1379,23 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 #'
 #' @keywords internal
 #' @noRd
-build_geom_query <- function(fun, mode) {
-  if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
-  glue::glue("ST_AsWKB({fun})") 
-  # if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else glue::glue("{fun}")
+build_geom_query <- function(fun, name, crs) {
+  if (is.null(name)) {
+    ## If not creating a table, fallback to BLOB
+    glue::glue("ST_AsWKB({fun})")
+  } else {
+    ## When creating a table in a connection, we preserve the CRS
+    ## in the geometry column
+    data_crs   <- sf::st_crs(crs, parameters = TRUE)
+    geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+    glue::glue("{fun}::{geom_field}")
+  }
 }
-
+# build_geom_query <- function(fun, mode) {
+#   if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
+#   glue::glue("ST_AsWKB({fun})") 
+#   # if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else glue::glue("{fun}")
+# }
 
 #' Gets the current mode
 #' 
