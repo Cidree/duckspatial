@@ -175,8 +175,7 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
 #' @export
 #' @rdname ddbs_crs
 #' @param conn A DuckDB connection (required for character method)
-#' @param crs_column Column name storing CRS info (default: "crs_duckspatial")
-ddbs_crs.character <- function(x, conn, crs_column = "crs_duckspatial", ...) {
+ddbs_crs.character <- function(x, conn, ...) {
 
     # 0. Check if x is in AUTH:CODE format (e.g., "EPSG:4326")
     if (length(x) == 1 && grepl("^[A-Z]+:[0-9]+$", x)) {
@@ -228,14 +227,16 @@ ddbs_crs.character <- function(x, conn, crs_column = "crs_duckspatial", ...) {
     }
     
     ## check if crs_column exists and get CRS
-    ## check if crs_column exists and get CRS
     crs_data <- tryCatch({
+      geom_name <- get_geom_name(conn, query_name)
       DBI::dbGetQuery(
-        conn, glue::glue("SELECT {crs_column} FROM {query_name} LIMIT 1;")
+        conn, glue::glue("SELECT ST_CRS({geom_name}) AS crs FROM {query_name} LIMIT 1;")
       ) |> as.character()
     }, error = function(e) {
       NULL
     })
+  
+    ## TODO - Review below for duckdb 1.5
     
     if (is.null(crs_data)) {
       # Fallback: Try to auto-detect from view definition (like tbl_duckdb_connection method)
@@ -383,7 +384,6 @@ ddbs_list_tables <- function(conn) {
 #'
 #' @template conn
 #' @template name
-#' @template crs
 #' @template quiet
 #'
 #' @returns Invisibly `duckspatial_df` object
@@ -408,8 +408,6 @@ ddbs_list_tables <- function(conn) {
 ddbs_glimpse <- function(
   conn,
   name,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   quiet = FALSE) {
 
   
@@ -428,6 +426,8 @@ ddbs_glimpse <- function(
   x_geom    <- get_geom_name(conn, name_list$query_name)
   no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE, collapse = TRUE)
 
+  ## 2.3. Get the CRS
+  crs <- ddbs_crs(x, conn)
 
   # 4. Get data
 
@@ -444,18 +444,14 @@ ddbs_glimpse <- function(
   data_sf <- convert_to_sf_wkb(
       data       = data_tbl,
       crs        = crs,
-      crs_column = crs_column,
       x_geom     = x_geom
   )
-
-  ## 4.3. Get CRS from the sf object
-  crs_obj <- sf::st_crs(data_sf)
   
   ## 4.4. Convert sf to duckspatial_df
   result <- as_duckspatial_df(
     x        = data_sf,
     conn     = conn,
-    crs      = crs_obj,
+    crs      = crs,
     geom_col = x_geom
   )
   
