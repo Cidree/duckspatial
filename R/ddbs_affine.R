@@ -18,7 +18,6 @@
 #' rotates around the centroid of each geometry
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -61,13 +60,9 @@ ddbs_rotate <- function(
     center_y = NULL,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -186,7 +181,7 @@ ddbs_rotate <- function(
     ## 3.6. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(rotation_expr, mode)} as {x_geom}
+      {build_geom_query(rotation_expr, name, crs_x)} as {x_geom}
       FROM {x_list$query_name};
     ")
 
@@ -220,8 +215,7 @@ ddbs_rotate <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -244,7 +238,6 @@ ddbs_rotate <- function(
 #' The geometry rotates around this axis
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -290,8 +283,6 @@ ddbs_rotate_3d <- function(
     axis = "x",
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -318,8 +309,6 @@ ddbs_rotate_3d <- function(
       x = x,
       conn = conn,
       name = name,
-      crs = crs,
-      crs_column = crs_column,
       mode = mode,
       overwrite = overwrite,
       quiet = quiet,
@@ -344,7 +333,6 @@ ddbs_rotate_3d <- function(
 #' @param dy numeric value specifying the shift in the Y direction (latitude/northing)
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -381,8 +369,6 @@ ddbs_shift <- function(
     dy = 0,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -403,8 +389,6 @@ ddbs_shift <- function(
       x = x,
       conn = conn,
       name = name,
-      crs = crs,
-      crs_column = crs_column,
       mode = mode,
       overwrite = overwrite,
       quiet = quiet,
@@ -432,7 +416,6 @@ ddbs_shift <- function(
 #' @template by_feature
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -472,13 +455,9 @@ ddbs_flip <- function(
     by_feature = FALSE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -586,7 +565,7 @@ ddbs_flip <- function(
     ## 3.4. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(flip_expr, mode)} as {x_geom}
+      {build_geom_query(flip_expr, name, crs_x)} as {x_geom}
       FROM {x_list$query_name};
     ")
   
@@ -617,8 +596,7 @@ ddbs_flip <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -641,7 +619,6 @@ ddbs_flip <- function(
 #' @template by_feature
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -688,13 +665,9 @@ ddbs_scale <- function(
     by_feature = FALSE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -779,7 +752,7 @@ ddbs_scale <- function(
     ## 3.4. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(scale_expr, mode)} as {x_geom}
+      {build_geom_query(scale_expr, name, crs_x)} as {x_geom}
       FROM {x_list$query_name};
     ")
 
@@ -809,8 +782,7 @@ ddbs_scale <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -836,7 +808,6 @@ ddbs_scale <- function(
 #' @template by_feature
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -882,13 +853,9 @@ ddbs_shear <- function(
     by_feature = FALSE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -969,7 +936,7 @@ ddbs_shear <- function(
     ## 3.4. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(shear_expr, mode)} as {x_geom}
+      {build_geom_query(shear_expr, name, crs_x)} as {x_geom}
       FROM {x_list$query_name};
     ")
 
@@ -1000,8 +967,7 @@ ddbs_shear <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 

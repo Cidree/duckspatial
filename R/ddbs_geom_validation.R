@@ -8,7 +8,6 @@
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -87,8 +86,6 @@ ddbs_is_simple <- function(
   conn = NULL,
   name = NULL,
   new_column = "is_simple",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -98,8 +95,6 @@ ddbs_is_simple <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -119,8 +114,6 @@ ddbs_is_valid <- function(
   conn = NULL,
   name = NULL,
   new_column = "is_valid",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -130,8 +123,6 @@ ddbs_is_valid <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -150,8 +141,6 @@ ddbs_is_closed <- function(
   conn = NULL,
   name = NULL,
   new_column = "is_closed",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -161,8 +150,6 @@ ddbs_is_closed <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -181,8 +168,6 @@ ddbs_is_empty <- function(
   conn = NULL,
   name = NULL,
   new_column = "is_empty",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -192,8 +177,6 @@ ddbs_is_empty <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -213,8 +196,6 @@ ddbs_is_ring <- function(
   conn = NULL,
   name = NULL,
   new_column = "is_ring",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -224,8 +205,6 @@ ddbs_is_ring <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,

@@ -9,7 +9,6 @@
 #' @template name
 #' @param new_column Name of the new column to store the extracted coordinate.
 #'   Defaults to `"X"` for `ddbs_x()` and `"Y"` for `ddbs_y()`.
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -46,8 +45,6 @@ ddbs_x <- function(
   conn = NULL,
   name = NULL,
   new_column = "X",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -57,8 +54,6 @@ ddbs_x <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -75,9 +70,7 @@ ddbs_y <- function(
   x,
   conn = NULL,
   name = NULL,
-  new_column = "X",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
+  new_column = "Y",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -87,8 +80,6 @@ ddbs_y <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,

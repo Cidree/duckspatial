@@ -4,7 +4,7 @@
 \alias{convert_to_sf_wkb}
 \title{Converts from data frame to sf using WKB conversion}
 \usage{
-convert_to_sf_wkb(data, crs, crs_column, x_geom)
+convert_to_sf_wkb(data, crs, x_geom)
 }
 \arguments{
 \item{data}{a tibble or data frame}
@@ -12,11 +12,11 @@ convert_to_sf_wkb(data, crs, crs_column, x_geom)
 \item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
 doesn't have a \code{crs_column}, and you know the CRS.}
 
+\item{x_geom}{name of geometry column}
+
 \item{crs_column}{\link{Deprecated} a character string of length one specifying the column
 storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
 Set to \code{NULL} if absent.}
-
-\item{x_geom}{name of geometry column}
 }
 \value{
 sf

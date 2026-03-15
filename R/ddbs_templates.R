@@ -220,7 +220,6 @@ template_geometry_conversion <- function(
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -241,8 +240,6 @@ template_measure <- function(
   conn = NULL,
   name = NULL,
   new_column = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
@@ -250,8 +247,6 @@ template_measure <- function(
   
   # Match and validate fun
   fun <- match.arg(fun)
-  
-  deprecate_crs(crs_column, crs)
 
   # 0. Validate inputs
   assert_xy(x, "x")
@@ -343,7 +338,7 @@ template_measure <- function(
       SELECT 
         {x_rest}
         {st_function} AS {new_column},
-        {build_geom_query(x_geom, mode)} AS {x_geom}
+        {build_geom_query(x_geom, name, crs_x)} AS {x_geom}
       FROM 
         {x_list$query_name};
     ")
@@ -376,8 +371,7 @@ template_measure <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom,
         fun_group  = 2,
         units      = output_units
@@ -399,7 +393,6 @@ template_measure <- function(
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -420,14 +413,10 @@ template_new_column <- function(
   conn = NULL,
   name = NULL,
   new_column = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
   fun) {
-  
-  deprecate_crs(crs_column, crs)
 
   ## 0. Handle errors
   assert_xy(x, "x")
@@ -515,7 +504,7 @@ template_new_column <- function(
       SELECT 
         {x_rest}
         {fun}({x_geom}) as {new_column},
-        {build_geom_query(st_function, mode)} as {x_geom}
+        {build_geom_query(st_function, name, crs_x)} as {x_geom}
       FROM 
         {x_list$query_name};
     ")
@@ -548,8 +537,7 @@ template_new_column <- function(
       query      = base.query,
       conn       = target_conn,
       mode       = mode,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
+      crs        = crs_x,
       x_geom     = x_geom,
       fun_group  = 2,
       units      = NULL

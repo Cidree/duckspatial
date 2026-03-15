@@ -7,7 +7,6 @@
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -68,8 +67,6 @@ ddbs_has_z <- function(
   conn = NULL,
   name = NULL,
   new_column = "has_z",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -80,8 +77,6 @@ ddbs_has_z <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -101,8 +96,6 @@ ddbs_has_m <- function(
   conn = NULL,
   name = NULL,
   new_column = "has_m",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -113,8 +106,6 @@ ddbs_has_m <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -142,7 +133,6 @@ ddbs_has_m <- function(
 #' elevation or `"m"` for measure values.
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -215,8 +205,6 @@ ddbs_force_2d <- function(
   x,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -226,8 +214,6 @@ ddbs_force_2d <- function(
       x = x,
       conn = conn,
       name = name,
-      crs = crs,
-      crs_column = crs_column,
       mode = mode,
       overwrite = overwrite,
       quiet = quiet,
@@ -249,8 +235,6 @@ ddbs_force_3d <- function(
   dim = "z",
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -266,8 +250,6 @@ ddbs_force_3d <- function(
       x = x,
       conn = conn,
       name = name,
-      crs = crs,
-      crs_column = crs_column,
       mode = mode,
       overwrite = overwrite,
       quiet = quiet,
@@ -289,8 +271,6 @@ ddbs_force_4d <- function(
   var_m,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -305,8 +285,6 @@ ddbs_force_4d <- function(
       x = x,
       conn = conn,
       name = name,
-      crs = crs,
-      crs_column = crs_column,
       mode = mode,
       overwrite = overwrite,
       quiet = quiet,

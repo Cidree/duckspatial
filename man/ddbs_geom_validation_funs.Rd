@@ -14,8 +14,6 @@ ddbs_is_simple(
   conn = NULL,
   name = NULL,
   new_column = "is_simple",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -26,8 +24,6 @@ ddbs_is_valid(
   conn = NULL,
   name = NULL,
   new_column = "is_valid",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -38,8 +34,6 @@ ddbs_is_closed(
   conn = NULL,
   name = NULL,
   new_column = "is_closed",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -50,8 +44,6 @@ ddbs_is_empty(
   conn = NULL,
   name = NULL,
   new_column = "is_empty",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -62,8 +54,6 @@ ddbs_is_ring(
   conn = NULL,
   name = NULL,
   new_column = "is_ring",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -89,13 +79,6 @@ names. If \code{NULL} (the default), the function returns the result as an
 
 \item{new_column}{Name of the new column to create on the input data. Ignored
 with \code{mode = "sf"}.}
-
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

@@ -19,7 +19,6 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -102,13 +101,10 @@ ddbs_intersection <- function(
     conn_x = NULL,
     conn_y = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -184,7 +180,7 @@ ddbs_intersection <- function(
     base.query <- glue::glue("
         SELECT 
             {x_rest}
-            {build_geom_query(st_function, mode)} AS {x_geom}
+            {build_geom_query(st_function, name, crs_x)} AS {x_geom}
         FROM 
             {x_list$query_name} v1,
             {y_list$query_name} v2
@@ -219,8 +215,7 @@ ddbs_intersection <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
     
@@ -241,13 +236,10 @@ ddbs_difference <- function(
     conn_x = NULL,
     conn_y = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -340,7 +332,7 @@ ddbs_difference <- function(
         )
         SELECT 
             {x_rest}
-            {build_geom_query(st_function, mode)} as {x_geom}
+            {build_geom_query(st_function, name, crs_x)} as {x_geom}
         FROM diff_geom v1;
     ")
 
@@ -373,8 +365,7 @@ ddbs_difference <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -395,13 +386,10 @@ ddbs_sym_difference <- function(
     conn_x = NULL,
     conn_y = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")
@@ -506,7 +494,7 @@ ddbs_sym_difference <- function(
         )
         SELECT 
             {x_rest}
-            {build_geom_query(st_function, mode)} AS {x_geom}
+            {build_geom_query(st_function, name, crs_x)} AS {x_geom}
         FROM symdiff_geom v1;
     ")
 
@@ -532,8 +520,7 @@ ddbs_sym_difference <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 

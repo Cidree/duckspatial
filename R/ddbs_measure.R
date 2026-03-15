@@ -20,7 +20,6 @@
 #' @param id_y Character; optional name of the column in `y` whose values will
 #' replace the integer indices returned in each element of the list.
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -208,8 +207,6 @@ ddbs_area <- function(
   conn = NULL,
   name = NULL,
   new_column = "area",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -219,8 +216,6 @@ ddbs_area <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -239,8 +234,6 @@ ddbs_length <- function(
   conn = NULL,
   name = NULL,
   new_column = "length",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -250,8 +243,6 @@ ddbs_length <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -270,8 +261,6 @@ ddbs_perimeter <- function(
   conn = NULL,
   name = NULL,
   new_column = "perimeter",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -281,8 +270,6 @@ ddbs_perimeter <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,

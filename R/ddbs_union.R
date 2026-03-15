@@ -26,7 +26,6 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -99,13 +98,9 @@ ddbs_union <- function(
   conn_x      = NULL,
   conn_y      = NULL,
   name        = NULL,
-  crs         = NULL,
-  crs_column  = "crs_duckspatial",
   mode        = NULL,
   overwrite   = FALSE,
   quiet       = FALSE) {
-
-  deprecate_crs(crs_column, crs)
 
   ## 0. Validate inputs
   assert_xy(x, "x")
@@ -185,11 +180,12 @@ ddbs_union <- function(
 
       tmp.query <- build_union_query(
         by_feature = by_feature,
-        mode       = "duckspatial",   # no WKB needed when writing to table
+        mode       = "duckspatial",
+        name       = name,
+        crs        = crs_x,
         name_query = name_list$query_name,
         x_geom     = x_geom,
         y_geom     = y_geom,
-        crs_column = crs_column,
         x_query    = x_list$query_name,
         y_query    = y_list$query_name
       )
@@ -202,22 +198,22 @@ ddbs_union <- function(
     ## Create the base query
     base.query <- build_union_query(
       by_feature = by_feature,
+      name       = name,
+      crs        = crs_x,
       mode       = mode,
       name_query = NULL,
       x_geom     = x_geom,
       y_geom     = y_geom,
-      crs_column = crs_column,
       x_query    = x_list$query_name,
       y_query    = y_list$query_name
     )
 
     result <- ddbs_handle_query(
-        query      = base.query,
-        conn       = target_conn,
-        mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
+        query  = base.query,
+        conn   = target_conn,
+        mode   = mode,
+        crs    = crs_x,
+        x_geom = x_geom
     )
 
     return(result)
@@ -247,7 +243,7 @@ ddbs_union <- function(
   assert_geometry_column(x_geom, x_list)
 
   ## Resolve mode
-  if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
+  mode <- get_mode(mode, name)
 
   ## Named table: write and return
   if (!is.null(name)) {
@@ -256,10 +252,11 @@ ddbs_union <- function(
 
     tmp.query <- build_union_query(
       by_feature = FALSE,
-      mode       = "duckspatial",   # no WKB needed when writing to table
+      name       = name,
+      crs        = crs_x,
+      mode       = "duckspatial",
       name_query = name_list$query_name,
       x_geom     = x_geom,
-      crs_column = crs_column,
       x_query    = x_list$query_name
     )
 
@@ -272,10 +269,11 @@ ddbs_union <- function(
 
   base.query <- build_union_query(
     by_feature = FALSE,
+    name       = name,
+    crs        = crs_x,
     mode       = mode,
     name_query = NULL,
     x_geom     = x_geom,
-    crs_column = crs_column,
     x_query    = x_list$query_name
   )
 
@@ -283,8 +281,7 @@ ddbs_union <- function(
       query      = base.query,
       conn       = target_conn,
       mode       = mode,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
+      crs        = crs_x,
       x_geom     = x_geom
   )
 
@@ -301,13 +298,10 @@ ddbs_combine <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
     
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -358,8 +352,7 @@ ddbs_combine <- function(
     st_function <- glue::glue("ST_Collect(LIST({x_geom}))")
     base.query <- glue::glue("
       SELECT
-        FIRST({crs_column}) as {crs_column},
-        {build_geom_query(st_function, mode)} AS {x_geom}
+        {build_geom_query(st_function, name, crs_x)} AS {x_geom}
       FROM
         {x_list$query_name};
     ")
@@ -390,12 +383,11 @@ ddbs_combine <- function(
   
     # 5. Apply geospatial operation
     result <- ddbs_handle_query(
-        query      = base.query,
-        conn       = target_conn,
-        mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
-        x_geom     = x_geom
+        query  = base.query,
+        conn   = target_conn,
+        mode   = mode,
+        crs    = crs_x,
+        x_geom = x_geom
     )
 
     return(result)
@@ -411,13 +403,10 @@ ddbs_union_agg <- function(
   by,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
-  deprecate_crs(crs_column, crs)
 
   ## 0. Handle errors
   assert_xy(x, "x")
@@ -471,9 +460,8 @@ ddbs_union_agg <- function(
   st_function <- glue::glue("ST_Union_Agg({x_geom})")
   base.query <- glue::glue("
     SELECT 
-      {by_cols}, 
-      FIRST({crs_column}) as {crs_column},
-      {build_geom_query(st_function, mode)} AS {x_geom}
+      {by_cols},
+      {build_geom_query(st_function, name, crs_x)} AS {x_geom}
     FROM 
       {x_list$query_name}
     GROUP BY 
@@ -506,12 +494,11 @@ ddbs_union_agg <- function(
 
   # 4. Apply geospatial operation
   result <- ddbs_handle_query(
-      query      = base.query,
-      conn       = target_conn,
-      mode       = mode,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
-      x_geom     = x_geom
+      query  = base.query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs_x,
+      x_geom = x_geom
   )
 
   return(result)

@@ -609,29 +609,29 @@ get_query_list <- function(x, conn) {
 #'
 #' @keywords internal
 #' @returns sf
-convert_to_sf <- function(data, crs, crs_column, x_geom) { # nocov start
-    if (is.null(crs)) {
-        if (is.null(crs_column)) {
-            data_sf <- data |>
-                sf::st_as_sf(wkt = x_geom)
-        } else {
-            if (crs_column %in% names(data)) {
-                data_sf <- data |>
-                    sf::st_as_sf(wkt = x_geom, crs = data[1, crs_column])
-                data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-            } else {
-                cli::cli_alert_warning("No CRS found for the imported table.")
-                data_sf <- data |>
-                    sf::st_as_sf(wkt = x_geom)
-            }
-        }
+# convert_to_sf <- function(data, crs, crs_column, x_geom) { # nocov start
+#     if (is.null(crs)) {
+#         if (is.null(crs_column)) {
+#             data_sf <- data |>
+#                 sf::st_as_sf(wkt = x_geom)
+#         } else {
+#             if (crs_column %in% names(data)) {
+#                 data_sf <- data |>
+#                     sf::st_as_sf(wkt = x_geom, crs = data[1, crs_column])
+#                 data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
+#             } else {
+#                 cli::cli_alert_warning("No CRS found for the imported table.")
+#                 data_sf <- data |>
+#                     sf::st_as_sf(wkt = x_geom)
+#             }
+#         }
 
-    } else {
-        data_sf <- data |>
-            sf::st_as_sf(wkt = x_geom, crs = crs)
-    }
+#     } else {
+#         data_sf <- data |>
+#             sf::st_as_sf(wkt = x_geom, crs = crs)
+#     }
 
-} # nocov end
+# } # nocov end
 
 
 
@@ -885,86 +885,6 @@ deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
 }
 
 
-#' Handle output type for duckspatial functions
-#'
-#' Converts a data frame/tibble result to the appropriate output type
-#' based on the `mode` parameter or global options.
-#'
-#' @param query A query
-#' @param conn DuckDB connection
-#' @template mode
-#' @template crs
-#' @param x_geom Name of the geometry column
-#'
-#' @keywords internal
-#' @noRd
-#' @returns Object of the specified output type
-ddbs_handle_output <- function(
-  query, 
-  conn, 
-  mode = NULL, 
-  crs = NULL, 
-  crs_column = "crs_duckspatial", 
-  x_geom = "geometry"
-) { # nocov start
-  
-  # Resolve mode type: parameter > global option > default
-  if (is.null(mode)) {
-    mode <- getOption("duckspatial.mode", "duckspatial")
-  }
-  
-  # Validate mode type
-  valid_modes <- c("duckspatial", "sf")
-  if (!mode %in% valid_modes) {
-    cli::cli_abort(
-      "{.arg mode} must be one of {.val {valid_modes}}, not {.val {mode}}."
-    )
-  }
-  
-  # Handle based on output type
-  if (mode == "sf") {
-
-    # Get the query
-    data_tbl <- DBI::dbGetQuery(conn, query)
-
-    # Convert to sf object
-    data_sf <- convert_to_sf_wkb(
-      data       = data_tbl,
-      crs        = crs,
-      crs_column = crs_column,
-      x_geom     = x_geom
-    )
-    return(data_sf)
-    
-  } else {
-    # output == "duckspatial_df"
-
-    # Get the data
-    data_tbl <- DBI::dbGetQuery(conn, query)
-
-    # Convert to sf first, then wrap as duckspatial_df
-    data_sf <- convert_to_sf_wkb(
-      data       = data_tbl,
-      crs        = crs,
-      crs_column = crs_column,
-      x_geom     = x_geom
-    )
-    
-    # Get CRS from the sf object
-    crs_obj <- sf::st_crs(data_sf)
-    
-    # Convert sf to duckspatial_df
-    result <- as_duckspatial_df(
-      x        = data_sf,
-      conn     = conn,
-      crs      = crs_obj,
-      geom_col = x_geom
-    )
-    
-    return(result)
-  }
-  # nocov end
-}
 
 
 
@@ -1431,7 +1351,6 @@ build_union_sql <- function(
   by_feature, 
   x_geom, 
   y_geom = NULL,
-  crs_column, 
   x_query, 
   y_query = NULL) {
   if (!is.null(y_query)) {
@@ -1443,27 +1362,24 @@ build_union_sql <- function(
           "(SELECT ROW_NUMBER() OVER () as rn, * FROM {x_query}) v1
            JOIN (SELECT ROW_NUMBER() OVER () as rn, * FROM {y_query}) v2
            ON v1.rn = v2.rn"
-        ),
-        group_by  = ""
+        )
       )
     } else {
       list(
         geom_call  = glue::glue("ST_Union_Agg(geom)"),
         geom_alias = x_geom,
         from       = glue::glue(
-          "(SELECT {crs_column}, {x_geom} as geom FROM {x_query}
+          "(SELECT {x_geom} as geom FROM {x_query}
             UNION ALL
-            SELECT {crs_column}, {y_geom} as geom FROM {y_query}) v1"
-        ),
-        group_by   = glue::glue("GROUP BY v1.{crs_column}")
+            SELECT {y_geom} as geom FROM {y_query}) v1"
+        )
       )
     }
   } else {
     list(
       geom_call  = glue::glue("ST_Union_Agg({x_geom})"),
       geom_alias = x_geom,
-      from       = x_query,
-      group_by   = ""
+      from       = x_query
     )
   }
 }
@@ -1478,23 +1394,23 @@ build_union_sql <- function(
 #' @noRd
 build_union_query <- function(
   by_feature, 
+  name,
+  crs,
   mode, 
   name_query,
   x_geom, 
   y_geom = NULL, 
-  crs_column,
   x_query, 
   y_query = NULL) {
 
-  parts     <- build_union_sql(by_feature, x_geom, y_geom, crs_column, x_query, y_query)
-  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, mode)} as {parts$geom_alias}")
+  parts     <- build_union_sql(by_feature, x_geom, y_geom, x_query, y_query)
+  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs)} as {parts$geom_alias}")
 
   if (!is.null(y_query)) {
     row_id  <- if (by_feature) "ROW_NUMBER() OVER () as row_id," else "1 as row_id,"
     crs_sel <- glue::glue("v1.{crs_column},")
   } else {
     row_id  <- ""
-    crs_sel <- glue::glue("FIRST({crs_column}) as {crs_column},")
   }
 
   prefix <- if (!is.null(name_query)) {
@@ -1505,9 +1421,8 @@ build_union_query <- function(
 
   glue::glue("
     {prefix}
-    SELECT {row_id} {crs_sel} {geom_expr}
-    FROM {parts$from}
-    {parts$group_by};
+    SELECT {row_id} {geom_expr}
+    FROM {parts$from};
   ")
 }
 

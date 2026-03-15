@@ -15,7 +15,6 @@
 #' \code{output = "raster"}
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @param output Character string specifying output format. One of:
 #'   \itemize{
 #'     \item \code{"polygon"} - Returns QuadKey tile boundaries as `duckspatial_df` (default)
@@ -78,14 +77,11 @@ ddbs_quadkey <- function(
   background = NA,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   output = "polygon",
   overwrite = FALSE,
   quiet = FALSE
 ) {
 
-  deprecate_crs(crs_column, crs)
   
   ## 0. Handle errors
   assert_xy(x, "x")
@@ -152,7 +148,7 @@ ddbs_quadkey <- function(
   
 
   ## 3.3. check CRS (we need EPSG:4326 for quadkeys)
-  if (crs_x$input != "EPSG:4326") {
+  if (!crs_x$input %in% c("EPSG:4326", "WGS 84")) {
     if (!quiet) cli::cli_alert_info("Transforming {.arg x} crs to {.val EPSG:4326}")
     ## query
     tmp.query <- glue::glue("
@@ -181,10 +177,9 @@ ddbs_quadkey <- function(
           CREATE TABLE {name_list$query_name} AS
           SELECT 
             ST_QuadKey({x_geom}, {level}) as quadkey,
-            {fun}({field}) as {field},
-            {crs_column}
+            {fun}({field}) as {field}
           FROM {x_list$query_name}
-          GROUP BY quadkey, {crs_column};
+          GROUP BY quadkey;
         ")
       } else {
         tmp.query <- glue::glue("
@@ -207,10 +202,9 @@ ddbs_quadkey <- function(
     tmp.query <- glue::glue("
       SELECT 
         ST_QuadKey({x_geom}, {level}) as quadkey,
-        {fun}({field}) as {field},
-        {crs_column}
+        {fun}({field}) as {field}
       FROM {x_list$query_name}
-      GROUP BY quadkey, {crs_column};
+      GROUP BY quadkey;
     ")
   } else {
     tmp.query <- glue::glue("
@@ -222,7 +216,6 @@ ddbs_quadkey <- function(
   
   ## 5.2. retrieve results from the query
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-  data_tbl <- dplyr::select(data_tbl, -dplyr::all_of(crs_column))
 
   ## 6. convert to desired output format
   if (output == "polygon") {

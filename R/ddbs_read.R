@@ -36,11 +36,11 @@
 #'
 #' ## Example 1: Write and read persistent table
 #' ddbs_write_vector(conn, sf_points, "points")
-#' ddbs_read_table(conn, "points", crs = 4326)
+#' ddbs_read_table(conn, "points")
 #'
 #' ## Example 2: Register and read Arrow view (faster, temporary)
 #' ddbs_register_vector(conn, sf_points, "points_view")
-#' ddbs_read_table(conn, "points_view", crs = 4326)
+#' ddbs_read_table(conn, "points_view")
 #'
 #' ## disconnect from db
 #' ddbs_stop_conn(conn)
@@ -102,6 +102,7 @@ ddbs_read_table <- function(
     }
 
     ## get column names and prepare SQL
+    ## TODO - remove crs column
     if (object_type == "Arrow view") {
         # For Arrow views, PRAGMA table_info doesn't work, so we need to get columns differently
         all_cols <- DBI::dbListFields(conn, name_list$query_name)
@@ -192,8 +193,6 @@ ddbs_read_table <- function(
 ddbs_read_vector <- function(
     conn,
     name,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     clauses = NULL,
     quiet = FALSE) {
     
@@ -206,8 +205,6 @@ ddbs_read_vector <- function(
     ddbs_read_table(
         conn       = conn,
         name       = name,
-        crs        = crs,
-        crs_column = crs_column,
         clauses    = clauses,
         quiet      = quiet
     )

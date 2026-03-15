@@ -21,7 +21,7 @@ ddbs_crs(x, ...)
 
 \method{ddbs_crs}{tbl_duckdb_connection}(x, ...)
 
-\method{ddbs_crs}{character}(x, conn, crs_column = "crs_duckspatial", ...)
+\method{ddbs_crs}{character}(x, conn, ...)
 
 \method{ddbs_crs}{duckdb_connection}(x, name, ...)
 
@@ -44,8 +44,6 @@ ddbs_crs(x, ...)
 \item{...}{Additional arguments passed to methods}
 
 \item{conn}{A DuckDB connection (required for character method)}
-
-\item{crs_column}{Column name storing CRS info (default: "crs_duckspatial")}
 
 \item{name}{Table name (for backward compatibility when first arg is connection)}
 }

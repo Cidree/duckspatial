@@ -10,7 +10,6 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -83,13 +82,9 @@ ddbs_join <- function(
     conn_x = NULL,
     conn_y = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-
-    deprecate_crs(crs_column, crs)
     
     # 1. Validate inputs
     assert_xy(x, "x")
@@ -183,7 +178,7 @@ ddbs_join <- function(
         SELECT 
             {x_rest}
             {y_rest}
-            {build_geom_query(st_function, mode)} AS {x_geom}
+            {build_geom_query(st_function, name, crs_x)} AS {x_geom}
         FROM 
             {x_list$query_name} tbl_x
         JOIN 
@@ -220,8 +215,7 @@ ddbs_join <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
