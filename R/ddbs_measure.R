@@ -482,7 +482,7 @@ ddbs_distance <- function(
         SELECT 
             x.id_x,
             y.id_y,
-            {st_distance_fun) AS distance
+            {st_distance_fun} AS distance
         FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
         CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
     ")
