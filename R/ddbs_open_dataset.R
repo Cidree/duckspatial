@@ -93,6 +93,16 @@ ddbs_open_dataset <- function(path,
   # Check for dedicated readers dispatch
   is_dedicated_shp <- (fmt == "shp" && read_shp_mode == "ST_ReadSHP")
   is_dedicated_osm <- (fmt == "osm.pbf" || grepl("\\.osm\\.pbf$", path)) && read_osm_mode == "ST_ReadOSM"
+    
+  # Helper for temporary table construction
+  # As for duckdb v1.5 we cannot work with views as the geometry type is not recognized
+  # and we need to alter it (column modification is not allowed in views)
+  create_temp_table <- function(name, geom_col, from) {
+      glue::glue("
+        CREATE OR REPLACE TEMPORARY TABLE {name} AS 
+        SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col}) FROM {from}
+      ")
+    }
   
   # -- CRS DETECTION --
   # Suppress CRS warnings for all formats since:
@@ -183,7 +193,6 @@ ddbs_open_dataset <- function(path,
       }
       
       scan_query <- glue::glue("read_parquet('{path}'{p_args_str})")
-      view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM {scan_query}")
       
       # Resolve geometry column
       if (is.null(geom_col)) {
@@ -201,17 +210,37 @@ ddbs_open_dataset <- function(path,
          }
       }
       
-  } else if (is_dedicated_shp) {
+      view_query <- create_temp_table(
+        name     = view_name,
+        geom_col = geom_col,
+        from     = scan_query
+      )
+      
+  } else if (is_dedicated_shp) {      
+      geom_col <- "geom" # Standard for ST_ReadSHP
       # Dedicated ST_ReadSHP path
       if (!is.null(shp_encoding)) {
-          view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM ST_ReadSHP('{path}', encoding := '{shp_encoding}')")
+        view_query <- create_temp_table(
+            name     = view_name,
+            geom_col = geom_col,
+            from     = glue::glue("ST_ReadSHP('{path}', encoding := '{shp_encoding}')")
+        )
       } else {
-          view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM ST_ReadSHP('{path}')")
+        view_query <- create_temp_table(
+            name     = view_name,
+            geom_col = geom_col,
+            from     = glue::glue("ST_ReadSHP('{path}')")
+        )
       }
-      geom_col <- "geom" # Standard for ST_ReadSHP
 
   } else if (is_dedicated_osm) {
        # Dedicated ST_ReadOSM path
+        # TODO - Review how to deal with geometry column here
+        # view_query <- create_temp_table(
+        #     name     = view_name,
+        #     geom_col = geom_col,
+        #     from     = glue::glue("ST_ReadSHP('{path}')")
+        # )
        view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM ST_ReadOSM('{path}')")
        geom_col <- NA_character_ # Signal no geometry
 
@@ -305,8 +334,13 @@ ddbs_open_dataset <- function(path,
              if (length(geom_cols) > 0) geom_col <- geom_cols[1]
          }
       }
+      
+      view_query <- create_temp_table(
+        name     = view_name,
+        geom_col = geom_col,
+        from     = query_str
+      )
 
-      view_query <- glue::glue("CREATE OR REPLACE TEMPORARY VIEW {view_name} AS SELECT * FROM {query_str}")
   }
 
   # -- EXECUTE VIEW CREATION --
@@ -347,7 +381,23 @@ ddbs_open_dataset <- function(path,
     ), call = fn_call)
   })
   
-  # Return a lazy duckspatial_df object
-  duck_tbl <- dplyr::tbl(conn, view_name)
-  new_duckspatial_df(duck_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+    # Return a lazy duckspatial_df object
+    duck_tbl <- dplyr::tbl(conn, view_name)
+    result <- new_duckspatial_df(
+        duck_tbl, 
+        crs = crs, 
+        geom_col = geom_col, 
+        source_table = view_name
+    )
+    
+    ## DuckDB v1.5:
+    ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
+    ## when building the duckspatial_df. Now we convert it back to geometry
+    DBI::dbExecute(conn, glue::glue("
+        ALTER TABLE {dbplyr::remote_name(result)}
+        ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
+        USING ST_GeomFROMWKB({geom_col});
+    "))
+
+    return(result)
 }
