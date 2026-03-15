@@ -12,8 +12,9 @@ test_that("dplyr verbs preserve duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   # Test filter
   filtered <- nc_lazy |> dplyr::filter(AREA > 0.1)
@@ -40,8 +41,9 @@ test_that("group_by preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   grouped <- nc_lazy |> dplyr::group_by(SID74)
   
@@ -54,8 +56,9 @@ test_that("summarize preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   summarized <- nc_lazy |> 
     dplyr::group_by(SID74) |> 
@@ -69,8 +72,9 @@ test_that("distinct preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   distinct_result <- nc_lazy |> dplyr::distinct(SID74, .keep_all = TRUE)
   
@@ -82,8 +86,9 @@ test_that("rename preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   renamed <- nc_lazy |> dplyr::rename(county_name = NAME)
   
@@ -95,8 +100,9 @@ test_that("slice_min preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   sliced <- nc_lazy |> dplyr::slice_min(AREA, n = 5)
   
@@ -108,8 +114,9 @@ test_that("head preserves duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   headed <- nc_lazy |> head(10)
   
@@ -122,8 +129,9 @@ test_that("chained dplyr operations preserve duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn)
   
   result <- nc_lazy |>
     dplyr::filter(AREA > 0.1) |>
@@ -149,8 +157,9 @@ test_that("ddbs_collect works with duckspatial_df", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn, geom_col = "geometry")
   
   result <- ddbs_collect(nc_lazy)
   
@@ -166,8 +175,9 @@ test_that("compute.duckspatial_df forces execution and preserves class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  nc_lazy <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf), geom_col = "geometry")
   
   computed <- dplyr::compute(nc_lazy)
   
@@ -181,8 +191,9 @@ test_that("compute.duckspatial_df simplifies query plan", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry") |>
+  nc_lazy <- as_duckspatial_df("nc_test", conn) |> 
+    # dplyr::tbl(conn, "nc_test") |>
+    # as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry") |>
     dplyr::filter(AREA > 0.1) |>
     dplyr::mutate(area_sq = AREA * AREA)
   
@@ -200,8 +211,9 @@ test_that("ddbs_compute wrapper works correctly", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  nc_lazy <- as_duckspatial_df("nc_test", conn) 
   
   computed <- ddbs_compute(nc_lazy)
   
@@ -219,8 +231,10 @@ test_that("left_join.duckspatial_df preserves spatial attributes", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn) 
+  
   
   extra_data <- data.frame(NAME = nc_sf$NAME[1:5], extra_col = 1:5)
   DBI::dbWriteTable(conn, "extra_data", extra_data)
@@ -237,8 +251,9 @@ test_that("inner_join.duckspatial_df preserves spatial attributes", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  # nc_lazy <- dplyr::tbl(conn, "nc_test") |>
+  #   as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn) 
   
   extra_data <- data.frame(NAME = nc_sf$NAME[1:5], extra_col = 1:5)
   DBI::dbWriteTable(conn, "extra_data", extra_data)
