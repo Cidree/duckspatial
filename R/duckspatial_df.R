@@ -77,14 +77,30 @@ as_duckspatial_df.sf <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ..
   ddbs_write_table(
     conn = conn,
     data = x,
-    name = view_name,
+    name = paste0(view_name, '_raw'), # modified for duckdb v1.5
     quiet = TRUE,
     temp_view = TRUE
   )
   
   # Create lazy table
+  # lazy_tbl <- dplyr::tbl(conn, view_name)
+  # new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+
+  # Create lazy table as for duckdb v1.5
+  DBI::dbExecute(conn, glue::glue("
+    CREATE TEMP TABLE {view_name} AS
+    SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col}) FROM {paste0(view_name, '_raw')}
+  "))
   lazy_tbl <- dplyr::tbl(conn, view_name)
-  new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+  result <- new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+  DBI::dbExecute(conn, glue::glue("
+    ALTER TABLE {dbplyr::remote_name(result)}
+    ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
+    USING ST_GeomFROMWKB({geom_col});
+  "))
+  
+  return(result)
+
 }
 
 #' @rdname as_duckspatial_df
@@ -165,22 +181,47 @@ as_duckspatial_df.character <- function(x, conn = NULL, crs = NULL,
       cli::cli_abort("{.arg conn} must be provided when using table names as input.")
     }
   }
+
+  ## DUCKDB 1.4 AND EARLIER -----
   
-  lazy_tbl <- dplyr::tbl(conn, x)
+  # lazy_tbl <- dplyr::tbl(conn, x)
   
-  # Auto-detect geometry column
-  if (is.null(geom_col)) {
-    cols <- colnames(lazy_tbl)
-    if ("geometry" %in% cols) {
-      geom_col <- "geometry"
-    } else if ("geom" %in% cols) {
-      geom_col <- "geom"
-    } else {
-      geom_col <- "geom"
-    }
-  }
+  # # Auto-detect geometry column
+  # if (is.null(geom_col)) {
+  #   cols <- colnames(lazy_tbl)
+  #   if ("geometry" %in% cols) {
+  #     geom_col <- "geometry"
+  #   } else if ("geom" %in% cols) {
+  #     geom_col <- "geom"
+  #   } else {
+  #     geom_col <- "geom"
+  #   }
+  # }
   
-  new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = x)
+  # new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = x)
+
+  ## DUCKDB 1.5 -------------
+  # Create lazy table as for duckdb v1.5
+
+  ## Get geom and crs
+  if (is.null(geom_col)) geom_col <- get_geom_name(conn, x)
+  if (is.null(crs)) crs <- ddbs_crs(conn, x)
+
+  ## Modify geometry so it can be read in R
+  view_name <- ddbs_temp_view_name()
+  DBI::dbExecute(conn, glue::glue("
+    CREATE TEMP TABLE {view_name} AS
+    SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col}) FROM {x}
+  "))
+  lazy_tbl <- dplyr::tbl(conn, view_name)
+  result <- new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+  DBI::dbExecute(conn, glue::glue("
+    ALTER TABLE {dbplyr::remote_name(result)}
+    ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
+    USING ST_GeomFROMWKB({geom_col});
+  "))
+  
+  return(result)
 }
 
 #' @rdname as_duckspatial_df
