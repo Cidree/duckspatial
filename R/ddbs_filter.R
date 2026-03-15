@@ -150,11 +150,7 @@ ddbs_filter <- function(
     
     ## 4.3. get columns to return from x
     x_rest_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
-    
-    ## error if crs_column not found (conditional on saved crs_x)
-    if (is.null(crs_x)) {
-        assert_crs_column(crs_column, x_rest_cols)
-    }
+
 
     ## 4.4. Format column lists for SQL
     x_rest <- if (length(x_rest_cols) > 0) paste0('v1."', x_rest_cols, '", ', collapse = '') else ""

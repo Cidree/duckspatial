@@ -1408,7 +1408,6 @@ build_union_query <- function(
 
   if (!is.null(y_query)) {
     row_id  <- if (by_feature) "ROW_NUMBER() OVER () as row_id," else "1 as row_id,"
-    crs_sel <- glue::glue("v1.{crs_column},")
   } else {
     row_id  <- ""
   }

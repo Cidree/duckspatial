@@ -795,12 +795,7 @@ ddbs_transform <- function(
         ## create query (no st_as_text)
         tmp.query <- glue::glue("
             CREATE TABLE {name_list$query_name} AS
-            SELECT 
-                {x_rest}
-                '{crs_y$input}' AS '{crs_column}',
-                ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}') as {x_geom} 
-            FROM 
-                {x_list$query_name};
+            {base.query};
         ")
         ## execute intersection query
         DBI::dbExecute(target_conn, tmp.query)

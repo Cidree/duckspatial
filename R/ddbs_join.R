@@ -158,15 +158,7 @@ ddbs_join <- function(
     ## 4.3. Get non-geometry columns for x and y (both use same pattern)
     x_rest_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
     y_rest_cols <- get_geom_name(target_conn, y_list$query_name, rest = TRUE, collapse = FALSE)
-    
-    ## error if crs_column not found (conditional on saved crs_x)
-    if (is.null(crs_x)) {
-       assert_crs_column(crs_column, x_rest_cols)
-    }
-    
-    ## remove CRS column from y_rest_cols
-    crs_idx <- grep(crs_column, y_rest_cols, fixed = TRUE)
-    if (length(crs_idx) > 0) y_rest_cols <- y_rest_cols[-crs_idx]
+
     
     ## 4.4. Format column lists for SQL (symmetric handling)
     x_rest <- if (length(x_rest_cols) > 0) paste0('tbl_x."', x_rest_cols, '", ', collapse = '') else ""
