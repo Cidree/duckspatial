@@ -399,8 +399,9 @@ describe("ddbs_length()", {
     })
 
     it("calculates length correctly on geographic CRS", {
-      length_ddbs <- ddbs_length(rivers_sf, mode = "sf")
-      length_sf   <- sf::st_length(rivers_sf)
+      rivers_geog <- ddbs_transform(rivers_sf, "EPSG:4326", mode = "sf")
+      length_ddbs <- ddbs_length(rivers_geog, mode = "sf")
+      length_sf   <- sf::st_length(rivers_geog)
       
       expect_equal(length_ddbs, length_sf)
     })
@@ -657,11 +658,11 @@ describe("ddbs_distance()", {
       ## This one retrieves the result in a different order, but same results
       output_sf_conn   <- ddbs_distance(points_sample_sf, "points", conn = conn_test) |> collect()
       
-      expect_equal(output_sf_ddbs, output_ddbs_sf)
-      expect_equal(output_sf_ddbs, output_sf_sf)
-      expect_equal(output_sf_ddbs, output_ddbs_ddbs)
-      expect_equal(output_sf_ddbs, output_conn_sf)
-      expect_equal(output_sf_ddbs, output_sf_conn |> dplyr::arrange(id_y, id_x))
+      expect_equal(output_sf_ddbs, output_ddbs_sf |> dplyr::arrange(id_x, id_y))
+      expect_equal(output_ddbs_sf, output_sf_sf)
+      expect_equal(output_ddbs_sf, output_ddbs_ddbs)
+      expect_equal(output_ddbs_sf, output_conn_sf)
+      expect_equal(output_ddbs_sf, output_sf_conn |> dplyr::arrange(id_y, id_x))
     })
     
     it("warns when mixing DuckDB table with duckspatial_df from different connections", {

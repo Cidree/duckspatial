@@ -653,7 +653,6 @@ ddbs_convex_hull <- function(
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
