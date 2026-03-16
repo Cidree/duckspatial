@@ -443,7 +443,7 @@ ddbs_distance <- function(
 
     ## Create the query
     tmp.query <- glue::glue("
-      SELECT {st_distance_fun) as distance
+      SELECT {st_distance_fun} as distance
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
     ")
