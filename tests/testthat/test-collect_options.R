@@ -11,8 +11,9 @@ test_that("collect.duckspatial_df respects global options", {
   ddbs_write_table(conn, nc_sf, "nc_test_opts")
   
   # Create duckspatial_df
-  x <- dplyr::tbl(conn, "nc_test_opts") |> 
-     as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))
+  # x <- dplyr::tbl(conn, "nc_test_opts") |> 
+  #    as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))
+  x <- as_duckspatial_df("nc_test_opts", conn)
   
   # Save original option
   op_orig <- options()

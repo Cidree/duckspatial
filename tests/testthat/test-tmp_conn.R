@@ -108,7 +108,8 @@ test_that("ddbs_temp_conn: read_only with file=TRUE creates file first (regressi
     )
     
     # Verify spatial extension is loaded and works
-    result <- DBI::dbGetQuery(conn, "SELECT ST_Point(0, 0) as geom;")
+    # result <- DBI::dbGetQuery(conn, "SELECT ST_Point(0, 0) as geom;")
+    result <- DBI::dbGetQuery(conn, "SELECT ST_AsWKB(ST_Point(0, 0)) as geom;")
     expect_equal(nrow(result), 1)
     
     # Cleanup

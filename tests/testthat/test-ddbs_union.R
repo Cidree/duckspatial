@@ -47,10 +47,16 @@ describe("ddbs_union_agg()", {
       output_conn <- ddbs_union_agg("countries", by = "n", conn = conn_test)
       
       expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+
+      ## Sometimes they are arranged differently, but the results are
+      ## the same when sorted
       expect_equal(
         ddbs_collect(output_ddbs) |> dplyr::arrange(n), 
-        ddbs_collect(output_conn)
+        ddbs_collect(output_sf) |> dplyr::arrange(n)
+      )
+      expect_equal(
+        ddbs_collect(output_ddbs) |> dplyr::arrange(n), 
+        ddbs_collect(output_conn) |> dplyr::arrange(n)
       )
     })
     

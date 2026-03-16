@@ -62,7 +62,8 @@ ddbs_register_table <- function(
     arrow_exists <- if (inherits(arrow_views, "try-error")) {
         FALSE
     } else {
-        view_name %in% arrow_views
+        # view_name %in% arrow_views
+        paste0(view_name, "_raw") %in% arrow_views
     }
 
     if ((name_exists || arrow_exists) && !overwrite) {
@@ -89,7 +90,8 @@ ddbs_register_table <- function(
         }
         if (arrow_exists) {
             try(
-                duckdb::duckdb_unregister_arrow(conn, view_name),
+                # duckdb::duckdb_unregister_arrow(conn, view_name),
+                duckdb::duckdb_unregister_arrow(conn, paste0(view_name, "_raw")),
                 silent = TRUE
             )
         }

@@ -153,7 +153,8 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
       
       view_sql <- tryCatch({
         q_sql <- glue::glue(
-          "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
+          # "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
+          "SELECT sql FROM duckdb_tables() WHERE table_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
         )
         result <- DBI::dbGetQuery(source_conn, q_sql)
         if (nrow(result) > 0) result$sql else NULL
@@ -1235,8 +1236,9 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
          x_to_import <- x
          if (is.character(x)) {
              x_to_import <- tryCatch({
-                 tbl_obj <- dplyr::tbl(source_conn_x, x)
-                 suppressWarnings(as_duckspatial_df(tbl_obj))
+                convert_geometry_duckspatial(source_conn_x, x)
+                #  tbl_obj <- dplyr::tbl(source_conn_x, x)
+                #  suppressWarnings(as_duckspatial_df(tbl_obj))
              }, error = function(e) {
                  tryCatch(dplyr::tbl(source_conn_x, x), error = function(ex) x)
              })

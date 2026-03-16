@@ -165,7 +165,11 @@ ddbs_write_table <- function(
 
         ## Get the CRS, and define the geometry type for duckdb
         data_crs   <- sf::st_crs(data, parameters = TRUE)
-        geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+        if (length(data_crs) == 0) {
+            geom_field <- glue::glue("GEOMETRY")
+        } else {
+            geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+        }
 
         ## Warn if no CRS was found in the input data
         if (is.null(data_crs$srid) || is.na(data_crs$srid)) {
