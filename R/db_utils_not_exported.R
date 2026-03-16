@@ -1264,8 +1264,9 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
          y_to_import <- y
          if (is.character(y)) {
              y_to_import <- tryCatch({
-                 tbl_obj <- dplyr::tbl(source_conn_y, y)
-                 suppressWarnings(as_duckspatial_df(tbl_obj))
+                convert_geometry_duckspatial(source_conn_y, y)
+                #  tbl_obj <- dplyr::tbl(source_conn_y, y)
+                #  suppressWarnings(as_duckspatial_df(tbl_obj))
              }, error = function(e) {
                  tryCatch(dplyr::tbl(source_conn_y, y), error = function(ex) y)
              })
@@ -1447,3 +1448,32 @@ get_geometry_type_duckdb <- function(x) {
   data_crs   <- sf::st_crs(x, parameters = TRUE)
   glue::glue("GEOMETRY('{data_crs$srid}')")
 }
+
+
+convert_geometry_duckspatial <- function(
+  conn, 
+  x, 
+  geom_col = NULL, 
+  crs = NULL) {
+
+  ## Get geom and crs
+  if (is.null(geom_col)) geom_col <- get_geom_name(conn, x)
+  if (is.null(crs)) crs <- ddbs_crs(conn, x)
+
+  ## Modify geometry so it can be read in R
+  view_name <- ddbs_temp_view_name()
+  DBI::dbExecute(conn, glue::glue("
+    CREATE TEMP TABLE {view_name} AS
+    SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col}) FROM {x}
+  "))
+  lazy_tbl <- dplyr::tbl(conn, view_name)
+  result <- new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+  DBI::dbExecute(conn, glue::glue("
+    ALTER TABLE {dbplyr::remote_name(result)}
+    ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
+    USING ST_GeomFROMWKB({geom_col});
+  "))
+  
+  return(result)
+}
+
