@@ -197,7 +197,7 @@ ddbs_open_dataset <- function(path,
       # Resolve geometry column
       if (is.null(geom_col)) {
          try_cols <- tryCatch({
-             DBI::dbGetQuery(conn, glue::glue("DESCRIBE {scan_query}"))
+             DBI::dbGetQuery(conn, glue::glue("DESCRIBE SELECT * FROM {scan_query}"))
          }, error = function(e) NULL)
          
          if (!is.null(try_cols)) {
