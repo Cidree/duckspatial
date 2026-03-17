@@ -182,7 +182,8 @@ assert_conn_character <- function(conn, ...) { # nocov start
 #' @noRd
 #' @returns invisible(TRUE)
 assert_col_exists <- function(conn, table, cols, ref) { # nocov start
-    avail <- DBI::dbListFields(conn, table)
+
+    avail <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {table}"))$column_name
     missing <- setdiff(cols, avail)
     if (length(missing) > 0) {
         # Rephrased to put the vector first, helping cli resolve pluralization quantity
