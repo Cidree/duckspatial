@@ -128,18 +128,17 @@ ddbs_register_table <- function(
 
     duckdb::duckdb_register_arrow(conn, paste0(view_name, "_raw"), arrow_table)
 
-    # Add CRS information
-    data_crs <- sf::st_crs(data_sf, parameters = TRUE)
-    crs_value <- if (!is.null(data_crs$srid) && nchar(data_crs$srid) > 0) {
-        data_crs$srid
+    ## Get the CRS, and define the geometry type for duckdb
+    data_crs   <- sf::st_crs(data_sf, parameters = TRUE)
+    if (length(data_crs) == 0) {
+        geom_field <- glue::glue("GEOMETRY")
     } else {
-        data_crs$Wkt
+        geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
     }
-    geom_field <- glue::glue("GEOMETRY('{crs_value}')")
     
     DBI::dbExecute(conn, glue::glue("
         CREATE TEMP VIEW {view_name} AS
-        SELECT * REPLACE ({geom_name}::GEOMETRY('{crs_value}') AS {geom_name})
+        SELECT * REPLACE ({geom_name}::{geom_field} AS {geom_name})
         FROM {paste0(view_name, '_raw')}
     "))
 

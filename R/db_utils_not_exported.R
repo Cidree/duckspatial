@@ -1309,8 +1309,13 @@ build_geom_query <- function(fun, name, crs) {
   } else {
     ## When creating a table in a connection, we preserve the CRS
     ## in the geometry column
+    ## Get the CRS, and define the geometry type for duckdb    
     data_crs   <- sf::st_crs(crs, parameters = TRUE)
-    geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+    if (length(data_crs) == 0) {
+        geom_field <- glue::glue("GEOMETRY")
+    } else {
+        geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+    }
     glue::glue("{fun}::{geom_field}")
   }
 }
