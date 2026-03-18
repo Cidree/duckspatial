@@ -145,7 +145,8 @@ res_ext <- ddbs_interpolate_aw(
   target = g_sf, source = nc,
   tid = "tid", sid = "sid",
   extensive = "BIR74",
-  weight = "total"
+  weight = "total",
+  mode = "sf"
 )
 
 # Check mass preservation
@@ -156,7 +157,8 @@ sum(res_ext$BIR74, na.rm = TRUE) / sum(nc$BIR74) # Should be ~1
 res_int <- ddbs_interpolate_aw(
   target = g_sf, source = nc,
   tid = "tid", sid = "sid",
-  intensive = "BIR74"
+  intensive = "BIR74",
+  mode = "sf"
 )
 
 # 4. Quick Visualization

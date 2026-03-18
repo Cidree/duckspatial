@@ -89,7 +89,8 @@
 #'   target = g_sf, source = nc,
 #'   tid = "tid", sid = "sid",
 #'   extensive = "BIR74",
-#'   weight = "total"
+#'   weight = "total",
+#'   mode = "sf"
 #' )
 #'
 #' # Check mass preservation
@@ -100,7 +101,8 @@
 #' res_int <- ddbs_interpolate_aw(
 #'   target = g_sf, source = nc,
 #'   tid = "tid", sid = "sid",
-#'   intensive = "BIR74"
+#'   intensive = "BIR74",
+#'   mode = "sf"
 #' )
 #'
 #' # 4. Quick Visualization
