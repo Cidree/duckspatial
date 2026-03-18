@@ -44,7 +44,7 @@ test_that("ddbs_write_table writes an sf object to a new table", {
   expect_true(table_name %in% all_tables)
 
   # Verify the content
-  result <- ddbs_read_table(conn_test, table_name, crs = 4326)
+  result <- ddbs_read_table(conn_test, table_name)
   expect_s3_class(result, "sf")
   expect_equal(nrow(result), nrow(points_sf))
   expect_equal(sf::st_crs(result), sf::st_crs(points_sf))
@@ -65,7 +65,7 @@ test_that("ddbs_write_table respects the overwrite argument", {
   expect_true(ddbs_write_table(conn_test, countries_sf, table_name, overwrite = TRUE))
 
   # Verify the new data is in the table
-  result <- ddbs_read_table(conn_test, table_name, crs = 4326)
+  result <- ddbs_read_table(conn_test, table_name)
   expect_equal(nrow(result), nrow(countries_sf))
 })
 
@@ -79,14 +79,14 @@ test_that("ddbs_write_table handles different geometry types", {
   # Write LINESTRING
   table_line <- "test_line"
   ddbs_write_table(conn_test, line, table_line, overwrite = TRUE)
-  result_line <- ddbs_read_table(conn_test, table_line, crs = NULL)
+  result_line <- ddbs_read_table(conn_test, table_line)
   expect_s3_class(result_line, "sf")
   expect_equal(sf::st_geometry_type(result_line) |> as.character(), "LINESTRING")
 
   # Write POLYGON
   table_polygon <- "test_polygon"
   ddbs_write_table(conn_test, polygon, table_polygon, overwrite = TRUE)
-  result_polygon <- ddbs_read_table(conn_test, table_polygon, crs = NULL)
+  result_polygon <- ddbs_read_table(conn_test, table_polygon)
   expect_s3_class(result_polygon, "sf")
   expect_equal(sf::st_geometry_type(result_polygon) |> as.character(), "POLYGON")
 })
@@ -95,9 +95,12 @@ test_that("ddbs_write_table stores CRS information correctly", {
   table_name <- "test_crs_storage"
   ddbs_write_table(conn_test, points_sf, table_name, overwrite = TRUE)
 
-  # Query the crs_duckspatial column
-  crs_info <- DBI::dbGetQuery(conn_test, glue::glue("SELECT crs_duckspatial FROM {table_name} LIMIT 1"))
-  expect_equal(crs_info$crs_duckspatial, "EPSG:4326")
+  # Query the crs
+  crs_info <- DBI::dbGetQuery(
+    conn_test, 
+    glue::glue("SELECT ST_CRS(geometry) FROM {table_name} LIMIT 1")
+  ) |> as.character()
+  expect_equal(crs_info, "EPSG:4326")
 })
 
 # 2. Writing from file paths ----
@@ -114,8 +117,11 @@ test_that("ddbs_write_table can write from a .geojson file path", {
   expect_gt(count[[1]], 0)
 
   # Verify CRS is stored
-  crs_info <- DBI::dbGetQuery(conn_test, glue::glue("SELECT crs_duckspatial FROM {table_name} LIMIT 1"))
-  expect_true(!is.na(crs_info$crs_duckspatial) && nchar(crs_info$crs_duckspatial) > 0)
+  crs_info <- DBI::dbGetQuery(
+    conn_test, 
+    glue::glue("SELECT ST_CRS(geom) FROM {table_name} LIMIT 1")
+  ) |> as.character()
+  expect_true(!is.na(crs_info) && nchar(crs_info) > 0)
 })
 
 # 3. Edge cases and errors ----
@@ -128,8 +134,11 @@ test_that("ddbs_write_table handles sf objects with no CRS", {
 
   # Check that the crs_duckspatial column does NOT exist
   # Because we skip creating it when CRS is missing
-  fields <- DBI::dbListFields(conn_test, table_name)
-  expect_false("crs_duckspatial" %in% fields)
+  crs <- DBI::dbGetQuery(
+    conn_test,
+    "SELECT ST_CRS(geometry) as crs FROM test_no_crs LIMIT 1;"
+  )$crs
+  expect_true(is.na(crs))
 })
 
 test_that("ddbs_write_table respects temp_view = TRUE", {
@@ -138,16 +147,17 @@ test_that("ddbs_write_table respects temp_view = TRUE", {
   # Write with temp_view = TRUE
   expect_true(ddbs_write_table(conn_test, points_sf, table_name, temp_view = TRUE, overwrite = TRUE))
   
-  # Should NOT be in persistent tables
+  # Should NOT be in persistent tables (changed in duckdb 1.5)
   all_tables <- DBI::dbListTables(conn_test)
-  expect_false(table_name %in% all_tables)
+  # expect_false(table_name %in% all_tables)
+  expect_true(table_name %in% all_tables)
   
   # Should be in Arrow views
   arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-  expect_true(table_name %in% arrow_views)
+  expect_true(paste0(table_name, "_raw") %in% arrow_views)
   
   # Should be readable
-  result <- ddbs_read_table(conn_test, table_name, crs = 4326)
+  result <- ddbs_read_table(conn_test, table_name)
   expect_s3_class(result, "sf")
   expect_equal(nrow(result), nrow(points_sf))
 })
@@ -161,7 +171,7 @@ test_that("ddbs_write_table can write a duckspatial_df object", {
   
   # Create a duckspatial_df
   ddbs_write_table(conn_new, points_sf, "points_source", overwrite = TRUE)
-  df_lazy <- ddbs_read_table(conn_new, "points_source", crs = 4326) |>
+  df_lazy <- ddbs_read_table(conn_new, "points_source") |>
     as_duckspatial_df()
   
   table_name <- "points_from_lazy"
@@ -170,31 +180,11 @@ test_that("ddbs_write_table can write a duckspatial_df object", {
   expect_true(ddbs_write_table(conn_new, df_lazy, table_name, overwrite = TRUE))
   
   # Verify result
-  result <- ddbs_read_table(conn_new, table_name, crs = 4326)
+  result <- ddbs_read_table(conn_new, table_name)
   expect_equal(nrow(result), nrow(points_sf))
   expect_equal(sf::st_crs(result), sf::st_crs(points_sf))
 })
 
-test_that("ddbs_write_table handles sf objects with existing crs_duckspatial column", {
-  conn_new <- ddbs_temp_conn()
-  
-  # Create an sf object that already has crs_duckspatial
-  points_with_crs_col <- points_sf
-  points_with_crs_col$crs_duckspatial <- "EPSG:4326"
-  
-  table_name <- "points_duplicate_col"
-  
-  # This should now work (previously failed with "Column with name crs_duckspatial already exists")
-  expect_true(ddbs_write_table(conn_new, points_with_crs_col, table_name, overwrite = TRUE))
-  
-  # Verify result
-  result <- ddbs_read_table(conn_new, table_name, crs = 4326)
-  expect_equal(nrow(result), nrow(points_sf))
-  
-  # Check we didn't end up with two crs columns or errors
-  fields <- DBI::dbListFields(conn_new, table_name)
-  expect_equal(sum(fields == "crs_duckspatial"), 1)
-})
 
 test_that("ddbs_write_table throws error for unsupported input", {
   conn_new <- ddbs_temp_conn()
@@ -210,7 +200,7 @@ test_that("ddbs_write_table with temp_view=TRUE works for duckspatial_df", {
   
   # Create a duckspatial_df first
   ddbs_write_table(conn_new, points_sf, "points_src", overwrite = TRUE)
-  df_lazy <- ddbs_read_table(conn_new, "points_src", crs = 4326) |>
+  df_lazy <- ddbs_read_table(conn_new, "points_src") |>
     as_duckspatial_df()
   
   view_name <- "points_lazy_view"
@@ -220,26 +210,10 @@ test_that("ddbs_write_table with temp_view=TRUE works for duckspatial_df", {
   
   # Verify view was created (should be in Arrow views, not tables)
   arrow_views <- duckdb::duckdb_list_arrow(conn_new)
-  expect_true(view_name %in% arrow_views)
+  expect_true(paste0(view_name, "_raw") %in% arrow_views)
   
   # Should be queryable
-  result <- ddbs_read_table(conn_new, view_name, crs = 4326)
+  result <- ddbs_read_table(conn_new, view_name)
   expect_equal(nrow(result), nrow(points_sf))
 })
 
-test_that("ddbs_write_table with temp_view=TRUE handles existing crs_duckspatial", {
-  conn_new <- ddbs_temp_conn()
-  
-  # Create sf with existing crs_duckspatial
-  points_with_crs <- points_sf
-  points_with_crs$crs_duckspatial <- "EPSG:4326"
-  
-  view_name <- "points_crs_view"
-  
-  # Should not error despite existing column
-  expect_true(ddbs_write_table(conn_new, points_with_crs, view_name, temp_view = TRUE, overwrite = TRUE))
-  
-  # Verify it works
-  arrow_views <- duckdb::duckdb_list_arrow(conn_new)
-  expect_true(view_name %in% arrow_views)
-})
