@@ -161,15 +161,15 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
       }, error = function(e) NULL)
       
       if (!is.null(view_sql) && length(view_sql) > 0) {
-        source_pat_clean <- paste0("VIEW\\s+\"", source_table_clean, "\"")
-        source_pat <- paste0("VIEW\\s+", source_table)
+        source_pat_clean <- paste0("TABLE\\s+\"", source_table_clean, "\"")
+        source_pat <- paste0("TABLE\\s+", source_table)
         
         if (grepl(source_pat_clean, view_sql, ignore.case = TRUE)) {
-          new_sql <- sub(source_pat_clean, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
+          new_sql <- sub(source_pat_clean, paste0("TABLE ", target_name), view_sql, ignore.case = TRUE)
         } else {
-          new_sql <- sub(source_pat, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
+          new_sql <- sub(source_pat, paste0("TABLE ", target_name), view_sql, ignore.case = TRUE)
         }
-        new_sql <- sub("CREATE VIEW", "CREATE OR REPLACE TEMPORARY VIEW", new_sql, ignore.case = TRUE)
+        new_sql <- sub("CREATE TABLE", "CREATE OR REPLACE TEMPORARY TABLE", new_sql, ignore.case = TRUE)
         
         tryCatch({
           DBI::dbExecute(target_conn, new_sql)
