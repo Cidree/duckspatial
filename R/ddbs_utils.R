@@ -152,7 +152,7 @@ ddbs_glimpse <- function(
   no_geom_cols <- get_geom_name(conn, name_list$query_name, rest = TRUE, collapse = TRUE)
 
   ## 2.3. Get the CRS
-  crs <- ddbs_crs(x, conn)
+  crs <- ddbs_crs(name, conn)
 
   # 4. Get data
 
