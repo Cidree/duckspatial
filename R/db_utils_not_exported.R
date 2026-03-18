@@ -146,6 +146,14 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
   
   # STRATEGY 1: SQL recreation (same DB, direct view reference)
   if (inherits(source_object, c("duckspatial_df", "tbl_duckdb_connection", "tbl_lazy"))) {
+
+    # TODO - modified in duckdb v1.5
+    if (inherits(source_object, "duckspatial_df")) {
+      ddbs_write_table(target_conn, source_object, target_name, temp_view = TRUE, quiet = TRUE)
+      cli::cli_inform("Imported view using SQL recreation (zero overhead)")
+      return(list(name = target_name, method = "sql_recreation", cleanup = function() NULL))
+    }
+
     source_table <- dbplyr::remote_name(source_object)
     
     if (!is.null(source_table) && !inherits(source_table, "sql")) {
@@ -153,27 +161,41 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
       
       view_sql <- tryCatch({
         q_sql <- glue::glue(
-          # "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
           "SELECT sql FROM duckdb_tables() WHERE table_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
         )
         result <- DBI::dbGetQuery(source_conn, q_sql)
-        if (nrow(result) > 0) result$sql else NULL
+
+        if (nrow(result) > 0) {
+          kw <- "TABLE"
+          result$sql
+        } else {
+          q_sql <- glue::glue(
+            "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
+          )
+          result <- DBI::dbGetQuery(source_conn, q_sql)
+          if (nrow(result) > 0) {
+            kw <- "VIEW"
+            result$sql
+          } else {
+            NULL
+          }
+        }
       }, error = function(e) NULL)
       
       if (!is.null(view_sql) && length(view_sql) > 0) {
-        source_pat_clean <- paste0("TABLE\\s+\"", source_table_clean, "\"")
-        source_pat <- paste0("TABLE\\s+", source_table)
+        source_pat_clean <- paste0(kw, "\\s+\"", source_table_clean, "\"")
+        source_pat <- paste0(kw, "\\s+", source_table)
         
         if (grepl(source_pat_clean, view_sql, ignore.case = TRUE)) {
-          new_sql <- sub(source_pat_clean, paste0("TABLE ", target_name), view_sql, ignore.case = TRUE)
+          new_sql <- sub(source_pat_clean, paste(kw, target_name), view_sql, ignore.case = TRUE)
         } else {
-          new_sql <- sub(source_pat, paste0("TABLE ", target_name), view_sql, ignore.case = TRUE)
+          new_sql <- sub(source_pat, paste(kw, target_name), view_sql, ignore.case = TRUE)
         }
-        new_sql <- sub("CREATE TABLE", "CREATE OR REPLACE TEMPORARY TABLE", new_sql, ignore.case = TRUE)
+        new_sql <- sub(paste("CREATE", kw), paste("CREATE OR REPLACE TEMPORARY", kw), new_sql, ignore.case = TRUE)
         
         tryCatch({
           DBI::dbExecute(target_conn, new_sql)
-          cli::cli_inform("Imported view using SQL recreation (zero overhead)")
+          cli::cli_inform("Imported {tolower(kw)} using SQL recreation (zero overhead)")
           return(list(name = target_name, method = "sql_recreation", cleanup = function() NULL))
         }, error = function(e) {
           if (isTRUE(getOption("duckspatial.debug", FALSE))) {
