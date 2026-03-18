@@ -115,10 +115,9 @@ ddbs_read_table <- function(
         # The geometry column is added before crs_duckspatial, so it should be the
         # last column before crs_duckspatial (or last column if excluding crs_duckspatial)
         if (is.na(geom_name)) {
-            non_crs_cols <- setdiff(all_cols, crs_column)
-            if (length(non_crs_cols) > 0) {
+            if (length(all_cols) > 0) {
                 # Take the LAST non-CRS column (geometry is added last during registration)
-                geom_name <- non_crs_cols[length(non_crs_cols)]
+                geom_name <- all_cols[length(all_cols)]
             }
         }
 
