@@ -104,19 +104,6 @@ ddbs_write_table <- function(
                 )
                 import_result$cleanup()
                 
-                # Add CRS column if the source had CRS info
-                if (inherits(data, "duckspatial_df")) {
-                    crs_info <- ddbs_crs(data)
-                    if (!is.null(crs_info$input) && !is.na(crs_info$input)) {
-                        tryCatch({
-                            DBI::dbExecute(conn, glue::glue("
-                                ALTER TABLE {name_list$query_name}
-                                ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{crs_info$input}';
-                            "))
-                        }, error = function(e) NULL)
-                    }
-                }
-                
                 if (isFALSE(quiet)) {
                     cli::cli_alert_success("Table {name_list$query_name} imported via {import_result$method}")
                 }
