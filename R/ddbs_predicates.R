@@ -235,7 +235,8 @@ ddbs_predicate <- function(
     ## check the CRS units to use the right function
     crs_units <- crs_x$units_gdal
     if (crs_units != "metre") {
-      predicate_expr <- glue::glue("ST_DWithin_Spheroid(x.{x_geom}, y.{y_geom}, {distance})")
+      # predicate_expr <- glue::glue("ST_DWithin_Spheroid(x.{x_geom}, y.{y_geom}, {distance})")
+      predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
       if (crs_x$input != "EPSG:4326") {
         cli::cli_warn(
           "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."

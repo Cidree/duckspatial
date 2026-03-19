@@ -62,8 +62,7 @@ describe("ddbs_buffer()", {
       point_planar <- sf::st_transform(points_sf[1, ], "EPSG:3857")
       sf_output   <- sf::st_buffer(point_planar, 100, nQuadSegs = 8)
       ddbs_output <- ddbs_buffer(point_planar, 100) |> 
-        sf::st_as_sf() |> 
-        dplyr::select(-crs_duckspatial)
+        sf::st_as_sf()
 
       expect_equal(sf_output$geometry, ddbs_output$geometry)
     })
@@ -87,8 +86,7 @@ describe("ddbs_buffer()", {
         point_planar <- sf::st_transform(points_sf[1, ], "EPSG:3857")
         sf_output <- sf::st_buffer(point_planar, 100, nQuadSegs = 16)
         ddbs_output <- ddbs_buffer(point_planar, 100, num_triangles = 16) |> 
-          sf::st_as_sf() |> 
-          dplyr::select(-crs_duckspatial)
+          sf::st_as_sf()
         
         expect_equal(sf_output$geometry, ddbs_output$geometry)
       })
@@ -120,8 +118,7 @@ describe("ddbs_buffer()", {
         point_planar <- sf::st_transform(points_sf[1, ], "EPSG:3857")
         sf_output <- sf::st_buffer(point_planar, 100, nQuadSegs = 8, endCapStyle = "SQUARE")
         ddbs_output <- ddbs_buffer(point_planar, 100, num_triangles = 8, cap_style = "CAP_SQUARE") |> 
-          sf::st_as_sf() |> 
-          dplyr::select(-crs_duckspatial)
+          sf::st_as_sf()
         
         expect_equal(sf_output$geometry, ddbs_output$geometry)
       })
@@ -153,8 +150,7 @@ describe("ddbs_buffer()", {
         point_planar <- sf::st_transform(points_sf[1, ], "EPSG:3857")
         sf_output <- sf::st_buffer(point_planar, 100, nQuadSegs = 8, joinStyle = "MITRE")
         ddbs_output <- ddbs_buffer(point_planar, 100, num_triangles = 8, join_style = "JOIN_MITRE") |> 
-          sf::st_as_sf() |> 
-          dplyr::select(-crs_duckspatial)
+          sf::st_as_sf()
         
         expect_equal(sf_output$geometry, ddbs_output$geometry)
       })

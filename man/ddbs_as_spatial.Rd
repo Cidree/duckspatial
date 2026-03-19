@@ -10,7 +10,6 @@ ddbs_as_spatial(
   crs = "EPSG:4326",
   conn = NULL,
   name = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -42,10 +41,6 @@ runs on a temporary DuckDB database.}
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_table}}).
-Set to \code{NULL} if absent.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

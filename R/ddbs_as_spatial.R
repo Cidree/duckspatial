@@ -13,9 +13,6 @@
 #'        longitude/latitude).
 #' @template conn_null
 #' @template name
-#' @param crs_column \link{Deprecated} a character string of length one specifying the column
-#'        storing the CRS (created automatically by \code{\link{ddbs_write_table}}).
-#'        Set to `NULL` if absent.
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -72,7 +69,6 @@ ddbs_as_spatial <- function(
     crs = "EPSG:4326",
     conn = NULL,
     name = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -123,8 +119,7 @@ ddbs_as_spatial <- function(
     st_function <- glue::glue("ST_Point({coords_str})")
     base.query <- glue::glue("
       SELECT {all_cols}
-      '{crs}' AS '{crs_column}',
-      {build_geom_query(st_function, mode)} as geometry
+      {build_geom_query(st_function, name, crs)} as geometry
       FROM {x_list$query_name};
     ")    
 
@@ -153,12 +148,11 @@ ddbs_as_spatial <- function(
     
     # 5. Apply geospatial operation
     result <- ddbs_handle_query(
-        query      = base.query,
-        conn       = target_conn,
-        mode       = mode,
-        crs        = crs,
-        crs_column = NULL,
-        x_geom     = "geometry"
+        query  = base.query,
+        conn   = target_conn,
+        mode   = mode,
+        crs    = crs,
+        x_geom = "geometry"
     )
 
     return(result)

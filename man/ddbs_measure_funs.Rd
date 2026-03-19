@@ -13,8 +13,6 @@ ddbs_area(
   conn = NULL,
   name = NULL,
   new_column = "area",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -25,8 +23,6 @@ ddbs_length(
   conn = NULL,
   name = NULL,
   new_column = "length",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -37,8 +33,6 @@ ddbs_perimeter(
   conn = NULL,
   name = NULL,
   new_column = "perimeter",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -72,13 +66,6 @@ names. If \code{NULL} (the default), the function returns the result as an
 
 \item{new_column}{Name of the new column to create on the input data. Ignored
 with \code{mode = "sf"}.}
-
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

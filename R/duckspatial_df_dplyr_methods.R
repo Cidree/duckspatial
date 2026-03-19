@@ -106,10 +106,6 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
       conn <- dbplyr::remote_con(x_lazy)
       query_sql <- dbplyr::sql_render(x_lazy)
       
-      # Check column type in the lazy table
-      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
-      cached_type <- attr(x, "geom_type")
-      
       # Inject ST_AsWKB() conversion
       # We use dbplyr::sql to pass the raw SQL function
       # We assume the column name is safe or quoted by dbplyr if we used sym?
@@ -219,7 +215,6 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
   convert_to_sf_wkb(
     data = collected,
     crs = crs_obj,
-    crs_column = NULL,
     x_geom = geom_col
   )
 }
@@ -316,9 +311,6 @@ glimpse.duckspatial_df <- function(x, width = NULL, ...) {
   bbox <- st_bbox(x)
   geomtype <- ddbs_geometry_type(x, by_feature = FALSE) |> 
     as.character()
-  
-  # Strip class to delegate to dplyr's glimpse.tbl_lazy
-  class(x) <- setdiff(class(x), "duckspatial_df")
 
   # Add spatial metadata info to output
   ## metadata with icons/symbols
@@ -330,7 +322,13 @@ glimpse.duckspatial_df <- function(x, width = NULL, ...) {
                               bbox["xmin"], bbox["ymin"], bbox["xmax"], bbox["ymax"])), "\n")
 
   # Execute via dplyr
-  dplyr::glimpse(x, width = width, ...)
+  remote_name <- dbplyr::remote_name(x)
+  head_data <- dplyr::tbl(
+    dbplyr::remote_con(x),
+    dplyr::sql(glue::glue("SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
+    FROM {remote_name} LIMIT 20"))
+  )
+  dplyr::glimpse(head_data, width = width, ...)
 
   
   

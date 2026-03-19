@@ -5,7 +5,6 @@
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -19,15 +18,11 @@ template_unary_ops <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE,
     fun,
     other_args = NULL) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -63,6 +58,7 @@ template_unary_ops <- function(
     ## register cleanup of the connection
     on.exit(resolve_conn$cleanup(), add = TRUE)
 
+
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
@@ -97,10 +93,12 @@ template_unary_ops <- function(
     }
   
     ## 3.5. Build base query
+    ## As for duckdb 1.5 - uses ST_AsWKB for data retrieved in R
+    ## uses GEOMETRY('auth:code') for table creation
     st_function <- glue::glue("{fun}({args})")
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(st_function, mode)} as {x_geom}
+      {build_geom_query(st_function, name, crs_x)} as {x_geom}
       FROM {x_list$query_name};
     ")
   
@@ -131,8 +129,7 @@ template_unary_ops <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -223,7 +220,6 @@ template_geometry_conversion <- function(
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -244,8 +240,6 @@ template_measure <- function(
   conn = NULL,
   name = NULL,
   new_column = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
@@ -253,8 +247,6 @@ template_measure <- function(
   
   # Match and validate fun
   fun <- match.arg(fun)
-  
-  deprecate_crs(crs_column, crs)
 
   # 0. Validate inputs
   assert_xy(x, "x")
@@ -324,7 +316,8 @@ template_measure <- function(
   if (crs_units == "metre") {
       st_function <- glue::glue("{fun}({x_geom})")
   } else {
-      st_function <- glue::glue("{fun}_Spheroid({x_geom})")
+      # st_function <- glue::glue("{fun}_Spheroid({x_geom})")
+      st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({x_geom}))")
   }
   
   ## 3.4. Determine units for output
@@ -346,7 +339,7 @@ template_measure <- function(
       SELECT 
         {x_rest}
         {st_function} AS {new_column},
-        {build_geom_query(x_geom, mode)} AS {x_geom}
+        {build_geom_query(x_geom, name, crs_x)} AS {x_geom}
       FROM 
         {x_list$query_name};
     ")
@@ -379,8 +372,7 @@ template_measure <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom,
         fun_group  = 2,
         units      = output_units
@@ -402,7 +394,6 @@ template_measure <- function(
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -423,14 +414,10 @@ template_new_column <- function(
   conn = NULL,
   name = NULL,
   new_column = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
   fun) {
-  
-  deprecate_crs(crs_column, crs)
 
   ## 0. Handle errors
   assert_xy(x, "x")
@@ -518,7 +505,7 @@ template_new_column <- function(
       SELECT 
         {x_rest}
         {fun}({x_geom}) as {new_column},
-        {build_geom_query(st_function, mode)} as {x_geom}
+        {build_geom_query(st_function, name, crs_x)} as {x_geom}
       FROM 
         {x_list$query_name};
     ")
@@ -551,8 +538,7 @@ template_new_column <- function(
       query      = base.query,
       conn       = target_conn,
       mode       = mode,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
+      crs        = crs_x,
       x_geom     = x_geom,
       fun_group  = 2,
       units      = NULL

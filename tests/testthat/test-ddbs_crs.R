@@ -17,14 +17,15 @@ test_that("ddbs_crs works for different input types", {
   # 2. duckspatial_df method
   ddbs_write_table(conn, nc_sf, "nc_data")
   # Use default retrieval options
-  nc_ds <- dplyr::tbl(conn, "nc_data") |> 
-    as_duckspatial_df(geom_col = "geometry", crs = sf::st_crs(nc_sf))
+  nc_ds <- as_duckspatial_df("nc_data", conn, crs = sf::st_crs(nc_sf))
     
   expect_equal(ddbs_crs(nc_ds), sf::st_crs(nc_sf))
   
   # 3. tbl_duckdb_connection (lazy) method
+  # TODO - Not possible in DuckDB v1.5 to use tbl()
   # Plain lazy table without duckspatial_df wrapper
-  nc_lazy <- dplyr::tbl(conn, "nc_data")
+  # nc_lazy <- dplyr::tbl(conn, "nc_data")
+  nc_lazy <- as_duckspatial_df("nc_data", conn)
   # ddbs_crs should fallback to looking up the table in the DB if it is a simple table ref
   # Our implementation for tbl_duckdb_connection tries to detect from VIEW SQL or ST_Read
   # BUT "nc_data" is a table with 'crs_duckspatial' column?
@@ -42,7 +43,8 @@ test_that("ddbs_crs works for different input types", {
   # Let's test the specific feature: Auto-detection from view
   path <- system.file("shape/nc.shp", package = "sf")
   DBI::dbExecute(conn, glue::glue("CREATE VIEW nc_view AS SELECT * FROM ST_Read('{path}')"))
-  nc_view_lazy <- dplyr::tbl(conn, "nc_view")
+  # nc_view_lazy <- dplyr::tbl(conn, "nc_view")
+  nc_view_lazy <- as_duckspatial_df("nc_view", conn)
   
   crs_auto <- ddbs_crs(nc_view_lazy)
   expect_false(is.na(crs_auto))

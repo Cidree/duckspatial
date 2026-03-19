@@ -6,7 +6,6 @@
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -38,8 +37,6 @@ ddbs_boundary <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -48,8 +45,6 @@ ddbs_boundary <- function(
         x = x,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet,
@@ -71,7 +66,6 @@ ddbs_boundary <- function(
 #' @template by_feature
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -122,13 +116,10 @@ ddbs_envelope <- function(
     by_feature = FALSE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
+
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -176,7 +167,11 @@ ddbs_envelope <- function(
     assert_geometry_column(x_geom, x_list)
 
     ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+    x_rest <- if (isTRUE(by_feature)) {
+        get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
+    } else {
+        ""
+    }
 
     ## 3.3. Build envelope clause based on by_feature
     if (isTRUE(by_feature)) {
@@ -186,23 +181,13 @@ ddbs_envelope <- function(
     }
 
     ## 3.4. Build base query
-    if (isTRUE(by_feature)) {
-        base.query <- glue::glue("
-            SELECT 
-                {x_rest}
-                {build_geom_query(st_envelope_clause, mode)} as {x_geom}
-            FROM 
-                {x_list$query_name};
-        ")
-    } else {
-        base.query <- glue::glue("
-            SELECT 
-                {build_geom_query(st_envelope_clause, mode)} as {x_geom},
-                FIRST({crs_column}) as {crs_column}
-            FROM 
-                {x_list$query_name};
-        ")
-    }
+    base.query <- glue::glue("
+        SELECT 
+            {x_rest}
+            {build_geom_query(st_envelope_clause, name, crs_x)} as {x_geom}
+        FROM 
+            {x_list$query_name};
+    ")
 
 
     # 4. if name is not NULL (i.e. no SF returned)
@@ -231,8 +216,7 @@ ddbs_envelope <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -251,7 +235,6 @@ ddbs_envelope <- function(
 #' @template by_feature
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -295,13 +278,9 @@ ddbs_bbox <- function(
     by_feature = FALSE,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     # 0. Handle errors
     assert_xy(x, "x")

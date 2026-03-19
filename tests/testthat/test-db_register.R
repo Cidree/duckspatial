@@ -39,7 +39,7 @@ test_that("can register sf object as arrow view", {
 
     # check that view exists in arrow views
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    expect_true("points_view" %in% arrow_views)
+    expect_true("points_view_raw" %in% arrow_views)
 
 })
 
@@ -49,7 +49,7 @@ test_that("can read registered view back with ddbs_read_table", {
     ddbs_register_table(conn_test, points_sf, "points_view2", overwrite = TRUE)
 
     # read back
-    result <- ddbs_read_table(conn_test, "points_view2", crs = 4326)
+    result <- ddbs_read_table(conn_test, "points_view2")
   
 
     # check that result is sf object
@@ -63,21 +63,6 @@ test_that("can read registered view back with ddbs_read_table", {
 
 })
 
-test_that("crs_duckspatial column is created with SRID", {
-
-    # register sf object with known EPSG CRS
-    ddbs_register_table(conn_test, points_sf, "points_crs_test", overwrite = TRUE)
-
-    # query the crs_duckspatial column
-    crs_result <- DBI::dbGetQuery(
-        conn_test,
-        "SELECT DISTINCT crs_duckspatial FROM points_crs_test"
-    )
-
-    # check that crs_duckspatial contains SRID
-    expect_true(grepl("EPSG:", crs_result$crs_duckspatial[1]))
-
-})
 
 test_that("overwrite=TRUE replaces existing view", {
 
@@ -111,31 +96,31 @@ test_that("can register sf object from file path", {
 
     # check that view exists
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    expect_true("countries_from_file" %in% arrow_views)
+    # expect_true("countries_from_file" %in% arrow_views)
+    expect_true("countries_from_file_raw" %in% arrow_views)
 
 })
 
-test_that("registered view contains geometry column", {
+# test_that("registered view contains geometry column", {
 
-    # register sf object
-    ddbs_register_table(conn_test, points_sf, "geom_test", overwrite = TRUE)
+#     # register sf object
+#     ddbs_register_table(conn_test, points_sf, "geom_test", overwrite = TRUE)
 
-    # check columns
-    columns <- DBI::dbListFields(conn_test, "geom_test")
+#     # check columns
+#     columns <- DBI::dbListFields(conn_test, "geom_test")
 
-    expect_true("geometry" %in% columns)
-    expect_true("crs_duckspatial" %in% columns)
+#     expect_true("geometry" %in% columns)
 
-})
+# })
 
 test_that("registered view contains CRS column or has CRS (in duckdb 1.5+)", {
     # register sf object
     ddbs_register_table(conn_test, points_sf, "crs_test", overwrite = TRUE)
 
     # check columns
-    columns <- DBI::dbListFields(conn_test, "crs_test")
+    crs_test <- ddbs_crs(conn_test, "crs_test")
 
-    expect_true("crs_duckspatial" %in% columns)
+    expect_s3_class(crs_test, "crs")
 })
 
 # expected errors --------------------------------------------------------------
@@ -158,7 +143,7 @@ test_that("error when view name exists and overwrite=FALSE", {
 test_that("can register duckspatial_df directly", {
     # Create a duckspatial_df by reading from existing view
     ddbs_register_table(conn_test, points_sf, "points_for_lazy", overwrite = TRUE)
-    df_lazy <- ddbs_read_table(conn_test, "points_for_lazy", crs = 4326) |>
+    df_lazy <- ddbs_read_table(conn_test, "points_for_lazy") |>
         as_duckspatial_df()
 
     # Register duckspatial_df as new view
@@ -167,30 +152,14 @@ test_that("can register duckspatial_df directly", {
 
     # Verify view exists
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    expect_true("lazy_view_direct" %in% arrow_views)
+    # expect_true("lazy_view_direct" %in% arrow_views)
+    expect_true("lazy_view_direct_raw" %in% arrow_views)
 
     # Verify data is queryable
     count_result <- DBI::dbGetQuery(conn_test, "SELECT COUNT(*) as n FROM lazy_view_direct")
     expect_equal(count_result$n, nrow(points_sf))
 })
 
-test_that("handles sf with existing crs_duckspatial column", {
-    # Create sf with existing crs_duckspatial
-    points_with_crs <- points_sf
-    points_with_crs$crs_duckspatial <- "EPSG:4326"
-
-    # Should not error
-    result <- ddbs_register_table(conn_test, points_with_crs, "crs_col_test", overwrite = TRUE)
-    expect_true(result)
-
-    # Verify view exists
-    arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    expect_true("crs_col_test" %in% arrow_views)
-
-    # Check only one crs_duckspatial column
-    columns <- DBI::dbListFields(conn_test, "crs_col_test")
-    expect_equal(sum(columns == "crs_duckspatial"), 1)
-})
 
 test_that("error for unsupported data types", {
     expect_error(

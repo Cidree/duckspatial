@@ -36,9 +36,13 @@ test_that("GeoPackage output automatically renames 'FID' to 'FID_original'", {
   # First create a table in DuckDB with FID
   DBI::dbWriteTable(conn, "test_fid_source", df, overwrite = TRUE)
   ddbs_load(conn) # Ensure spatial
-  DBI::dbExecute(conn, "CREATE OR REPLACE TABLE test_fid_spatial AS SELECT *, ST_Point(lon, lat) as geom FROM test_fid_source")
+  DBI::dbExecute(conn, "
+    CREATE OR REPLACE TABLE test_fid_spatial AS 
+    SELECT *, ST_Point(lon, lat) as geom 
+    FROM test_fid_source
+  ")
   
-  remote_tbl <- dplyr::tbl(conn, "test_fid_spatial")
+  remote_tbl <- as_duckspatial_df("test_fid_spatial", conn)
   
   tmp_remote <- tempfile(fileext = ".gpkg")
   on.exit(unlink(tmp_remote), add = TRUE)

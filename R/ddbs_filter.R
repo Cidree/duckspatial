@@ -13,7 +13,6 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @template crs
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
 #' the coordinate system of the geometry (e.g. degrees or meters)
 #' @template mode
@@ -72,14 +71,10 @@ ddbs_filter <- function(
     conn_x = NULL,
     conn_y = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     distance = NULL,
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-    
-    deprecate_crs(crs_column, crs)
 
     # 1. Validate inputs
     assert_xy(x, "x")
@@ -155,11 +150,7 @@ ddbs_filter <- function(
     
     ## 4.3. get columns to return from x
     x_rest_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
-    
-    ## error if crs_column not found (conditional on saved crs_x)
-    if (is.null(crs_x)) {
-        assert_crs_column(crs_column, x_rest_cols)
-    }
+
 
     ## 4.4. Format column lists for SQL
     x_rest <- if (length(x_rest_cols) > 0) paste0('v1."', x_rest_cols, '", ', collapse = '') else ""
@@ -171,7 +162,7 @@ ddbs_filter <- function(
         ## check the CRS units to use the right function
         crs_units <- crs_x$units_gdal
         if (crs_units != "metre") {
-            st_predicate <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(v1.{x_geom}), ST_FlipCoordinates(v2.{y_geom}), {distance})")
+            st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{x_geom}, v2.{y_geom}, {distance})")
             if (crs_x$input != "EPSG:4326") {
                 cli::cli_warn(
                 "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
@@ -194,7 +185,7 @@ ddbs_filter <- function(
     base.query <- glue::glue("
         SELECT DISTINCT 
             {x_rest} 
-            {build_geom_query(st_function, mode)} AS {x_geom}
+            {build_geom_query(st_function, name, crs_x)} AS {x_geom}
         FROM 
             {x_list$query_name} v1, 
             {y_list$query_name} v2
@@ -229,8 +220,7 @@ ddbs_filter <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 

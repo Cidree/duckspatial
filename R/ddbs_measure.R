@@ -20,7 +20,6 @@
 #' @param id_y Character; optional name of the column in `y` whose values will
 #' replace the integer indices returned in each element of the list.
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -208,8 +207,6 @@ ddbs_area <- function(
   conn = NULL,
   name = NULL,
   new_column = "area",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -219,8 +216,6 @@ ddbs_area <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -239,8 +234,6 @@ ddbs_length <- function(
   conn = NULL,
   name = NULL,
   new_column = "length",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -250,8 +243,6 @@ ddbs_length <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -270,8 +261,6 @@ ddbs_perimeter <- function(
   conn = NULL,
   name = NULL,
   new_column = "perimeter",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -281,8 +270,6 @@ ddbs_perimeter <- function(
     conn = conn,
     name = name,
     new_column = new_column,
-    crs = crs,
-    crs_column = crs_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -449,14 +436,19 @@ ddbs_distance <- function(
   )
 
   ## 3.3. Select the right coordinates order
-  st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+  # st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+  if (dist_type %in% c("haversine", "spheroid")) {
+    st_distance_fun <- glue::glue("{st_distance_fun}(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates( y.{y_geom}))")
+  } else {
+    st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+  }
   
   ## 3.2. Create query and get results based on mode
   if (mode == "sf") {
 
     ## Create the query
     tmp.query <- glue::glue("
-      SELECT {st_distance_fun) as distance
+      SELECT {st_distance_fun} as distance
       FROM {x_list$query_name} x
       CROSS JOIN {y_list$query_name} y
     ")
@@ -495,7 +487,7 @@ ddbs_distance <- function(
         SELECT 
             x.id_x,
             y.id_y,
-            {st_distance_fun) AS distance
+            {st_distance_fun} AS distance
         FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
         CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
     ")

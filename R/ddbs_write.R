@@ -39,7 +39,7 @@
 #' ddbs_write_table(conn, sf_points, "points")
 #'
 #' ## read data back into R
-#' ddbs_write_table(conn, "points", crs = 4326)
+#' ddbs_read_table(conn, "points")
 #'
 #' ## disconnect from db
 #' dbDisconnect(conn)
@@ -104,19 +104,6 @@ ddbs_write_table <- function(
                 )
                 import_result$cleanup()
                 
-                # Add CRS column if the source had CRS info
-                if (inherits(data, "duckspatial_df")) {
-                    crs_info <- ddbs_crs(data)
-                    if (!is.null(crs_info$input) && !is.na(crs_info$input)) {
-                        tryCatch({
-                            DBI::dbExecute(conn, glue::glue("
-                                ALTER TABLE {name_list$query_name}
-                                ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{crs_info$input}';
-                            "))
-                        }, error = function(e) NULL)
-                    }
-                }
-                
                 if (isFALSE(quiet)) {
                     cli::cli_alert_success("Table {name_list$query_name} imported via {import_result$method}")
                 }
@@ -147,10 +134,6 @@ ddbs_write_table <- function(
 
     ## 3. insert data
     if (inherits(data, "sf")) {
-        # Remove existing crs_duckspatial column if present (e.g. from previous read)
-        if ("crs_duckspatial" %in% names(data)) {
-            data <- dplyr::select(data, -dplyr::any_of("crs_duckspatial"))
-        }
 
         # 3. Handle unsupported geometries (TOO SLOW)
         # unsupported_types <- c("GEOMETRYCOLLECTION")
@@ -167,33 +150,35 @@ ddbs_write_table <- function(
         data_df <- as.data.frame(data)
         data_df[[geom_name]] <- wkb_data  # Ensure raw data is preserved
 
-        ## Write data into DuckDB
-        # duckdb::duckdb_register(conn, "temp_view", data_df, experimental = TRUE) # check later
-        DBI::dbWriteTable(conn, DBI::Id(schema = name_list$schema_name, table = name_list$table_name), data_df, field.types = c(geom_name = "BLOB"))
-        # DBI::dbExecute(conn, glue::glue("
-        #     CREATE TABLE {name_list$query_name} AS
-        #     SELECT {paste0(names(data_df), collapse = ', ')}
-        #     FROM temp_view
-        # "))
-        ## Convert to spatial
-        DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {name_list$query_name}
-            ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
-        "))
-        # duckdb::duckdb_unregister(conn, "temp_view") |> on.exit()
-        ## CRS
-        ## get data CRS
-        data_crs <- sf::st_crs(data, parameters = TRUE)
+        ## Get the CRS, and define the geometry type for duckdb
+        data_crs   <- sf::st_crs(data, parameters = TRUE)
+        if (length(data_crs) == 0) {
+            geom_field <- glue::glue("GEOMETRY")
+        } else {
+            geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+        }
 
+        ## Warn if no CRS was found in the input data
         if (is.null(data_crs$srid) || is.na(data_crs$srid)) {
             cli::cli_alert_warning("No CRS found in the input data. The table will be created without CRS information.")
-        } else {
-            ## create new column with CRS as default value
-            DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {name_list$query_name}
-            ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{data_crs$srid}';
-        "))
         }
+
+        ## Write data into DuckDB
+        # duckdb::duckdb_register(conn, "temp_view", data_df, experimental = TRUE) # check later
+        DBI::dbWriteTable(
+            conn, 
+            DBI::Id(schema = name_list$schema_name, table = name_list$table_name), 
+            data_df, 
+            field.types = c(geom_name = "BLOB")
+        )
+ 
+        ## Convert to spatial with CRS
+        DBI::dbExecute(conn, glue::glue("
+            ALTER TABLE {name_list$query_name}
+            ALTER COLUMN {geom_name} SET DATA TYPE {geom_field} USING ST_GeomFromWKB({geom_name});
+        "))
+        # duckdb::duckdb_unregister(conn, "temp_view") |> on.exit()
+        
 
     } else if (!is.character(data) || length(data) != 1) {
         cli::cli_abort("{.arg data} must be an {.cls sf} object, a {.cls duckspatial_df}, or a file path string.")
@@ -217,23 +202,11 @@ ddbs_write_table <- function(
         #     ## manage CRS
         #
         # } else {
-            ## insert data
+            ## insert files (in duckdb v1.5, ST_Read() already manages CRS)
             DBI::dbExecute(
                 conn,
                 glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM ST_Read('{data}')")
             )
-            ## get CRS
-            meta_list <- DBI::dbGetQuery(conn, glue::glue("SELECT * FROM ST_READ_META('{data}')"))
-            auth_name <- meta_list$layers[[1]]$geometry_fields[[1]]$crs$auth_name
-            auth_code <- meta_list$layers[[1]]$geometry_fields[[1]]$crs$auth_code
-            srid <- paste0(auth_name, ":", auth_code)
-            ## create new column with CRS as default value
-            DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {name_list$query_name}
-            ADD COLUMN crs_duckspatial VARCHAR DEFAULT '{srid}';
-        "))
-        # }
-
 
     }
 

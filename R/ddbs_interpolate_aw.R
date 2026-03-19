@@ -51,13 +51,7 @@
 #'   spatially intensive (e.g., population density).
 #' @param weight Character. Determines the denominator calculation for extensive variables.
 #'   Either \code{"sum"} (default) or \code{"total"}. See **Mass Preservation** in Details.
-#' @param output Character. One of \code{"sf"} (default) or \code{"tibble"}.
-#'   \itemize{
-#'     \item \code{"sf"}: The result includes the geometry column of the target.
-#'     \item \code{"tibble"}: The result **excludes the geometry column**. This is significantly faster
-#'     and consumes less storage.
-#'   }
-#'   **Note:** This argument also controls the schema of the created table if \code{name} is provided.
+#' @template mode
 #' @param keep_NA Logical. If \code{TRUE} (default), returns all features from the target,
 #'   even those that do not overlap with the source (values will be NA). If \code{FALSE},
 #'   performs an inner join, dropping non-overlapping target features.
@@ -69,21 +63,10 @@
 #'   to this CRS within the database before interpolation.
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template overwrite
 #' @template quiet
 #'
-#' @returns
-#' \itemize{
-#'   \item If \code{name} is \code{NULL} (default): Returns an \code{sf} object (if \code{output="sf"})
-#'   or a \code{tibble} (if \code{output="tibble"}).
-#'   \item If \code{name} is provided: Returns \code{TRUE} invisibly and creates a persistent table
-#'   in the DuckDB database.
-#'   \itemize{
-#'      \item If \code{output="sf"}, the table **includes** the geometry column.
-#'      \item If \code{output="tibble"}, the table **excludes** the geometry column (pure attributes).
-#'   }
-#' }
+#' @template returns_mode
 #'
 #' @examples
 #' \donttest{
@@ -106,7 +89,8 @@
 #'   target = g_sf, source = nc,
 #'   tid = "tid", sid = "sid",
 #'   extensive = "BIR74",
-#'   weight = "total"
+#'   weight = "total",
+#'   mode = "sf"
 #' )
 #'
 #' # Check mass preservation
@@ -117,7 +101,8 @@
 #' res_int <- ddbs_interpolate_aw(
 #'   target = g_sf, source = nc,
 #'   tid = "tid", sid = "sid",
-#'   intensive = "BIR74"
+#'   intensive = "BIR74",
+#'   mode = "sf"
 #' )
 #'
 #' # 4. Quick Visualization
@@ -143,24 +128,21 @@ ddbs_interpolate_aw <- function(
     extensive = NULL,
     intensive = NULL,
     weight = "sum",
-    output = "sf",
+    mode = NULL,
     keep_NA = TRUE,
     na.rm = FALSE,
     join_crs = NULL,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     overwrite = FALSE,
     quiet = FALSE
 ) {
-
-  deprecate_crs(crs_column, crs)
 
   # 0. Handle inputs and errors
   assert_xy(target, "target")
   assert_xy(source, "source")
   assert_name(name)
+  assert_name(mode, "mode")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
   assert_logic(keep_NA, "keep_NA")
@@ -176,9 +158,6 @@ ddbs_interpolate_aw <- function(
   if (!weight %in% c("sum", "total")) {
     cli::cli_abort("{.arg weight} must be either 'sum' or 'total'.")
   }
-  if (!output %in% c("sf", "tibble")) {
-    cli::cli_abort("{.arg output} must be either 'sf' or 'tibble'.")
-  }
 
   # Strict validation: Intensive variables cannot use "total" weight
   # because summing densities across total source areas is mathematically invalid.
@@ -186,25 +165,81 @@ ddbs_interpolate_aw <- function(
     cli::cli_abort("Spatially intensive variables must use {.code weight = 'sum'}.")
   }
 
-  # 1. Manage connection
-  is_duckdb_conn <- dbConnCheck(conn)
-  if (isFALSE(is_duckdb_conn)) {
-    conn <- ddbs_create_conn()
-    on.exit(duckdb::dbDisconnect(conn), add = TRUE)
-  }
+  # 2. Normalize inputs
 
-  # 1.2 Get query list
-  t_list <- get_query_list(target, conn)
+  # Pre-extract CRS and sf_column (before normalize_spatial_input converts types)
+  t_geom <- attr(target, "sf_column")
+  s_geom <- attr(source, "sf_column")
+  t_crs  <- ddbs_crs(target, conn)
+  s_crs  <- ddbs_crs(source, conn)
+
+  # Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, validate character table names
+  target <- normalize_spatial_input(target, conn)
+  source <- normalize_spatial_input(source, conn)
+
+  ## Get mode - If it's NULL, it will use the duckspatial.mode option
+  mode <- get_mode(mode, name)
+
+    
+  # 3. Manage connection to DB
+
+  ## 3.1. Resolve connections and handle imports
+  resolve_res <- resolve_spatial_connections(target, source, conn)
+
+  target_conn <- resolve_res$conn
+  target <- resolve_res$x
+  source <- resolve_res$y
+  
+  # 3.2 Get query list
+  t_list <- get_query_list(target, target_conn)
   on.exit(t_list$cleanup(), add = TRUE)
-  s_list <- get_query_list(source, conn)
+  s_list <- get_query_list(source, target_conn)
   on.exit(s_list$cleanup(), add = TRUE)
 
-  # 2. Get Geometry and Attribute Columns
-  t_geom <- get_geom_name(conn, t_list$query_name)
-  s_geom <- get_geom_name(conn, s_list$query_name)
+  # CRS already extracted at start of function
+  if (!is.null(join_crs)) {
 
-  # 2.1 Get Attribute Columns (target columns to keep)
-  t_rest <- get_geom_name(conn, t_list$query_name, rest = TRUE, collapse = FALSE)
+    # If we need to reproject (join_crs provided), both inputs MUST have a known CRS.
+    if (is.na(t_crs)) cli::cli_abort("Target CRS unknown. Cannot transform to {.arg join_crs}.")
+    if (is.na(s_crs)) cli::cli_abort("Source CRS unknown. Cannot transform to {.arg join_crs}.")
+
+
+    join_crs_sql <- crs_to_sql(join_crs)
+
+    # Convert those objects to SQL literals
+    t_crs_sql <- crs_to_sql(t_crs)
+    s_crs_sql <- crs_to_sql(s_crs)
+
+    if (t_crs_sql == "NULL") cli::cli_abort("Target CRS value is NULL. Cannot transform to {.arg join_crs}.")
+    if (s_crs_sql == "NULL") cli::cli_abort("Source CRS value is NULL. Cannot transform to {.arg join_crs}.")
+
+    t_geom_expr <- glue::glue("ST_Transform({t_geom}, {t_crs_sql}, {join_crs_sql})")
+    s_geom_expr <- glue::glue("ST_Transform({s_geom}, {s_crs_sql}, {join_crs_sql})")
+  } else {
+    # If NO join_crs provided, inputs MUST match.
+    if (!is.null(t_crs) && !is.null(s_crs)) {
+      if (!crs_equal(t_crs, s_crs)) {
+        cli::cli_abort("The Coordinates Reference System of {.arg target} and {.arg source} is different.")
+      }
+  } else {
+      assert_crs(target_conn, t_list$query_name, s_list$query_name)
+  }
+    # If neither has CRS (t_has_crs=FALSE, s_has_crs=FALSE),
+    # we assume they are both planar/NA and proceed without error.
+  }
+  
+
+  # 4. Prepare parameters for query
+
+  ## 4.1. predicate already validated early (sel_pred above)
+  ## 4.2. get names of geometry columns (use saved sf_col_x/y from before transformation)
+  t_geom <- t_geom %||% get_geom_name(target_conn, t_list$query_name)
+  s_geom <- s_geom %||% get_geom_name(target_conn, s_list$query_name)
+  assert_geometry_column(t_geom, t_list)
+  assert_geometry_column(s_geom, s_list)
+
+  # 3.3. Get Attribute Columns (target columns to keep)
+  t_rest <- get_geom_name(target_conn, t_list$query_name, rest = TRUE, collapse = FALSE)
 
   # 2.1 Column Conflict Prevention
   # Check if interpolated vars already exist in target (excluding tid)
@@ -223,11 +258,11 @@ ddbs_interpolate_aw <- function(
   }
 
   # 3. Validate IDs and Variables exist
-  assert_col_exists(conn, t_list$query_name, tid, "target")
-  assert_col_exists(conn, s_list$query_name, sid, "source")
+  assert_col_exists(target_conn, t_list$query_name, tid, "target")
+  assert_col_exists(target_conn, s_list$query_name, sid, "source")
 
-  if (!is.null(extensive)) assert_col_exists(conn, s_list$query_name, extensive, "source")
-  if (!is.null(intensive)) assert_col_exists(conn, s_list$query_name, intensive, "source")
+  if (!is.null(extensive)) assert_col_exists(target_conn, s_list$query_name, extensive, "source")
+  if (!is.null(intensive)) assert_col_exists(target_conn, s_list$query_name, intensive, "source")
 
   # 4. Prepare CRS Logic (Projection)
   # Initialize default geometry expressions (used if join_crs is NULL)
@@ -235,47 +270,6 @@ ddbs_interpolate_aw <- function(
   t_geom_expr <- t_geom
   s_geom_expr <- s_geom
 
-  # Check if the CRS column exists in the registered views/tables
-  # This prevents Binder Errors if the column is missing (e.g., when inputs have NA CRS)
-  t_fields <- DBI::dbListFields(conn, t_list$query_name)
-  s_fields <- DBI::dbListFields(conn, s_list$query_name)
-
-  t_has_crs <- crs_column %in% t_fields
-  s_has_crs <- crs_column %in% s_fields
-
-  if (!is.null(join_crs)) {
-    # If we need to reproject (join_crs provided), both inputs MUST have a known CRS.
-    if (!t_has_crs) cli::cli_abort("Target CRS unknown (column {.val {crs_column}} missing). Cannot transform to {.arg join_crs}.")
-    if (!s_has_crs) cli::cli_abort("Source CRS unknown (column {.val {crs_column}} missing). Cannot transform to {.arg join_crs}.")
-
-    join_crs_sql <- crs_to_sql(join_crs)
-
-    # Fetch table CRS using existing package functionality
-    # We retrieve the sf::st_crs object from the DB metadata
-    t_crs <- ddbs_crs(conn, t_list$query_name, crs_column)
-    s_crs <- ddbs_crs(conn, s_list$query_name, crs_column)
-
-    # Convert those objects to SQL literals
-    t_crs_sql <- crs_to_sql(t_crs)
-    s_crs_sql <- crs_to_sql(s_crs)
-
-    if (t_crs_sql == "NULL") cli::cli_abort("Target CRS value is NULL. Cannot transform to {.arg join_crs}.")
-    if (s_crs_sql == "NULL") cli::cli_abort("Source CRS value is NULL. Cannot transform to {.arg join_crs}.")
-
-    t_geom_expr <- glue::glue("ST_Transform({t_geom}, {t_crs_sql}, {join_crs_sql})")
-    s_geom_expr <- glue::glue("ST_Transform({s_geom}, {s_crs_sql}, {join_crs_sql})")
-  } else {
-    # If NO join_crs provided, inputs MUST match.
-    if (t_has_crs && s_has_crs) {
-      # Both have CRS info, safely compare them
-      assert_crs(conn, t_list$query_name, s_list$query_name)
-    } else if (t_has_crs != s_has_crs) {
-      # Mismatch: One has CRS, one does not
-      cli::cli_abort("CRS mismatch: One input has a defined CRS and the other does not.")
-    }
-    # If neither has CRS (t_has_crs=FALSE, s_has_crs=FALSE),
-    # we assume they are both planar/NA and proceed without error.
-  }
 
   # 5. Build CTE Query
   s_alias <- "s_geom_proj"
@@ -397,44 +391,29 @@ ddbs_interpolate_aw <- function(
   full_ctes <- paste(c(overlap_cte, denom_ctes, agg_cte), collapse = ",\n")
 
   # 6.1 Handle Output Type: SF vs Tibble (no geometry)
-
-  if (output == "sf") {
-    # Standard spatial return
-    final_select <- glue::glue("
-      SELECT
-        {t_cols_select}
-        ST_AsWKB(tgt.{t_geom}) as {t_geom},
-        av.* EXCLUDE (tid)
-      FROM {t_list$query_name} tgt
-      {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
-    ")
-    table_select <- glue::glue("
-      SELECT
-        {t_cols_select}
-        tgt.{t_geom} as {t_geom},
-        av.* EXCLUDE (tid)
-      FROM {t_list$query_name} tgt
-      {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
-    ")
-  } else {
-    # Tibble return: Do NOT select geometry (much faster)
-    final_select <- glue::glue("
-      SELECT
-        {t_cols_select}
-        av.* EXCLUDE (tid)
-      FROM {t_list$query_name} tgt
-      {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
-    ")
-
-    # For table creation, we also drop geometry if output="tibble"
-    table_select <- final_select
-  }
+  st_function <- glue::glue("tgt.{t_geom}")
+  final_select <- glue::glue("
+    SELECT
+      {t_cols_select}
+      {build_geom_query(st_function, name, t_crs)} as {t_geom},
+      av.* EXCLUDE (tid)
+    FROM {t_list$query_name} tgt
+    {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
+  ")
+  table_select <- glue::glue("
+    SELECT
+      {t_cols_select}
+      {build_geom_query(st_function, name, t_crs)} as {t_geom},
+      av.* EXCLUDE (tid)
+    FROM {t_list$query_name} tgt
+    {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
+  ")
 
   # 6.2 Execute
 
   if (!is.null(name)) {
     name_list <- get_query_name(name)
-    overwrite_table(name_list$query_name, conn, quiet, overwrite)
+    overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
 
     # CREATE TABLE must precede WITH for standard CTE usage in DuckDB statements like this
     full_sql <- glue::glue("
@@ -443,7 +422,7 @@ ddbs_interpolate_aw <- function(
       {table_select}
     ")
 
-    DBI::dbExecute(conn, full_sql)
+    DBI::dbExecute(target_conn, full_sql)
     feedback_query(quiet)
     return(invisible(TRUE))
   }
@@ -453,20 +432,14 @@ ddbs_interpolate_aw <- function(
     {final_select}
   ")
 
-  data_tbl <- DBI::dbGetQuery(conn, full_sql)
-
-  if (output == "sf") {
-    data_sf <- convert_to_sf_wkb(
-      data       = data_tbl,
-      crs        = crs,
-      crs_column = crs_column,
-      x_geom     = t_geom
+  result <- ddbs_handle_query(
+        query  = full_sql,
+        conn   = target_conn,
+        mode   = mode,
+        crs    = t_crs,
+        x_geom = t_geom
     )
-    feedback_query(quiet)
-    return(data_sf)
-  } else {
-    # Return standard tibble
-    feedback_query(quiet)
-    return(dplyr::as_tibble(data_tbl))
-  }
+
+  return(result)
+
 }
