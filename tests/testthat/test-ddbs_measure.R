@@ -94,7 +94,7 @@ describe("ddbs_area()", {
       expect_message(ddbs_area(nc_4326_sf, conn = conn_test, name = "area_tbl2", new_column = "area_calc"))
       
       expect_no_message(ddbs_area(nc_4326_sf, new_column = "area_calc", quiet = TRUE))
-      # expect_no_message(ddbs_area(nc_4326_sf, conn = conn_test, name = "area_tbl3", new_column = "area_calc", quiet = TRUE))
+      expect_no_message(ddbs_area(nc_4326_sf, conn = conn_test, name = "area_tbl3", new_column = "area_calc", quiet = TRUE))
     })
     
     it("calculates area correctly on projected CRS", {
@@ -156,16 +156,15 @@ describe("ddbs_area()", {
     })
     
     it("writes tables to the database", {
-      output <- ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl", new_column = "area_calc") |> 
-        suppressWarnings()
+      output <- ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl", new_column = "area_calc")
       expect_true(output)
     })
     
     it("shows and suppresses messages correctly", {
       expect_no_message(ddbs_area(nc_ddbs, new_column = "area_calc"))
-      expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl2", new_column = "area_calc") |> suppressWarnings())
-      expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl3", new_column = "area_calc", quiet = TRUE) |> suppressWarnings())
-      
+      expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl2", new_column = "area_calc"))
+
+      expect_no_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl3", new_column = "area_calc", quiet = TRUE))      
       expect_no_message(ddbs_area(nc_ddbs, new_column = "area_calc", quiet = TRUE))
     })
 
@@ -402,8 +401,9 @@ describe("ddbs_length()", {
       rivers_geog <- ddbs_transform(rivers_sf, "EPSG:4326", mode = "sf")
       length_ddbs <- ddbs_length(rivers_geog, mode = "sf")
       length_sf   <- sf::st_length(rivers_geog)
-      
-      expect_equal(length_ddbs, length_sf)
+      # TODO - DuckDB v1.5 has changes in the calculation, and gives different values
+      # TODO - review when ST_Spheroid_*() funs don't need to flip coords anymore
+      expect_equal(length_ddbs, length_sf, tolerance = .1)
     })
     
     it("calculates length correctly on projected CRS", {
@@ -473,8 +473,8 @@ describe("ddbs_length()", {
     it("shows and suppresses messages correctly", {
       expect_no_message(ddbs_length(rivers_ddbs, new_column = "length_calc"))
       expect_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl2", new_column = "length_calc") |> suppressWarnings())
-      expect_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl3", new_column = "length_calc", quiet = TRUE) |> suppressWarnings())
-      
+
+      expect_no_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl3", new_column = "length_calc", quiet = TRUE))      
       expect_no_message(ddbs_length(rivers_ddbs, new_column = "length_calc", quiet = TRUE))
     })
 
@@ -893,9 +893,9 @@ describe("ddbs_perimeter()", {
     
     it("shows and suppresses messages correctly", {
       expect_no_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc"))
-      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl2", new_column = "perimeter_calc") |> suppressWarnings())
-      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE) |> suppressWarnings())
-      
+      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl2", new_column = "perimeter_calc"))
+
+      expect_no_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE))      
       expect_no_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", quiet = TRUE))
     })
 

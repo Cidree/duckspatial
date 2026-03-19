@@ -29,7 +29,7 @@ test_that("ddbs_write_table imports from external duckspatial_df without collect
   
   # Verify geometry column exists and is GEOMETRY type
   desc <- DBI::dbGetQuery(target_conn, "DESCRIBE imported_countries")
-  geom_types <- desc$column_type[desc$column_type == "GEOMETRY"]
+  geom_types <- desc$column_type[desc$column_type == "GEOMETRY('EPSG:4326')"]
   expect_true(length(geom_types) >= 1)
   
   # Verify CRS was preserved

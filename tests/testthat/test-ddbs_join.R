@@ -72,13 +72,11 @@ testthat::test_that("expected behavior", {
 
     testthat::expect_true(output3)
 
-    # TODO - Review this because it fails
-    # output3 <- DBI::dbReadTable(conn_test, "test_result") |>
-    #     sf::st_as_sf(wkt = 'geometry')
+    output3 <- ddbs_read_table(conn_test, "test_result")
 
-    # testthat::expect_true(is(output3 , 'sf'))
+    testthat::expect_true(is(output3 , 'sf'))
 
-    ddbs_read_table(conn = conn_test, name = "test_result", crs = 4326)
+    ddbs_read_table(conn = conn_test, name = "test_result")
 
 
     # show and suppress messages
@@ -229,3 +227,4 @@ testthat::test_that("ddbs_join throws error on CRS mismatch", {
     "Coordinates Reference System"
   )
 })
+

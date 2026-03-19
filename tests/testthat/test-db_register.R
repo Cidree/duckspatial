@@ -38,9 +38,8 @@ test_that("can register sf object as arrow view", {
     expect_true(result)
 
     # check that view exists in arrow views
-    # TODO - not using duckdb_register in v1.5
-    # arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    # expect_true("points_view" %in% arrow_views)
+    arrow_views <- duckdb::duckdb_list_arrow(conn_test)
+    expect_true("points_view_raw" %in% arrow_views)
 
 })
 
