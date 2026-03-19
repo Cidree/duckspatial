@@ -436,7 +436,12 @@ ddbs_distance <- function(
   )
 
   ## 3.3. Select the right coordinates order
-  st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+  # st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+  if (dist_type %in% c("haversine", "spheroid")) {
+    st_distance_fun <- glue::glue("{st_distance_fun}(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates( y.{y_geom}))")
+  } else {
+    st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+  }
   
   ## 3.2. Create query and get results based on mode
   if (mode == "sf") {

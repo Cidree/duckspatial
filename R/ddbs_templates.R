@@ -316,7 +316,8 @@ template_measure <- function(
   if (crs_units == "metre") {
       st_function <- glue::glue("{fun}({x_geom})")
   } else {
-      st_function <- glue::glue("{fun}_Spheroid({x_geom})")
+      # st_function <- glue::glue("{fun}_Spheroid({x_geom})")
+      st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({x_geom}))")
   }
   
   ## 3.4. Determine units for output
