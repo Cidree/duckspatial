@@ -150,8 +150,8 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
     # TODO - modified in duckdb v1.5
     if (inherits(source_object, "duckspatial_df")) {
       ddbs_write_table(target_conn, source_object, target_name, temp_view = TRUE, quiet = TRUE)
-      cli::cli_inform("Imported view using SQL recreation (zero overhead)")
-      return(list(name = target_name, method = "sql_recreation", cleanup = function() NULL))
+      cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
+      return(list(name = target_name, method = "collect_and_write", cleanup = function() NULL))
     }
 
     source_table <- dbplyr::remote_name(source_object)
@@ -160,15 +160,15 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
       source_table_clean <- gsub('^"|"$', "", as.character(source_table))
       
       view_sql <- tryCatch({
-        q_sql <- glue::glue(
-          "SELECT sql FROM duckdb_tables() WHERE table_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
-        )
-        result <- DBI::dbGetQuery(source_conn, q_sql)
+        # q_sql <- glue::glue(
+        #   "SELECT sql FROM duckdb_tables() WHERE table_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
+        # )
+        # result <- DBI::dbGetQuery(source_conn, q_sql)
 
-        if (nrow(result) > 0) {
-          kw <- "TABLE"
-          result$sql
-        } else {
+        # if (nrow(result) > 0) {
+        #   kw <- "TABLE"
+        #   result$sql
+        # } else {
           q_sql <- glue::glue(
             "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
           )
@@ -179,7 +179,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
           } else {
             NULL
           }
-        }
+        # }
       }, error = function(e) NULL)
       
       if (!is.null(view_sql) && length(view_sql) > 0) {
