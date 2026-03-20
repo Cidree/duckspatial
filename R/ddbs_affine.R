@@ -71,6 +71,7 @@ ddbs_rotate <- function(
     assert_logic(by_feature, "by_feature")
     assert_name(name)
     assert_conn_character(conn, x)
+    assert_conn_x_name(conn, x, name)
     assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
