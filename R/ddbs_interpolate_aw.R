@@ -195,8 +195,22 @@ ddbs_interpolate_aw <- function(
   on.exit(t_list$cleanup(), add = TRUE)
   s_list <- get_query_list(source, target_conn)
   on.exit(s_list$cleanup(), add = TRUE)
+  
 
-  # CRS already extracted at start of function
+  # 4. Prepare parameters for query
+
+  ## 4.1. predicate already validated early (sel_pred above)
+  ## get names of geometry columns (use saved sf_col_x/y from before transformation)
+  t_geom <- t_geom %||% get_geom_name(target_conn, t_list$query_name)
+  s_geom <- s_geom %||% get_geom_name(target_conn, s_list$query_name)
+  assert_geometry_column(t_geom, t_list)
+  assert_geometry_column(s_geom, s_list)
+
+  ## Default to raw geometry columns (overwritten below if transformation is requested)
+  t_geom_expr <- t_geom
+  s_geom_expr <- s_geom
+
+  ## 4.2. Manage CRS
   if (!is.null(join_crs)) {
 
     # If we need to reproject (join_crs provided), both inputs MUST have a known CRS.
@@ -227,21 +241,11 @@ ddbs_interpolate_aw <- function(
     # If neither has CRS (t_has_crs=FALSE, s_has_crs=FALSE),
     # we assume they are both planar/NA and proceed without error.
   }
-  
 
-  # 4. Prepare parameters for query
-
-  ## 4.1. predicate already validated early (sel_pred above)
-  ## 4.2. get names of geometry columns (use saved sf_col_x/y from before transformation)
-  t_geom <- t_geom %||% get_geom_name(target_conn, t_list$query_name)
-  s_geom <- s_geom %||% get_geom_name(target_conn, s_list$query_name)
-  assert_geometry_column(t_geom, t_list)
-  assert_geometry_column(s_geom, s_list)
-
-  # 3.3. Get Attribute Columns (target columns to keep)
+  ## 4.3. Get Attribute Columns (target columns to keep)
   t_rest <- get_geom_name(target_conn, t_list$query_name, rest = TRUE, collapse = FALSE)
 
-  # 2.1 Column Conflict Prevention
+  ## 4.4. Column Conflict Prevention
   # Check if interpolated vars already exist in target (excluding tid)
   interp_vars <- c(extensive, intensive)
   conflicts <- intersect(interp_vars, t_rest)
@@ -257,18 +261,12 @@ ddbs_interpolate_aw <- function(
     t_rest <- setdiff(t_rest, conflicts)
   }
 
-  # 3. Validate IDs and Variables exist
+  ## 4.5. Validate IDs and Variables exist
   assert_col_exists(target_conn, t_list$query_name, tid, "target")
   assert_col_exists(target_conn, s_list$query_name, sid, "source")
 
   if (!is.null(extensive)) assert_col_exists(target_conn, s_list$query_name, extensive, "source")
   if (!is.null(intensive)) assert_col_exists(target_conn, s_list$query_name, intensive, "source")
-
-  # 4. Prepare CRS Logic (Projection)
-  # Initialize default geometry expressions (used if join_crs is NULL)
-  # Default to raw geometry columns (overwritten below if transformation is requested)
-  t_geom_expr <- t_geom
-  s_geom_expr <- s_geom
 
 
   # 5. Build CTE Query
