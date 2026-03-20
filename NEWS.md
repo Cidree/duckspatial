@@ -4,8 +4,6 @@
 
 -   `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (with `ddbs_collect()` or `st_as_sf()`). Every function now accepts this class as input, and it's the returned class by default. If the user wants to materialize the result in the same way `sf` would do, that can be done with `mode = "sf"` (#55, #63).
 
--   Polymorphic API: some functions such as `ddbs_area()` can be used inside {dplyr} verbs, such as `mutate(area = ddbs_area(geometry)` (#92).
-
 -   `ddbs_buffer()`: now has four new arguments: `num_triangles`, `cap_style`, `join_style`, and `mitre_limit` (#72).
 
 -   `ddbs_union()`: is split into two new functions depending on the desired behavior: `ddbs_union()` and `ddbs_union_agg()` (#77).
@@ -14,7 +12,7 @@
 
 -   `ddbs_simplify()`: tolerance defaults to 0; gains a new argument `preserve_topology` specified before `conn` (#86).
 
--   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector. For materializing a vector in R, use `mode = "sf"` (#83).
+-   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector. For materializing a vector in R, use `mode = "sf"`. This argument is also moved before `conn` argument (#83).
 
 -    `ddbs_predicate()` and colleagues: they gain new arguments: name, mode, overwrite, and quiet. When `mode = "duckspatial"`, they return a lazy tbl backed by DuckDB. When `mode = "sf"`, they return a list/matrix (#105).
 

@@ -5,10 +5,10 @@
 #' column to the dataset.
 #'
 #' @template x
-#' @template conn_null
-#' @template name
 #' @param new_column Name of the new column to store the extracted coordinate.
 #'   Defaults to `"X"` for `ddbs_x()` and `"Y"` for `ddbs_y()`.
+#' @template conn_null
+#' @template name
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -42,18 +42,18 @@ NULL
 #' @export
 ddbs_x <- function(
   x,
+  new_column = "X",
   conn = NULL,
   name = NULL,
-  new_column = "X",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -68,18 +68,18 @@ ddbs_x <- function(
 #' @export
 ddbs_y <- function(
   x,
+  new_column = "Y",
   conn = NULL,
   name = NULL,
-  new_column = "Y",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,

@@ -204,18 +204,18 @@ NULL
 #' @export
 ddbs_area <- function(
   x,
+  new_column = "area",
   conn = NULL,
   name = NULL,
-  new_column = "area",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
     
   template_measure(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -231,18 +231,18 @@ ddbs_area <- function(
 #' @export
 ddbs_length <- function(
   x,
+  new_column = "length",
   conn = NULL,
   name = NULL,
-  new_column = "length",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_measure(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -258,18 +258,18 @@ ddbs_length <- function(
 #' @export
 ddbs_perimeter <- function(
   x,
+  new_column = "perimeter",
   conn = NULL,
   name = NULL,
-  new_column = "perimeter",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
     
   template_measure(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,

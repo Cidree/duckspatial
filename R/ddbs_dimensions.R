@@ -4,9 +4,9 @@
 #' 
 #' @template x
 #' @template by_feature
+#' @template new_column
 #' @template conn_null
 #' @template name
-#' @template new_column
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -22,12 +22,7 @@
 #'   dimension typically represents a measurement along the geometry, such as distance
 #'   or time, and results in coordinates of the form (X, Y, M) or (X, Y, Z, M).
 #'
-#' @returns
-#' \itemize{
-#'   \item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
-#'   \item \code{mode = "sf"}: An eagerly collected vector in R memory.
-#'   \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
-#' }
+#' @template returns_mode
 #' 
 #' @examples
 #' \dontrun{
@@ -64,9 +59,9 @@ NULL
 ddbs_has_z <- function(
   x,
   by_feature = TRUE,
+  new_column = "has_z",
   conn = NULL,
   name = NULL,
-  new_column = "has_z",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
@@ -74,9 +69,9 @@ ddbs_has_z <- function(
   template_new_column(  
     x = x,
     by_feature = by_feature,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -93,19 +88,19 @@ ddbs_has_z <- function(
 ddbs_has_m <- function(
   x,
   by_feature = TRUE,
+  new_column = "has_m",
   conn = NULL,
   name = NULL,
-  new_column = "has_m",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(  
     x = x,
+    new_column = new_column,
     by_feature = by_feature,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,

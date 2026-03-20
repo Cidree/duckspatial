@@ -244,7 +244,7 @@ describe("ddbs_area()", {
 
     it("calculates area correctly on geographic CRS", {
       duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina", overwrite = TRUE)
-      area_ddbs <- ddbs_area("argentina", conn_test, mode = "sf")
+      area_ddbs <- ddbs_area("argentina", conn = conn_test, mode = "sf")
       area_sf   <- sf::st_area(argentina_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
@@ -253,7 +253,7 @@ describe("ddbs_area()", {
     it("calculates area correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
       duckspatial::ddbs_write_table(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
-      area_ddbs <- ddbs_area("argentina", conn_test, mode = "sf")
+      area_ddbs <- ddbs_area("argentina", conn = conn_test, mode = "sf")
       area_sf   <- sf::st_area(argentina_3857_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
@@ -554,7 +554,7 @@ describe("ddbs_length()", {
 
     it("calculates length correctly on geographic CRS", {
       duckspatial::ddbs_write_table(conn_test, rivers_sf, "rivers_4326")
-      length_ddbs <- ddbs_length("rivers_4326", conn_test, mode = "sf")
+      length_ddbs <- ddbs_length("rivers_4326", conn = conn_test, mode = "sf")
       length_sf   <- sf::st_length(rivers_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -563,7 +563,7 @@ describe("ddbs_length()", {
     it("calculates length correctly on projected CRS", {
       rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
       duckspatial::ddbs_write_table(conn_test, rivers_3857_sf, "rivers_3857")
-      length_ddbs <- ddbs_length("rivers_3857", conn_test, mode = "sf")
+      length_ddbs <- ddbs_length("rivers_3857", conn = conn_test, mode = "sf")
       length_sf   <- sf::st_length(rivers_3857_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -975,7 +975,7 @@ describe("ddbs_perimeter()", {
 
     it("calculates perimeter correctly on geographic CRS", {
       duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina", overwrite = TRUE)
-      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, mode = "sf")
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn = conn_test, mode = "sf")
       perimeter_sf   <- sf::st_perimeter(argentina_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
@@ -984,7 +984,7 @@ describe("ddbs_perimeter()", {
     it("calculates perimeter correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
       duckspatial::ddbs_write_table(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
-      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, mode = "sf")
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn = conn_test, mode = "sf")
       perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
