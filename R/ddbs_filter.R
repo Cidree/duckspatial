@@ -140,22 +140,16 @@ ddbs_filter <- function(
        assert_crs(target_conn, x_list$query_name, y_list$query_name)
     }
 
+    
     # 4. Prepare parameters for query
-    ## 4.1. predicate already validated early (sel_pred above)
-    ## 4.2. get names of geometry columns (use saved sf_col_x/y from before transformation)
+
+    ## 4.1. Get names of geometry columns (use saved sf_col_x/y from before transformation)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
-    
-    ## 4.3. get columns to return from x
-    x_rest_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
 
-
-    ## 4.4. Format column lists for SQL
-    x_rest <- if (length(x_rest_cols) > 0) paste0('v1."', x_rest_cols, '", ', collapse = '') else ""
-
-    ## 4.5. Build base query
+    ## 4.2. Build base query
     st_function <- glue::glue("v1.{x_geom}")
     if (sel_pred == "ST_DWithin") {
 
@@ -184,8 +178,7 @@ ddbs_filter <- function(
 
     base.query <- glue::glue("
         SELECT DISTINCT 
-            {x_rest} 
-            {build_geom_query(st_function, name, crs_x)} AS {x_geom}
+            v1.* REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
         FROM 
             {x_list$query_name} v1, 
             {y_list$query_name} v2

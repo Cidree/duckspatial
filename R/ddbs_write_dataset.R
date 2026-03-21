@@ -221,7 +221,7 @@ ddbs_write_dataset <- function(
   
   if (inherits(data, c("duckspatial_df", "tbl_lazy", "tbl_duckdb_connection"))) {
     # Efficient table name extraction or subquery construction
-    r_name <- dbplyr::remote_name(data)
+    r_name <- attr(data, "source_table") %||% dbplyr::remote_name(data)
     is_simple_table <- !is.null(r_name) && is.character(r_name)
     
     if (is_simple_table) {
@@ -241,7 +241,7 @@ ddbs_write_dataset <- function(
     
     has_geometry_type <- FALSE
     if (!is.null(dtypes) && "column_type" %in% names(dtypes)) {
-        has_geometry_type <- any(dtypes$column_type == "GEOMETRY")
+        has_geometry_type <- any(grepl("GEOMETRY", dtypes$column_type))
     }
     
     

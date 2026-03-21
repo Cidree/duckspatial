@@ -69,11 +69,8 @@ template_unary_ops <- function(
     ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
   
-    ## 3.3. Append all args
+    ## 3.2. Append all args
     ## if other_args is NULL, use only the geometry column name
     ## if is not NULL, append the rest of the function arguments
     if (is.null(other_args)) {
@@ -86,19 +83,19 @@ template_unary_ops <- function(
       )
     }
   
-    ## 3.4. Function-specific handling
+    ## 3.3. Function-specific handling
     if (tolower(fun) == "st_buffer") {
       crs_units <- crs_x$units_gdal
       if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
     }
   
-    ## 3.5. Build base query
+    ## 3.4. Build base query
     ## As for duckdb 1.5 - uses ST_AsWKB for data retrieved in R
     ## uses GEOMETRY('auth:code') for table creation
     st_function <- glue::glue("{fun}({args})")
     base.query <- glue::glue("
-      SELECT {x_rest}
-      {build_geom_query(st_function, name, crs_x)} as {x_geom}
+      SELECT *
+      REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
       FROM {x_list$query_name};
     ")
   
@@ -308,10 +305,7 @@ template_measure <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-  ## 3.3. Build the appropriate ST function based on fun and CRS
+  ## 3.2. Build the appropriate ST function based on fun and CRS
   ## Use spheroid version for geographic coordinates
   if (crs_units == "metre") {
       st_function <- glue::glue("{fun}({x_geom})")
@@ -320,7 +314,7 @@ template_measure <- function(
       st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({x_geom}))")
   }
   
-  ## 3.4. Determine units for output
+  ## 3.3. Determine units for output
   output_units <- switch(
     fun,
     "ST_Area" = "m^2",
@@ -328,7 +322,7 @@ template_measure <- function(
     "ST_Perimeter" = "metre"
   )
 
-  ## 3.5. Build the base query
+  ## 3.4. Build the base query
   if (mode == "sf") {
     base.query <- glue::glue("
       SELECT {st_function} AS {new_column}
@@ -337,9 +331,8 @@ template_measure <- function(
   } else {
     base.query <- glue::glue("
       SELECT 
-        {x_rest}
-        {st_function} AS {new_column},
-        {build_geom_query(x_geom, name, crs_x)} AS {x_geom}
+        * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}),
+        {st_function} AS {new_column}
       FROM 
         {x_list$query_name};
     ")
@@ -466,10 +459,7 @@ template_new_column <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-  ## 3.3. Compute if by_feature = FALSE (returns always a single value)
+  ## 3.2. Compute if by_feature = FALSE (returns always a single value)
   ## For functions ST_Has*() - if 1 is TRUE, return TRUE
   ## For functions ST_is_*() - if 1 is FALSE, return FALSE
   if (isFALSE(by_feature)) {
@@ -489,7 +479,6 @@ template_new_column <- function(
     } else {
       return(all(data_tbl[1, ]))
     }
-    
   }
 
   ## 3.3. Build the base query
@@ -503,9 +492,8 @@ template_new_column <- function(
   } else {
     base.query <- glue::glue("
       SELECT 
-        {x_rest}
-        {fun}({x_geom}) as {new_column},
-        {build_geom_query(st_function, name, crs_x)} as {x_geom}
+        * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}),
+        {fun}({x_geom}) AS {new_column}
       FROM 
         {x_list$query_name};
     ")

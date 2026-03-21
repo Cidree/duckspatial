@@ -74,7 +74,7 @@ res_extensive <- ddbs_interpolate_aw(
   sid = "source_id",
   extensive = "BIR74",
   weight = "total",
-  output = "sf"
+  mode = "sf"
 )
 ```
 
@@ -99,7 +99,7 @@ res_intensive <- ddbs_interpolate_aw(
   sid = "source_id",
   intensive = "BIR74", # Treated as density here
   weight = "sum",      # Standard behavior for intensive vars
-  output = "sf"
+  mode = "sf"
 )
 ```
 
@@ -121,7 +121,7 @@ plot(plot_data[c("Extensive_Count", "Intensive_Value")],
 
 ## 2) High Performance: Output as Tibble
 
-If you are working with massive datasets, constructing the geometry for the result `sf` object can be slow. If you only need the interpolated numbers, set `output = "tibble"`. This skips the geometry construction step and is significantly faster.
+If you are working with massive datasets, constructing the geometry for the result `sf` object can be slow. If you only need the interpolated numbers, collect the default `duckspatial_df` using `ddbs_collect(as = "tibble")`. This skips the geometry construction step and is significantly faster.
 
 ```{r}
 # Return a standard data.frame/tibble without geometry
@@ -130,9 +130,9 @@ res_tbl <- ddbs_interpolate_aw(
   source = nc,
   tid = "target_id",
   sid = "source_id",
-  extensive = "BIR74",
-  output = "tibble"
-)
+  extensive = "BIR74"
+) |> 
+  ddbs_collect(as = "tibble")
 
 head(res_tbl)
 ```
@@ -194,14 +194,14 @@ ddbs_interpolate_aw(
   weight = "total",
   name = "nc_grid_births", # <--- Writes to DB
   overwrite = TRUE,
-  output = "tibble"
+  mode = "tibble"
 )
 ```
 
 And preview this table directly in the database:
 
 ```{r}
-DBI::dbGetQuery(conn, "SELECT * FROM nc_grid_births LIMIT 5")
+as_duckspatial_df("nc_grid_births", conn)
 ```
 
 ### Cleanup

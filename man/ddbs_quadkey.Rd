@@ -78,7 +78,7 @@ is subdivided into four smaller tiles at the next zoom level. This function
 wraps DuckDB's ST_QuadKey spatial function to generate these tiles from input geometries.
 
 Note that creating a table inside the connection will generate a non-spatial table, and
-therefore, it cannot be read with \code{ddbs_read_vector()}.
+therefore, it cannot be read with \link{ddbs_read_table}.
 }
 \examples{
 \dontrun{

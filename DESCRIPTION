@@ -37,7 +37,7 @@ Imports:
     DBI,
     dbplyr (>= 2.0.0),
     dplyr,
-    duckdb,
+    duckdb (>= 1.5.0),
     geoarrow,
     glue,
     lifecycle,
@@ -61,6 +61,7 @@ Suggests:
     quadkeyr,
     quarto,
     rmarkdown,
+    scales,
     terra,
     testthat (>= 3.0.0)
 VignetteBuilder: quarto

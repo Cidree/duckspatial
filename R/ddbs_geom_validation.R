@@ -5,9 +5,9 @@
 #' geometries using DuckDB's spatial extension.
 #' 
 #' @template x
+#' @template new_column
 #' @template conn_null
 #' @template name
-#' @template new_column
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -83,18 +83,18 @@ NULL
 #' @export
 ddbs_is_simple <- function(
   x,
+  new_column = "is_simple",
   conn = NULL,
   name = NULL,
-  new_column = "is_simple",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -111,18 +111,18 @@ ddbs_is_simple <- function(
 #' @export
 ddbs_is_valid <- function(
   x,
+  new_column = "is_valid",
   conn = NULL,
   name = NULL,
-  new_column = "is_valid",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -138,18 +138,18 @@ ddbs_is_valid <- function(
 #' @export
 ddbs_is_closed <- function(
   x,
+  new_column = "is_closed",
   conn = NULL,
   name = NULL,
-  new_column = "is_closed",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -165,18 +165,18 @@ ddbs_is_closed <- function(
 #' @export
 ddbs_is_empty <- function(
   x,
+  new_column = "is_empty",
   conn = NULL,
   name = NULL,
-  new_column = "is_empty",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -193,18 +193,18 @@ ddbs_is_empty <- function(
 #' @export
 ddbs_is_ring <- function(
   x,
+  new_column = "is_ring",
   conn = NULL,
   name = NULL,
-  new_column = "is_ring",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_new_column(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,

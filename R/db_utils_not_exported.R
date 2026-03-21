@@ -428,6 +428,13 @@ get_query_list <- function(x, conn) {
         return(result)
       }
     }
+    ## Test duckdb 1.5
+    x_list <- get_query_name(source_table)
+    if (!is.null(x_list$table_name)) {
+      x_list$cleanup <- function() NULL
+      x_list$owned <- TRUE
+      return(x_list)
+    }
     ## Modified by dplyr verbs: render to a new temp view
     temp_view_name <- ddbs_temp_view_name()
     query_sql <- dbplyr::sql_render(x, con = conn)
@@ -1009,23 +1016,24 @@ ddbs_handle_query <- function(
 
     # Open lazily as duckspatial_df
     # This could be replaced by ddbs_open_table()
-    lazy_tbl <- dplyr::tbl(conn, view_name)
+    # lazy_tbl <- dplyr::tbl(conn, view_name)
 
     result <- new_duckspatial_df(
-      lazy_tbl, 
+      view_name, 
       crs = crs, 
       geom_col = x_geom, 
-      source_table = ddbs_temp_view_name()
+      source_table = view_name,
+      source_conn = conn
     )
 
     ## TODO - REVIEW FOR DUCKDB 1.5
     ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
     ## when building the duckspatial_df. Now we convert it back to geometry
-    DBI::dbExecute(conn, glue::glue("
-      ALTER TABLE {dbplyr::remote_name(result)}
-      ALTER COLUMN {x_geom} SET DATA TYPE GEOMETRY
-      USING ST_GeomFROMWKB({x_geom});
-    "))
+    # DBI::dbExecute(conn, glue::glue("
+    #   ALTER TABLE {dbplyr::remote_name(result)}
+    #   ALTER COLUMN {x_geom} SET DATA TYPE GEOMETRY
+    #   USING ST_GeomFROMWKB({x_geom});
+    # "))
     
     return(result)
   }
@@ -1213,6 +1221,7 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
     # Note: Character inputs will return NULL from get_conn_from_input
     source_conn_x <- conn_x %||% get_conn_from_input(x)
     source_conn_y <- conn_y %||% get_conn_from_input(y)
+    source_conn_ds <- attr(x, "source_conn")
     
     # 2. Determine target connection
     # Priority: explicit conn > conn_x > conn_y > default
@@ -1222,8 +1231,10 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
         source_conn_x
     } else if (!is.null(source_conn_y)) {
         source_conn_y
+    } else if (!is.null(source_conn_ds)) {
+      source_conn_ds
     } else {
-        ddbs_default_conn()
+      ddbs_default_conn()
     }
   
     
@@ -1324,8 +1335,9 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 #'
 #' @keywords internal
 #' @noRd
-build_geom_query <- function(fun, name, crs) {
-  if (is.null(name)) {
+build_geom_query <- function(fun, name, crs, mode) {
+  ## Get mode
+  if (is.null(name) && mode == "sf") {
     ## If not creating a table, fallback to BLOB
     glue::glue("ST_AsWKB({fun})")
   } else {
@@ -1434,7 +1446,7 @@ build_union_query <- function(
   y_query = NULL) {
 
   parts     <- build_union_sql(by_feature, x_geom, y_geom, x_query, y_query)
-  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs)} as {parts$geom_alias}")
+  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs, mode)} as {parts$geom_alias}")
 
   if (!is.null(y_query)) {
     row_id  <- if (by_feature) "ROW_NUMBER() OVER () as row_id," else "1 as row_id,"

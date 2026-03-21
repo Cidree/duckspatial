@@ -34,7 +34,7 @@
 #' )
 #'
 #' # option 1: convert data frame to sf object
-#' cities_ddbs <- ddbs_as_spatial(cities_df)
+#' cities_ddbs <- ddbs_as_points(cities_df)
 #'
 #' # specify custom coordinate column names
 #' cities_df2 <- data.frame(
@@ -43,7 +43,7 @@
 #'   latitude = c(-32.8895, -26.8241)
 #' )
 #' 
-#' ddbs_as_spatial(cities_df2, coords = c("longitude", "latitude"))
+#' ddbs_as_points(cities_df2, coords = c("longitude", "latitude"))
 #'
 #'
 #' ## option 2: convert table in duckdb to spatial table
@@ -53,7 +53,7 @@
 #' DBI::dbWriteTable(conn, "cities_tbl", cities_df, overwrite = TRUE)
 #'
 #' # convert to spatial table in database
-#' ddbs_as_spatial(
+#' ddbs_as_points(
 #'     x = "cities_tbl",
 #'     conn = conn,
 #'     name = "cities_spatial",
@@ -63,7 +63,7 @@
 #' # read the spatial table
 #' ddbs_read_table(conn, "cities_spatial")
 #' }
-ddbs_as_spatial <- function(
+ddbs_as_points <- function(
     x,
     coords = c("lon", "lat"),
     crs = "EPSG:4326",
@@ -109,17 +109,14 @@ ddbs_as_spatial <- function(
 
     # 3. Prepare parameters for the query
 
-    ## 3.1. Get column names
-    all_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.2. Coords as character
+    ## 3.1. Coords as character
     coords_str <- paste0(coords,  collapse = ", ")
   
-    ## 3.3. Build base query
+    ## 3.2. Build base query
     st_function <- glue::glue("ST_Point({coords_str})")
     base.query <- glue::glue("
-      SELECT {all_cols}
-      {build_geom_query(st_function, name, crs)} as geometry
+      SELECT *,
+      {build_geom_query(st_function, name, crs, mode)} as geometry
       FROM {x_list$query_name};
     ")    
 

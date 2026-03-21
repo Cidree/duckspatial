@@ -327,7 +327,7 @@ test_that("ddbs_interpolate_aw throws errors for missing arguments", {
 # -------------------------------------------------------------------------
 # Edge Cases (CRS Mismatch, Disjoint)
 # -------------------------------------------------------------------------
-## TODO - second test failing
+
 test_that("ddbs_interpolate_aw errors on CRS mismatch if join_crs is NULL", {
   # Create version with different CRS (Mercator)
   wards_3857 <- sf::st_transform(wards, 3857)
@@ -343,7 +343,6 @@ test_that("ddbs_interpolate_aw errors on CRS mismatch if join_crs is NULL", {
   )
   
   # 2. Should succeed if we provide join_crs (forcing reprojection of both to common CRS)
-  testthat::skip()
   expect_no_error(
     ddbs_interpolate_aw(
       target = wards_3857, source = race, tid = "WARD", sid = "GEOID",

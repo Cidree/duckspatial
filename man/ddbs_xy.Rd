@@ -8,9 +8,9 @@
 \usage{
 ddbs_x(
   x,
+  new_column = "X",
   conn = NULL,
   name = NULL,
-  new_column = "X",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -18,9 +18,9 @@ ddbs_x(
 
 ddbs_y(
   x,
+  new_column = "Y",
   conn = NULL,
   name = NULL,
-  new_column = "Y",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -36,6 +36,9 @@ ddbs_y(
 }
 Data is returned from this object.}
 
+\item{new_column}{Name of the new column to store the extracted coordinate.
+Defaults to \code{"X"} for \code{ddbs_x()} and \code{"Y"} for \code{ddbs_y()}.}
+
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
@@ -43,9 +46,6 @@ runs on a temporary DuckDB database.}
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{new_column}{Name of the new column to store the extracted coordinate.
-Defaults to \code{"X"} for \code{ddbs_x()} and \code{"Y"} for \code{ddbs_y()}.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

@@ -11,9 +11,9 @@
 \usage{
 ddbs_is_simple(
   x,
+  new_column = "is_simple",
   conn = NULL,
   name = NULL,
-  new_column = "is_simple",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -21,9 +21,9 @@ ddbs_is_simple(
 
 ddbs_is_valid(
   x,
+  new_column = "is_valid",
   conn = NULL,
   name = NULL,
-  new_column = "is_valid",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -31,9 +31,9 @@ ddbs_is_valid(
 
 ddbs_is_closed(
   x,
+  new_column = "is_closed",
   conn = NULL,
   name = NULL,
-  new_column = "is_closed",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -41,9 +41,9 @@ ddbs_is_closed(
 
 ddbs_is_empty(
   x,
+  new_column = "is_empty",
   conn = NULL,
   name = NULL,
-  new_column = "is_empty",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -51,9 +51,9 @@ ddbs_is_empty(
 
 ddbs_is_ring(
   x,
+  new_column = "is_ring",
   conn = NULL,
   name = NULL,
-  new_column = "is_ring",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -69,6 +69,9 @@ ddbs_is_ring(
 }
 Data is returned from this object.}
 
+\item{new_column}{Name of the new column to create on the input data. Ignored
+with \code{mode = "sf"}.}
+
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
@@ -76,9 +79,6 @@ runs on a temporary DuckDB database.}
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{new_column}{Name of the new column to create on the input data. Ignored
-with \code{mode = "sf"}.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

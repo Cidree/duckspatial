@@ -62,3 +62,5 @@ test_that("duckspatial_df uses efficient SQL render fallback when source_table i
   # or at least wouldn't reflect the SQL query "AREA > 0", because it would be serving
   # materialized data (points/polygons) from the Arrow stream.
 })
+
+

@@ -204,18 +204,18 @@ NULL
 #' @export
 ddbs_area <- function(
   x,
+  new_column = "area",
   conn = NULL,
   name = NULL,
-  new_column = "area",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
     
   template_measure(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -231,18 +231,18 @@ ddbs_area <- function(
 #' @export
 ddbs_length <- function(
   x,
+  new_column = "length",
   conn = NULL,
   name = NULL,
-  new_column = "length",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
   
   template_measure(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -258,18 +258,18 @@ ddbs_length <- function(
 #' @export
 ddbs_perimeter <- function(
   x,
+  new_column = "perimeter",
   conn = NULL,
   name = NULL,
-  new_column = "perimeter",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
     
   template_measure(
     x = x,
+    new_column = new_column,
     conn = conn,
     name = name,
-    new_column = new_column,
     mode = mode,
     overwrite = overwrite,
     quiet = quiet,
@@ -438,7 +438,13 @@ ddbs_distance <- function(
   ## 3.3. Select the right coordinates order
   # st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
   if (dist_type %in% c("haversine", "spheroid")) {
-    st_distance_fun <- glue::glue("{st_distance_fun}(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates( y.{y_geom}))")
+    # Here we flip the coordinates, but this will have to changed when spatial updates
+    st_distance_fun <- glue::glue(
+      "{st_distance_fun}(
+        ST_Point(ST_Y(x.{x_geom}), ST_X(x.{x_geom})),
+        ST_Point(ST_Y(y.{y_geom}), ST_X(y.{y_geom}))
+      )"
+    )
   } else {
     st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
   }

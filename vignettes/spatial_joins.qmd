@@ -4,7 +4,7 @@ date: "`r Sys.Date()`"
 code-annotations: hover
 urlcolor: blue
 vignette: >
-  %\VignetteIndexEntry{Benchmark}
+  %\VignetteIndexEntry{Spatial joins}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 execute:

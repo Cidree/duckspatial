@@ -10,9 +10,9 @@
 \usage{
 ddbs_area(
   x,
+  new_column = "area",
   conn = NULL,
   name = NULL,
-  new_column = "area",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -20,9 +20,9 @@ ddbs_area(
 
 ddbs_length(
   x,
+  new_column = "length",
   conn = NULL,
   name = NULL,
-  new_column = "length",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -30,9 +30,9 @@ ddbs_length(
 
 ddbs_perimeter(
   x,
+  new_column = "perimeter",
   conn = NULL,
   name = NULL,
-  new_column = "perimeter",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -56,6 +56,9 @@ ddbs_distance(
 \arguments{
 \item{x}{Input geometry (sf object, duckspatial_df, or table name in DuckDB)}
 
+\item{new_column}{Name of the new column to create on the input data. Ignored
+with \code{mode = "sf"}.}
+
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
@@ -63,9 +66,6 @@ runs on a temporary DuckDB database.}
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{new_column}{Name of the new column to create on the input data. Ignored
-with \code{mode = "sf"}.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{
