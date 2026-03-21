@@ -61,6 +61,7 @@ Suggests:
     quadkeyr,
     quarto,
     rmarkdown,
+    scales,
     terra,
     testthat (>= 3.0.0)
 VignetteBuilder: quarto
