@@ -184,7 +184,7 @@ ddbs_envelope <- function(
     base.query <- glue::glue("
         SELECT 
             {x_rest}
-            {build_geom_query(st_envelope_clause, name, crs_x)} as {x_geom}
+            {build_geom_query(st_envelope_clause, name, crs_x, mode)} as {x_geom}
         FROM 
             {x_list$query_name};
     ")
@@ -327,9 +327,6 @@ ddbs_bbox <- function(
     ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
     ## 3.3. Build base query - set the extent_clause
     if (isTRUE(by_feature)) {

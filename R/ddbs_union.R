@@ -352,7 +352,7 @@ ddbs_combine <- function(
     st_function <- glue::glue("ST_Collect(LIST({x_geom}))")
     base.query <- glue::glue("
       SELECT
-        {build_geom_query(st_function, name, crs_x)} AS {x_geom}
+        {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
       FROM
         {x_list$query_name};
     ")
@@ -461,7 +461,7 @@ ddbs_union_agg <- function(
   base.query <- glue::glue("
     SELECT 
       {by_cols},
-      {build_geom_query(st_function, name, crs_x)} AS {x_geom}
+      {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
     FROM 
       {x_list$query_name}
     GROUP BY 

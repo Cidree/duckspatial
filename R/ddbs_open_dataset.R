@@ -101,12 +101,12 @@ ddbs_open_dataset <- function(path,
       if (is.null(geom_col)) {
         glue::glue("
             CREATE OR REPLACE TEMPORARY TABLE {name} AS 
-            SELECT * FROM {from}
+            SELECT * FROM {from};
         ")
       } else {
           glue::glue("
             CREATE OR REPLACE TEMPORARY TABLE {name} AS 
-            SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col}) FROM {from}
+            SELECT * FROM {from};
         ")
       }
       
@@ -389,29 +389,33 @@ ddbs_open_dataset <- function(path,
         "x" = msg
     ), call = fn_call)
   })
-  
-    # Get data lazily
-    duck_tbl <- dplyr::tbl(conn, view_name)
 
     # Return already if there's no geometry
-    if (is.null(geom_col)) return(duck_tbl)
+    if (is.null(geom_col)) return(dplyr::tbl(conn, view_name))
     
     # Return duckspatial if there's geometry col
     result <- new_duckspatial_df(
-        duck_tbl, 
-        crs = crs, 
-        geom_col = geom_col, 
-        source_table = view_name
+      view_name, 
+      crs = crs, 
+      geom_col = geom_col, 
+      source_table = view_name,
+      source_conn = conn
     )
+    # result <- new_duckspatial_df(
+    #     duck_tbl, 
+    #     crs = crs, 
+    #     geom_col = geom_col, 
+    #     source_table = view_name
+    # )
     
-    ## DuckDB v1.5:
-    ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
-    ## when building the duckspatial_df. Now we convert it back to geometry
-    DBI::dbExecute(conn, glue::glue("
-        ALTER TABLE {dbplyr::remote_name(result)}
-        ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
-        USING ST_GeomFROMWKB({geom_col});
-    "))
+    # ## DuckDB v1.5:
+    # ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
+    # ## when building the duckspatial_df. Now we convert it back to geometry
+    # DBI::dbExecute(conn, glue::glue("
+    #     ALTER TABLE {dbplyr::remote_name(result)}
+    #     ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
+    #     USING ST_GeomFROMWKB({geom_col});
+    # "))
 
     
 

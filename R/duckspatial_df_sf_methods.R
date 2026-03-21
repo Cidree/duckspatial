@@ -230,9 +230,10 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   
   ## print preview
   tryCatch({
-    remote_name <- dbplyr::remote_name(x)
+    remote_name <- attr(x, "source_table")
+    remote_conn <- attr(x, "source_conn") %||% dbplyr::remote_con(x)
     head_data <- dplyr::tbl(
-      dbplyr::remote_con(x),
+      remote_conn,
       dplyr::sql(glue::glue("SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
       FROM {remote_name} LIMIT {n}"))
     )

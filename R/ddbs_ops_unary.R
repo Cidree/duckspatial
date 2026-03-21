@@ -777,7 +777,7 @@ ddbs_transform <- function(
     base.query <- glue::glue("
         SELECT 
             {x_rest}
-            {build_geom_query(st_function, name, crs_y)} as {x_geom} 
+            {build_geom_query(st_function, name, crs_y, mode)} as {x_geom} 
         FROM 
             {x_list$query_name};
     ")
@@ -988,7 +988,7 @@ ddbs_polygonize <- function(
     st_function <- glue::glue("ST_Polygonize(LIST({x_geom}))")
     base.query <- glue::glue("
       SELECT 
-        {build_geom_query(st_function, name, crs_x)} as {x_geom}
+        {build_geom_query(st_function, name, crs_x, mode)} as {x_geom}
       FROM 
         {x_list$query_name};
     ")

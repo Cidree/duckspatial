@@ -182,7 +182,7 @@ ddbs_rotate <- function(
     ## 3.6. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(rotation_expr, name, crs_x)} as {x_geom}
+      {build_geom_query(rotation_expr, name, crs_x, mode)} as {x_geom}
       FROM {x_list$query_name};
     ")
 
@@ -566,7 +566,7 @@ ddbs_flip <- function(
     ## 3.4. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(flip_expr, name, crs_x)} as {x_geom}
+      {build_geom_query(flip_expr, name, crs_x, mode)} as {x_geom}
       FROM {x_list$query_name};
     ")
   
@@ -753,7 +753,7 @@ ddbs_scale <- function(
     ## 3.4. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(scale_expr, name, crs_x)} as {x_geom}
+      {build_geom_query(scale_expr, name, crs_x, mode)} as {x_geom}
       FROM {x_list$query_name};
     ")
 
@@ -937,7 +937,7 @@ ddbs_shear <- function(
     ## 3.4. Build base query
     base.query <- glue::glue("
       SELECT {x_rest}
-      {build_geom_query(shear_expr, name, crs_x)} as {x_geom}
+      {build_geom_query(shear_expr, name, crs_x, mode)} as {x_geom}
       FROM {x_list$query_name};
     ")
 

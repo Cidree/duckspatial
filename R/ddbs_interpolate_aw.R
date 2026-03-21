@@ -393,7 +393,7 @@ ddbs_interpolate_aw <- function(
   final_select <- glue::glue("
     SELECT
       {t_cols_select}
-      {build_geom_query(st_function, name, t_crs)} as {t_geom},
+      {build_geom_query(st_function, name, t_crs, mode)} as {t_geom},
       av.* EXCLUDE (tid)
     FROM {t_list$query_name} tgt
     {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
@@ -401,7 +401,7 @@ ddbs_interpolate_aw <- function(
   table_select <- glue::glue("
     SELECT
       {t_cols_select}
-      {build_geom_query(st_function, name, t_crs)} as {t_geom},
+      {build_geom_query(st_function, name, t_crs, mode)} as {t_geom},
       av.* EXCLUDE (tid)
     FROM {t_list$query_name} tgt
     {final_join_type} aggregated_values av ON tgt.{tid} = av.tid

@@ -109,17 +109,14 @@ ddbs_as_spatial <- function(
 
     # 3. Prepare parameters for the query
 
-    ## 3.1. Get column names
-    all_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.2. Coords as character
+    ## 3.1. Coords as character
     coords_str <- paste0(coords,  collapse = ", ")
   
-    ## 3.3. Build base query
+    ## 3.2. Build base query
     st_function <- glue::glue("ST_Point({coords_str})")
     base.query <- glue::glue("
-      SELECT {all_cols}
-      {build_geom_query(st_function, name, crs)} as geometry
+      SELECT *,
+      {build_geom_query(st_function, name, crs, mode)} as geometry
       FROM {x_list$query_name};
     ")    
 

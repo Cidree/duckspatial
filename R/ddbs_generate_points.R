@@ -113,7 +113,7 @@ ddbs_generate_points <- function(
   ## 2.2. Build base query  
   st_function <- "ST_Point(x, y)"
   base.query <- glue::glue("
-    SELECT {build_geom_query(st_function, name, crs_x)} as geometry
+    SELECT {build_geom_query(st_function, name, crs_x, mode)} as geometry
     FROM {view_name_tbl};
   ")  
 

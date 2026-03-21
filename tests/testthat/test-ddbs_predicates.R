@@ -136,8 +136,6 @@ describe("ddbs_predicate()", {
     })
     
     it("works with dwithin predicate", {
-      ## DWithin_Spheroid has changed in Duckdb v1.5
-      testthat::skip()
       point_sf <- ddbs_collect(points_ddbs)[1, ]
       output_predicate <- ddbs_predicate(point_sf, points_ddbs, predicate = "dwithin", distance = 100) |> collect()
       output_function  <- ddbs_is_within_distance(point_sf, points_ddbs, distance = 100) |> collect()
