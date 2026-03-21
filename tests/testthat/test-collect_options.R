@@ -20,7 +20,7 @@ test_that("collect.duckspatial_df respects global options", {
   on.exit(options(op_orig), add = TRUE)
   
   # 1. Default (sf) behavior when option is "duckspatial_df" (default)
-  ddbs_options(output_type = "duckspatial_df")
+  ddbs_options(output_type = "sf")
   res <- dplyr::collect(x)
   expect_s3_class(res, "sf")
   
@@ -41,4 +41,39 @@ test_that("collect.duckspatial_df respects global options", {
   ddbs_options(output_type = "tibble")
   res_sf <- dplyr::collect(x, as = "sf")
   expect_s3_class(res_sf, "sf")
+})
+
+
+
+test_that("duckspatial.mode works as expected", {
+  skip_if_not_installed("sf")
+  
+  # Setup data
+  x <- ddbs_open_dataset(
+    system.file("spatial/argentina.geojson", 
+    package = "duckspatial")
+  )
+  
+  # Save original option
+  op_orig <- options()
+  on.exit(options(op_orig), add = TRUE)
+  
+  # 1. Mode = "sf"
+  ddbs_options(mode = "sf")
+  res <- ddbs_centroid(x)
+  expect_s3_class(res, "sf")
+  
+  # 2. Mode = "sf" on operations that return a vector
+  res <- ddbs_area(x)
+  expect_s3_class(res, "units")
+
+  # 3. Mode = "sf" on operations that return a list
+  res <- ddbs_intersects(x, x)
+  expect_type(res, "list")
+  
+  # 4. Default mode (duckspatial)
+  ddbs_options(mode = "duckspatial")
+  res <- ddbs_centroid(x)
+  expect_s3_class(res, "duckspatial_df")
+
 })
