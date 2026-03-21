@@ -16,17 +16,20 @@
 
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
-    "Important: 'crs_column' and 'crs' arguments are deprecated and will be removed in the next version.\n",
-    "If possible, use the default values of these arguments to avoid future issues."
+    "duckspatial 1.0.0 attached",
+    "\n* Compatible with DuckDB v1.5.0",
+    "\n* This release introduces breaking changes",
+    "\n* See full release notes for migration guidance"
   )
 
   # Notify about default output change
-  if (identical(getOption("duckspatial.output_type"), "duckspatial_df")) {
-    packageStartupMessage(
-      "\nNotice: duckspatial functions now return lazy 'duckspatial_df' (dbplyr) objects by default instead of standard 'sf' objects.",
-      "\nTo restore previous behavior, run: ddbs_options(output_type = 'sf')"
+  packageStartupMessage(
+      "\nDefault output has changed:",
+      "\n  duckspatial now returns lazy `duckspatial_df` (dbplyr) objects",
+      "\n  instead of `sf` objects.",
+      "\n\nTo restore the previous behaviour:",
+      "\n  ddbs_options(duckspatial.mode = 'sf')"
     )
-  }
 }
 
 .onUnload <- function(libpath) {
