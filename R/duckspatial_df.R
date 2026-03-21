@@ -28,8 +28,10 @@ new_duckspatial_df <- function(
 
     if (!is.null(geom_type) && grepl("BLOB", geom_type)) {
 
+      # Here we won't have a source table, so we will need to create it
       source_table <- ddbs_temp_view_name()
 
+      # Get the CRS to cast the geometry column correctly
       data_crs   <- sf::st_crs(crs, parameters = TRUE)
       if (length(data_crs) == 0) {
           geom_field <- glue::glue("GEOMETRY")
@@ -37,9 +39,10 @@ new_duckspatial_df <- function(
           geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
       }
 
-      # Use sql_render instead of view_name
+      # Use sql_render to extract the query
       inner_query <- dbplyr::sql_render(x)
 
+      # Create the table that will be returned as source_table
       DBI::dbExecute(
         source_conn,
         glue::glue("
@@ -49,6 +52,7 @@ new_duckspatial_df <- function(
         )
       )
       
+      # Handle as a duckdb table in the next step
       x <- source_table
     }
   }
@@ -58,14 +62,17 @@ new_duckspatial_df <- function(
   if (is.character(x)) {
     
     # First, we cast to BLOB the first rows creating a temporary view
+    # The temp view is used only for printing purposes, so we don't need
+    # to store all the data. Therefore, we can just take a maximum of 20 rows
+    # That message up will be added with duckdb 1.5.1
     view_name <- ddbs_temp_view_name()
     DBI::dbExecute(
       source_conn,
       glue::glue("
-      CREATE TEMP VIEW {view_name} AS
-      SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
-      FROM {x};")
-    )
+        CREATE TEMP VIEW {view_name} AS
+        SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
+        FROM {x};")
+      )
 
     x <- dplyr::tbl(source_conn, view_name)
 

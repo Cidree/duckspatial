@@ -554,9 +554,9 @@ distinct.duckspatial_df <- function(.data, ..., .keep_all = FALSE) {
 # But often generic joins dispatch to dbplyr methods directly.
 # Let's enable generic join methods just in case to verify attributes.
 
-#' @rdname duckspatial_df_dplyr
-#' @export
-#' @importFrom dplyr left_join
+# #' @rdname duckspatial_df_dplyr
+# #' @export
+# #' @importFrom dplyr left_join
 # left_join.duckspatial_df <- function(x, y, by = NULL, copy = FALSE, 
 #                                       suffix = c(".x", ".y"), ...,
 #                                       keep = NULL, na_matches = c("na", "never"),
