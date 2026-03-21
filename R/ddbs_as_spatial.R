@@ -34,7 +34,7 @@
 #' )
 #'
 #' # option 1: convert data frame to sf object
-#' cities_ddbs <- ddbs_as_spatial(cities_df)
+#' cities_ddbs <- ddbs_as_points(cities_df)
 #'
 #' # specify custom coordinate column names
 #' cities_df2 <- data.frame(
@@ -43,7 +43,7 @@
 #'   latitude = c(-32.8895, -26.8241)
 #' )
 #' 
-#' ddbs_as_spatial(cities_df2, coords = c("longitude", "latitude"))
+#' ddbs_as_points(cities_df2, coords = c("longitude", "latitude"))
 #'
 #'
 #' ## option 2: convert table in duckdb to spatial table
@@ -53,7 +53,7 @@
 #' DBI::dbWriteTable(conn, "cities_tbl", cities_df, overwrite = TRUE)
 #'
 #' # convert to spatial table in database
-#' ddbs_as_spatial(
+#' ddbs_as_points(
 #'     x = "cities_tbl",
 #'     conn = conn,
 #'     name = "cities_spatial",
@@ -63,7 +63,7 @@
 #' # read the spatial table
 #' ddbs_read_table(conn, "cities_spatial")
 #' }
-ddbs_as_spatial <- function(
+ddbs_as_points <- function(
     x,
     coords = c("lon", "lat"),
     crs = "EPSG:4326",

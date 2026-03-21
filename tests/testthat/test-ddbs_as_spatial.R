@@ -21,7 +21,7 @@ cities_tbl <- data.frame(
 DBI::dbWriteTable(conn_test, "cities", cities_tbl)
 
 
-# 1. ddbs_as_spatial() -------------------------------------------------------
+# 1. ddbs_as_points() -------------------------------------------------------
 
 ## - CHECK 1.1: ddbs returns different outputs (duckspatial_df, geoarrow, sf, tbl)
 ## - CHECK 1.2: messages work
@@ -29,34 +29,34 @@ DBI::dbWriteTable(conn_test, "cities", cities_tbl)
 ## - CHECK 1.4: different column names, and CRS
 ## - CHECK 2.1: specific errors
 ## - CHECK 2.2: general errors
-describe("ddbs_as_spatial()", {
+describe("ddbs_as_points()", {
 
   ### EXPECTED BEHAVIOR -------------------------------------------------
 
   describe("expected behavior", {
 
     it("returns different output formats", {
-      output_ddbs_fmt <- ddbs_as_spatial(cities_tbl)
-      output_sf_fmt <- ddbs_as_spatial(cities_tbl, mode = "sf")
+      output_ddbs_fmt <- ddbs_as_points(cities_tbl)
+      output_sf_fmt <- ddbs_as_points(cities_tbl, mode = "sf")
 
       expect_s3_class(output_ddbs_fmt, "duckspatial_df")
       expect_s3_class(output_sf_fmt, "sf")
     })
 
     it("shows and suppresses messages correctly", {
-      expect_no_message(ddbs_as_spatial(cities_tbl))
-      expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial"))
-      expect_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE))
-      expect_true(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial2"))
+      expect_no_message(ddbs_as_points(cities_tbl))
+      expect_message(ddbs_as_points("cities", conn = conn_test, name = "as_spatial"))
+      expect_message(ddbs_as_points("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE))
+      expect_true(ddbs_as_points("cities", conn = conn_test, name = "as_spatial2"))
 
-      expect_no_message(ddbs_as_spatial(cities_tbl, quiet = TRUE))
-      expect_no_message(ddbs_as_spatial("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE, quiet = TRUE))
+      expect_no_message(ddbs_as_points(cities_tbl, quiet = TRUE))
+      expect_no_message(ddbs_as_points("cities", conn = conn_test, name = "as_spatial", overwrite = TRUE, quiet = TRUE))
     })
 
     it("writes tables correctly to DuckDB", {
       output_tbl <- ddbs_read_table(conn_test, "as_spatial")
       expect_equal(
-        ddbs_collect(ddbs_as_spatial(cities_tbl))$geometry,
+        ddbs_collect(ddbs_as_points(cities_tbl))$geometry,
         output_tbl$geometry
       )
     })
@@ -71,7 +71,7 @@ describe("ddbs_as_spatial()", {
         ) |> 
         sf::st_drop_geometry()
 
-      output_3857 <- ddbs_as_spatial(
+      output_3857 <- ddbs_as_points(
         cities_3857,
         coords = c("xx", "yy"),
         crs = "EPSG:3857"
@@ -86,40 +86,40 @@ describe("ddbs_as_spatial()", {
   describe("errors", {
 
     it("validates coords argument", {
-      expect_error(ddbs_as_spatial(cities_tbl, coords = c("longitude", "latitude")))
-      expect_error(ddbs_as_spatial(cities_tbl, coords = c("longitude", "latitude", "z")))
+      expect_error(ddbs_as_points(cities_tbl, coords = c("longitude", "latitude")))
+      expect_error(ddbs_as_points(cities_tbl, coords = c("longitude", "latitude", "z")))
     })
 
     it("validates CRS argument", {
-      expect_error(ddbs_as_spatial(cities_tbl, crs = "NICE_CRS"))
+      expect_error(ddbs_as_points(cities_tbl, crs = "NICE_CRS"))
     })
 
     it("requires connection when using table names", {
-      expect_error(ddbs_as_spatial("cities", conn = NULL))
+      expect_error(ddbs_as_points("cities", conn = NULL))
     })
 
     it("validates x argument type", {
-      expect_error(ddbs_as_spatial(x = 999))
+      expect_error(ddbs_as_points(x = 999))
     })
 
     it("validates conn argument type", {
-      expect_error(ddbs_as_spatial(cities_tbl, conn = 999))
+      expect_error(ddbs_as_points(cities_tbl, conn = 999))
     })
 
     it("validates overwrite argument type", {
-      expect_error(ddbs_as_spatial(cities_tbl, overwrite = 999))
+      expect_error(ddbs_as_points(cities_tbl, overwrite = 999))
     })
 
     it("validates quiet argument type", {
-      expect_error(ddbs_as_spatial(cities_tbl, quiet = 999))
+      expect_error(ddbs_as_points(cities_tbl, quiet = 999))
     })
 
     it("validates table name exists", {
-      expect_error(ddbs_as_spatial(x = "999", conn = conn_test))
+      expect_error(ddbs_as_points(x = "999", conn = conn_test))
     })
 
     it("requires name to be single character string", {
-      expect_error(ddbs_as_spatial(cities_tbl, conn = conn_test, name = c('banana', 'banana')))
+      expect_error(ddbs_as_points(cities_tbl, conn = conn_test, name = c('banana', 'banana')))
     })
   })
 })
