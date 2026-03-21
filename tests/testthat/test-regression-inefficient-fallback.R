@@ -13,10 +13,11 @@ test_that("duckspatial_df uses efficient SQL render fallback when source_table i
   # This typically results in source_table=NULL in as_duckspatial_df
   # providing we do it in a way that generates a query.
   
-  lazy_tbl <- dplyr::tbl(conn, "nc_test") |> dplyr::filter(AREA > 0)
+  # lazy_tbl <- dplyr::tbl(conn, "nc_test") |> dplyr::filter(AREA > 0)
   
-  # Ensure it is a duckspatial_df
-  ds <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  # # Ensure it is a duckspatial_df
+  # ds <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  ds <- as_duckspatial_df("nc_test", conn) |> dplyr::filter(AREA > 0)
   
   # Manually ensure source_table is NULL to force the fallback path logic
   attr(ds, "source_table") <- NULL
@@ -61,3 +62,5 @@ test_that("duckspatial_df uses efficient SQL render fallback when source_table i
   # or at least wouldn't reflect the SQL query "AREA > 0", because it would be serving
   # materialized data (points/polygons) from the Arrow stream.
 })
+
+

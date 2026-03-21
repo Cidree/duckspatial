@@ -4,13 +4,7 @@
 \alias{ddbs_glimpse}
 \title{Check first rows of the data}
 \usage{
-ddbs_glimpse(
-  conn,
-  name,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
-  quiet = FALSE
-)
+ddbs_glimpse(conn, name, quiet = FALSE)
 }
 \arguments{
 \item{conn}{A \code{DBIConnection} object to a DuckDB database}
@@ -19,13 +13,6 @@ ddbs_glimpse(
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}

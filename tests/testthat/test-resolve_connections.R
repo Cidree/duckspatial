@@ -12,8 +12,10 @@ test_that("resolve_spatial_connections handles single connection correctly", {
   # We need get_conn_from_input to work. It uses dbplyr::remote_con(x) for tbl_lazy/duckspatial_df
   # For the test, we can use real tables to avoid mocking internals that might fail
   ddbs_write_table(conn, sf::st_sf(geom=sf::st_sfc(sf::st_point(1:2)), crs=4326), "t1")
-  t1_df <- dplyr::tbl(conn, "t1")
-  t2_df <- dplyr::tbl(conn, "t1") # reuse
+  # t1_df <- dplyr::tbl(conn, "t1")
+  # t2_df <- dplyr::tbl(conn, "t1") # reuse
+  t1_df <- as_duckspatial_df("t1", conn)
+  t2_df <- as_duckspatial_df("t1", conn) # reuse
   
   res2 <- resolve_spatial_connections(t1_df, t2_df)
   expect_identical(res2$conn, conn)
@@ -42,7 +44,8 @@ test_that("resolve_spatial_connections handles cross-connection correctly", {
   expect_false(res$y == "t2") # imported view name
   
   # Verify import worked
-  imported_y <- DBI::dbReadTable(conn1, res$y)
+  # imported_y <- DBI::dbReadTable(conn1, res$y)
+  imported_y <- ddbs_read_table(conn1, res$y)
   expect_equal(nrow(imported_y), 1)
   
   # Note: cleanup behavior depends on import strategy used
@@ -73,7 +76,8 @@ test_that("resolve_spatial_connections defaults to conn_x if available", {
   conn1 <- ddbs_temp_conn()
   
   ddbs_write_table(conn1, sf::st_sf(geom=sf::st_sfc(sf::st_point(c(0,0))), crs=4326), "t1")
-  t1_df <- dplyr::tbl(conn1, "t1")
+  # t1_df <- dplyr::tbl(conn1, "t1")
+  t1_df <- as_duckspatial_df("t1", conn1)
   
   res <- resolve_spatial_connections(t1_df, "t2")
   expect_identical(res$conn, conn1)
@@ -86,8 +90,10 @@ test_that("resolve_spatial_connections warns when conn_x != conn_y without expli
   ddbs_write_table(conn1, sf::st_sf(geom=sf::st_sfc(sf::st_point(c(0,0))), crs=4326), "t1")
   ddbs_write_table(conn2, sf::st_sf(geom=sf::st_sfc(sf::st_point(c(1,1))), crs=4326), "t2")
   
-  t1_df <- dplyr::tbl(conn1, "t1")
-  t2_df <- dplyr::tbl(conn2, "t2")
+  # t1_df <- dplyr::tbl(conn1, "t1")
+  # t2_df <- dplyr::tbl(conn2, "t2")
+  t1_df <- as_duckspatial_df("t1", conn1)
+  t2_df <- as_duckspatial_df("t2", conn2)
   
   # Should warn about different connections when no explicit conn provided
   expect_warning(
@@ -98,7 +104,7 @@ test_that("resolve_spatial_connections warns when conn_x != conn_y without expli
       ),
       "target connection are different"
     ),
-    "Imported via duckdb_register"
+    "Imported via collection" #"Imported via duckdb_register"
   )
   
   # Should use x's connection as target

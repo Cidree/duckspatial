@@ -10,7 +10,6 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -83,13 +82,9 @@ ddbs_join <- function(
     conn_x = NULL,
     conn_y = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-
-    deprecate_crs(crs_column, crs)
     
     # 1. Validate inputs
     assert_xy(x, "x")
@@ -153,37 +148,19 @@ ddbs_join <- function(
 
 
     # 4. Prepare parameters for query
-    ## 4.1. predicate already validated early (sel_pred above)
-    ## 4.2. get name of geometry column (use saved sf_col_x/y from before transformation)
+    
+    ## 4.1. Get name of geometry column (use saved sf_col_x/y from before transformation)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
-    
-    ## 4.3. Get non-geometry columns for x and y (both use same pattern)
-    x_rest_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = FALSE)
-    y_rest_cols <- get_geom_name(target_conn, y_list$query_name, rest = TRUE, collapse = FALSE)
-    
-    ## error if crs_column not found (conditional on saved crs_x)
-    if (is.null(crs_x)) {
-       assert_crs_column(crs_column, x_rest_cols)
-    }
-    
-    ## remove CRS column from y_rest_cols
-    crs_idx <- grep(crs_column, y_rest_cols, fixed = TRUE)
-    if (length(crs_idx) > 0) y_rest_cols <- y_rest_cols[-crs_idx]
-    
-    ## 4.4. Format column lists for SQL (symmetric handling)
-    x_rest <- if (length(x_rest_cols) > 0) paste0('tbl_x."', x_rest_cols, '", ', collapse = '') else ""
-    y_rest <- if (length(y_rest_cols) > 0) paste0('tbl_y."', y_rest_cols, '", ', collapse = '') else ""
 
-    ## 4.5. Build base query
+    ## 4.2. Build base query
     st_function <- glue::glue("tbl_x.{x_geom}")
     base.query <- glue::glue("
         SELECT 
-            {x_rest}
-            {y_rest}
-            {build_geom_query(st_function, mode)} AS {x_geom}
+            tbl_x.* REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}),
+            tbl_y.* EXCLUDE ({y_geom})
         FROM 
             {x_list$query_name} tbl_x
         JOIN 
@@ -220,8 +197,7 @@ ddbs_join <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 

@@ -1,10 +1,9 @@
 #' Get or set global duckspatial options
 #'
-#' @param output_type Character string. Controls the default return type for spatial operations.
+#' @param output_type Character string. Controls the default return type for [ddbs_collect].
 #'   Must be one of:
 #'   \itemize{
-#'     \item \code{"duckspatial_df"} (default): Lazy spatial data frame backed by dbplyr/DuckDB.
-#'     \item \code{"sf"}: Eagerly collected \code{sf} object (in-memory).
+#'     \item \code{"sf"} (default): Eagerly collected \code{sf} object (in-memory).
 #'     \item \code{"tibble"}: Eagerly collected \code{tibble} without geometry.
 #'     \item \code{"raw"}: Eagerly collected \code{tibble} with geometry as raw WKB bytes.
 #'     \item \code{"geoarrow"}: Eagerly collected \code{tibble} with geometry as \code{geoarrow_vctr}.
@@ -22,14 +21,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Set default mode to sf
-#' ddbs_options(mode = "sf")
+#' # Set default mode to geoarrow
+#' ddbs_options(mode = "geoarrow")
 #' 
 #' # Set default output to tibble
 #' ddbs_options(output_type = "tibble")
-#' 
-#' # Set default output to duckspatial_df
-#' ddbs_options(output_type = "duckspatial_df")
 #'
 #' # Check current settings
 #' ddbs_options()
@@ -38,10 +34,10 @@ ddbs_options <- function(output_type = NULL, mode = NULL) {
   
   # 1. SETTER logic
   if (!is.null(output_type)) {
-    if (!output_type %in% c("duckspatial_df", "sf", "tibble", "raw", "geoarrow")) {
+    if (!output_type %in% c("sf", "tibble", "raw", "geoarrow")) {
       cli::cli_abort(paste0(
         "Invalid output_type: {.val {output_type}}. ",
-        "Must be one of {.val duckspatial_df}, {.val sf}, {.val tibble}, {.val raw}, or {.val geoarrow}."
+        "Must be one of {.val sf}, {.val tibble}, {.val raw}, or {.val geoarrow}."
       ))
     }
     options(duckspatial.output_type = output_type)

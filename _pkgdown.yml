@@ -206,7 +206,7 @@ reference:
 - title: Geometry Construction
   desc: Create new geometries from scratch or from existing data
   contents:
-  - ddbs_as_spatial
+  - ddbs_as_points
   - ddbs_generate_points
   - ddbs_quadkey
 
@@ -231,6 +231,8 @@ reference:
   contents:
   - ddbs_transform
   - ddbs_flip_coordinates
+  - ddbs_xy
+  - ddbs_force_dim
 
 - title: Geometry Validation
   desc: Check and repair geometry validity and dimensionality
@@ -240,7 +242,6 @@ reference:
   - ddbs_simplify
   - ddbs_geom_validation_funs
   - ddbs_has_dim
-  - ddbs_force_dim
 
 - title: Format Conversion
   desc: Convert geometries to and from standard spatial formats

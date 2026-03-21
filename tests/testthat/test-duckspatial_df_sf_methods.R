@@ -8,8 +8,7 @@ test_that("st_crs.duckspatial_df returns correct CRS", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   expect_equal(sf::st_crs(nc_lazy), sf::st_crs(nc_sf))
 })
@@ -18,8 +17,7 @@ test_that("st_bbox.duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  nc_lazy <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   bbox <- sf::st_bbox(nc_lazy)
   expect_s3_class(bbox, "bbox")
@@ -32,8 +30,7 @@ test_that("st_geometry.duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  nc_lazy <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   geom <- sf::st_geometry(nc_lazy)
   
@@ -46,8 +43,7 @@ test_that("st_as_sf.duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  nc_lazy <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   result_sf <- sf::st_as_sf(nc_lazy)
   
@@ -60,8 +56,7 @@ test_that("print.duckspatial_df shows informative output", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf))
+  nc_lazy <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   output <- capture.output(print(nc_lazy))
   
@@ -74,8 +69,7 @@ test_that("ddbs_geom_col returns correct geometry column name", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  nc_lazy <- dplyr::tbl(conn, "nc_test") |>
-    as_duckspatial_df(crs = sf::st_crs(nc_sf), geom_col = "geometry")
+  nc_lazy <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   expect_equal(ddbs_geom_col(nc_lazy), "geometry")
   expect_equal(ddbs_geom_col(nc_sf), attr(nc_sf, "sf_column"))

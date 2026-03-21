@@ -15,8 +15,6 @@ ddbs_union(
   conn_x = NULL,
   conn_y = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -26,8 +24,6 @@ ddbs_combine(
   x,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -38,8 +34,6 @@ ddbs_union_agg(
   by,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -83,13 +77,6 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

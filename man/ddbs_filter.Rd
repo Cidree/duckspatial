@@ -12,8 +12,6 @@ ddbs_filter(
   conn_x = NULL,
   conn_y = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   distance = NULL,
   mode = NULL,
   overwrite = FALSE,
@@ -54,13 +52,6 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
 
 \item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
 the coordinate system of the geometry (e.g. degrees or meters)}

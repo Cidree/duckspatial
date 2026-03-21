@@ -94,7 +94,7 @@ describe("ddbs_area()", {
       expect_message(ddbs_area(nc_4326_sf, conn = conn_test, name = "area_tbl2", new_column = "area_calc"))
       
       expect_no_message(ddbs_area(nc_4326_sf, new_column = "area_calc", quiet = TRUE))
-      # expect_no_message(ddbs_area(nc_4326_sf, conn = conn_test, name = "area_tbl3", new_column = "area_calc", quiet = TRUE))
+      expect_no_message(ddbs_area(nc_4326_sf, conn = conn_test, name = "area_tbl3", new_column = "area_calc", quiet = TRUE))
     })
     
     it("calculates area correctly on projected CRS", {
@@ -156,16 +156,15 @@ describe("ddbs_area()", {
     })
     
     it("writes tables to the database", {
-      output <- ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl", new_column = "area_calc") |> 
-        suppressWarnings()
+      output <- ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl", new_column = "area_calc")
       expect_true(output)
     })
     
     it("shows and suppresses messages correctly", {
       expect_no_message(ddbs_area(nc_ddbs, new_column = "area_calc"))
-      expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl2", new_column = "area_calc") |> suppressWarnings())
-      expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl3", new_column = "area_calc", quiet = TRUE) |> suppressWarnings())
-      
+      expect_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl2", new_column = "area_calc"))
+
+      expect_no_message(ddbs_area(nc_ddbs, conn = conn_test, name = "ddbs_area_tbl3", new_column = "area_calc", quiet = TRUE))      
       expect_no_message(ddbs_area(nc_ddbs, new_column = "area_calc", quiet = TRUE))
     })
 
@@ -245,7 +244,7 @@ describe("ddbs_area()", {
 
     it("calculates area correctly on geographic CRS", {
       duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina", overwrite = TRUE)
-      area_ddbs <- ddbs_area("argentina", conn_test, mode = "sf")
+      area_ddbs <- ddbs_area("argentina", conn = conn_test, mode = "sf")
       area_sf   <- sf::st_area(argentina_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
@@ -254,7 +253,7 @@ describe("ddbs_area()", {
     it("calculates area correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
       duckspatial::ddbs_write_table(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
-      area_ddbs <- ddbs_area("argentina", conn_test, mode = "sf")
+      area_ddbs <- ddbs_area("argentina", conn = conn_test, mode = "sf")
       area_sf   <- sf::st_area(argentina_3857_sf)
       
       expect_equal(area_ddbs, area_sf, tolerance = 0.001)
@@ -399,10 +398,12 @@ describe("ddbs_length()", {
     })
 
     it("calculates length correctly on geographic CRS", {
-      length_ddbs <- ddbs_length(rivers_sf, mode = "sf")
-      length_sf   <- sf::st_length(rivers_sf)
-      
-      expect_equal(length_ddbs, length_sf)
+      rivers_geog <- ddbs_transform(rivers_sf, "EPSG:4326", mode = "sf")
+      length_ddbs <- ddbs_length(rivers_geog, mode = "sf")
+      length_sf   <- sf::st_length(rivers_geog)
+      # TODO - DuckDB v1.5 has changes in the calculation, and gives different values
+      # TODO - review when ST_Spheroid_*() funs don't need to flip coords anymore
+      expect_equal(length_ddbs, length_sf, tolerance = .1)
     })
     
     it("calculates length correctly on projected CRS", {
@@ -472,8 +473,8 @@ describe("ddbs_length()", {
     it("shows and suppresses messages correctly", {
       expect_no_message(ddbs_length(rivers_ddbs, new_column = "length_calc"))
       expect_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl2", new_column = "length_calc") |> suppressWarnings())
-      expect_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl3", new_column = "length_calc", quiet = TRUE) |> suppressWarnings())
-      
+
+      expect_no_message(ddbs_length(rivers_ddbs, conn = conn_test, name = "ddbs_length_tbl3", new_column = "length_calc", quiet = TRUE))      
       expect_no_message(ddbs_length(rivers_ddbs, new_column = "length_calc", quiet = TRUE))
     })
 
@@ -553,7 +554,7 @@ describe("ddbs_length()", {
 
     it("calculates length correctly on geographic CRS", {
       duckspatial::ddbs_write_table(conn_test, rivers_sf, "rivers_4326")
-      length_ddbs <- ddbs_length("rivers_4326", conn_test, mode = "sf")
+      length_ddbs <- ddbs_length("rivers_4326", conn = conn_test, mode = "sf")
       length_sf   <- sf::st_length(rivers_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -562,7 +563,7 @@ describe("ddbs_length()", {
     it("calculates length correctly on projected CRS", {
       rivers_3857_sf <- sf::st_transform(rivers_sf, "EPSG:3857")
       duckspatial::ddbs_write_table(conn_test, rivers_3857_sf, "rivers_3857")
-      length_ddbs <- ddbs_length("rivers_3857", conn_test, mode = "sf")
+      length_ddbs <- ddbs_length("rivers_3857", conn = conn_test, mode = "sf")
       length_sf   <- sf::st_length(rivers_3857_sf)
       
       expect_equal(length_ddbs, length_sf)
@@ -657,11 +658,11 @@ describe("ddbs_distance()", {
       ## This one retrieves the result in a different order, but same results
       output_sf_conn   <- ddbs_distance(points_sample_sf, "points", conn = conn_test) |> collect()
       
-      expect_equal(output_sf_ddbs, output_ddbs_sf)
-      expect_equal(output_sf_ddbs, output_sf_sf)
-      expect_equal(output_sf_ddbs, output_ddbs_ddbs)
-      expect_equal(output_sf_ddbs, output_conn_sf)
-      expect_equal(output_sf_ddbs, output_sf_conn |> dplyr::arrange(id_y, id_x))
+      expect_equal(output_sf_ddbs, output_ddbs_sf |> dplyr::arrange(id_x, id_y))
+      expect_equal(output_ddbs_sf, output_sf_sf)
+      expect_equal(output_ddbs_sf, output_ddbs_ddbs)
+      expect_equal(output_ddbs_sf, output_conn_sf)
+      expect_equal(output_ddbs_sf, output_sf_conn |> dplyr::arrange(id_y, id_x))
     })
     
     it("warns when mixing DuckDB table with duckspatial_df from different connections", {
@@ -892,9 +893,9 @@ describe("ddbs_perimeter()", {
     
     it("shows and suppresses messages correctly", {
       expect_no_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc"))
-      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl2", new_column = "perimeter_calc") |> suppressWarnings())
-      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE) |> suppressWarnings())
-      
+      expect_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl2", new_column = "perimeter_calc"))
+
+      expect_no_message(ddbs_perimeter(nc_ddbs, conn = conn_test, name = "ddbs_perimeter_tbl3", new_column = "perimeter_calc", quiet = TRUE))      
       expect_no_message(ddbs_perimeter(nc_ddbs, new_column = "perimeter_calc", quiet = TRUE))
     })
 
@@ -974,7 +975,7 @@ describe("ddbs_perimeter()", {
 
     it("calculates perimeter correctly on geographic CRS", {
       duckspatial::ddbs_write_table(conn_test, argentina_sf, "argentina", overwrite = TRUE)
-      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, mode = "sf")
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn = conn_test, mode = "sf")
       perimeter_sf   <- sf::st_perimeter(argentina_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)
@@ -983,7 +984,7 @@ describe("ddbs_perimeter()", {
     it("calculates perimeter correctly on projected CRS", {
       argentina_3857_sf <- sf::st_transform(argentina_sf, "EPSG:3857")
       duckspatial::ddbs_write_table(conn_test, argentina_3857_sf, "argentina", overwrite = TRUE)
-      perimeter_ddbs <- ddbs_perimeter("argentina", conn_test, mode = "sf")
+      perimeter_ddbs <- ddbs_perimeter("argentina", conn = conn_test, mode = "sf")
       perimeter_sf   <- sf::st_perimeter(argentina_3857_sf)
       
       expect_equal(perimeter_ddbs, perimeter_sf, tolerance = 0.001)

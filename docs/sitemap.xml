@@ -16,6 +16,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/crs_equal.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_format.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_points.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_spatial.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_bbox.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.html</loc></url>
@@ -79,6 +80,8 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_table.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_vector.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_xy.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/dplyr_reconstruct.duckspatial_df.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/duckspatial-package.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.html</loc></url>

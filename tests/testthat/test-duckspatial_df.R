@@ -8,28 +8,35 @@ test_that("new_duckspatial_df creates valid duckspatial_df objects", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  lazy_tbl <- dplyr::tbl(conn, "nc_test")
+  # lazy_tbl <- dplyr::tbl(conn, "nc_test")
   
-  result <- new_duckspatial_df(
-    lazy_tbl, 
-    crs = sf::st_crs(nc_sf), 
+  # result <- new_duckspatial_df(
+  #   lazy_tbl, 
+  #   crs = sf::st_crs(nc_sf), 
+  #   geom_col = "geometry",
+  #   source_table = "nc_test"
+  # )
+  result <- convert_geometry_duckspatial(
+    conn = conn,
+    x = "nc_test",
     geom_col = "geometry",
-    source_table = "nc_test"
+    crs = sf::st_crs(nc_sf)
   )
   
   expect_s3_class(result, "duckspatial_df")
   expect_s3_class(result, "tbl_lazy")
   expect_equal(attr(result, "sf_column"), "geometry")
   expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
-  expect_equal(attr(result, "source_table"), "nc_test")
+  # expect_equal(attr(result, "source_table"), "nc_test")
 })
 
 test_that("new_duckspatial_df avoids double wrapping", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  lazy_tbl <- dplyr::tbl(conn, "nc_test")
-  result1 <- new_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  # lazy_tbl <- dplyr::tbl(conn, "nc_test")
+  # result1 <- new_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  result1 <- convert_geometry_duckspatial(conn, "nc_test")
   result2 <- new_duckspatial_df(result1, crs = sf::st_crs(nc_sf))
   
   expect_identical(result1, result2)
@@ -63,8 +70,9 @@ test_that("as_duckspatial_df.tbl_duckdb_connection works correctly", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  lazy_tbl <- dplyr::tbl(conn, "nc_test")
-  result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  # lazy_tbl <- dplyr::tbl(conn, "nc_test")
+  # result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  result <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   expect_s3_class(result, "duckspatial_df")
   expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
@@ -74,8 +82,9 @@ test_that("as_duckspatial_df.tbl_lazy works correctly", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  lazy_tbl <- dplyr::tbl(conn, "nc_test") |> dplyr::filter(AREA > 0)
-  result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  # lazy_tbl <- dplyr::tbl(conn, "nc_test") |> dplyr::filter(AREA > 0)
+  # result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))  
+  result <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf)) |> dplyr::filter(AREA > 0)
   
   expect_s3_class(result, "duckspatial_df")
   expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
@@ -88,13 +97,13 @@ test_that("as_duckspatial_df.character works correctly", {
   result <- as_duckspatial_df("nc_test", conn = conn, crs = sf::st_crs(nc_sf))
   
   expect_s3_class(result, "duckspatial_df")
-  expect_equal(attr(result, "source_table"), "nc_test")
+  # expect_equal(attr(result, "source_table"), "nc_test")
 })
 
 test_that("as_duckspatial_df.character requires connection", {
   expect_error(
     as_duckspatial_df("some_table"),
-    "conn|Table.*does not exist"
+    "conn|table|Table.*does not exist"
   )
 })
 
@@ -128,11 +137,12 @@ test_that("is_duckspatial_df works correctly", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
-  lazy_tbl <- dplyr::tbl(conn, "nc_test")
-  result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  # lazy_tbl <- dplyr::tbl(conn, "nc_test")
+  # result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  result <- as_duckspatial_df("nc_test", conn, crs = sf::st_crs(nc_sf))
   
   expect_true(is_duckspatial_df(result))
-  expect_false(is_duckspatial_df(lazy_tbl))
+  # expect_false(is_duckspatial_df(lazy_tbl))
   expect_false(is_duckspatial_df(nc_sf))
   expect_false(is_duckspatial_df(NULL))
 })

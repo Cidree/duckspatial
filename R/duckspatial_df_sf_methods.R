@@ -203,34 +203,41 @@ print.duckspatial_df <- function(x, ..., n = 10) {
 
   ## get metadata for the header
   geom_col <- attr(x, "sf_column") %||% "geom"
-  crs <- st_crs(x)
-  bbox <- st_bbox(x)
+  crs <- ddbs_crs(x)
+  # bbox <- st_bbox(x)
+  bbox <- ddbs_bbox(x)
   geomtype <- ddbs_geometry_type(x, by_feature = FALSE)
   
   ## header with visual separator
-  cat(cli::col_silver("# A duckspatial lazy spatial table\n"))
+  cat(cli::col_white("# A duckspatial lazy spatial table\n"))
   
   ## metadata with icons/symbols
-  cat(cli::col_silver("#"), cli::col_blue("\u25cf CRS:"), cli::col_silver(ddbs_format_crs(crs)), "\n")
-  cat(cli::col_silver("#"), cli::col_blue("\u25cf Geometry column:"), cli::col_silver(geom_col), "\n")
-  cat(cli::col_silver("#"), cli::col_blue("\u25cf Geometry type:"), cli::col_silver(geomtype), "\n")
-  cat(cli::col_silver("#"), cli::col_blue("\u25cf Bounding box:"), 
-      cli::col_silver(sprintf("xmin: %.5g ymin: %.5g xmax: %.5g ymax: %.5g", 
+  cat(cli::col_white("#"), cli::col_blue("\u25cf CRS:"), cli::col_white(ddbs_format_crs(crs)), "\n")
+  cat(cli::col_white("#"), cli::col_blue("\u25cf Geometry column:"), cli::col_white(geom_col), "\n")
+  cat(cli::col_white("#"), cli::col_blue("\u25cf Geometry type:"), cli::col_white(geomtype), "\n")
+  cat(cli::col_white("#"), cli::col_blue("\u25cf Bounding box:"), 
+      cli::col_white(sprintf("xmin: %.5g ymin: %.5g xmax: %.5g ymax: %.5g", 
                               bbox["xmin"], bbox["ymin"], bbox["xmax"], bbox["ymax"])), "\n")
   
   ## info box
-  cat(cli::col_silver("# Data backed by DuckDB (dbplyr lazy evaluation)\n"))
-  cat(cli::col_silver("# Use"), 
-      cli::col_green("ddbs_collect()"), 
-      cli::col_silver("or"), 
-      cli::col_green("st_as_sf()"), 
-      cli::col_silver("to materialize to sf\n"))
-  cat(cli::col_silver("#\n"))
+  cat(cli::col_white("# Data backed by DuckDB (dbplyr lazy evaluation)\n"))
+  cat(cli::col_white("# Use"), 
+      cli::style_bold(cli::col_green("ddbs_collect()")), 
+      cli::col_white("or"), 
+      cli::style_bold(cli::col_green("st_as_sf()")), 
+      cli::col_white("to materialize to sf\n"))
+  cat(cli::col_white("#\n"))
   
   ## print preview
   tryCatch({
-    class(x) <- setdiff(class(x), "duckspatial_df")
-    print(x, n = n)
+    remote_name <- attr(x, "source_table")
+    remote_conn <- attr(x, "source_conn") %||% dbplyr::remote_con(x)
+    head_data <- dplyr::tbl(
+      remote_conn,
+      dplyr::sql(glue::glue("SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
+      FROM {remote_name} LIMIT {n}"))
+    )
+    print(head_data, n = n)
   }, error = function(e) {
     cat(cli::col_yellow("\u26a0 Preview unavailable\n"))
   })

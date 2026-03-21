@@ -34,6 +34,7 @@ permanently materialized in the database.
 }
 \examples{
 \dontrun{
+library(duckdb)
 library(duckspatial)
 library(sf)
 
@@ -45,6 +46,6 @@ ddbs_register_table(conn, nc, "nc_arrow_view")
 
 dbGetQuery(conn, "SELECT COUNT(*) FROM nc_arrow_view;")
 
-ddbs_stop_conn(conn, shutdown = TRUE)
+ddbs_stop_conn(conn)
 }
 }

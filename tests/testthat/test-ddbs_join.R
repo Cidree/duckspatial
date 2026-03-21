@@ -15,8 +15,6 @@ tester <- function(x = points_sf,
                    join = "intersects",
                    conn = NULL,
                    name = NULL,
-                   crs = NULL,
-                   crs_column = "crs_duckspatial",
                    mode = "sf",
                    overwrite = FALSE,
                    quiet = FALSE) {
@@ -26,8 +24,6 @@ tester <- function(x = points_sf,
         join = join,
         conn = conn,
         name = name,
-        crs = crs,
-        crs_column = crs_column,
         mode = mode,
         overwrite = overwrite,
         quiet = quiet
@@ -76,13 +72,11 @@ testthat::test_that("expected behavior", {
 
     testthat::expect_true(output3)
 
-    # TODO - Review this because it fails
-    # output3 <- DBI::dbReadTable(conn_test, "test_result") |>
-    #     sf::st_as_sf(wkt = 'geometry')
+    output3 <- ddbs_read_table(conn_test, "test_result")
 
-    # testthat::expect_true(is(output3 , 'sf'))
+    testthat::expect_true(is(output3 , 'sf'))
 
-    ddbs_read_table(conn = conn_test, name = "test_result", crs = 4326)
+    ddbs_read_table(conn = conn_test, name = "test_result")
 
 
     # show and suppress messages
@@ -233,3 +227,4 @@ testthat::test_that("ddbs_join throws error on CRS mismatch", {
     "Coordinates Reference System"
   )
 })
+

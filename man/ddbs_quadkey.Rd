@@ -12,8 +12,6 @@ ddbs_quadkey(
   background = NA,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   output = "polygon",
   overwrite = FALSE,
   quiet = FALSE
@@ -48,13 +46,6 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
-
 \item{output}{Character string specifying output format. One of:
 \itemize{
 \item \code{"polygon"} - Returns QuadKey tile boundaries as \code{duckspatial_df} (default)
@@ -87,7 +78,7 @@ is subdivided into four smaller tiles at the next zoom level. This function
 wraps DuckDB's ST_QuadKey spatial function to generate these tiles from input geometries.
 
 Note that creating a table inside the connection will generate a non-spatial table, and
-therefore, it cannot be read with \code{ddbs_read_vector()}.
+therefore, it cannot be read with \link{ddbs_read_table}.
 }
 \examples{
 \dontrun{

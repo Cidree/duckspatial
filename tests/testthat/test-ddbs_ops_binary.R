@@ -7,7 +7,7 @@ testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
 ## create two overlapping polygons for testing
-poly1 <- st_polygon(list(matrix(c(
+poly1 <- sf::st_polygon(list(matrix(c(
   0, 0,
   4, 0,
   4, 4,
@@ -15,7 +15,7 @@ poly1 <- st_polygon(list(matrix(c(
   0, 0
 ), ncol = 2, byrow = TRUE)))
 
-poly2 <- st_polygon(list(matrix(c(
+poly2 <- sf::st_polygon(list(matrix(c(
   2, 2,
   6, 2,
   6, 6,
@@ -23,8 +23,8 @@ poly2 <- st_polygon(list(matrix(c(
   2, 2
 ), ncol = 2, byrow = TRUE)))
 
-poly1_sf <- st_sf(id = 1, geometry = st_sfc(poly1), crs = 4326)
-poly2_sf <- st_sf(id = 2, geometry = st_sfc(poly2), crs = 4326)
+poly1_sf <- sf::st_sf(id = 1, geometry = sf::st_sfc(poly1), crs = 4326)
+poly2_sf <- sf::st_sf(id = 2, geometry = sf::st_sfc(poly2), crs = 4326)
 
 poly1_ddbs <- as_duckspatial_df(poly1_sf)
 poly2_ddbs <- as_duckspatial_df(poly2_sf)
@@ -103,8 +103,9 @@ describe("ddbs_intersection()", {
       expect_equal(ddbs_collect(output_1), ddbs_collect(output_10))
 
       expect_message(ddbs_intersection("poly1", "poly2", conn_x = conn_test, conn_y = conn_test_2, name = "test"))
-      expect_true(DBI::dbExistsTable(conn_test, "test"))
-      expect_false(DBI::dbExistsTable(conn_test_2, "test"))
+      
+      expect_in("test", ddbs_list_tables(conn_test)$table_name)
+      expect_disjoint("test", ddbs_list_tables(conn_test_2)$table_name)
     })
 
     it("matches sf::st_intersection results", {
@@ -208,8 +209,11 @@ describe("ddbs_difference()", {
       expect_equal(ddbs_collect(output_1), ddbs_collect(output_10))
 
       expect_message(ddbs_difference("poly1", "poly2", conn_x = conn_test, conn_y = conn_test_2, name = "diff3"))
-      expect_true(DBI::dbExistsTable(conn_test, "diff3"))
-      expect_false(DBI::dbExistsTable(conn_test_2, "diff3"))
+
+      expect_in("diff3", ddbs_list_tables(conn_test)$table_name)
+      expect_disjoint("diff3", ddbs_list_tables(conn_test_2)$table_name)
+      # expect_true(DBI::dbExistsTable(conn_test, "diff3"))
+      # expect_false(DBI::dbExistsTable(conn_test_2, "diff3"))
     })
 
     it("matches sf::st_difference results", {
@@ -304,8 +308,11 @@ describe("ddbs_sym_difference()", {
       expect_equal(ddbs_collect(output_1), ddbs_collect(output_10))
 
       expect_message(ddbs_sym_difference("poly1", "poly2", conn_x = conn_test, conn_y = conn_test_2, name = "symdiff3"))
-      expect_true(DBI::dbExistsTable(conn_test, "symdiff3"))
-      expect_false(DBI::dbExistsTable(conn_test_2, "symdiff3"))
+
+      expect_in("symdiff3", ddbs_list_tables(conn_test)$table_name)
+      expect_disjoint("symdiff3", ddbs_list_tables(conn_test_2)$table_name)
+      # expect_true(DBI::dbExistsTable(conn_test, "symdiff3"))
+      # expect_false(DBI::dbExistsTable(conn_test_2, "symdiff3"))
     })
 
     it("matches sf::st_sym_difference results", {

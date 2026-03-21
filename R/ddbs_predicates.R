@@ -218,18 +218,28 @@ ddbs_predicate <- function(
   y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
   assert_geometry_column(x_geom, x_list)
   assert_geometry_column(y_geom, y_list)
-
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
   
- # 4. Build predicate expression
+  ## 3.2. Build predicate expression
   if (st_predicate == "ST_DWithin") {
+
+    ## Warn if the distance arg wasn't specified, and give it a value of 0
+    if (is.null(distance)) {
+      cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
+      distance <- 0
+    }
     
     ## check the CRS units to use the right function
     crs_units <- crs_x$units_gdal
     if (crs_units != "metre") {
-      predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
+      # predicate_expr <- glue::glue("ST_DWithin_Spheroid(x.{x_geom}, y.{y_geom}, {distance})")
+      # predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
+        predicate_expr <- glue::glue(
+        "ST_DWithin_Spheroid(
+          ST_Point(ST_Y(x.{x_geom}), ST_X(x.{x_geom})),
+          ST_Point(ST_Y(y.{y_geom}), ST_X(y.{y_geom})),
+          {distance}
+        )"
+      )
       if (crs_x$input != "EPSG:4326") {
         cli::cli_warn(
           "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
@@ -239,17 +249,13 @@ ddbs_predicate <- function(
       predicate_expr <- glue::glue("ST_DWithin(x.{x_geom}, y.{y_geom}, {distance})")
     }
     
-    if (is.null(distance)) {
-      cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
-      distance <- 0
-    }
     
   } else {
     predicate_expr <- glue::glue("{st_predicate}(x.{x_geom}, y.{y_geom})")
   }
 
 
-  # 5. Build query and return based on mode
+  # 4. Build query and return based on mode
   ## - mode sf: it will return a list-like object
   ## - mode duckspatial: it will return a lazy-tbl object
   if (mode == "sf") {

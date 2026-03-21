@@ -9,11 +9,9 @@
 ddbs_has_z(
   x,
   by_feature = TRUE,
+  new_column = "has_z",
   conn = NULL,
   name = NULL,
-  new_column = "has_z",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -22,11 +20,9 @@ ddbs_has_z(
 ddbs_has_m(
   x,
   by_feature = TRUE,
+  new_column = "has_m",
   conn = NULL,
   name = NULL,
-  new_column = "has_m",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -46,6 +42,9 @@ Data is returned from this object.}
 separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
+\item{new_column}{Name of the new column to create on the input data. Ignored
+with \code{mode = "sf"}.}
+
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
 
@@ -53,16 +52,6 @@ runs on a temporary DuckDB database.}
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
-
-\item{new_column}{Name of the new column to create on the input data. Ignored
-with \code{mode = "sf"}.}
-
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{
@@ -79,11 +68,13 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
+Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
 \itemize{
-\item \code{mode = "duckspatial"} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
-\item \code{mode = "sf"}: An eagerly collected vector in R memory.
-\item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
+\item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected object in R memory, that will return the same data type as the
+\code{sf} equivalent (e.g. \code{sf} or \code{units} vector).
 }
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Functions to check whether geometries have Z (elevation) or M (measure) dimensions

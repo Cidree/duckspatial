@@ -13,9 +13,6 @@
 #'        longitude/latitude).
 #' @template conn_null
 #' @template name
-#' @param crs_column \link{Deprecated} a character string of length one specifying the column
-#'        storing the CRS (created automatically by \code{\link{ddbs_write_table}}).
-#'        Set to `NULL` if absent.
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -37,7 +34,7 @@
 #' )
 #'
 #' # option 1: convert data frame to sf object
-#' cities_ddbs <- ddbs_as_spatial(cities_df)
+#' cities_ddbs <- ddbs_as_points(cities_df)
 #'
 #' # specify custom coordinate column names
 #' cities_df2 <- data.frame(
@@ -46,7 +43,7 @@
 #'   latitude = c(-32.8895, -26.8241)
 #' )
 #' 
-#' ddbs_as_spatial(cities_df2, coords = c("longitude", "latitude"))
+#' ddbs_as_points(cities_df2, coords = c("longitude", "latitude"))
 #'
 #'
 #' ## option 2: convert table in duckdb to spatial table
@@ -56,7 +53,7 @@
 #' DBI::dbWriteTable(conn, "cities_tbl", cities_df, overwrite = TRUE)
 #'
 #' # convert to spatial table in database
-#' ddbs_as_spatial(
+#' ddbs_as_points(
 #'     x = "cities_tbl",
 #'     conn = conn,
 #'     name = "cities_spatial",
@@ -66,13 +63,12 @@
 #' # read the spatial table
 #' ddbs_read_table(conn, "cities_spatial")
 #' }
-ddbs_as_spatial <- function(
+ddbs_as_points <- function(
     x,
     coords = c("lon", "lat"),
     crs = "EPSG:4326",
     conn = NULL,
     name = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
@@ -113,18 +109,14 @@ ddbs_as_spatial <- function(
 
     # 3. Prepare parameters for the query
 
-    ## 3.1. Get column names
-    all_cols <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.2. Coords as character
+    ## 3.1. Coords as character
     coords_str <- paste0(coords,  collapse = ", ")
   
-    ## 3.3. Build base query
+    ## 3.2. Build base query
     st_function <- glue::glue("ST_Point({coords_str})")
     base.query <- glue::glue("
-      SELECT {all_cols}
-      '{crs}' AS '{crs_column}',
-      {build_geom_query(st_function, mode)} as geometry
+      SELECT *,
+      {build_geom_query(st_function, name, crs, mode)} as geometry
       FROM {x_list$query_name};
     ")    
 
@@ -153,12 +145,11 @@ ddbs_as_spatial <- function(
     
     # 5. Apply geospatial operation
     result <- ddbs_handle_query(
-        query      = base.query,
-        conn       = target_conn,
-        mode       = mode,
-        crs        = crs,
-        crs_column = NULL,
-        x_geom     = "geometry"
+        query  = base.query,
+        conn   = target_conn,
+        mode   = mode,
+        crs    = crs,
+        x_geom = "geometry"
     )
 
     return(result)

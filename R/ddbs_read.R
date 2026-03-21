@@ -8,7 +8,6 @@
 #'
 #' @template conn
 #' @template name
-#' @template crs
 #' @param clauses character, additional SQL code to modify the query from the
 #' table (e.g. "WHERE ...", "ORDER BY...")
 #' @template quiet
@@ -37,11 +36,11 @@
 #'
 #' ## Example 1: Write and read persistent table
 #' ddbs_write_vector(conn, sf_points, "points")
-#' ddbs_read_table(conn, "points", crs = 4326)
+#' ddbs_read_table(conn, "points")
 #'
 #' ## Example 2: Register and read Arrow view (faster, temporary)
 #' ddbs_register_vector(conn, sf_points, "points_view")
-#' ddbs_read_table(conn, "points_view", crs = 4326)
+#' ddbs_read_table(conn, "points_view")
 #'
 #' ## disconnect from db
 #' ddbs_stop_conn(conn)
@@ -49,13 +48,8 @@
 ddbs_read_table <- function(
     conn,
     name,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     clauses = NULL,
     quiet = FALSE) {
-    
-    
-    deprecate_crs(crs_column, crs)
     
     # 0. Handle errors
     dbConnCheck(conn)
@@ -108,6 +102,7 @@ ddbs_read_table <- function(
     }
 
     ## get column names and prepare SQL
+    ## TODO - remove crs column
     if (object_type == "Arrow view") {
         # For Arrow views, PRAGMA table_info doesn't work, so we need to get columns differently
         all_cols <- DBI::dbListFields(conn, name_list$query_name)
@@ -120,10 +115,9 @@ ddbs_read_table <- function(
         # The geometry column is added before crs_duckspatial, so it should be the
         # last column before crs_duckspatial (or last column if excluding crs_duckspatial)
         if (is.na(geom_name)) {
-            non_crs_cols <- setdiff(all_cols, crs_column)
-            if (length(non_crs_cols) > 0) {
+            if (length(all_cols) > 0) {
                 # Take the LAST non-CRS column (geometry is added last during registration)
-                geom_name <- non_crs_cols[length(non_crs_cols)]
+                geom_name <- all_cols[length(all_cols)]
             }
         }
 
@@ -157,12 +151,18 @@ ddbs_read_table <- function(
     )
     tmp.query <- paste(tmp.query, clauses)
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)
+  
+    ## Get the CRS
+    crs <- get_table_crs(
+        conn = conn,
+        geom_name = geom_name,
+        table_name = name_list$query_name
+    )
 
     ## 5. convert to SF
     data_sf <- convert_to_sf_wkb(
         data       = data_tbl,
         crs        = crs,
-        crs_column = crs_column,
         x_geom     = geom_name
     )
 
@@ -192,8 +192,6 @@ ddbs_read_table <- function(
 ddbs_read_vector <- function(
     conn,
     name,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     clauses = NULL,
     quiet = FALSE) {
     
@@ -206,8 +204,6 @@ ddbs_read_vector <- function(
     ddbs_read_table(
         conn       = conn,
         name       = name,
-        crs        = crs,
-        crs_column = crs_column,
         clauses    = clauses,
         quiet      = quiet
     )

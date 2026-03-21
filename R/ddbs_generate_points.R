@@ -9,7 +9,6 @@
 #' @param seed A number for the random number generator
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -46,14 +45,10 @@ ddbs_generate_points <- function(
   seed = NULL,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
 ) {
-
-  deprecate_crs(crs_column, crs)
 
   ## 0. Handle errors
   assert_xy(x, "x")
@@ -94,7 +89,6 @@ ddbs_generate_points <- function(
   on.exit(x_list$cleanup(), add = TRUE)
   
   bbox <- ddbs_bbox(x_list$query_name, by_feature = FALSE, conn = target_conn, quiet = TRUE)
-  if (is.null(crs)) crs_data <- ddbs_crs(target_conn, x_list$query_name)$input else crs_data <- crs
 
 
   # 2. Create table as temp view
@@ -111,7 +105,6 @@ ddbs_generate_points <- function(
     SELECT
       ST_X(point) AS x,
       ST_Y(point) AS y,
-      '{crs_data}' AS {crs_column}
     FROM 
        {generate_points_query};
   ")
@@ -120,8 +113,7 @@ ddbs_generate_points <- function(
   ## 2.2. Build base query  
   st_function <- "ST_Point(x, y)"
   base.query <- glue::glue("
-    SELECT {crs_column},
-    {build_geom_query(st_function, mode)} as geometry
+    SELECT {build_geom_query(st_function, name, crs_x, mode)} as geometry
     FROM {view_name_tbl};
   ")  
 
@@ -154,8 +146,7 @@ ddbs_generate_points <- function(
       query      = base.query,
       conn       = target_conn,
       mode       = mode,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
+      crs        = crs_x,
       x_geom     = "geometry"
   )
   

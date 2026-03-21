@@ -5,7 +5,6 @@
 #' @template x
 #' @template conn_null
 #' @template name
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -19,15 +18,11 @@ template_unary_ops <- function(
     x,
     conn = NULL,
     name = NULL,
-    crs = NULL,
-    crs_column = "crs_duckspatial",
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE,
     fun,
     other_args = NULL) {
-    
-    deprecate_crs(crs_column, crs)
 
     ## 0. Handle errors
     assert_xy(x, "x")
@@ -63,6 +58,7 @@ template_unary_ops <- function(
     ## register cleanup of the connection
     on.exit(resolve_conn$cleanup(), add = TRUE)
 
+
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
@@ -73,11 +69,8 @@ template_unary_ops <- function(
     ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
   
-    ## 3.3. Append all args
+    ## 3.2. Append all args
     ## if other_args is NULL, use only the geometry column name
     ## if is not NULL, append the rest of the function arguments
     if (is.null(other_args)) {
@@ -90,17 +83,19 @@ template_unary_ops <- function(
       )
     }
   
-    ## 3.4. Function-specific handling
+    ## 3.3. Function-specific handling
     if (tolower(fun) == "st_buffer") {
       crs_units <- crs_x$units_gdal
       if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
     }
   
-    ## 3.5. Build base query
+    ## 3.4. Build base query
+    ## As for duckdb 1.5 - uses ST_AsWKB for data retrieved in R
+    ## uses GEOMETRY('auth:code') for table creation
     st_function <- glue::glue("{fun}({args})")
     base.query <- glue::glue("
-      SELECT {x_rest}
-      {build_geom_query(st_function, mode)} as {x_geom}
+      SELECT *
+      REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
       FROM {x_list$query_name};
     ")
   
@@ -131,8 +126,7 @@ template_unary_ops <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom
     )
 
@@ -223,7 +217,6 @@ template_geometry_conversion <- function(
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -244,8 +237,6 @@ template_measure <- function(
   conn = NULL,
   name = NULL,
   new_column = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
@@ -253,8 +244,6 @@ template_measure <- function(
   
   # Match and validate fun
   fun <- match.arg(fun)
-  
-  deprecate_crs(crs_column, crs)
 
   # 0. Validate inputs
   assert_xy(x, "x")
@@ -316,18 +305,16 @@ template_measure <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-  ## 3.3. Build the appropriate ST function based on fun and CRS
+  ## 3.2. Build the appropriate ST function based on fun and CRS
   ## Use spheroid version for geographic coordinates
   if (crs_units == "metre") {
       st_function <- glue::glue("{fun}({x_geom})")
   } else {
+      # st_function <- glue::glue("{fun}_Spheroid({x_geom})")
       st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({x_geom}))")
   }
   
-  ## 3.4. Determine units for output
+  ## 3.3. Determine units for output
   output_units <- switch(
     fun,
     "ST_Area" = "m^2",
@@ -335,7 +322,7 @@ template_measure <- function(
     "ST_Perimeter" = "metre"
   )
 
-  ## 3.5. Build the base query
+  ## 3.4. Build the base query
   if (mode == "sf") {
     base.query <- glue::glue("
       SELECT {st_function} AS {new_column}
@@ -344,9 +331,8 @@ template_measure <- function(
   } else {
     base.query <- glue::glue("
       SELECT 
-        {x_rest}
-        {st_function} AS {new_column},
-        {build_geom_query(x_geom, mode)} AS {x_geom}
+        * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}),
+        {st_function} AS {new_column}
       FROM 
         {x_list$query_name};
     ")
@@ -379,8 +365,7 @@ template_measure <- function(
         query      = base.query,
         conn       = target_conn,
         mode       = mode,
-        crs        = if (!is.null(crs)) crs else crs_x,
-        crs_column = crs_column,
+        crs        = crs_x,
         x_geom     = x_geom,
         fun_group  = 2,
         units      = output_units
@@ -402,7 +387,6 @@ template_measure <- function(
 #' @template conn_null
 #' @template name
 #' @template new_column
-#' @template crs
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -423,14 +407,10 @@ template_new_column <- function(
   conn = NULL,
   name = NULL,
   new_column = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE,
   fun) {
-  
-  deprecate_crs(crs_column, crs)
 
   ## 0. Handle errors
   assert_xy(x, "x")
@@ -479,10 +459,7 @@ template_new_column <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-  ## 3.3. Compute if by_feature = FALSE (returns always a single value)
+  ## 3.2. Compute if by_feature = FALSE (returns always a single value)
   ## For functions ST_Has*() - if 1 is TRUE, return TRUE
   ## For functions ST_is_*() - if 1 is FALSE, return FALSE
   if (isFALSE(by_feature)) {
@@ -502,7 +479,6 @@ template_new_column <- function(
     } else {
       return(all(data_tbl[1, ]))
     }
-    
   }
 
   ## 3.3. Build the base query
@@ -516,9 +492,8 @@ template_new_column <- function(
   } else {
     base.query <- glue::glue("
       SELECT 
-        {x_rest}
-        {fun}({x_geom}) as {new_column},
-        {build_geom_query(st_function, mode)} as {x_geom}
+        * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}),
+        {fun}({x_geom}) AS {new_column}
       FROM 
         {x_list$query_name};
     ")
@@ -551,8 +526,7 @@ template_new_column <- function(
       query      = base.query,
       conn       = target_conn,
       mode       = mode,
-      crs        = if (!is.null(crs)) crs else crs_x,
-      crs_column = crs_column,
+      crs        = crs_x,
       x_geom     = x_geom,
       fun_group  = 2,
       units      = NULL

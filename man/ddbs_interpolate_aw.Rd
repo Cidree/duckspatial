@@ -12,14 +12,12 @@ ddbs_interpolate_aw(
   extensive = NULL,
   intensive = NULL,
   weight = "sum",
-  output = "sf",
+  mode = NULL,
   keep_NA = TRUE,
   na.rm = FALSE,
   join_crs = NULL,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -44,13 +42,13 @@ spatially intensive (e.g., population density).}
 \item{weight}{Character. Determines the denominator calculation for extensive variables.
 Either \code{"sum"} (default) or \code{"total"}. See \strong{Mass Preservation} in Details.}
 
-\item{output}{Character. One of \code{"sf"} (default) or \code{"tibble"}.
+\item{mode}{Character. Controls the return type. Options:
 \itemize{
-\item \code{"sf"}: The result includes the geometry column of the target.
-\item \code{"tibble"}: The result \strong{excludes the geometry column}. This is significantly faster
-and consumes less storage.
+\item \code{"duckspatial"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
+\item \code{"sf"}: Eagerly collected sf object (uses memory)
 }
-\strong{Note:} This argument also controls the schema of the created table if \code{name} is provided.}
+Can be set globally via \code{\link{ddbs_options}(mode = "...")} or
+per-function via this argument. Per-function overrides global setting.}
 
 \item{keep_NA}{Logical. If \code{TRUE} (default), returns all features from the target,
 even those that do not overlap with the source (values will be NA). If \code{FALSE},
@@ -72,13 +70,6 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{crs}{\link{Deprecated} The coordinates reference system of the data. Specify if the data
-doesn't have a \code{crs_column}, and you know the CRS.}
-
-\item{crs_column}{\link{Deprecated} a character string of length one specifying the column
-storing the CRS (created automatically by \code{\link{ddbs_write_vector}}).
-Set to \code{NULL} if absent.}
-
 \item{overwrite}{Boolean. whether to overwrite the existing table if it exists. Defaults
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
@@ -86,16 +77,13 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 }
 \value{
+Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
 \itemize{
-\item If \code{name} is \code{NULL} (default): Returns an \code{sf} object (if \code{output="sf"})
-or a \code{tibble} (if \code{output="tibble"}).
-\item If \code{name} is provided: Returns \code{TRUE} invisibly and creates a persistent table
-in the DuckDB database.
-\itemize{
-\item If \code{output="sf"}, the table \strong{includes} the geometry column.
-\item If \code{output="tibble"}, the table \strong{excludes} the geometry column (pure attributes).
+\item \code{duckspatial} (default): A \code{duckspatial_df} (lazy spatial data frame) backed by dbplyr/DuckDB.
+\item \code{sf}: An eagerly collected object in R memory, that will return the same data type as the
+\code{sf} equivalent (e.g. \code{sf} or \code{units} vector).
 }
-}
+When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
 Transfers attribute data from a source spatial layer to a target spatial layer based
@@ -157,7 +145,8 @@ res_ext <- ddbs_interpolate_aw(
   target = g_sf, source = nc,
   tid = "tid", sid = "sid",
   extensive = "BIR74",
-  weight = "total"
+  weight = "total",
+  mode = "sf"
 )
 
 # Check mass preservation
@@ -168,7 +157,8 @@ sum(res_ext$BIR74, na.rm = TRUE) / sum(nc$BIR74) # Should be ~1
 res_int <- ddbs_interpolate_aw(
   target = g_sf, source = nc,
   tid = "tid", sid = "sid",
-  intensive = "BIR74"
+  intensive = "BIR74",
+  mode = "sf"
 )
 
 # 4. Quick Visualization
