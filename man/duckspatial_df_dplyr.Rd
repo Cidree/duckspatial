@@ -2,62 +2,72 @@
 % Please edit documentation in R/duckspatial_df_dplyr_methods.R
 \name{duckspatial_df_dplyr}
 \alias{duckspatial_df_dplyr}
-\alias{dplyr_reconstruct.duckspatial_df}
+\alias{compute.duckspatial_df}
+\alias{select.duckspatial_df}
+\alias{filter.duckspatial_df}
+\alias{arrange.duckspatial_df}
+\alias{rename.duckspatial_df}
+\alias{slice.duckspatial_df}
+\alias{head.duckspatial_df}
+\alias{glimpse.duckspatial_df}
+\alias{mutate.duckspatial_df}
+\alias{count.duckspatial_df}
+\alias{distinct.duckspatial_df}
 \alias{left_join.duckspatial_df}
 \alias{inner_join.duckspatial_df}
-\alias{head.duckspatial_df}
-\alias{count.duckspatial_df}
-\alias{glimpse.duckspatial_df}
-\alias{compute.duckspatial_df}
-\alias{distinct.duckspatial_df}
+\alias{right_join.duckspatial_df}
+\alias{full_join.duckspatial_df}
+\alias{group_by.duckspatial_df}
+\alias{ungroup.duckspatial_df}
+\alias{summarise.duckspatial_df}
 \title{dplyr methods for duckspatial_df}
 \usage{
-\method{dplyr_reconstruct}{duckspatial_df}(data, template)
+\method{compute}{duckspatial_df}(x, name = NULL, temporary = TRUE, ...)
 
-\method{left_join}{duckspatial_df}(
-  x,
-  y,
-  by = NULL,
-  copy = FALSE,
-  suffix = c(".x", ".y"),
-  ...,
-  keep = NULL,
-  na_matches = c("na", "never"),
-  relationship = NULL
-)
+\method{select}{duckspatial_df}(.data, ...)
 
-\method{inner_join}{duckspatial_df}(
-  x,
-  y,
-  by = NULL,
-  copy = FALSE,
-  suffix = c(".x", ".y"),
-  ...,
-  keep = NULL,
-  na_matches = c("na", "never"),
-  relationship = NULL
-)
+\method{filter}{duckspatial_df}(.data, ...)
+
+\method{arrange}{duckspatial_df}(.data, ...)
+
+\method{rename}{duckspatial_df}(.data, ...)
+
+\method{slice}{duckspatial_df}(.data, ...)
 
 \method{head}{duckspatial_df}(x, n = 6L, ...)
 
-\method{count}{duckspatial_df}(x, ..., wt = NULL, sort = FALSE, name = NULL)
-
 \method{glimpse}{duckspatial_df}(x, width = NULL, ...)
 
-\method{compute}{duckspatial_df}(x, name = NULL, temporary = TRUE, ...)
+\method{mutate}{duckspatial_df}(.data, ...)
+
+\method{count}{duckspatial_df}(x, ..., wt = NULL, sort = FALSE, name = NULL)
 
 \method{distinct}{duckspatial_df}(.data, ..., .keep_all = FALSE)
+
+\method{left_join}{duckspatial_df}(x, y, by = NULL, ...)
+
+\method{inner_join}{duckspatial_df}(x, y, by = NULL, ...)
+
+\method{right_join}{duckspatial_df}(x, y, by = NULL, ...)
+
+\method{full_join}{duckspatial_df}(x, y, by = NULL, ...)
+
+\method{group_by}{duckspatial_df}(.data, ..., .add = FALSE, .drop = dplyr::group_by_drop_default(.data))
+
+\method{ungroup}{duckspatial_df}(x, ...)
+
+\method{summarise}{duckspatial_df}(.data, ...)
 }
 \arguments{
 \item{x}{A \code{duckspatial_df} object}
-
-\item{...}{Additional arguments passed to \code{\link[dplyr:compute]{dplyr::compute()}}}
 
 \item{name}{Optional name for the result table. If NULL, a unique temporary
 name is generated.}
 
 \item{temporary}{If TRUE (default), creates a temporary table that is
 automatically cleaned up when the connection closes.}
+
+\item{...}{Additional arguments passed to \code{\link[dplyr:compute]{dplyr::compute()}}}
 }
 \value{
 A new \code{duckspatial_df} pointing to the materialized table, with

@@ -46,6 +46,8 @@
 
 -   `ddbs_x()` and `ddbs_y()`: extract the `x` and `y` coordinates of points (#108).
 
+-   `ddbs_options()`: to set some `duckspatial` default options.
+
 ## MINOR CHANGES
 
 -   Improve the documentation of the functions (#85).

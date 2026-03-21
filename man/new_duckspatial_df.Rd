@@ -4,7 +4,13 @@
 \alias{new_duckspatial_df}
 \title{Create a duckspatial lazy spatial data frame}
 \usage{
-new_duckspatial_df(x, crs = NULL, geom_col = "geom", source_table = NULL)
+new_duckspatial_df(
+  x,
+  crs = NULL,
+  geom_col = "geom",
+  source_table = NULL,
+  source_conn = NULL
+)
 }
 \arguments{
 \item{x}{Input: tbl_duckdb_connection, tbl_lazy, or similar dbplyr object}
