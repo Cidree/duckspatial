@@ -768,16 +768,12 @@ ddbs_transform <- function(
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## build the base query
+    ## 3.2. Build the base query
     ## always_xy assumes [northing, easting]
     st_function <- glue::glue("ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)")
     base.query <- glue::glue("
-        SELECT 
-            {x_rest}
-            {build_geom_query(st_function, name, crs_y, mode)} as {x_geom} 
+        SELECT *
+        REPLACE ({build_geom_query(st_function, name, crs_y, mode)} AS {x_geom})
         FROM 
             {x_list$query_name};
     ")

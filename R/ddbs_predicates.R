@@ -218,12 +218,8 @@ ddbs_predicate <- function(
   y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
   assert_geometry_column(x_geom, x_list)
   assert_geometry_column(y_geom, y_list)
-
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
   
- # 4. Build predicate expression
+  ## 3.2. Build predicate expression
   if (st_predicate == "ST_DWithin") {
 
     ## Warn if the distance arg wasn't specified, and give it a value of 0
@@ -259,7 +255,7 @@ ddbs_predicate <- function(
   }
 
 
-  # 5. Build query and return based on mode
+  # 4. Build query and return based on mode
   ## - mode sf: it will return a list-like object
   ## - mode duckspatial: it will return a lazy-tbl object
   if (mode == "sf") {

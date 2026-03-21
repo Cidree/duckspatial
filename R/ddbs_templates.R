@@ -95,7 +95,7 @@ template_unary_ops <- function(
     st_function <- glue::glue("{fun}({args})")
     base.query <- glue::glue("
       SELECT *
-      REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+      REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
       FROM {x_list$query_name};
     ")
   

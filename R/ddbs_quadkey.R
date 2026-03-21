@@ -143,18 +143,14 @@ ddbs_quadkey <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. Get names of the rest of the columns
-  x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-  
-
-  ## 3.3. check CRS (we need EPSG:4326 for quadkeys)
+  ## 3.2. check CRS (we need EPSG:4326 for quadkeys)
   if (!crs_x$input %in% c("EPSG:4326", "WGS 84")) {
     if (!quiet) cli::cli_alert_info("Transforming {.arg x} crs to {.val EPSG:4326}")
     ## query
     tmp.query <- glue::glue("
       CREATE OR REPLACE TABLE {x_list$query_name} AS
-      SELECT {x_rest}
-      ST_Transform({x_geom}, '{crs_x$input}', 'EPSG:4326') as {x_geom} 
+      SELECT *
+      REPLACE (ST_Transform({x_geom}, '{crs_x$input}', 'EPSG:4326') AS {x_geom}) 
       FROM {x_list$query_name};
     ")
     ## execute
@@ -184,7 +180,7 @@ ddbs_quadkey <- function(
       } else {
         tmp.query <- glue::glue("
           CREATE TABLE {name_list$query_name} AS
-          SELECT {x_rest}
+          SELECT * EXCLUDE ({x_geom}),
           ST_QuadKey({x_geom}, {level}) as quadkey 
           FROM {x_list$query_name};
         ")
@@ -208,7 +204,7 @@ ddbs_quadkey <- function(
     ")
   } else {
     tmp.query <- glue::glue("
-      SELECT {x_rest}
+      SELECT * EXCLUDE ({x_geom}),
       ST_QuadKey({x_geom}, {level}) as quadkey 
       FROM {x_list$query_name};
     ")

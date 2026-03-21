@@ -128,18 +128,15 @@ ddbs_rotate <- function(
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
 
-
-    ## 3.3. Convert angle to radians if needed
+    ## 3.2. Convert angle to radians if needed
     if (units == "degrees") {
         angle_rad <- angle * pi / 180
     } else {
         angle_rad <- angle
     }
 
-    ## 3.4. Calculate rotation matrix parameters
+    ## 3.3. Calculate rotation matrix parameters
     cos_angle <- cos(angle_rad)
     sin_angle <- sin(angle_rad)
 
@@ -179,10 +176,10 @@ ddbs_rotate <- function(
         )
     }
 
-    ## 3.6. Build base query
+    ## 3.4. Build base query
     base.query <- glue::glue("
-      SELECT {x_rest}
-      {build_geom_query(rotation_expr, name, crs_x, mode)} as {x_geom}
+      SELECT *
+      REPLACE ({build_geom_query(rotation_expr, name, crs_x, mode)} AS {x_geom})
       FROM {x_list$query_name};
     ")
 
@@ -508,10 +505,7 @@ ddbs_flip <- function(
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Build flip expression using ST_Affine
+    ## 3.2. Build flip expression using ST_Affine
     if (by_feature) {
         # Flip each feature around its own centroid
         if (direction == "horizontal") {
@@ -563,10 +557,10 @@ ddbs_flip <- function(
         }
     }
 
-    ## 3.4. Build base query
+    ## 3.3. Build base query
     base.query <- glue::glue("
-      SELECT {x_rest}
-      {build_geom_query(flip_expr, name, crs_x, mode)} as {x_geom}
+      SELECT *
+      REPLACE {build_geom_query(flip_expr, name, crs_x, mode)} AS {x_geom}
       FROM {x_list$query_name};
     ")
   
@@ -718,10 +712,7 @@ ddbs_scale <- function(
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Build scale expression using ST_Scale
+    ## 3.2. Build scale expression using ST_Scale
     if (by_feature) {
         # Scale each feature around its own centroid
         # ST_Scale scales around origin (0,0), so translate to origin, scale, translate back
@@ -750,10 +741,10 @@ ddbs_scale <- function(
         )
     }
 
-    ## 3.4. Build base query
+    ## 3.3. Build base query
     base.query <- glue::glue("
-      SELECT {x_rest}
-      {build_geom_query(scale_expr, name, crs_x, mode)} as {x_geom}
+      SELECT *
+      REPLACE ({build_geom_query(scale_expr, name, crs_x, mode)} AS {x_geom})
       FROM {x_list$query_name};
     ")
 
@@ -906,10 +897,7 @@ ddbs_shear <- function(
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
-
-    ## 3.3. Build shear expression using ST_Affine
+    ## 3.2. Build shear expression using ST_Affine
     # Shear matrix: a=1, b=x_shear, d=y_shear, e=1
     if (by_feature) {
         # Shear each feature around its own centroid
@@ -934,10 +922,10 @@ ddbs_shear <- function(
         )
     }
 
-    ## 3.4. Build base query
+    ## 3.3. Build base query
     base.query <- glue::glue("
-      SELECT {x_rest}
-      {build_geom_query(shear_expr, name, crs_x, mode)} as {x_geom}
+      SELECT *
+      REPLACE ({build_geom_query(shear_expr, name, crs_x, mode)} AS {x_geom})
       FROM {x_list$query_name};
     ")
 

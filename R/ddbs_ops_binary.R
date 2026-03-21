@@ -303,10 +303,7 @@ ddbs_difference <- function(
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
 
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
-
-    ## 3.3. Build base query
+    ## 3.2. Build base query
     st_function <- glue::glue("{x_geom}")
     base.query <- glue::glue("
         WITH diff_geom AS (
@@ -331,29 +328,6 @@ ddbs_difference <- function(
             * REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
         FROM diff_geom;
     ")
-    # base.query <- glue::glue("
-    #     WITH diff_geom AS (
-    #         SELECT 
-    #             {x_rest}
-    #             ST_Difference(
-    #                 ST_MakeValid(v1.{x_geom}),
-    #                 ST_MakeValid(v2.{y_geom})
-    #             ) AS {x_geom}
-    #         FROM 
-    #             {x_list$query_name} v1, 
-    #             {y_list$query_name} v2
-    #         WHERE NOT ST_IsEmpty(
-    #             ST_Difference(
-    #                 ST_MakeValid(v1.{x_geom}),
-    #                 ST_MakeValid(v2.{y_geom})
-    #             )
-    #         )
-    #     )
-    #     SELECT 
-    #         {x_rest}
-    #         {build_geom_query(st_function, name, crs_x)} as {x_geom}
-    #     FROM diff_geom v1;
-    # ")
 
 
     # 4. if name is not NULL (i.e. no SF returned)
@@ -476,10 +450,7 @@ ddbs_sym_difference <- function(
     assert_geometry_column(x_geom, x_list)
     assert_geometry_column(y_geom, y_list)
 
-    ## 3.2. Get names of the rest of the columns
-    x_rest <- get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE, table_id = "v1")
-
-    ## 3.3. Build the base query
+    ## 3.2. Build the base query
     st_function <- glue::glue("{x_geom}")
     base.query <- glue::glue("
         WITH symdiff_geom AS (
