@@ -9,11 +9,9 @@ automatic method selection based on the coordinate reference system
 ``` r
 ddbs_area(
   x,
+  new_column = "area",
   conn = NULL,
   name = NULL,
-  new_column = "area",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -21,11 +19,9 @@ ddbs_area(
 
 ddbs_length(
   x,
+  new_column = "length",
   conn = NULL,
   name = NULL,
-  new_column = "length",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -33,11 +29,9 @@ ddbs_length(
 
 ddbs_perimeter(
   x,
+  new_column = "perimeter",
   conn = NULL,
   name = NULL,
-  new_column = "perimeter",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -65,6 +59,11 @@ ddbs_distance(
 
   Input geometry (sf object, duckspatial_df, or table name in DuckDB)
 
+- new_column:
+
+  Name of the new column to create on the input data. Ignored with
+  `mode = "sf"`.
+
 - conn:
 
   A connection object to a DuckDB database. If `NULL`, the function runs
@@ -76,25 +75,6 @@ ddbs_distance(
   a character string of length two specifying the schema and table
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
-
-- new_column:
-
-  Name of the new column to create on the input data. Ignored with
-  `mode = "sf"`.
-
-- crs:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
-
-- crs_column:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
-  [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
-  Set to `NULL` if absent.
 
 - mode:
 

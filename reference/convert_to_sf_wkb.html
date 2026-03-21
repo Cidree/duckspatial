@@ -162,7 +162,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">convert_to_sf_wkb</span><span class="op">(</span><span class="va">data</span>, <span class="va">crs</span>, <span class="va">crs_column</span>, <span class="va">x_geom</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">convert_to_sf_wkb</span><span class="op">(</span><span class="va">data</span>, <span class="va">crs</span>, <span class="va">x_geom</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -174,14 +174,7 @@
 
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> The coordinates reference system of the data. Specify if the data
-doesn't have a <code>crs_column</code>, and you know the CRS.</p></dd>
-
-
-<dt id="arg-crs-column">crs_column<a class="anchor" aria-label="anchor" href="#arg-crs-column"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> a character string of length one specifying the column
-storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>).
-Set to <code>NULL</code> if absent.</p></dd>
+<dd><p>The coordinates reference system</p></dd>
 
 
 <dt id="arg-x-geom">x_geom<a class="anchor" aria-label="anchor" href="#arg-x-geom"></a></dt>

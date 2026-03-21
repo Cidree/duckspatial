@@ -240,7 +240,7 @@ Defaults to <code>FALSE</code>.</p></dd>
 <span class="r-in"><span><span class="fu">ddbs_write_table</span><span class="op">(</span><span class="va">conn</span>, <span class="va">sf_points</span>, <span class="st">"points"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## read data back into R</span></span></span>
-<span class="r-in"><span><span class="fu">ddbs_write_table</span><span class="op">(</span><span class="va">conn</span>, <span class="st">"points"</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="ddbs_read_table.html">ddbs_read_table</a></span><span class="op">(</span><span class="va">conn</span>, <span class="st">"points"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## disconnect from db</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>

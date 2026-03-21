@@ -18,7 +18,7 @@ ddbs_crs(x, ...)
 ddbs_crs(x, ...)
 
 # S3 method for class 'character'
-ddbs_crs(x, conn, crs_column = "crs_duckspatial", ...)
+ddbs_crs(x, conn, ...)
 
 # S3 method for class 'duckdb_connection'
 ddbs_crs(x, name, ...)
@@ -55,10 +55,6 @@ ddbs_crs(x, ...)
 - conn:
 
   A DuckDB connection (required for character method)
-
-- crs_column:
-
-  Column name storing CRS info (default: "crs_duckspatial")
 
 - name:
 

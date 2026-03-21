@@ -9,11 +9,9 @@ dimensions
 ddbs_has_z(
   x,
   by_feature = TRUE,
+  new_column = "has_z",
   conn = NULL,
   name = NULL,
-  new_column = "has_z",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -22,11 +20,9 @@ ddbs_has_z(
 ddbs_has_m(
   x,
   by_feature = TRUE,
+  new_column = "has_m",
   conn = NULL,
   name = NULL,
-  new_column = "has_m",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -55,6 +51,11 @@ ddbs_has_m(
   each geometry. If `FALSE`, the geometric operation is applied to the
   data as a whole.
 
+- new_column:
+
+  Name of the new column to create on the input data. Ignored with
+  `mode = "sf"`.
+
 - conn:
 
   A connection object to a DuckDB database. If `NULL`, the function runs
@@ -66,25 +67,6 @@ ddbs_has_m(
   a character string of length two specifying the schema and table
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
-
-- new_column:
-
-  Name of the new column to create on the input data. Ignored with
-  `mode = "sf"`.
-
-- crs:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
-
-- crs_column:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
-  [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
-  Set to `NULL` if absent.
 
 - mode:
 
@@ -112,13 +94,17 @@ ddbs_has_m(
 
 ## Value
 
-- `mode = "duckspatial"` (default): A `duckspatial_df` (lazy spatial
-  data frame) backed by dbplyr/DuckDB.
+Depends on the `mode` argument (or global preference set by
+[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
 
-- `mode = "sf"`: An eagerly collected vector in R memory.
+- `duckspatial` (default): A `duckspatial_df` (lazy spatial data frame)
+  backed by dbplyr/DuckDB.
 
-- When `name` is provided: writes the table in the DuckDB connection and
-  returns `TRUE` (invisibly).
+- `sf`: An eagerly collected object in R memory, that will return the
+  same data type as the `sf` equivalent (e.g. `sf` or `units` vector).
+
+When `name` is provided, the result is also written as a table or view
+in DuckDB and the function returns `TRUE` (invisibly).
 
 ## Details
 

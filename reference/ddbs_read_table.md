@@ -8,14 +8,7 @@ temporary Arrow views created by `ddbs_register_table`.
 ## Usage
 
 ``` r
-ddbs_read_table(
-  conn,
-  name,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
-  clauses = NULL,
-  quiet = FALSE
-)
+ddbs_read_table(conn, name, clauses = NULL, quiet = FALSE)
 ```
 
 ## Arguments
@@ -30,20 +23,6 @@ ddbs_read_table(
   a character string of length two specifying the schema and table
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
-
-- crs:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
-
-- crs_column:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
-  [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
-  Set to `NULL` if absent.
 
 - clauses:
 
@@ -82,11 +61,11 @@ sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
 
 ## Example 1: Write and read persistent table
 ddbs_write_vector(conn, sf_points, "points")
-ddbs_read_table(conn, "points", crs = 4326)
+ddbs_read_table(conn, "points")
 
 ## Example 2: Register and read Arrow view (faster, temporary)
 ddbs_register_vector(conn, sf_points, "points_view")
-ddbs_read_table(conn, "points_view", crs = 4326)
+ddbs_read_table(conn, "points_view")
 
 ## disconnect from db
 ddbs_stop_conn(conn)

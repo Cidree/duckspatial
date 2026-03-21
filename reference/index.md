@@ -75,7 +75,7 @@ Combine or subset geometries based on spatial relationships
 
 Create new geometries from scratch or from existing data
 
-- [`ddbs_as_spatial()`](https://cidree.github.io/duckspatial/reference/ddbs_as_spatial.md)
+- [`ddbs_as_points()`](https://cidree.github.io/duckspatial/reference/ddbs_as_points.md)
   : Generate point geometries from coordinates
 - [`ddbs_generate_points()`](https://cidree.github.io/duckspatial/reference/ddbs_generate_points.md)
   : Generate random points within bounding boxes of geometries
@@ -121,6 +121,13 @@ Transform and manipulate coordinate systems
   : Transform the coordinate reference system of geometries
 - [`ddbs_flip_coordinates()`](https://cidree.github.io/duckspatial/reference/ddbs_flip_coordinates.md)
   : Flips the X and Y coordinates of geometries
+- [`ddbs_x()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
+  [`ddbs_y()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
+  : Extract X and Y coordinates from geometries
+- [`ddbs_force_2d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  [`ddbs_force_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  [`ddbs_force_4d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  : Force geometry dimensions
 
 ## Geometry Validation
 
@@ -141,10 +148,6 @@ Check and repair geometry validity and dimensionality
 - [`ddbs_has_z()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
   [`ddbs_has_m()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
   : Check geometry dimensions
-- [`ddbs_force_2d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
-  [`ddbs_force_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
-  [`ddbs_force_4d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
-  : Force geometry dimensions
 
 ## Format Conversion
 
@@ -228,12 +231,22 @@ Create and work with lazy `duckspatial_df` objects
   [`st_as_sf(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
   [`print(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
   : sf methods for duckspatial_df
-- [`dplyr_reconstruct(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+- [`compute(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`select(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`filter(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`arrange(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`rename(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`slice(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`head(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`glimpse(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`mutate(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`count(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`distinct(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
   [`left_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
   [`inner_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`head(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`count(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`glimpse(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`compute(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
-  [`distinct(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`right_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`full_join(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`group_by(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`ungroup(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`summarise(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
   : dplyr methods for duckspatial_df

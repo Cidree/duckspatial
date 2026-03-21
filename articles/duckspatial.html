@@ -187,7 +187,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Getting started</h1>
 
 
-      <p class="date">2026-03-07</p>
+      <p class="date">2026-03-21</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/duckspatial.qmd" class="external-link"><code>vignettes/duckspatial.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -243,21 +243,20 @@
 <span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
-<span><span class="co">#&gt; # Source:   table&lt;temp_view_5108e7f7_2ce6_4d53_b89a_5a9a6d8d16b1&gt; [?? x 7]</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
-<span><span class="co">#&gt;    CNTR_ID NAME_ENGL            ISO3_CODE CNTR_NAME       FID   date       geom </span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;                &lt;chr&gt;     &lt;chr&gt;           &lt;chr&gt; &lt;date&gt;     &lt;lis&gt;</span></span>
-<span><span class="co">#&gt;  1 AR      Argentina            ARG       Argentina       AR    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  2 AS      American Samoa       ASM       American Samoa… AS    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  3 AT      Austria              AUT       Österreich      AT    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  4 AQ      Antarctica           ATA       Antarctica      AQ    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  5 AD      Andorra              AND       Andorra         AD    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  6 AE      United Arab Emirates ARE       ???????? ?????… AE    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  7 AF      Afghanistan          AFG       ?????????-????… AF    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  8 AG      Antigua and Barbuda  ATG       Antigua and Ba… AG    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt;  9 AI      Anguilla             AIA       Anguilla        AI    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt; 10 AL      Albania              ALB       Shqipëria       AL    2021-01-01 &lt;raw&gt;</span></span>
-<span><span class="co">#&gt; # ℹ more rows</span></span></code></pre></div>
+<span><span class="co">#&gt; # Source:   SQL [?? x 8]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.0 [unknown@Linux 6.14.0-1017-azure:R 4.5.3/:memory:]</span></span>
+<span><span class="co">#&gt;    OGC_FID CNTR_ID NAME_ENGL          ISO3_CODE CNTR_NAME FID   date       geom </span></span>
+<span><span class="co">#&gt;      &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;              &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt; &lt;date&gt;     &lt;lis&gt;</span></span>
+<span><span class="co">#&gt;  1       0 AR      Argentina          ARG       Argentina AR    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  2       1 AS      American Samoa     ASM       American… AS    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  3       2 AT      Austria            AUT       Österrei… AT    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  4       3 AQ      Antarctica         ATA       Antarcti… AQ    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  5       4 AD      Andorra            AND       Andorra   AD    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  6       5 AE      United Arab Emira… ARE       ????????… AE    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  7       6 AF      Afghanistan        AFG       ????????… AF    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  8       7 AG      Antigua and Barbu… ATG       Antigua … AG    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt;  9       8 AI      Anguilla           AIA       Anguilla  AI    2021-01-01 &lt;raw&gt;</span></span>
+<span><span class="co">#&gt; 10       9 AL      Albania            ALB       Shqipëria AL    2021-01-01 &lt;raw&gt;</span></span></code></pre></div>
 </div>
 <blockquote>
 <p><strong>Note:</strong> The first call to <code><a href="../reference/ddbs_open_dataset.html">ddbs_open_dataset()</a></code> may take a few seconds. Internally, {duckspatial} creates a default DuckDB connection, then installs and loads the Spatial extension into it. Subsequent calls reuse the same connection and are much faster. We cover this connection in more detail in the <a href="#working-in-a-database">Working in a database</a> section below.</p>
@@ -339,12 +338,11 @@
 <span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
-<span><span class="co">#&gt; # Source:   SQL [?? x 9]</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
-<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       crs_duckspatial</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;          </span></span>
-<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 EPSG:4326      </span></span>
-<span><span class="co">#&gt; # ℹ 2 more variables: is_valid &lt;lgl&gt;, geometry &lt;list&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # Source:   SQL [?? x 8]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.0 [unknown@Linux 6.14.0-1017-azure:R 4.5.3/:memory:]</span></span>
+<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       geometry is_valid</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;list&gt;   &lt;lgl&gt;   </span></span>
+<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 &lt;raw&gt;    FALSE</span></span></code></pre></div>
 </div>
 <p>Antarctica has invalid geometries (likely self-intersections). We can repair them with <code><a href="../reference/ddbs_make_valid.html">ddbs_make_valid()</a></code> before computing the union, and because <code>duckspatial_df</code> objects are lazy, we can chain both steps in a single pipe:</p>
 <div class="cell">
@@ -362,11 +360,11 @@
 <span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
-<span><span class="co">#&gt; # Source:   table&lt;temp_view_d7291867_e946_458b_9fee_5b6d4b8d565e&gt; [?? x 2]</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
-<span><span class="co">#&gt;   crs_duckspatial geometry       </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;           &lt;list&gt;         </span></span>
-<span><span class="co">#&gt; 1 EPSG:4326       &lt;raw [195,104]&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # Source:   SQL [?? x 1]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.0 [unknown@Linux 6.14.0-1017-azure:R 4.5.3/:memory:]</span></span>
+<span><span class="co">#&gt;   geometry       </span></span>
+<span><span class="co">#&gt;   &lt;list&gt;         </span></span>
+<span><span class="co">#&gt; 1 &lt;raw [194,782]&gt;</span></span></code></pre></div>
 </div>
 <p>The result is still a lazy <code>duckspatial_df</code>. To visualise it we need to pull the data into R as an <code>sf</code> object. Any of the following three calls do that:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -384,15 +382,15 @@
 <span>  <span class="fu"><a href="../reference/ddbs_collect.html">ddbs_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">world_sf</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simple feature collection with 1 feature and 1 field</span></span>
+<span><span class="co">#&gt; Simple feature collection with 1 feature and 0 fields</span></span>
 <span><span class="co">#&gt; Geometry type: MULTIPOLYGON</span></span>
 <span><span class="co">#&gt; Dimension:     XY</span></span>
 <span><span class="co">#&gt; Bounding box:  xmin: -178.9125 ymin: -89.9 xmax: 180 ymax: 83.65187</span></span>
 <span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
-<span><span class="co">#&gt;   crs_duckspatial                                                       geometry</span></span>
-<span><span class="co">#&gt; * &lt;chr&gt;                                                       &lt;MULTIPOLYGON [°]&gt;</span></span>
-<span><span class="co">#&gt; 1 EPSG:4326       (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.48…</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 1 × 1</span></span>
+<span><span class="co">#&gt;                                                                         geometry</span></span>
+<span><span class="co">#&gt; *                                                             &lt;MULTIPOLYGON [°]&gt;</span></span>
+<span><span class="co">#&gt; 1 (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.48437, -151.7571 -…</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
@@ -462,12 +460,11 @@
 <span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
-<span><span class="co">#&gt; # Source:   SQL [?? x 9]</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span>
-<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       crs_duckspatial</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;          </span></span>
-<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 EPSG:4326      </span></span>
-<span><span class="co">#&gt; # ℹ 2 more variables: is_valid &lt;lgl&gt;, geometry &lt;list&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # Source:   SQL [?? x 8]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.0 [unknown@Linux 6.14.0-1017-azure:R 4.5.3/:memory:]</span></span>
+<span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       geometry is_valid</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;list&gt;   &lt;lgl&gt;   </span></span>
+<span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 &lt;raw&gt;    FALSE</span></span></code></pre></div>
 </div>
 <p>You can write intermediate results as named tables in the database by passing a <code>name</code> argument:</p>
 <div class="cell">

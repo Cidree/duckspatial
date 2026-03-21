@@ -6,7 +6,13 @@ column).
 ## Usage
 
 ``` r
-new_duckspatial_df(x, crs = NULL, geom_col = "geom", source_table = NULL)
+new_duckspatial_df(
+  x,
+  crs = NULL,
+  geom_col = "geom",
+  source_table = NULL,
+  source_conn = NULL
+)
 ```
 
 ## Arguments

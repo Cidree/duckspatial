@@ -14,8 +14,6 @@ ddbs_quadkey(
   background = NA,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   output = "polygon",
   overwrite = FALSE,
   quiet = FALSE
@@ -69,20 +67,6 @@ ddbs_quadkey(
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
 
-- crs:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
-
-- crs_column:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
-  [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
-  Set to `NULL` if absent.
-
 - output:
 
   Character string specifying output format. One of:
@@ -127,7 +111,7 @@ tiles from input geometries.
 
 Note that creating a table inside the connection will generate a
 non-spatial table, and therefore, it cannot be read with
-[`ddbs_read_vector()`](https://cidree.github.io/duckspatial/reference/ddbs_read_vector.md).
+[ddbs_read_table](https://cidree.github.io/duckspatial/reference/ddbs_read_table.md).
 
 ## Examples
 

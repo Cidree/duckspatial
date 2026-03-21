@@ -173,8 +173,6 @@ intersection or containment, attaching attributes from one set to the other.</p>
 <span>  conn_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  conn_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
 <span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -226,17 +224,6 @@ If <code>NULL</code> (default), it is resolved from <code>conn</code> or extract
 or a character string of length two specifying the schema and table
 names. If <code>NULL</code> (the default), the function returns the result as an
 <code>sf</code> object</p></dd>
-
-
-<dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> The coordinates reference system of the data. Specify if the data
-doesn't have a <code>crs_column</code>, and you know the CRS.</p></dd>
-
-
-<dt id="arg-crs-column">crs_column<a class="anchor" aria-label="anchor" href="#arg-crs-column"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> a character string of length one specifying the column
-storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>).
-Set to <code>NULL</code> if absent.</p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>

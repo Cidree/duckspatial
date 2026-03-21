@@ -165,11 +165,9 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_has_z</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  by_feature <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  new_column <span class="op">=</span> <span class="st">"has_z"</span>,</span>
 <span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  new_column <span class="op">=</span> <span class="st">"has_z"</span>,</span>
-<span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
 <span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -178,11 +176,9 @@
 <span><span class="fu">ddbs_has_m</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  by_feature <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  new_column <span class="op">=</span> <span class="st">"has_m"</span>,</span>
 <span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  new_column <span class="op">=</span> <span class="st">"has_m"</span>,</span>
-<span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
 <span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -207,6 +203,11 @@ separately to each geometry. If <code>FALSE</code>, the geometric
 operation is applied to the data as a whole.</p></dd>
 
 
+<dt id="arg-new-column">new_column<a class="anchor" aria-label="anchor" href="#arg-new-column"></a></dt>
+<dd><p>Name of the new column to create on the input data. Ignored
+with <code>mode = "sf"</code>.</p></dd>
+
+
 <dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
 <dd><p>A connection object to a DuckDB database. If <code>NULL</code>, the function
 runs on a temporary DuckDB database.</p></dd>
@@ -217,22 +218,6 @@ runs on a temporary DuckDB database.</p></dd>
 or a character string of length two specifying the schema and table
 names. If <code>NULL</code> (the default), the function returns the result as an
 <code>sf</code> object</p></dd>
-
-
-<dt id="arg-new-column">new_column<a class="anchor" aria-label="anchor" href="#arg-new-column"></a></dt>
-<dd><p>Name of the new column to create on the input data. Ignored
-with <code>mode = "sf"</code>.</p></dd>
-
-
-<dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> The coordinates reference system of the data. Specify if the data
-doesn't have a <code>crs_column</code>, and you know the CRS.</p></dd>
-
-
-<dt id="arg-crs-column">crs_column<a class="anchor" aria-label="anchor" href="#arg-crs-column"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> a character string of length one specifying the column
-storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>).
-Set to <code>NULL</code> if absent.</p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
@@ -254,11 +239,11 @@ Defaults to <code>FALSE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-
-<ul><li><p><code>mode = "duckspatial"</code> (default): A <code>duckspatial_df</code> (lazy spatial data frame) backed by dbplyr/DuckDB.</p></li>
-<li><p><code>mode = "sf"</code>: An eagerly collected vector in R memory.</p></li>
-<li><p>When <code>name</code> is provided: writes the table in the DuckDB connection and returns <code>TRUE</code> (invisibly).</p></li>
-</ul></div>
+    <p>Depends on the <code>mode</code> argument (or global preference set by <code><a href="ddbs_options.html">ddbs_options</a></code>):</p><ul><li><p><code>duckspatial</code> (default): A <code>duckspatial_df</code> (lazy spatial data frame) backed by dbplyr/DuckDB.</p></li>
+<li><p><code>sf</code>: An eagerly collected object in R memory, that will return the same data type as the
+<code>sf</code> equivalent (e.g. <code>sf</code> or <code>units</code> vector).</p></li>
+</ul><p>When <code>name</code> is provided, the result is also written as a table or view in DuckDB and the function returns <code>TRUE</code> (invisibly).</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>These functions check for additional coordinate dimensions beyond X and Y:</p><ul><li><p><code>ddbs_has_z()</code> checks if a geometry has Z coordinates (elevation/altitude values).

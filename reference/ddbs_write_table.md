@@ -81,7 +81,7 @@ sf_points <- st_as_sf(random_points, coords = c("x", "y"), crs = 4326)
 ddbs_write_table(conn, sf_points, "points")
 
 ## read data back into R
-ddbs_write_table(conn, "points", crs = 4326)
+ddbs_read_table(conn, "points")
 
 ## disconnect from db
 dbDisconnect(conn)

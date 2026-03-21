@@ -17,14 +17,12 @@ ddbs_interpolate_aw(
   extensive = NULL,
   intensive = NULL,
   weight = "sum",
-  output = "sf",
+  mode = NULL,
   keep_NA = TRUE,
   na.rm = FALSE,
   join_crs = NULL,
   conn = NULL,
   name = NULL,
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -68,17 +66,19 @@ ddbs_interpolate_aw(
   variables. Either `"sum"` (default) or `"total"`. See **Mass
   Preservation** in Details.
 
-- output:
+- mode:
 
-  Character. One of `"sf"` (default) or `"tibble"`.
+  Character. Controls the return type. Options:
 
-  - `"sf"`: The result includes the geometry column of the target.
+  - `"duckspatial"` (default): Lazy spatial data frame backed by
+    dbplyr/DuckDB
 
-  - `"tibble"`: The result **excludes the geometry column**. This is
-    significantly faster and consumes less storage.
+  - `"sf"`: Eagerly collected sf object (uses memory)
 
-  **Note:** This argument also controls the schema of the created table
-  if `name` is provided.
+  Can be set globally via
+  [`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)`(mode = "...")`
+  or per-function via this argument. Per-function overrides global
+  setting.
 
 - keep_NA:
 
@@ -112,20 +112,6 @@ ddbs_interpolate_aw(
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
 
-- crs:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
-
-- crs_column:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
-  [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
-  Set to `NULL` if absent.
-
 - overwrite:
 
   Boolean. whether to overwrite the existing table if it exists.
@@ -138,16 +124,17 @@ ddbs_interpolate_aw(
 
 ## Value
 
-- If `name` is `NULL` (default): Returns an `sf` object (if
-  `output="sf"`) or a `tibble` (if `output="tibble"`).
+Depends on the `mode` argument (or global preference set by
+[`ddbs_options`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)):
 
-- If `name` is provided: Returns `TRUE` invisibly and creates a
-  persistent table in the DuckDB database.
+- `duckspatial` (default): A `duckspatial_df` (lazy spatial data frame)
+  backed by dbplyr/DuckDB.
 
-  - If `output="sf"`, the table **includes** the geometry column.
+- `sf`: An eagerly collected object in R memory, that will return the
+  same data type as the `sf` equivalent (e.g. `sf` or `units` vector).
 
-  - If `output="tibble"`, the table **excludes** the geometry column
-    (pure attributes).
+When `name` is provided, the result is also written as a table or view
+in DuckDB and the function returns `TRUE` (invisibly).
 
 ## Details
 
@@ -229,9 +216,9 @@ res_ext <- ddbs_interpolate_aw(
   target = g_sf, source = nc,
   tid = "tid", sid = "sid",
   extensive = "BIR74",
-  weight = "total"
+  weight = "total",
+  mode = "sf"
 )
-#> ✔ Query successful
 
 # Check mass preservation
 sum(res_ext$BIR74, na.rm = TRUE) / sum(nc$BIR74) # Should be ~1
@@ -242,9 +229,9 @@ sum(res_ext$BIR74, na.rm = TRUE) / sum(nc$BIR74) # Should be ~1
 res_int <- ddbs_interpolate_aw(
   target = g_sf, source = nc,
   tid = "tid", sid = "sid",
-  intensive = "BIR74"
+  intensive = "BIR74",
+  mode = "sf"
 )
-#> ✔ Query successful
 
 # 4. Quick Visualization
 par(mfrow = c(1, 2))

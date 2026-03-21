@@ -12,13 +12,11 @@ ddbs_options(output_type = NULL, mode = NULL)
 
 - output_type:
 
-  Character string. Controls the default return type for spatial
-  operations. Must be one of:
+  Character string. Controls the default return type for
+  [ddbs_collect](https://cidree.github.io/duckspatial/reference/ddbs_collect.md).
+  Must be one of:
 
-  - `"duckspatial_df"` (default): Lazy spatial data frame backed by
-    dbplyr/DuckDB.
-
-  - `"sf"`: Eagerly collected `sf` object (in-memory).
+  - `"sf"` (default): Eagerly collected `sf` object (in-memory).
 
   - `"tibble"`: Eagerly collected `tibble` without geometry.
 
@@ -48,14 +46,11 @@ Invisibly returns a list containing the currently set options.
 
 ``` r
 if (FALSE) { # \dontrun{
-# Set default mode to sf
-ddbs_options(mode = "sf")
+# Set default mode to geoarrow
+ddbs_options(mode = "geoarrow")
 
 # Set default output to tibble
 ddbs_options(output_type = "tibble")
-
-# Set default output to duckspatial_df
-ddbs_options(output_type = "duckspatial_df")
 
 # Check current settings
 ddbs_options()

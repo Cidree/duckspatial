@@ -15,7 +15,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/crs_equal.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_format.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_spatial.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_points.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_bbox.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_boundary.html</loc></url>
@@ -78,6 +78,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_table.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_vector.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_xy.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/duckspatial-package.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.html</loc></url>
@@ -85,7 +86,6 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/get_conn_from_input.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_geom_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/get_query_name.html</loc></url>
-<url><loc>https://cidree.github.io/duckspatial/reference/get_st_predicate.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/import_view_to_connection.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/index.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/is_duckspatial_df.html</loc></url>

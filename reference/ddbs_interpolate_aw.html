@@ -179,14 +179,12 @@ loading all geometries into R memory.</p>
 <span>  extensive <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  intensive <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  weight <span class="op">=</span> <span class="st">"sum"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"sf"</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  keep_NA <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  join_crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  crs <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  crs_column <span class="op">=</span> <span class="st">"crs_duckspatial"</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -229,11 +227,11 @@ spatially intensive (e.g., population density).</p></dd>
 Either <code>"sum"</code> (default) or <code>"total"</code>. See <strong>Mass Preservation</strong> in Details.</p></dd>
 
 
-<dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
-<dd><p>Character. One of <code>"sf"</code> (default) or <code>"tibble"</code>.</p><ul><li><p><code>"sf"</code>: The result includes the geometry column of the target.</p></li>
-<li><p><code>"tibble"</code>: The result <strong>excludes the geometry column</strong>. This is significantly faster
-and consumes less storage.</p></li>
-</ul><p><strong>Note:</strong> This argument also controls the schema of the created table if <code>name</code> is provided.</p></dd>
+<dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
+<dd><p>Character. Controls the return type. Options:</p><ul><li><p><code>"duckspatial"</code> (default): Lazy spatial data frame backed by dbplyr/DuckDB</p></li>
+<li><p><code>"sf"</code>: Eagerly collected sf object (uses memory)</p></li>
+</ul><p>Can be set globally via <code><a href="ddbs_options.html">ddbs_options</a>(mode = "...")</code> or
+per-function via this argument. Per-function overrides global setting.</p></dd>
 
 
 <dt id="arg-keep-na">keep_NA<a class="anchor" aria-label="anchor" href="#arg-keep-na"></a></dt>
@@ -266,17 +264,6 @@ names. If <code>NULL</code> (the default), the function returns the result as an
 <code>sf</code> object</p></dd>
 
 
-<dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> The coordinates reference system of the data. Specify if the data
-doesn't have a <code>crs_column</code>, and you know the CRS.</p></dd>
-
-
-<dt id="arg-crs-column">crs_column<a class="anchor" aria-label="anchor" href="#arg-crs-column"></a></dt>
-<dd><p><a href="https://rdrr.io/r/base/Deprecated.html" class="external-link">Deprecated</a> a character string of length one specifying the column
-storing the CRS (created automatically by <code><a href="ddbs_write_vector.html">ddbs_write_vector</a></code>).
-Set to <code>NULL</code> if absent.</p></dd>
-
-
 <dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
 <dd><p>Boolean. whether to overwrite the existing table if it exists. Defaults
 to <code>FALSE</code>. This argument is ignored when <code>name</code> is <code>NULL</code>.</p></dd>
@@ -289,14 +276,11 @@ Defaults to <code>FALSE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-
-<ul><li><p>If <code>name</code> is <code>NULL</code> (default): Returns an <code>sf</code> object (if <code>output="sf"</code>)
-or a <code>tibble</code> (if <code>output="tibble"</code>).</p></li>
-<li><p>If <code>name</code> is provided: Returns <code>TRUE</code> invisibly and creates a persistent table
-in the DuckDB database.</p><ul><li><p>If <code>output="sf"</code>, the table <strong>includes</strong> the geometry column.</p></li>
-<li><p>If <code>output="tibble"</code>, the table <strong>excludes</strong> the geometry column (pure attributes).</p></li>
-</ul></li>
-</ul></div>
+    <p>Depends on the <code>mode</code> argument (or global preference set by <code><a href="ddbs_options.html">ddbs_options</a></code>):</p><ul><li><p><code>duckspatial</code> (default): A <code>duckspatial_df</code> (lazy spatial data frame) backed by dbplyr/DuckDB.</p></li>
+<li><p><code>sf</code>: An eagerly collected object in R memory, that will return the same data type as the
+<code>sf</code> equivalent (e.g. <code>sf</code> or <code>units</code> vector).</p></li>
+</ul><p>When <code>name</code> is provided, the result is also written as a table or view in DuckDB and the function returns <code>TRUE</code> (invisibly).</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Areal-weighted interpolation is used when the source and target geometries are incongruent (they do not align). It relies on the assumption of <strong>uniform distribution</strong>: values in the source polygons are assumed to be spread evenly across the polygon's area.</p>
@@ -356,9 +340,9 @@ Available at: <a href="https://doi.org/10.21105/joss.01221" class="external-link
 <span class="r-in"><span>  target <span class="op">=</span> <span class="va">g_sf</span>, source <span class="op">=</span> <span class="va">nc</span>,</span></span>
 <span class="r-in"><span>  tid <span class="op">=</span> <span class="st">"tid"</span>, sid <span class="op">=</span> <span class="st">"sid"</span>,</span></span>
 <span class="r-in"><span>  extensive <span class="op">=</span> <span class="st">"BIR74"</span>,</span></span>
-<span class="r-in"><span>  weight <span class="op">=</span> <span class="st">"total"</span></span></span>
+<span class="r-in"><span>  weight <span class="op">=</span> <span class="st">"total"</span>,</span></span>
+<span class="r-in"><span>  mode <span class="op">=</span> <span class="st">"sf"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check mass preservation</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">res_ext</span><span class="op">$</span><span class="va">BIR74</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">nc</span><span class="op">$</span><span class="va">BIR74</span><span class="op">)</span> <span class="co"># Should be ~1</span></span></span>
@@ -369,9 +353,9 @@ Available at: <a href="https://doi.org/10.21105/joss.01221" class="external-link
 <span class="r-in"><span><span class="va">res_int</span> <span class="op">&lt;-</span> <span class="fu">ddbs_interpolate_aw</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  target <span class="op">=</span> <span class="va">g_sf</span>, source <span class="op">=</span> <span class="va">nc</span>,</span></span>
 <span class="r-in"><span>  tid <span class="op">=</span> <span class="st">"tid"</span>, sid <span class="op">=</span> <span class="st">"sid"</span>,</span></span>
-<span class="r-in"><span>  intensive <span class="op">=</span> <span class="st">"BIR74"</span></span></span>
+<span class="r-in"><span>  intensive <span class="op">=</span> <span class="st">"BIR74"</span>,</span></span>
+<span class="r-in"><span>  mode <span class="op">=</span> <span class="st">"sf"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Query successful</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># 4. Quick Visualization</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>

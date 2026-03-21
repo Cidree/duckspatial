@@ -16,12 +16,6 @@
   ([\#55](https://github.com/Cidree/duckspatial/issues/55),
   [\#63](https://github.com/Cidree/duckspatial/issues/63)).
 
-- Polymorphic API: some functions such as
-  [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
-  can be used inside {dplyr} verbs, such as
-  `mutate(area = ddbs_area(geometry)`
-  ([\#92](https://github.com/Cidree/duckspatial/issues/92)).
-
 - [`ddbs_buffer()`](https://cidree.github.io/duckspatial/reference/ddbs_buffer.md):
   now has four new arguments: `num_triangles`, `cap_style`,
   `join_style`, and `mitre_limit`
@@ -61,7 +55,7 @@
   the `new_column` argument now defaults to a column name, as we now
   encourage the users to keep most of the work within DuckDB, rather
   than materialize a vector. For materializing a vector in R, use
-  `mode = "sf"`
+  `mode = "sf"`. This argument is also moved before `conn` argument
   ([\#83](https://github.com/Cidree/duckspatial/issues/83)).
 
 - [`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
@@ -72,7 +66,7 @@
 
 ### NEW FEATURES
 
-- [`ddbs_as_spatial()`](https://cidree.github.io/duckspatial/reference/ddbs_as_spatial.md):
+- [`ddbs_as_points()`](https://cidree.github.io/duckspatial/reference/ddbs_as_points.md):
   converts a table with coordinates into a spatial object
   ([\#75](https://github.com/Cidree/duckspatial/issues/75)).
 
@@ -138,6 +132,15 @@
   and
   [`ddbs_read_table()`](https://cidree.github.io/duckspatial/reference/ddbs_read_table.md)
   ([\#100](https://github.com/Cidree/duckspatial/issues/100)).
+
+- [`ddbs_x()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
+  and
+  [`ddbs_y()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md):
+  extract the `x` and `y` coordinates of points
+  ([\#108](https://github.com/Cidree/duckspatial/issues/108)).
+
+- [`ddbs_options()`](https://cidree.github.io/duckspatial/reference/ddbs_options.md):
+  to set some `duckspatial` default options.
 
 ### MINOR CHANGES
 

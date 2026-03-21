@@ -8,11 +8,9 @@ of spatial geometries using DuckDB's spatial extension.
 ``` r
 ddbs_is_simple(
   x,
+  new_column = "is_simple",
   conn = NULL,
   name = NULL,
-  new_column = "is_simple",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -20,11 +18,9 @@ ddbs_is_simple(
 
 ddbs_is_valid(
   x,
+  new_column = "is_valid",
   conn = NULL,
   name = NULL,
-  new_column = "is_valid",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -32,11 +28,9 @@ ddbs_is_valid(
 
 ddbs_is_closed(
   x,
+  new_column = "is_closed",
   conn = NULL,
   name = NULL,
-  new_column = "is_closed",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -44,11 +38,9 @@ ddbs_is_closed(
 
 ddbs_is_empty(
   x,
+  new_column = "is_empty",
   conn = NULL,
   name = NULL,
-  new_column = "is_empty",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -56,11 +48,9 @@ ddbs_is_empty(
 
 ddbs_is_ring(
   x,
+  new_column = "is_ring",
   conn = NULL,
   name = NULL,
-  new_column = "is_ring",
-  crs = NULL,
-  crs_column = "crs_duckspatial",
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -83,6 +73,11 @@ ddbs_is_ring(
 
   Data is returned from this object.
 
+- new_column:
+
+  Name of the new column to create on the input data. Ignored with
+  `mode = "sf"`.
+
 - conn:
 
   A connection object to a DuckDB database. If `NULL`, the function runs
@@ -94,25 +89,6 @@ ddbs_is_ring(
   a character string of length two specifying the schema and table
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
-
-- new_column:
-
-  Name of the new column to create on the input data. Ignored with
-  `mode = "sf"`.
-
-- crs:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) The coordinates
-  reference system of the data. Specify if the data doesn't have a
-  `crs_column`, and you know the CRS.
-
-- crs_column:
-
-  [Deprecated](https://rdrr.io/r/base/Deprecated.html) a character
-  string of length one specifying the column storing the CRS (created
-  automatically by
-  [`ddbs_write_vector`](https://cidree.github.io/duckspatial/reference/ddbs_write_vector.md)).
-  Set to `NULL` if absent.
 
 - mode:
 

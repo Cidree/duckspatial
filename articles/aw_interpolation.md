@@ -74,9 +74,8 @@ res_extensive <- ddbs_interpolate_aw(
   sid = "source_id",
   extensive = "BIR74",
   weight = "total",
-  output = "sf"
+  mode = "sf"
 )
-#> ✔ Query successful
 ```
 
 **Verification:** The total sum of births in the result should match the
@@ -106,9 +105,8 @@ res_intensive <- ddbs_interpolate_aw(
   sid = "source_id",
   intensive = "BIR74", # Treated as density here
   weight = "sum",      # Standard behavior for intensive vars
-  output = "sf"
+  mode = "sf"
 )
-#> ✔ Query successful
 ```
 
 ### Visual Comparison
@@ -135,8 +133,9 @@ plot(plot_data[c("Extensive_Count", "Intensive_Value")],
 
 If you are working with massive datasets, constructing the geometry for
 the result `sf` object can be slow. If you only need the interpolated
-numbers, set `output = "tibble"`. This skips the geometry construction
-step and is significantly faster.
+numbers, collect the default `duckspatial_df` using
+`ddbs_collect(as = "tibble")`. This skips the geometry construction step
+and is significantly faster.
 
 ``` r
 # Return a standard data.frame/tibble without geometry
@@ -145,21 +144,20 @@ res_tbl <- ddbs_interpolate_aw(
   source = nc,
   tid = "target_id",
   sid = "source_id",
-  extensive = "BIR74",
-  output = "tibble"
-)
-#> ✔ Query successful
+  extensive = "BIR74"
+) |> 
+  ddbs_collect(as = "tibble")
 
 head(res_tbl)
-#> # A tibble: 6 × 3
-#>   target_id crs_duckspatial BIR74
-#>       <int> <chr>           <dbl>
-#> 1         1 EPSG:5070       1168.
-#> 2         2 EPSG:5070        379.
-#> 3         6 EPSG:5070        753.
-#> 4         7 EPSG:5070       5731.
-#> 5         8 EPSG:5070       8000.
-#> 6        11 EPSG:5070       1417.
+#> # A tibble: 6 × 2
+#>   target_id BIR74
+#>       <int> <dbl>
+#> 1         1 1168.
+#> 2         2  379.
+#> 3         6  753.
+#> 4         7 5731.
+#> 5         8 8000.
+#> 6        11 1417.
 ```
 
 ## 3) Database Mode: Large Data Workflows
@@ -248,7 +246,7 @@ ddbs_interpolate_aw(
   weight = "total",
   name = "nc_grid_births", # <--- Writes to DB
   overwrite = TRUE,
-  output = "tibble"
+  mode = "tibble"
 )
 #> ℹ Table <nc_grid_births> dropped
 #> ✔ Query successful
@@ -257,13 +255,29 @@ ddbs_interpolate_aw(
 And preview this table directly in the database:
 
 ``` r
-DBI::dbGetQuery(conn, "SELECT * FROM nc_grid_births LIMIT 5")
-#>   target_id crs_duckspatial     BIR74
-#> 1         1       EPSG:5070 1168.3093
-#> 2         2       EPSG:5070  378.5281
-#> 3         6       EPSG:5070  752.9156
-#> 4         7       EPSG:5070 5731.0103
-#> 5         8       EPSG:5070 7999.6957
+as_duckspatial_df("nc_grid_births", conn)
+#> # A duckspatial lazy spatial table
+#> # ● CRS: EPSG:5070 
+#> # ● Geometry column: x 
+#> # ● Geometry type: POLYGON 
+#> # ● Bounding box: xmin: 1.0543e+06 ymin: 1.348e+06 xmax: 1.8335e+06 ymax: 1.6892e+06 
+#> # Data backed by DuckDB (dbplyr lazy evaluation)
+#> # Use ddbs_collect() or st_as_sf() to materialize to sf
+#> #
+#> # Source:   SQL [?? x 3]
+#> # Database: DuckDB 1.5.0 [unknown@Linux 6.14.0-1017-azure:R 4.5.3/:memory:]
+#>    target_id x           BIR74
+#>        <int> <list>      <dbl>
+#>  1         1 <raw [93]>  1168.
+#>  2         2 <raw [93]>   379.
+#>  3         6 <raw [93]>   753.
+#>  4         7 <raw [93]>  5731.
+#>  5         8 <raw [93]>  8000.
+#>  6        11 <raw [93]>  1417.
+#>  7        12 <raw [93]>  8314.
+#>  8        13 <raw [93]>  8305.
+#>  9        14 <raw [93]> 25694.
+#> 10        15 <raw [93]> 17277.
 ```
 
 ### Cleanup

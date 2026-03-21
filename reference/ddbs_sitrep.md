@@ -27,5 +27,5 @@ ddbs_sitrep()
 #> 
 #> ── Default Connection ──
 #> 
-#> ! No default connection active (will be created on demand).
+#> ✔ Active DuckDB connection found.
 ```

@@ -12,48 +12,58 @@ plans.
 
 ``` r
 # S3 method for class 'duckspatial_df'
-dplyr_reconstruct(data, template)
+compute(x, name = NULL, temporary = TRUE, ...)
 
 # S3 method for class 'duckspatial_df'
-left_join(
-  x,
-  y,
-  by = NULL,
-  copy = FALSE,
-  suffix = c(".x", ".y"),
-  ...,
-  keep = NULL,
-  na_matches = c("na", "never"),
-  relationship = NULL
-)
+select(.data, ...)
 
 # S3 method for class 'duckspatial_df'
-inner_join(
-  x,
-  y,
-  by = NULL,
-  copy = FALSE,
-  suffix = c(".x", ".y"),
-  ...,
-  keep = NULL,
-  na_matches = c("na", "never"),
-  relationship = NULL
-)
+filter(.data, ...)
+
+# S3 method for class 'duckspatial_df'
+arrange(.data, ...)
+
+# S3 method for class 'duckspatial_df'
+rename(.data, ...)
+
+# S3 method for class 'duckspatial_df'
+slice(.data, ...)
 
 # S3 method for class 'duckspatial_df'
 head(x, n = 6L, ...)
 
 # S3 method for class 'duckspatial_df'
-count(x, ..., wt = NULL, sort = FALSE, name = NULL)
-
-# S3 method for class 'duckspatial_df'
 glimpse(x, width = NULL, ...)
 
 # S3 method for class 'duckspatial_df'
-compute(x, name = NULL, temporary = TRUE, ...)
+mutate(.data, ...)
+
+# S3 method for class 'duckspatial_df'
+count(x, ..., wt = NULL, sort = FALSE, name = NULL)
 
 # S3 method for class 'duckspatial_df'
 distinct(.data, ..., .keep_all = FALSE)
+
+# S3 method for class 'duckspatial_df'
+left_join(x, y, by = NULL, ...)
+
+# S3 method for class 'duckspatial_df'
+inner_join(x, y, by = NULL, ...)
+
+# S3 method for class 'duckspatial_df'
+right_join(x, y, by = NULL, ...)
+
+# S3 method for class 'duckspatial_df'
+full_join(x, y, by = NULL, ...)
+
+# S3 method for class 'duckspatial_df'
+group_by(.data, ..., .add = FALSE, .drop = dplyr::group_by_drop_default(.data))
+
+# S3 method for class 'duckspatial_df'
+ungroup(x, ...)
+
+# S3 method for class 'duckspatial_df'
+summarise(.data, ...)
 ```
 
 ## Arguments
@@ -61,11 +71,6 @@ distinct(.data, ..., .keep_all = FALSE)
 - x:
 
   A `duckspatial_df` object
-
-- ...:
-
-  Additional arguments passed to
-  [`dplyr::compute()`](https://dplyr.tidyverse.org/reference/compute.html)
 
 - name:
 
@@ -76,6 +81,11 @@ distinct(.data, ..., .keep_all = FALSE)
 
   If TRUE (default), creates a temporary table that is automatically
   cleaned up when the connection closes.
+
+- ...:
+
+  Additional arguments passed to
+  [`dplyr::compute()`](https://dplyr.tidyverse.org/reference/compute.html)
 
 ## Value
 
