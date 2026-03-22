@@ -140,7 +140,7 @@ ddbs_union <- function(
     y <- normalize_spatial_input(y, conn_y)
 
     ## Resolve connections
-    resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     y            <- resolve_conn$y
@@ -229,7 +229,7 @@ ddbs_union <- function(
   x <- normalize_spatial_input(x, conn)
 
   ## Resolve connection
-  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
   on.exit(resolve_conn$cleanup(), add = TRUE)
@@ -331,7 +331,7 @@ ddbs_combine <- function(
     # 2. Manage connection to DB
 
     ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
@@ -436,7 +436,7 @@ ddbs_union_agg <- function(
   # 2. Manage connection to DB
 
   ## 2.1. Resolve connections and handle imports
-  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
   ## register cleanup of the connection

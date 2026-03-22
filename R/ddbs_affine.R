@@ -111,7 +111,7 @@ ddbs_rotate <- function(
     # 2. Manage connection to DB
 
     ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
@@ -488,7 +488,7 @@ ddbs_flip <- function(
     # 2. Manage connection to DB
 
     ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
@@ -695,7 +695,7 @@ ddbs_scale <- function(
     # 2. Manage connection to DB
 
     ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
@@ -880,7 +880,7 @@ ddbs_shear <- function(
     # 2. Manage connection to DB
 
     ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection

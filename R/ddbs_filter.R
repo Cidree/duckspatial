@@ -109,7 +109,7 @@ ddbs_filter <- function(
     
     # 3. Manage connection to DB
     ## 3.1. Resolve connections and handle imports
-    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
     
     # NOTE: Inline connection resolution logic was replaced by resolve_spatial_connections()
     # helper (defined in db_utils_not_exported.R) to maintain consistency with ddbs_join

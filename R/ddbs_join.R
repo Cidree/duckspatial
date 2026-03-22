@@ -120,7 +120,7 @@ ddbs_join <- function(
     
     # 3. Manage connection to DB
     ## 3.1. Resolve connections and handle imports
-    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
     
     target_conn <- resolve_res$conn
     x <- resolve_res$x
