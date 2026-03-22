@@ -156,7 +156,13 @@ ddbs_filter <- function(
         ## check the CRS units to use the right function
         crs_units <- crs_x$units_gdal
         if (crs_units != "metre") {
-            st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{x_geom}, v2.{y_geom}, {distance})")
+            # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{x_geom}, v2.{y_geom}, {distance})")
+            st_predicate <- glue::glue("
+                ST_DWithin_Spheroid(
+                    ST_Point(ST_Y(v1.{x_geom}), ST_X(v1.{x_geom})), 
+                    ST_Point(ST_Y(v2.{y_geom}), ST_X(v2.{y_geom})), 
+                    {distance})
+                ")
             if (crs_x$input != "EPSG:4326") {
                 cli::cli_warn(
                 "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
