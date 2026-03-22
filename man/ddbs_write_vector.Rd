@@ -28,7 +28,7 @@ names. If \code{NULL} (the default), the function returns the result as an
 to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
 \item{temp_view}{If \code{TRUE}, registers the \code{sf} object as a temporary Arrow-backed database 'view'
-using \code{ddbs_register_table} instead of creating a persistent table. This is much faster but the view
+using \link{ddbs_register_table} instead of creating a persistent table. This is much faster but the view
 will not persist. Defaults to \code{FALSE}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
