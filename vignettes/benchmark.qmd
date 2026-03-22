@@ -99,9 +99,9 @@ This vignette benchmarks **{duckspatial}** against **{sf}** across several spati
 
 * `duckspatial`: v1.0.0
 
-* `duckdb`: v`r packageVersion("duckdb")`
+* `duckdb`: v1.5.1
 
-* `sf`: v`r packageVersion("sf")`
+* `sf`: v1.1.0
 
 ## TL;DR
 
@@ -196,9 +196,9 @@ The spatial join aims to bring the attributes of a dataset to another dataset ba
 
 This operation can be intensive. In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in @fig-st-join.
 
--   Using 1 million points: {duckspatial} was about 31 times faster than {sf}, and allocated 18 times less memory.
+-   Using 1 million points: {duckspatial} was about 50 times faster than {sf}, and allocated 18 times less memory.
 
--   Using 3 million points: {duckspatial} was about 25 times faster than {sf}, and allocated 16 times less memory.
+-   Using 3 million points: {duckspatial} was about 35 times faster than {sf}, and allocated 16 times less memory.
 
 ```{r}
 #| message: false
@@ -231,7 +231,7 @@ df_bench_join <- lapply(
 #| warning: false
 
 # Id to store the figures, saving the older ones
-id_output <- "v1.5"
+id_output <- "v1.5.1"
 
 # Generate the plots
 gg_join <- ggplot_benchmark(
@@ -264,7 +264,7 @@ ggsave(
 )
 ```
 
-![Benchmark that compares spatial join for duckspatial and sf](../man/figures/bench/bench-st-join-v1.5.png){#fig-st-join fig-align="center"}
+![Benchmark that compares spatial join for duckspatial and sf](../man/figures/bench/bench-st-join-v1.5.1.png){#fig-st-join fig-align="center"}
 
 # Spatial filter
 
@@ -272,9 +272,9 @@ The spatial filter aims to filter rows of `x` based in a spatial relationship wi
 
 In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in @fig-st-filter.
 
--   Using 1 million points: {duckspatial} was about 20 times faster than {sf}, and allocated 5 times less memory.
+-   Using 1 million points: {duckspatial} was about 42 times faster than {sf}, and allocated 5 times less memory.
 
--   Using 3 million points: {duckspatial} was about 8 times faster than {sf}, and allocated 5 times less memory.
+-   Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 5 times less memory.
 
 ```{r}
 #| message: false
@@ -337,13 +337,13 @@ ggsave(
 )
 ```
 
-![Benchmark that compares spatial filter for duckspatial and sf](../man/figures/bench/bench-st-filter-v1.5.png){#fig-st-filter fig-align="center"}
+![Benchmark that compares spatial filter for duckspatial and sf](../man/figures/bench/bench-st-filter-v1.5.1.png){#fig-st-filter fig-align="center"}
 
 # Spatial distances
 
 The `ST_Distance(x, y)` calculates the distance between each observation in `x` against each observation in `y`. The default {duckspatial} mode will return a lazy table with three columns: (id_x) the id of the row in `x`; (id_y) the id of the row in `y`; (distance) the actual distance between those pair of observations. In the case of `mode = 'sf'`, the result will be a sparse matrix. Note that {duckspatial} will use by default the best distance for the input CRS and geometry type.
 
-When calculating the distance between 10,000 pairs of points, {duckspatial} and {sf} run during the same time, but {duckspatial} uses much less memory (> 400 times).
+When calculating the distance between 10,000 pairs of points, {duckspatial} was about 1.5 times faster, but used much less memory (> 400 times).
 
 ```{r}
 #| message: false
@@ -409,7 +409,7 @@ ggsave(
 )
 ```
 
-![Benchmark that compares spatial distance for duckspatial and sf](../man/figures/bench/bench-st-distance-v1.5.png){#fig-st-distance fig-align="center"}
+![Benchmark that compares spatial distance for duckspatial and sf](../man/figures/bench/bench-st-distance-v1.5.1.png){#fig-st-distance fig-align="center"}
 
 
 # Dissolving geometries
@@ -418,9 +418,9 @@ Dissolving geometries consist in merging/aggregating geometries that share a com
 
 In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in @fig-st-dissolve.
 
--   Using 1 million points: {duckspatial} was about 3 times faster than {sf}, and allocated 10 times less memory.
+-   Using 1 million points: {duckspatial} was about 14 times faster than {sf}, and allocated 10 times less memory.
 
--   Using 3 million points: {duckspatial} was about 4 times faster than {sf}, and allocated 10 times less memory.
+-   Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 10 times less memory.
 
 ```{r}
 #| message: false
@@ -485,7 +485,7 @@ ggsave(
 )
 ```
 
-![Benchmark that compares dissolving geometries by group for duckspatial and sf](../man/figures/bench/bench-st-dissolve-v1.5.png){#fig-st-dissolve fig-align="center"}
+![Benchmark that compares dissolving geometries by group for duckspatial and sf](../man/figures/bench/bench-st-dissolve-v1.5.1.png){#fig-st-dissolve fig-align="center"}
 
 
 # Geometry predicates
@@ -495,9 +495,9 @@ Common examples include: ST_Contains, ST_Within, ST_Touches, ST_Overlaps, ST_Cro
 
 In the following example, we compare `ST_Intersects(geometry A, geometry B)`, which returns true if the two geometries share any point in common (their interiors or boundaries overlap in any way).
 
--   Using 1 million points: {duckspatial} was about 14 times faster than {sf}, and allocated 3 times less memory.
+-   Using 1 million points: {duckspatial} was about 28 times faster than {sf}, and allocated 3 times less memory.
 
--   Using 3 million points: {duckspatial} was about 9 times faster than {sf}, and allocated 3 times less memory.
+-   Using 3 million points: {duckspatial} was about 23 times faster than {sf}, and allocated 3 times less memory.
 
 ```{r}
 #| message: false
@@ -560,4 +560,4 @@ ggsave(
 )
 ```
 
-![Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf](../man/figures/bench/bench-st-intersects-v1.5.png){#fig-st-intersects fig-align="center"}
+![Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf](../man/figures/bench/bench-st-intersects-v1.5.1.png){#fig-st-intersects fig-align="center"}

@@ -20,6 +20,8 @@ new_duckspatial_df(
 \item{geom_col}{Name of geometry column (default: "geom")}
 
 \item{source_table}{Name of the source table if applicable}
+
+\item{source_conn}{Name of the source connection if applicable}
 }
 \value{
 A duckspatial_df object
