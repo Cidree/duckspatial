@@ -2,6 +2,7 @@
 % Please edit documentation in R/duckspatial_df_dplyr_methods.R
 \name{duckspatial_df_dplyr}
 \alias{duckspatial_df_dplyr}
+\alias{dplyr_reconstruct.duckspatial_df}
 \alias{compute.duckspatial_df}
 \alias{select.duckspatial_df}
 \alias{filter.duckspatial_df}
@@ -22,6 +23,8 @@
 \alias{summarise.duckspatial_df}
 \title{dplyr methods for duckspatial_df}
 \usage{
+\method{dplyr_reconstruct}{duckspatial_df}(data, template)
+
 \method{compute}{duckspatial_df}(x, name = NULL, temporary = TRUE, ...)
 
 \method{select}{duckspatial_df}(.data, ...)

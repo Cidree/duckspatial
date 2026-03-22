@@ -102,7 +102,6 @@ ddbs_read_table <- function(
     }
 
     ## get column names and prepare SQL
-    ## TODO - remove crs column
     if (object_type == "Arrow view") {
         # For Arrow views, PRAGMA table_info doesn't work, so we need to get columns differently
         all_cols <- DBI::dbListFields(conn, name_list$query_name)

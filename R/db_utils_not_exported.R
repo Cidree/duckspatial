@@ -133,9 +133,10 @@ crs_equal <- function(crs1, crs2) {  # nocov start
 #' @param source_conn Source DuckDB connection  
 #' @param source_object duckspatial_df, tbl_lazy, or tbl_duckdb_connection from source_conn
 #' @param target_name Name for view in target connection (auto-generated if NULL)
+#' @template quiet
 #' @return List with imported view name and cleanup function
 #' @keywords internal
-import_view_to_connection <- function(target_conn, source_conn, source_object, target_name = NULL) {
+import_view_to_connection <- function(target_conn, source_conn, source_object, target_name = NULL, quiet = FALSE) {
   
   if (is.null(target_name)) {
     target_name <- paste0("imported_", gsub("-", "_", uuid::UUIDgenerate()))
@@ -146,56 +147,33 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
   
   # STRATEGY 1: SQL recreation (same DB, direct view reference)
   if (inherits(source_object, c("duckspatial_df", "tbl_duckdb_connection", "tbl_lazy"))) {
-
-    # TODO - modified in duckdb v1.5
-    if (inherits(source_object, "duckspatial_df")) {
-      ddbs_write_table(target_conn, source_object, target_name, temp_view = TRUE, quiet = TRUE)
-      cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
-      return(list(name = target_name, method = "collect_and_write", cleanup = function() NULL))
-    }
-
     source_table <- dbplyr::remote_name(source_object)
     
     if (!is.null(source_table) && !inherits(source_table, "sql")) {
       source_table_clean <- gsub('^"|"$', "", as.character(source_table))
       
       view_sql <- tryCatch({
-        # q_sql <- glue::glue(
-        #   "SELECT sql FROM duckdb_tables() WHERE table_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
-        # )
-        # result <- DBI::dbGetQuery(source_conn, q_sql)
-
-        # if (nrow(result) > 0) {
-        #   kw <- "TABLE"
-        #   result$sql
-        # } else {
-          q_sql <- glue::glue(
-            "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
-          )
-          result <- DBI::dbGetQuery(source_conn, q_sql)
-          if (nrow(result) > 0) {
-            kw <- "VIEW"
-            result$sql
-          } else {
-            NULL
-          }
-        # }
+        q_sql <- glue::glue(
+          "SELECT sql FROM duckdb_views() WHERE view_name = {DBI::dbQuoteString(source_conn, source_table_clean)}"
+        )
+        result <- DBI::dbGetQuery(source_conn, q_sql)
+        if (nrow(result) > 0) result$sql else NULL
       }, error = function(e) NULL)
       
       if (!is.null(view_sql) && length(view_sql) > 0) {
-        source_pat_clean <- paste0(kw, "\\s+\"", source_table_clean, "\"")
-        source_pat <- paste0(kw, "\\s+", source_table)
+        source_pat_clean <- paste0("VIEW\\s+\"", source_table_clean, "\"")
+        source_pat <- paste0("VIEW\\s+", source_table)
         
         if (grepl(source_pat_clean, view_sql, ignore.case = TRUE)) {
-          new_sql <- sub(source_pat_clean, paste(kw, target_name), view_sql, ignore.case = TRUE)
+          new_sql <- sub(source_pat_clean, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
         } else {
-          new_sql <- sub(source_pat, paste(kw, target_name), view_sql, ignore.case = TRUE)
+          new_sql <- sub(source_pat, paste0("VIEW ", target_name), view_sql, ignore.case = TRUE)
         }
-        new_sql <- sub(paste("CREATE", kw), paste("CREATE OR REPLACE TEMPORARY", kw), new_sql, ignore.case = TRUE)
+        new_sql <- sub("CREATE VIEW", "CREATE OR REPLACE TEMPORARY VIEW", new_sql, ignore.case = TRUE)
         
         tryCatch({
           DBI::dbExecute(target_conn, new_sql)
-          cli::cli_inform("Imported {tolower(kw)} using SQL recreation (zero overhead)")
+          if (!quiet) cli::cli_inform("Imported view using SQL recreation (zero overhead)")
           return(list(name = target_name, method = "sql_recreation", cleanup = function() NULL))
         }, error = function(e) {
           if (isTRUE(getOption("duckspatial.debug", FALSE))) {
@@ -217,7 +195,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
       
       tryCatch({
         DBI::dbExecute(target_conn, view_query)
-        cli::cli_inform("Imported view using SQL query (zero overhead)")
+        if (!quiet) cli::cli_inform("Imported view using SQL query (zero overhead)")
         return(list(name = target_name, method = "sql_render", cleanup = function() NULL))
       }, error = function(e) {
         if (isTRUE(getOption("duckspatial.debug", FALSE))) {
@@ -260,7 +238,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
         ")
         DBI::dbExecute(target_conn, view_query)
         
-        cli::cli_inform("Imported view using ATTACH (zero-copy, READ_ONLY)")
+        if (!quiet) cli::cli_inform("Imported view using ATTACH (zero-copy, READ_ONLY)")
         return(list(
           name = target_name, 
           method = "attach",
@@ -304,7 +282,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
         DBI::dbClearResult(res)
         tryCatch(duckdb::duckdb_unregister_arrow(target_conn, temp_arrow_name), error = function(e) NULL)
         
-        cli::cli_inform("Imported via nanoarrow streaming (zero R materialization)")
+        if (!quiet) cli::cli_inform("Imported via nanoarrow streaming (zero R materialization)")
         return(list(name = target_name, method = "nanoarrow", cleanup = function() NULL))
       }, error = function(e) {
         if (isTRUE(getOption("duckspatial.debug", FALSE))) {
@@ -318,7 +296,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
   df <- dplyr::collect(source_object)
   
   if (inherits(df, "sf")) {
-    duckspatial::ddbs_write_table(target_conn, df, target_name, temp_view = TRUE)
+    duckspatial::ddbs_write_table(target_conn, df, target_name, temp_view = TRUE, quiet = quiet)
     cli::cli_warn("Imported via collection (materialized to R, then uploaded)")
     return(list(name = target_name, method = "collect_and_write", data = df, cleanup = function() NULL))
   } else if (is.data.frame(df)) {
@@ -330,6 +308,8 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
     cli::cli_abort("Import failed: Cannot import object of class {.cls {class(df)}}.")
   }
 }
+
+
 
 #' Get column names in a DuckDB database
 #'
@@ -401,6 +381,17 @@ get_query_name <- function(name) {  # nocov start
 #' @keywords internal
 #' @noRd
 #' @returns list with fixed names
+# IMPORTANT: This function returns a cleanup function instead of using on.exit() internally.
+# 
+# Why? R's on.exit() runs when the function containing it exits, NOT when the caller exits.
+# If we used on.exit() here, the temporary views would be dropped as soon as get_query_list()
+# returns, BEFORE the caller can execute their SQL query that references the view.
+#
+# The caller MUST register the cleanup function with on.exit() in their own scope:
+#   result <- get_query_list(x, conn)
+#   on.exit(result$cleanup(), add = TRUE)
+#   # ... use result$query_name ...
+#   # ... use result$query_name ...
 get_query_list <- function(x, conn) {
 
   if (inherits(x, "sf")) {
@@ -481,188 +472,6 @@ get_query_list <- function(x, conn) {
     return(x_list)
   }
 }
-
-
-
-#' Get names for the query
-#'
-#' @param x sf, duckspatial_df, tbl_lazy, or character
-#' @template conn_null
-#'
-#' @keywords internal
-#' @noRd
-#' @returns list with fixed names
-# IMPORTANT: This function returns a cleanup function instead of using on.exit() internally.
-# 
-# Why? R's on.exit() runs when the function containing it exits, NOT when the caller exits.
-# If we used on.exit() here, the temporary views would be dropped as soon as get_query_list()
-# returns, BEFORE the caller can execute their SQL query that references the view.
-#
-# The caller MUST register the cleanup function with on.exit() in their own scope:
-#   result <- get_query_list(x, conn)
-#   on.exit(result$cleanup(), add = TRUE)
-#   # ... use result$query_name ...
-#   # ... use result$query_name ...
-# get_query_list <- function(x, conn) {
-
-#   cleanup <- function() NULL  # default no-op
-  
-#   if (inherits(x, "sf")) {
-
-#     ## generate a unique temporary view name
-#     temp_view_name <- ddbs_temp_view_name()
-
-#     # Write table with the unique name
-#     duckspatial::ddbs_write_table(
-#       conn      = conn,
-#       data      = x,
-#       name      = temp_view_name,
-#       quiet     = TRUE,
-#       temp_view = TRUE
-#     )
-
-#     x_list <- get_query_name(temp_view_name)
-
-#     x_list$cleanup <- function() {NULL}
-
-#     return(x_list)
-
-#   } else if (inherits(x, "duckspatial_df")) {
-    
-#     # 1. OPTIMIZATION: Check if we have an unmodified direct source table/view
-#     # This optimization is ONLY valid when the lazy query hasn't been modified.
-#     #
-#     # When dplyr verbs (filter, select, mutate, etc.) are applied, the lazy query
-#     # changes but source_table attribute may still point to original table.
-#     # We detect modification by comparing source_table with dbplyr::remote_name():
-#     # - If remote_name returns the same table name, query is unmodified
-#     # - If remote_name returns sql() or NULL, query has been modified via dplyr verbs
-#     source_table <- attr(x, "source_table")
-#     if (!is.null(source_table)) {
-#       remote_name_result <- tryCatch(dbplyr::remote_name(x), error = function(e) NULL)
-      
-#       # Only use optimization if remote_name matches source_table exactly
-#       # (i.e., the query hasn't been modified by dplyr verbs)
-#       if (!is.null(remote_name_result) && 
-#           !inherits(remote_name_result, "sql") &&
-#           as.character(remote_name_result) == source_table) {
-#         result <- get_query_name(source_table)
-#         result$cleanup <- function() NULL
-#         return(result)
-#       }
-#       # Otherwise, fall through to SQL render path below
-#     }
-    
-#     # 2. SQL render (efficient lazy evaluation)
-#     # NOTE: Replaced inefficient collect-and-upload fallback with SQL render.
-#     # Regression test: tests/testthat/test-regression-inefficient-fallback.R
-#     # duckspatial_df inherits from tbl_lazy, so sql_render always works
-#     temp_view_name <- ddbs_temp_view_name()
-    
-#     query_sql <- dbplyr::sql_render(x, con = conn)
-    
-#     view_query <- glue::glue("
-#       CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
-#       {query_sql}
-#     ")
-#     DBI::dbExecute(conn, view_query)
-    
-#     cleanup <- function() {
-#       tryCatch(
-#         DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-#         error = function(e) NULL
-#       )
-#     }
-    
-#     x_list <- get_query_name(temp_view_name)
-#     x_list$cleanup <- cleanup
-#     return(x_list)
-
-#   } else if (inherits(x, "tbl_lazy")) {
-    
-#     ## For dbplyr tbl_lazy, we can use sql_render
-#     temp_view_name <- ddbs_temp_view_name()
-    
-#     # Get the SQL query from the lazy table
-#     query_sql <- dbplyr::sql_render(x)
-    
-#     # Create temp view from the query
-#     view_query <- glue::glue("
-#       CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS 
-#       {query_sql}
-#     ")
-#     DBI::dbExecute(conn, view_query)
-    
-#     cleanup <- function() {
-#       tryCatch(
-#         DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")),
-#         error = function(e) NULL
-#       )
-#     }
-    
-#     x_list <- get_query_name(temp_view_name)
-
-#   } else if (inherits(x, "data.frame")) {
-
-#     ## generate a unique temporary view name
-#     temp_view_name <- ddbs_temp_view_name()
-
-#     ## register the view
-#     duckdb::duckdb_register(conn, temp_view_name, x)
-
-#     cleanup <- function() {NULL}
-
-#     x_list <- get_query_name(temp_view_name)
-
-#   } else {
-#     x_list <- get_query_name(x)
-#   }
-
-#   # Add cleanup function to result
-#   x_list$cleanup <- cleanup
-#   return(x_list)
-
-# }
-
-
-
-
-
-
-#' Converts from data frame to sf
-#'
-#' Converts a table that has been read from DuckDB into an sf object
-#'
-#' @param data a tibble or data frame
-#' @template crs
-#' @param x_geom name of geometry
-#'
-#' @keywords internal
-#' @returns sf
-# convert_to_sf <- function(data, crs, crs_column, x_geom) { # nocov start
-#     if (is.null(crs)) {
-#         if (is.null(crs_column)) {
-#             data_sf <- data |>
-#                 sf::st_as_sf(wkt = x_geom)
-#         } else {
-#             if (crs_column %in% names(data)) {
-#                 data_sf <- data |>
-#                     sf::st_as_sf(wkt = x_geom, crs = data[1, crs_column])
-#                 data_sf <- data_sf[, -which(names(data_sf) == crs_column)]
-#             } else {
-#                 cli::cli_alert_warning("No CRS found for the imported table.")
-#                 data_sf <- data |>
-#                     sf::st_as_sf(wkt = x_geom)
-#             }
-#         }
-
-#     } else {
-#         data_sf <- data |>
-#             sf::st_as_sf(wkt = x_geom, crs = crs)
-#     }
-
-# } # nocov end
-
 
 
 
@@ -891,31 +700,6 @@ crs_to_sql <- function(x) {  # nocov start
 
 
 
-deprecate_crs <- function(crs_column = "crs_duckspatial", crs = NULL) {
-
-  caller <- deparse(sys.call(-1)[[1]])
-  
-  if (crs_column != "crs_duckspatial") {
-    lifecycle::deprecate_warn(
-      when    = "0.9.0",
-      what    = paste0(caller, "(crs_column)"),
-      details = "Support for CRS will change in the next version and the argument won't be necessary in any function of `duckspatial`.",
-      id      = "crs_column"
-    )
-  }
-  
-  if (!is.null(crs)) {
-    lifecycle::deprecate_warn(
-      when    = "0.9.0",
-      what    = paste0(caller, "(crs)"),
-      details = "Support for CRS will change in the next version and the argument won't be necessary in any function of `duckspatial`.",
-      id      = "crs"
-    )
-  }
-}
-
-
-
 
 
 
@@ -1015,25 +799,15 @@ ddbs_handle_query <- function(
     DBI::dbExecute(conn, query)
 
     # Open lazily as duckspatial_df
-    # This could be replaced by ddbs_open_table()
-    # lazy_tbl <- dplyr::tbl(conn, view_name)
+    lazy_tbl <- dplyr::tbl(conn, view_name)
 
     result <- new_duckspatial_df(
-      view_name, 
+      lazy_tbl, 
       crs = crs, 
       geom_col = x_geom, 
       source_table = view_name,
       source_conn = conn
     )
-
-    ## TODO - REVIEW FOR DUCKDB 1.5
-    ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
-    ## when building the duckspatial_df. Now we convert it back to geometry
-    # DBI::dbExecute(conn, glue::glue("
-    #   ALTER TABLE {dbplyr::remote_name(result)}
-    #   ALTER COLUMN {x_geom} SET DATA TYPE GEOMETRY
-    #   USING ST_GeomFROMWKB({x_geom});
-    # "))
     
     return(result)
   }
@@ -1168,7 +942,7 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     # - INSTALL writes to global extension dir (~/.duckdb/extensions), not the database
     # - LOAD just loads extension into session memory
     # - SET operations are session-level settings
-    ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
+    ddbs_install(conn, upgrade = FALSE, quiet = TRUE)
     ddbs_load(conn, quiet = TRUE)
 
     # Configure resources
@@ -1201,6 +975,7 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
 #' @param conn Explicit target connection (optional)
 #' @param conn_x Connection for x (optional, resolved if NULL)
 #' @param conn_y Connection for y (optional, resolved if NULL)
+#' @template quiet
 #' 
 #' @return List containing:
 #'   - conn: The target connection to use
@@ -1209,7 +984,7 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
 #'   - cleanup: A function to call on exit to drop temporary views
 #' @keywords internal
 #' @noRd
-resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y = NULL) {
+resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y = NULL, quiet = FALSE) {
     
     cleanup_funs <- list()
     add_cleanup <- function(fn) {
@@ -1269,15 +1044,14 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
          x_to_import <- x
          if (is.character(x)) {
              x_to_import <- tryCatch({
-                convert_geometry_duckspatial(source_conn_x, x)
-                #  tbl_obj <- dplyr::tbl(source_conn_x, x)
-                #  suppressWarnings(as_duckspatial_df(tbl_obj))
+                 tbl_obj <- dplyr::tbl(source_conn_x, x)
+                 suppressWarnings(as_duckspatial_df(tbl_obj))
              }, error = function(e) {
                  tryCatch(dplyr::tbl(source_conn_x, x), error = function(ex) x)
              })
          }
          
-         res <- import_view_to_connection(target_conn, source_conn_x, x_to_import)
+         res <- import_view_to_connection(target_conn, source_conn_x, x_to_import, quiet = quiet)
          x <- res$name
          
          add_cleanup(function() {
@@ -1299,15 +1073,14 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
          y_to_import <- y
          if (is.character(y)) {
              y_to_import <- tryCatch({
-                convert_geometry_duckspatial(source_conn_y, y)
-                #  tbl_obj <- dplyr::tbl(source_conn_y, y)
-                #  suppressWarnings(as_duckspatial_df(tbl_obj))
+                 tbl_obj <- dplyr::tbl(source_conn_y, y)
+                 suppressWarnings(as_duckspatial_df(tbl_obj))
              }, error = function(e) {
                  tryCatch(dplyr::tbl(source_conn_y, y), error = function(ex) y)
              })
          }
          
-         res <- import_view_to_connection(target_conn, source_conn_y, y_to_import)
+         res <- import_view_to_connection(target_conn, source_conn_y, y_to_import, quiet = quiet)
          y <- res$name
          
          add_cleanup(function() {
@@ -1468,7 +1241,16 @@ build_union_query <- function(
 }
 
 
-
+#' Gets the CRS of a table's geometry column
+#' 
+#' @param conn DuckDB connection
+#' @param geom_name Name of the geometry column
+#' @param table_name Name of the table
+#' 
+#' @return CRS object or NULL if not found
+#'
+#' @keywords internal
+#' @noRd
 get_table_crs <- function(conn, geom_name, table_name) {
 
   DBI::dbGetQuery(
@@ -1484,37 +1266,23 @@ get_table_crs <- function(conn, geom_name, table_name) {
 }
 
 
-
+#' Formats the geometry type for DuckDB queries based on the CRS of the data
+#' 
+#' @param x An sf object or CRS object to extract the CRS from
+#' 
+#' @return A character string representing the geometry type for DuckDB
+#'
+#' @keywords internal
+#' @noRd
 get_geometry_type_duckdb <- function(x) {
   data_crs   <- sf::st_crs(x, parameters = TRUE)
-  glue::glue("GEOMETRY('{data_crs$srid}')")
+    if (length(data_crs) == 0) {
+        geom_field <- glue::glue("GEOMETRY")
+    } else {
+        geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+    }
+    return(geom_field)
 }
 
 
-convert_geometry_duckspatial <- function(
-  conn, 
-  x, 
-  geom_col = NULL, 
-  crs = NULL) {
-
-  ## Get geom and crs
-  if (is.null(geom_col)) geom_col <- get_geom_name(conn, x)
-  if (is.null(crs)) crs <- ddbs_crs(conn, x)
-
-  ## Modify geometry so it can be read in R
-  view_name <- ddbs_temp_view_name()
-  DBI::dbExecute(conn, glue::glue("
-    CREATE TEMP TABLE {view_name} AS
-    SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col}) FROM {x}
-  "))
-  lazy_tbl <- dplyr::tbl(conn, view_name)
-  result <- new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
-  DBI::dbExecute(conn, glue::glue("
-    ALTER TABLE {dbplyr::remote_name(result)}
-    ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
-    USING ST_GeomFROMWKB({geom_col});
-  "))
-  
-  return(result)
-}
 

@@ -25,8 +25,7 @@ test_that("normalize_spatial_input works for tbl_duckdb_connection objects", {
   result <- duckspatial:::normalize_spatial_input(tbl_obj)
   
   expect_s3_class(result, "duckspatial_df")
-  # TODO - table names are now generated random db v1.5
-  # expect_identical(attr(result, "source_table"), "test_table")
+  expect_identical(attr(result, "source_table"), "test_table")
 })
 
 test_that("normalize_spatial_input works for character inputs", {

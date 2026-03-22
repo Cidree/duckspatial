@@ -334,7 +334,7 @@ ddbs_distance <- function(
   # 2. Manage connection to DB
 
   ## 2.1. Resolve connections and handle imports
-  resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+  resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
   y            <- resolve_conn$y

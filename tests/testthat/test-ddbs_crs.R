@@ -22,7 +22,6 @@ test_that("ddbs_crs works for different input types", {
   expect_equal(ddbs_crs(nc_ds), sf::st_crs(nc_sf))
   
   # 3. tbl_duckdb_connection (lazy) method
-  # TODO - Not possible in DuckDB v1.5 to use tbl()
   # Plain lazy table without duckspatial_df wrapper
   # nc_lazy <- dplyr::tbl(conn, "nc_data")
   nc_lazy <- as_duckspatial_df("nc_data", conn)

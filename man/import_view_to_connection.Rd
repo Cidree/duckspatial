@@ -8,7 +8,8 @@ import_view_to_connection(
   target_conn,
   source_conn,
   source_object,
-  target_name = NULL
+  target_name = NULL,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ import_view_to_connection(
 \item{source_object}{duckspatial_df, tbl_lazy, or tbl_duckdb_connection from source_conn}
 
 \item{target_name}{Name for view in target connection (auto-generated if NULL)}
+
+\item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 List with imported view name and cleanup function

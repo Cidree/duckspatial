@@ -7,7 +7,7 @@
 new_duckspatial_df(
   x,
   crs = NULL,
-  geom_col = "geom",
+  geom_col = NULL,
   source_table = NULL,
   source_conn = NULL
 )

@@ -97,19 +97,11 @@ ddbs_open_dataset <- function(path,
   # Helper for temporary table construction
   # As for duckdb v1.5 we cannot work with views as the geometry type is not recognized
   # and we need to alter it (column modification is not allowed in views)
-  create_temp_table <- function(name, geom_col, from) {
-      if (is.null(geom_col)) {
-        glue::glue("
-            CREATE OR REPLACE TEMPORARY TABLE {name} AS 
+  create_temp_table <- function(name, from) {
+      glue::glue("
+            CREATE OR REPLACE TEMPORARY VIEW {name} AS 
             SELECT * FROM {from};
         ")
-      } else {
-          glue::glue("
-            CREATE OR REPLACE TEMPORARY TABLE {name} AS 
-            SELECT * FROM {from};
-        ")
-      }
-      
   }
   
   # -- CRS DETECTION --
@@ -218,9 +210,8 @@ ddbs_open_dataset <- function(path,
       }
       
       view_query <- create_temp_table(
-        name     = view_name,
-        geom_col = geom_col,
-        from     = scan_query
+        name = view_name,
+        from = scan_query
       )
       
   } else if (is_dedicated_shp) {      
@@ -228,29 +219,23 @@ ddbs_open_dataset <- function(path,
       # Dedicated ST_ReadSHP path
       if (!is.null(shp_encoding)) {
         view_query <- create_temp_table(
-            name     = view_name,
-            geom_col = geom_col,
-            from     = glue::glue("ST_ReadSHP('{path}', encoding := '{shp_encoding}')")
+            name = view_name,
+            from = glue::glue("ST_ReadSHP('{path}', encoding := '{shp_encoding}')")
         )
       } else {
         view_query <- create_temp_table(
-            name     = view_name,
-            geom_col = geom_col,
-            from     = glue::glue("ST_ReadSHP('{path}')")
+            name = view_name,
+            from = glue::glue("ST_ReadSHP('{path}')")
         )
       }
 
   } else if (is_dedicated_osm) {
        # Dedicated ST_ReadOSM path
-        # TODO - Review how to deal with geometry column here
         geom_col <- NA_character_ # Signal no geometry
-        # view_query <- create_temp_table(
-        #     name     = view_name,
-        #     geom_col = geom_col,
-        #     from     = glue::glue("ST_ReadSHP('{path}')")
-        # )
-       view_query <- glue::glue("CREATE OR REPLACE TEMPORARY TABLE {view_name} AS SELECT * FROM ST_ReadOSM('{path}')")
-       
+        view_query <- create_temp_table(
+            name = view_name,
+            from = glue::glue("ST_ReadOSM('{path}')")
+        )
 
   } else {
       # Standard ST_Read (GDAL)
@@ -345,9 +330,8 @@ ddbs_open_dataset <- function(path,
       }
       
       view_query <- create_temp_table(
-        name     = view_name,
-        geom_col = geom_col,
-        from     = query_str
+        name = view_name,
+        from = query_str
       )
 
   }
@@ -389,35 +373,21 @@ ddbs_open_dataset <- function(path,
         "x" = msg
     ), call = fn_call)
   })
+    
+    # Get lazy table reference
+    duck_tbl <- dplyr::tbl(conn, view_name)
 
     # Return already if there's no geometry
-    if (is.null(geom_col)) return(dplyr::tbl(conn, view_name))
+    if (is.null(geom_col)) return(duck_tbl)
     
     # Return duckspatial if there's geometry col
     result <- new_duckspatial_df(
-      view_name, 
+      duck_tbl, 
       crs = crs, 
       geom_col = geom_col, 
       source_table = view_name,
       source_conn = conn
-    )
-    # result <- new_duckspatial_df(
-    #     duck_tbl, 
-    #     crs = crs, 
-    #     geom_col = geom_col, 
-    #     source_table = view_name
-    # )
-    
-    # ## DuckDB v1.5:
-    # ## The new geometry type is not allowed in dbplyr, so we need to store it as BLOB
-    # ## when building the duckspatial_df. Now we convert it back to geometry
-    # DBI::dbExecute(conn, glue::glue("
-    #     ALTER TABLE {dbplyr::remote_name(result)}
-    #     ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
-    #     USING ST_GeomFROMWKB({geom_col});
-    # "))
-
-    
+    )    
 
     return(result)
 }

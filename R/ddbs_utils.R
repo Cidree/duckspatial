@@ -254,7 +254,7 @@ ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb =
     }
 
     # Checks and installs the Spatial extension
-    ddbs_install(conn, upgrade = TRUE, quiet = TRUE)
+    ddbs_install(conn, upgrade = FALSE, quiet = TRUE)
     ddbs_load(conn, quiet = TRUE)
 
     # Configure resources if requested

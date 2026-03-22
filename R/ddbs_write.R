@@ -151,21 +151,16 @@ ddbs_write_table <- function(
         data_df[[geom_name]] <- wkb_data  # Ensure raw data is preserved
 
         ## Get the CRS, and define the geometry type for duckdb
-        data_crs   <- sf::st_crs(data, parameters = TRUE)
-        if (length(data_crs) == 0) {
-            geom_field <- glue::glue("GEOMETRY")
-        } else {
-            geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
-        }
+        geom_field <- get_geometry_type_duckdb(data)
 
         ## Warn if no CRS was found in the input data
-        if (is.null(data_crs$srid) || is.na(data_crs$srid)) {
+        if (geom_field == "GEOMETRY") {
             cli::cli_alert_warning("No CRS found in the input data. The table will be created without CRS information.")
         }
 
         ## Write data into DuckDB
         # duckdb::duckdb_register(conn, "temp_view", data_df, experimental = TRUE) # check later
-        DBI::dbWriteTable(
+        duckdb::dbWriteTable(
             conn, 
             DBI::Id(schema = name_list$schema_name, table = name_list$table_name), 
             data_df, 
@@ -199,7 +194,6 @@ ddbs_write_table <- function(
         #         ALTER TABLE {name_list$query_name}
         #         ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
         #     "))
-        #     ## manage CRS
         #
         # } else {
             ## insert files (in duckdb v1.5, ST_Read() already manages CRS)
