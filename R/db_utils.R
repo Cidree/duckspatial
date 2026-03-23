@@ -238,18 +238,21 @@ ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb =
         duckdb::duckdb(
           dbdir = db_path
           #, bigint = "integer64" ## in case the data includes big int
-        )
+        ),
+        geometry = "wk"
       )
     } else if (dbdir == 'memory') {
       conn <- duckdb::dbConnect(
         duckdb::duckdb(
           dbdir = ":memory:"
           #, bigint = "integer64" ## in case the data includes big int
-        )
+        ),
+        geometry = "wk"
       )
     } else {
       conn <- duckdb::dbConnect(
-        duckdb::duckdb(dbdir = dbdir)
+        duckdb::duckdb(dbdir = dbdir), 
+        geometry = "wk"
       )
     }
 
