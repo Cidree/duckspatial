@@ -1286,3 +1286,25 @@ get_geometry_type_duckdb <- function(x) {
 
 
 
+create_duckdb_table <- function(
+  conn,
+  name,
+  query,
+  overwrite,
+  quiet
+) {
+  ## Convenient names of table and/or schema.table
+  name_list <- get_query_name(name)
+
+  ## Overwrite handling
+  overwrite_table(name_list$query_name, conn, quiet, overwrite)
+
+  ## Create and execute the query
+  tmp.query <- glue::glue("
+      CREATE TABLE {name_list$query_name} AS
+      {query}
+  ")
+  DBI::dbExecute(conn, tmp.query)
+  feedback_query(quiet)
+  return(invisible(TRUE))
+}

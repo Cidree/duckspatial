@@ -121,7 +121,7 @@ ddbs_envelope <- function(
     quiet = FALSE) {
 
 
-    ## 0. Handle errors
+    # 0. Validate inputs
     assert_xy(x, "x")
     assert_logic(by_feature, "by_feature")
     assert_name(name)
@@ -131,56 +131,52 @@ ddbs_envelope <- function(
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
 
-    # 1. Manage connection to DB
 
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
+    # 1. Prepare inputs
+  
+    ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names)
     x <- normalize_spatial_input(x, conn)
 
-    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
-    mode <- get_mode(mode, name)
+    ## 1.2. Pre-extract attributes
+    crs_x    <- ddbs_crs(x, conn)
+    sf_col_x <- attr(x, "sf_column")
+    mode     <- get_mode(mode, name)
 
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
+    ## 1.3. Resolve spatial connections and handle imports
     resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
     on.exit(resolve_conn$cleanup(), add = TRUE)
 
-    ## 2.2. Get query list of table names
+    ## 1.4. Get list with query names for the input data
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
 
-    # 3. Prepare parameters for the query
+    # 2. Prepare the query
 
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+    ## available get it from the database)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3.2. Get names of the rest of the columns
+    ## 2.2. Get names of the rest of the columns, or empty string if by_feature = FALSE
     x_rest <- if (isTRUE(by_feature)) {
         get_geom_name(target_conn, x_list$query_name, rest = TRUE, collapse = TRUE)
     } else {
         ""
     }
 
-    ## 3.3. Build envelope clause based on by_feature
+    ## 2.3. Build envelope clause based on by_feature
     if (isTRUE(by_feature)) {
         st_envelope_clause <- glue::glue("ST_Envelope({x_geom})")
     } else {
         st_envelope_clause <- glue::glue("ST_Envelope_Agg({x_geom})")
     }
 
-    ## 3.4. Build base query
+    ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
     base.query <- glue::glue("
         SELECT 
             {x_rest}
@@ -190,37 +186,26 @@ ddbs_envelope <- function(
     ")
 
 
-    # 4. if name is not NULL (i.e. no SF returned)
+    # 3. Table creation if name is provided, or 
+    # create duckspatial_df or sf object if name is NULL
     if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query 
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS {base.query}
-        ")
-
-        ## execute query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
+        create_duckdb_table(
+            conn      = target_conn,
+            name      = name,
+            query     = base.query,
+            overwrite = overwrite,
+            quiet     = quiet
+        )
+    } else {
+        ddbs_handle_query(
+            query      = base.query,
+            conn       = target_conn,
+            mode       = mode,
+            crs        = crs_x,
+            x_geom     = x_geom
+        )
     }
 
-
-    # 5. Apply geospatial operation
-    result <- ddbs_handle_query(
-        query      = base.query,
-        conn       = target_conn,
-        mode       = mode,
-        crs        = crs_x,
-        x_geom     = x_geom
-    )
-
-    return(result)
 }
 
 
@@ -282,7 +267,7 @@ ddbs_bbox <- function(
     overwrite = FALSE,
     quiet = FALSE) {
 
-    # 0. Handle errors
+    # 0. Validate inputs
     assert_xy(x, "x")
     assert_logic(by_feature, "by_feature")
     assert_conn_x_name(conn, x, name)
@@ -293,42 +278,38 @@ ddbs_bbox <- function(
     assert_logic(quiet, "quiet")
     assert_connflict(conn, xy = x, ref = "x")
 
-    # 1. Manage connection to DB
 
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
+    # 1. Prepare inputs
+  
+    ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names)
     x <- normalize_spatial_input(x, conn)
 
-     ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
-    mode <- get_mode(mode, name)
+    ## 1.2. Pre-extract attributes
+    crs_x    <- ddbs_crs(x, conn)
+    sf_col_x <- attr(x, "sf_column")
+    mode     <- get_mode(mode, name)
 
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
+    ## 1.3. Resolve spatial connections and handle imports
     resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
     on.exit(resolve_conn$cleanup(), add = TRUE)
 
-    ## 2.2. Get query list of table names
+    ## 1.4. Get list with query names for the input data
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
 
-    # 3. Prepare parameters for the query
+    # 2. Prepare the query
 
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+    ## available get it from the database)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
 
-    ## 3.3. Build base query - set the extent_clause
+    ## 2.3 Build base query - set the extent_clause
     if (isTRUE(by_feature)) {
         st_extent_clause <- glue::glue("ST_Extent({x_geom})")
     } else {
@@ -348,20 +329,17 @@ ddbs_bbox <- function(
     )
 
 
-    # 5. if name is not NULL (i.e. no data frame returned)
+    # 3. Table creation if name is provided
     if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## execute area query
-        DBI::dbExecute(target_conn, glue::glue("CREATE TABLE {name_list$query_name} AS {base.query}"))
-        feedback_query(quiet)
-        return(invisible(TRUE))
+        return(create_duckdb_table(
+            conn      = target_conn,
+            name      = name,
+            query     = base.query,
+            overwrite = overwrite,
+            quiet     = quiet
+        ))
     }
+
 
     # 4. Apply geospatial operation based on mode
     if (mode == "sf" | isFALSE(by_feature)) {
@@ -375,7 +353,7 @@ ddbs_bbox <- function(
             ## Get data as a data frame
             data_tbl <- DBI::dbGetQuery(target_conn, base.query)
         
-            ## Convert to bbox class
+            ## Convert to sf bbox class
             bbox_vec <- structure(
                 unlist(data_tbl),
                 names = c("xmin", "ymin", "xmax", "ymax"),

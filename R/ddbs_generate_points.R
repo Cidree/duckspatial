@@ -50,7 +50,7 @@ ddbs_generate_points <- function(
   quiet = FALSE
 ) {
 
-  ## 0. Handle errors
+  # 0. Validate inputs
   assert_xy(x, "x")
   assert_numeric(n, "n")
   assert_conn_x_name(conn, x, name)
@@ -60,40 +60,35 @@ ddbs_generate_points <- function(
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
 
-  # 1. Manage connection to DB
 
-  ## 1.1. Pre-extract attributes (CRS and geometry column name)
-  ## this step should be before normalize_spatial_input()
-  crs_x    <- ddbs_crs(x, conn)
-  sf_col_x <- attr(x, "sf_column")
-
-  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-  ## validate character table names
+ # 1. Prepare inputs
+  
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names)
   x <- normalize_spatial_input(x, conn)
 
-  ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
-  mode <- get_mode(mode, name)
+  ## 1.2. Pre-extract attributes
+  crs_x <- ddbs_crs(x, conn)
+  mode  <- get_mode(mode, name)
 
-
-  # 2. Manage connection to DB
-
-  ## 2.1. Resolve connections and handle imports
+  ## 1.3. Resolve spatial connections and handle imports
   resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
   ## register cleanup of the connection
   on.exit(resolve_conn$cleanup(), add = TRUE)
 
-  ## 2.2. Get query list of table names
+  ## 1.4. Get list with query names for the input data
   x_list <- get_query_list(x, target_conn)
   on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 2. Prepare the query
   
+  ## 2.1. Get the bounding box of the input geometries
   bbox <- ddbs_bbox(x_list$query_name, by_feature = FALSE, conn = target_conn, quiet = TRUE)
 
-
-  # 2. Create table as temp view
-
-  ## 2.1. Create the table and store it as a view
+  ## 2.2. Create the table and store it as a view
   view_name_tbl <- ddbs_temp_view_name()
   generate_points_query <- if (is.null(seed)) {
     glue::glue("ST_GeneratePoints({{min_x: {bbox$xmin}, min_y: {bbox$ymin}, max_x: {bbox$xmax}, max_y: {bbox$ymax}}}::BOX_2D, {n}) as geometry")
@@ -110,7 +105,7 @@ ddbs_generate_points <- function(
   ")
   DBI::dbExecute(target_conn, tmp.query)
 
-  ## 2.2. Build base query  
+  ## 2.3. Build base query  
   st_function <- "ST_Point(x, y)"
   base.query <- glue::glue("
     SELECT {build_geom_query(st_function, name, crs_x, mode)} as geometry
@@ -118,38 +113,24 @@ ddbs_generate_points <- function(
   ")  
 
 
-  # 3. if name is not NULL (i.e. no SF returned)
+  # 3. Table creation if name is provided, or 
+  # create duckspatial_df or sf object if name is NULL
   if (!is.null(name)) {
-
-      ## convenient names of table and/or schema.table
-      name_list <- get_query_name(name)
-
-      ## handle overwrite
-      overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-      ## create query
-      tmp.query <- glue::glue("
-          CREATE TABLE {name_list$query_name} AS
-          {base.query}
-      ")
-
-      ## execute query
-      DBI::dbExecute(target_conn, tmp.query)
-      feedback_query(quiet)
-      return(invisible(TRUE))
-
-  }
-
-
-  # 4. Apply geospatial operation
-  result <- ddbs_handle_query(
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
       query      = base.query,
       conn       = target_conn,
       mode       = mode,
       crs        = crs_x,
       x_geom     = "geometry"
-  )
-  
-  return(result)
+    )
+  }
 
 }

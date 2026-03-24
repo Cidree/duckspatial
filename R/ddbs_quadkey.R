@@ -83,7 +83,7 @@ ddbs_quadkey <- function(
 ) {
 
   
-  ## 0. Handle errors
+  # 0. Validate inputs
   assert_xy(x, "x")
   assert_numeric(level, "level")
   assert_name(field, "field")
@@ -111,39 +111,36 @@ ddbs_quadkey <- function(
     )
   }  
 
-  # 1. Manage connection to DB
+  # 1. Prepare inputs
+  
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names)
+  x <- normalize_spatial_input(x, conn)
 
-  ## 1.1. Pre-extract attributes (CRS and geometry column name)
-  ## this step should be before normalize_spatial_input()
+  ## 1.2. Pre-extract attributes
   crs_x    <- ddbs_crs(x, conn)
   sf_col_x <- attr(x, "sf_column")
 
-  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-  ## validate character table names
-  x <- normalize_spatial_input(x, conn)
-
-
-  # 2. Manage connection to DB
-
-  ## 2.1. Resolve connections and handle imports
+  ## 1.3. Resolve spatial connections and handle imports
   resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
   ## register cleanup of the connection
   on.exit(resolve_conn$cleanup(), add = TRUE)
 
-  ## 2.2. Get query list of table names
+  ## 1.4. Get list with query names for the input data
   x_list <- get_query_list(x, target_conn)
   on.exit(x_list$cleanup(), add = TRUE)
 
 
-  # 3. Prepare parameters for the query
+  # 2. Prepare the query
 
-  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+  ## available get it from the database)
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. check CRS (we need EPSG:4326 for quadkeys)
+  ## 2.2. check CRS (we need EPSG:4326 for quadkeys)
   if (!crs_x$input %in% c("EPSG:4326", "WGS 84")) {
     if (!quiet) cli::cli_alert_info("Transforming {.arg x} crs to {.val EPSG:4326}")
     ## query
@@ -158,7 +155,7 @@ ddbs_quadkey <- function(
   }
 
 
-  # 4. if name is not NULL (i.e. no SF returned)
+  # 3. Table creation if name is provided
   if (!is.null(name)) {
 
       ## convenient names of table and/or schema.table
@@ -192,8 +189,9 @@ ddbs_quadkey <- function(
   }
 
 
-  # 5. Get data frame with query-level aggregation
-  ## 5.1. create query with aggregation if field is specified
+  # 4. Get data frame with query-level aggregation
+
+  ## 4.1. create query with aggregation if field is specified
   if (!is.null(field)) {
     tmp.query <- glue::glue("
       SELECT 
@@ -210,10 +208,11 @@ ddbs_quadkey <- function(
     ")
   }
   
-  ## 5.2. retrieve results from the query
+  ## 4.2. retrieve results from the query
   data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
-  ## 6. convert to desired output format
+  
+  # 5. convert to desired output format
   if (output == "polygon") {
 
     ## get 1 quadkey per row (already aggregated if field was specified)

@@ -72,9 +72,9 @@ ddbs_as_points <- function(
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-  
-
-    ## 0. Handle errors
+        
+    
+    # 0. Validate inputs
     assert_name(name)
     assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
@@ -83,36 +83,33 @@ ddbs_as_points <- function(
     assert_logic(quiet, "quiet")
   
 
-    # 1. Manage connection to DB
-    
-    ## 1.1. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
+    # 1. Prepare inputs
+  
+    ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names)
     x <- normalize_spatial_input(x, conn)
 
-    ## 1.2. Get mode - If it's NULL, it will use the duckspatial.mode option
+    ## 1.2. Pre-extract attributes
     mode <- get_mode(mode, name)
 
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
+    ## 1.3. Resolve spatial connections and handle imports
     resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
     on.exit(resolve_conn$cleanup(), add = TRUE)
 
-    ## 2.2. Get query list of table names
+    ## 1.4. Get list with query names for the input data
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
 
-    # 3. Prepare parameters for the query
+    # 2. Prepare the query
 
-    ## 3.1. Coords as character
+    ## 2.1. Coords as character
     coords_str <- paste0(coords,  collapse = ", ")
   
-    ## 3.2. Build base query
+    ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
     st_function <- glue::glue("ST_Point({coords_str})")
     base.query <- glue::glue("
       SELECT *,
@@ -121,37 +118,24 @@ ddbs_as_points <- function(
     ")    
 
 
-    # 4. if name is not NULL (i.e. no SF returned)
+    # 3. Table creation if name is provided, or 
+    # create duckspatial_df or sf object if name is NULL
     if (!is.null(name)) {
-      
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <-glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            {base.query}
-        ")
-        
-        ## execute query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
+        create_duckdb_table(
+            conn      = target_conn,
+            name      = name,
+            query     = base.query,
+            overwrite = overwrite,
+            quiet     = quiet
+        )
+    } else {
+        ddbs_handle_query(
+            query  = base.query,
+            conn   = target_conn,
+            mode   = mode,
+            crs    = crs,
+            x_geom = "geometry"
+        )
     }
-
-    
-    # 5. Apply geospatial operation
-    result <- ddbs_handle_query(
-        query  = base.query,
-        conn   = target_conn,
-        mode   = mode,
-        crs    = crs,
-        x_geom = "geometry"
-    )
-
-    return(result)
 }
 

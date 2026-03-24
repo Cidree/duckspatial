@@ -560,7 +560,7 @@ ddbs_flip <- function(
     ## 3.3. Build base query
     base.query <- glue::glue("
       SELECT *
-      REPLACE {build_geom_query(flip_expr, name, crs_x, mode)} AS {x_geom}
+      REPLACE ({build_geom_query(flip_expr, name, crs_x, mode)} AS {x_geom})
       FROM {x_list$query_name};
     ")
   
