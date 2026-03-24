@@ -799,7 +799,7 @@ ddbs_handle_query <- function(
     DBI::dbExecute(conn, query)
 
     # Open lazily as duckspatial_df
-    lazy_tbl <- dplyr::tbl(conn, view_name)
+    lazy_tbl <- duckdb::tbl_function(conn, view_name)
 
     result <- new_duckspatial_df(
       lazy_tbl, 
