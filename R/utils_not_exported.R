@@ -1308,3 +1308,66 @@ create_duckdb_table <- function(
   feedback_query(quiet)
   return(invisible(TRUE))
 }
+
+
+
+generate_predicate_clause <- function(
+  predicate,
+  conn,
+  x_list,
+  y_list,
+  x_geom,
+  y_geom,
+  distance,
+  crs_x
+) {
+
+  ## For ST_Dwithin we have an extra distance argument, and the duckdb functions
+  ## differ based on the CRS units (ST_DWithin vs ST_DWithin_Spheroid)
+  if (predicate == "ST_DWithin") {
+
+      ## if distance is not specified, it will fall back to ST_Within
+      if (is.null(distance)) {
+          cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
+          distance <- 0
+      }
+
+      ## check the CRS units to use the right function
+      crs_units <- crs_x$units_gdal
+      if (crs_units != "metre") {
+
+          ## When using Spheroid version, only point geometry is allowed
+          geom_type_x <- ddbs_geometry_type(x_list$query_name, FALSE, conn)
+          geom_type_y <- ddbs_geometry_type(y_list$query_name, FALSE, conn)
+          if (!geom_type_x %in% c("POINT", "MULTIPOINT") || !geom_type_y %in% c("POINT", "MULTIPOINT")) {
+              cli::cli_abort(c(
+                  "ST_DWithin with non-meter units only supports POINT or MULTIPOINT geometries.",
+                  "i" = "Detected types: {.val {geom_type_x}} and {.val {geom_type_y}}."
+              ))
+          }
+
+          # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{x_geom}, v2.{y_geom}, {distance})")
+          st_predicate <- glue::glue("
+              ST_DWithin_Spheroid(
+                  ST_Point(ST_Y(v1.{x_geom}), ST_X(v1.{x_geom})), 
+                  ST_Point(ST_Y(v2.{y_geom}), ST_X(v2.{y_geom})), 
+                  {distance})
+              ")
+          if (crs_x$input != "EPSG:4326") {
+              cli::cli_warn(c(
+                "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}.",
+                "i" = "Distance calculations may be less accurate.",
+                "i" = "Consider transforming to {.val EPSG:4326} or a projected CRS."
+              ))
+          }
+      } else {
+          st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
+      }
+
+  } else {
+      ## In every other case, it's a simple binary predicate with no extra arguments
+      st_predicate <- glue::glue("{predicate}(v1.{x_geom}, v2.{y_geom})")
+  }
+
+  return(st_predicate)
+}

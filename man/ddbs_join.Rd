@@ -12,6 +12,7 @@ ddbs_join(
   conn_x = NULL,
   conn_y = NULL,
   name = NULL,
+  distance = NULL,
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -51,6 +52,9 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
+
+\item{distance}{a numeric value specifying the distance for ST_DWithin. The units
+should be specified in meters}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{
