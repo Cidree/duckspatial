@@ -140,13 +140,13 @@ ddbs_join <- function(
     on.exit(y_list$cleanup(), add = TRUE)
     
     ## 1.6. Validate the CRS of x and y
-    if (!is.null(crs_x) && !is.null(crs_y)) {
-       if (!crs_equal(crs_x, crs_y)) {
-         cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
-       }
-    } else {
-       assert_crs(target_conn, x_list$query_name, y_list$query_name)
-    }
+    validate_xy_crs(
+        crs_x = crs_x,
+        crs_y = crs_y,
+        conn = target_conn,
+        x_list = x_list,
+        y_list = y_list
+    )
 
 
     # 2. Prepare the query

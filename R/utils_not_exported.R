@@ -1371,3 +1371,21 @@ generate_predicate_clause <- function(
 
   return(st_predicate)
 }
+
+
+
+validate_xy_crs <- function(
+  crs_x,
+  crs_y,
+  conn,
+  x_list,
+  y_list
+) {
+  if (!is.null(crs_x) && !is.null(crs_y)) {
+       if (!crs_equal(crs_x, crs_y)) {
+         cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
+       }
+    } else {
+       assert_crs(conn, x_list$query_name, y_list$query_name)
+    }
+}
