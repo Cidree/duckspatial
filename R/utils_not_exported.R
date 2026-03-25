@@ -51,7 +51,7 @@ normalize_spatial_input <- function(x, conn = NULL) {
     if (is.null(conn)) {
       cli::cli_abort("{.arg conn} required when using character table names.")
     }
-    if (!table_exists(conn, x)) {
+    if (!table_exists(conn, x) & !arrow_view_exists(conn, x)) {
       cli::cli_abort("Table or view {.val {x}} does not exist in connection.")
     }
     return(x)
@@ -73,6 +73,11 @@ table_exists <- function(conn, name, schema = "main") {
       schema, name
     )
   )[1,1]
+}
+
+
+arrow_view_exists <- function(conn, name) {
+  name %in% duckdb::duckdb_list_arrow(conn)
 }
 
 #' Get DuckDB connection from an object
