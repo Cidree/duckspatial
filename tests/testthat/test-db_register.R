@@ -39,7 +39,7 @@ test_that("can register sf object as arrow view", {
 
     # check that view exists in arrow views
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    expect_true("points_view_raw" %in% arrow_views)
+    expect_true("points_view" %in% arrow_views)
 
 })
 
@@ -97,7 +97,7 @@ test_that("can register sf object from file path", {
     # check that view exists
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
     # expect_true("countries_from_file" %in% arrow_views)
-    expect_true("countries_from_file_raw" %in% arrow_views)
+    expect_true("countries_from_file" %in% arrow_views)
 
 })
 
@@ -152,8 +152,7 @@ test_that("can register duckspatial_df directly", {
 
     # Verify view exists
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    # expect_true("lazy_view_direct" %in% arrow_views)
-    expect_true("lazy_view_direct_raw" %in% arrow_views)
+    expect_true("lazy_view_direct" %in% arrow_views)
 
     # Verify data is queryable
     count_result <- DBI::dbGetQuery(conn_test, "SELECT COUNT(*) as n FROM lazy_view_direct")

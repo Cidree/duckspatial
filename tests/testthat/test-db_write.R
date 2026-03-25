@@ -147,14 +147,13 @@ test_that("ddbs_write_table respects temp_view = TRUE", {
   # Write with temp_view = TRUE
   expect_true(ddbs_write_table(conn_test, points_sf, table_name, temp_view = TRUE, overwrite = TRUE))
   
-  # Should NOT be in persistent tables (changed in duckdb 1.5)
+  # Should NOT be in persistent tables
   all_tables <- DBI::dbListTables(conn_test)
-  # expect_false(table_name %in% all_tables)
-  expect_true(table_name %in% all_tables)
+  expect_false(table_name %in% all_tables)
   
   # Should be in Arrow views
   arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-  expect_true(paste0(table_name, "_raw") %in% arrow_views)
+  expect_true(table_name %in% arrow_views)
   
   # Should be readable
   result <- ddbs_read_table(conn_test, table_name)
@@ -210,7 +209,7 @@ test_that("ddbs_write_table with temp_view=TRUE works for duckspatial_df", {
   
   # Verify view was created (should be in Arrow views, not tables)
   arrow_views <- duckdb::duckdb_list_arrow(conn_new)
-  expect_true(paste0(view_name, "_raw") %in% arrow_views)
+  expect_true(view_name %in% arrow_views)
   
   # Should be queryable
   result <- ddbs_read_table(conn_new, view_name)
