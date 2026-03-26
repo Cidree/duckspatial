@@ -197,6 +197,7 @@ ddbs_glimpse <- function(
 #' `.duckdb` or `.db` extension. Defaults to `"memory"`.
 #' @template threads
 #' @template memory_limit_gb
+#' @param ... Additional parameters to be passed to \code{\link[duckdb]{dbConnect}}
 #'
 #' @returns A `duckdb_connection`
 #' @export
@@ -216,7 +217,11 @@ ddbs_glimpse <- function(
 #' conn <- ddbs_create_conn(threads = 1, memory_limit_gb = 2)
 #' ddbs_stop_conn(conn)
 #' }
-ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb = NULL){
+ddbs_create_conn <- function(
+  dbdir = "memory", 
+  threads = NULL, 
+  memory_limit_gb = NULL,
+  ...) {
 
     # 0. Handle errors
     if (!dbdir %in% c("tempdir","memory")) {
@@ -239,7 +244,8 @@ ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb =
           dbdir = db_path
           #, bigint = "integer64" ## in case the data includes big int
         ),
-        geometry = "wk"
+        geometry = "wk",
+        ...
       )
     } else if (dbdir == 'memory') {
       conn <- duckdb::dbConnect(
@@ -247,12 +253,14 @@ ddbs_create_conn <- function(dbdir = "memory", threads = NULL, memory_limit_gb =
           dbdir = ":memory:"
           #, bigint = "integer64" ## in case the data includes big int
         ),
-        geometry = "wk"
+        geometry = "wk",
+        ...
       )
     } else {
       conn <- duckdb::dbConnect(
         duckdb::duckdb(dbdir = dbdir), 
-        geometry = "wk"
+        geometry = "wk",
+        ...
       )
     }
 

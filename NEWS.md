@@ -60,6 +60,8 @@
 
 -   `ddbs_crs()`: accepts CRS codes and `crs` objects as inputs. It returns `NULL` when the input doesn't have a geometry (e.g. a `data.frame`) (#87).
 
+-   `ddbs_create_conn()`: now has ... that are paseed to `dbConnect()` for extra configuration.
+
 ## BUG FIXES
 
 -   `ddbs_length()`, `ddbs_area()` and `ddbs_distance()` were calculating the wrong measure when the CRS was geographic (#82).
