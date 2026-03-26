@@ -159,8 +159,10 @@ as_duckspatial_df.tbl_duckdb_connection <- function(
   }
   
   # Extract source table for efficient get_query_list path
-  source_table <- tryCatch(
-    as.character(dbplyr::remote_name(x)),
+  source_table <- tryCatch({
+    rem_name <- dbplyr::remote_name(x)
+    if (is.null(rem_name)) NULL else as.character(rem_name)
+  },
     error = function(e) NULL
   )
   
