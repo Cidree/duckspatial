@@ -197,7 +197,7 @@ ddbs_glimpse <- function(
 #' `.duckdb` or `.db` extension. Defaults to `"memory"`.
 #' @template threads
 #' @template memory_limit_gb
-#' @param ... Additional parameters to be passed to \code{\link[duckdb]{dbConnect}}
+#' @param ... Additional parameters to be passed to \code{\link[DBI]{dbConnect}}
 #'
 #' @returns A `duckdb_connection`
 #' @export

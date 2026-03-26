@@ -14,7 +14,7 @@ ddbs_create_conn(dbdir = "memory", threads = NULL, memory_limit_gb = NULL, ...)
 
 \item{memory_limit_gb}{Numeric. Memory limit in GB. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use 80\% of available operating system memory it detects (warning, on some shared HPC nodes the detected memory might be the full node memory, not the per-job allocation).}
 
-\item{...}{Additional parameters to be passed to \code{\link[duckdb]{dbConnect}}}
+\item{...}{Additional parameters to be passed to \code{\link[DBI]{dbConnect}}}
 }
 \value{
 A \code{duckdb_connection}

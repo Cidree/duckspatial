@@ -4,11 +4,13 @@
 \alias{ddbs_default_conn}
 \title{Get or create default DuckDB connection with spatial extension installed and loaded}
 \usage{
-ddbs_default_conn(create = TRUE)
+ddbs_default_conn(create = TRUE, ...)
 }
 \arguments{
 \item{create}{Logical. If TRUE and no connection exists, create one.
 Default is TRUE.}
+
+\item{...}{Additional parameters to pass to \code{ddbs_create_conn()}}
 }
 \value{
 A \code{duckdb_connection} or NULL if no connection exists and

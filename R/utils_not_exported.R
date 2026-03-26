@@ -870,12 +870,13 @@ get_file_crs <- function(path, conn) {
 #'
 #' @param create Logical. If TRUE and no connection exists, create one.
 #'   Default is TRUE.
+#' @param ... Additional parameters to pass to `ddbs_create_conn()`
 #'
 #' @returns A `duckdb_connection` or NULL if no connection exists and
 #'   create = FALSE
 #'
 #' @keywords internal
-ddbs_default_conn <- function(create = TRUE) {
+ddbs_default_conn <- function(create = TRUE, ...) {
   conn <- getOption("duckspatial_conn", NULL)
 
   # Check if existing connection is still valid
@@ -889,7 +890,7 @@ ddbs_default_conn <- function(create = TRUE) {
 
   # Create new connection if needed
   if (is.null(conn) && create) {
-    conn <- ddbs_create_conn(dbdir = "memory")
+    conn <- ddbs_create_conn(dbdir = "memory", ...)
     options(duckspatial_conn = conn)
   }
 
