@@ -1,7 +1,7 @@
 Type: Package
 Package: duckspatial
 Title: R Interface to 'DuckDB' Database with Spatial Extension
-Version: 0.9.0.9000
+Version: 1.0.0
 Authors@R: c(
     person(
         "Adrián", "Cidre González", 
@@ -37,7 +37,7 @@ Imports:
     DBI,
     dbplyr (>= 2.0.0),
     dplyr,
-    duckdb (>= 1.5.0),
+    duckdb (>= 1.5.1),
     geoarrow,
     glue,
     lifecycle,
