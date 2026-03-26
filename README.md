@@ -24,28 +24,21 @@ Downloads](https://cranlogs.r-pkg.org/badges/grand-total/duckspatial?color=green
 
 <!-- badges: end -->
 
-> Important note: The {duckspatial} R package is undergoing major
-> changes in preparation for v1.0.0. This release will align with DuckDB
-> v1.5 and its native CRS support in the Spatial extension.
+> As of **{duckspatial} v1.0.0**, the package uses the native CRS
+> support provided by the DuckDB Spatial extension (DuckDB ≥ 1.5). The
+> previous workaround of storing CRS information in a dedicated column
+> has been removed, and the `crs` and `crs_column` arguments are no
+> longer supported.
 >
-> Previously, {duckspatial} relied on a workaround to store CRS
-> information in a dedicated column (named “crs_duckspatial” by default
-> and referenced via the crs_column argument). With native CRS support
-> now available, this workaround is no longer needed and will be
-> removed. As a result, the crs and crs_column arguments are deprecated
-> as of v0.9.0.
+> Spatial tables are now represented using the `duckspatial_df` class, a
+> lazy spatial table backed by a temporary DuckDB table. This allows
+> spatial workflows to remain in DuckDB until the results are explicitly
+> materialized with `ddbs_collect()`, enabling efficient processing
+> without eagerly loading data into R.
 >
-> The upcoming version also introduces a new native spatial class,
-> duckspatial_df. This represents a lazy spatial table backed by a
-> temporary DuckDB view, allowing workflows to remain fully lazy until
-> results are explicitly materialized with ddbs_collect(). In practice,
-> this means you can work with {duckspatial} without eagerly loading
-> data into R.
->
-> Finally, v1.0.0 will include many new functions and broader API
-> improvements.
-
-## Overview
+> This release also introduces a number of new spatial functions and API
+> improvements, providing a more consistent and fully native integration
+> with DuckDB’s spatial capabilities.
 
 **{duckspatial}** provides fast, memory-efficient functions for
 analysing and manipulating large spatial vector datasets in R. It
@@ -61,13 +54,13 @@ Starting from v1.0.0, {duckspatial} introduces a native S3 class called
 `duckspatial_df`: a `tibble`-like object with a geometry column that
 lives **outside R’s memory**. Data is read and evaluated lazily (similar
 to how `duckplyr` handles lazy tables) and is only loaded into R when
-you explicitly materialise it (e.g. with `ddbs_collect()`).
+you explicitly materialize it (e.g. with `ddbs_collect()`).
 
 When the first `duckspatial_df` is created (either by reading a file or
 converting an `sf` object) a temporary view is registered in a default
 DuckDB connection with the spatial extension enabled. All spatial
 operations run inside that connection, letting DuckDB apply its own
-query optimisations before any data reaches R.
+query optimizations before any data reaches R.
 
 ### Naming conventions
 
