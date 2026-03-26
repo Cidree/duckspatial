@@ -624,7 +624,13 @@ feedback_query <- function(quiet) { # nocov start
 
 
 
-
+#' Get the number of rows in a table
+#'
+#' @template conn
+#' @param table name of the table
+#'
+#' @keywords internal
+#' @returns number of rows in the table
 get_nrow <- function(conn, table) { # nocov start
   DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) as n FROM {table}"))$n
 } # nocov end
@@ -633,7 +639,14 @@ get_nrow <- function(conn, table) { # nocov start
 
 
 
-reframe_predicate_data <- function(conn, data, x_list, y_list, id_x, id_y, sparse) { # nocov start
+reframe_predicate_data <- function(
+  conn, 
+  data, 
+  x_list, 
+  y_list, 
+  id_x, 
+  id_y, 
+  sparse) { # nocov start
 
   ## get number of rows
   nrowx <- get_nrow(conn, x_list$query_name)
@@ -889,9 +902,9 @@ ddbs_default_conn <- function(create = TRUE) {
 #'
 #' @returns Character string with unique view name
 #' @keywords internal
-ddbs_temp_view_name <- function() {
+ddbs_temp_view_name <- function() { # nocov start
   paste0("temp_view_", gsub("-", "_", uuid::UUIDgenerate()))
-}
+} # nocov end
 
 #' Create an ephemeral DuckDB connection
 #'
@@ -989,7 +1002,13 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
 #'   - cleanup: A function to call on exit to drop temporary views
 #' @keywords internal
 #' @noRd
-resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y = NULL, quiet = FALSE) {
+resolve_spatial_connections <- function(
+  x, 
+  y, 
+  conn = NULL, 
+  conn_x = NULL, 
+  conn_y = NULL, 
+  quiet = FALSE) {
     
     cleanup_funs <- list()
     add_cleanup <- function(fn) {
@@ -1113,7 +1132,7 @@ resolve_spatial_connections <- function(x, y, conn = NULL, conn_x = NULL, conn_y
 #'
 #' @keywords internal
 #' @noRd
-build_geom_query <- function(fun, name, crs, mode) {
+build_geom_query <- function(fun, name, crs, mode) { # nocov start
   ## Get mode
   if (is.null(name) && mode == "sf") {
     ## If not creating a table, fallback to BLOB
@@ -1130,12 +1149,8 @@ build_geom_query <- function(fun, name, crs, mode) {
     }
     glue::glue("{fun}::{geom_field}")
   }
-}
-# build_geom_query <- function(fun, mode) {
-#   if (is.null(mode)) mode <- getOption("duckspatial.mode", "duckspatial")
-#   glue::glue("ST_AsWKB({fun})") 
-#   # if (mode != "duckspatial") glue::glue("ST_AsWKB({fun})") else glue::glue("{fun}")
-# }
+} # nocov end
+
 
 #' Gets the current mode
 #' 
@@ -1143,7 +1158,7 @@ build_geom_query <- function(fun, name, crs, mode) {
 #'
 #' @keywords internal
 #' @noRd
-get_mode <- function(mode, name) {
+get_mode <- function(mode, name) { # nocov start
 
   ## If name is not NULL, the geospatial operations will create a new table,
   ## so we are interested in the duckspatial version (i.e. not add ST_AsWKB())
@@ -1159,7 +1174,7 @@ get_mode <- function(mode, name) {
 
   return(mode)
 
-}
+} # nocov end
 
 
 
@@ -1172,7 +1187,7 @@ build_union_sql <- function(
   x_geom, 
   y_geom = NULL,
   x_query, 
-  y_query = NULL) {
+  y_query = NULL) { # nocov start
   if (!is.null(y_query)) {
     if (by_feature) {
       list(
@@ -1202,7 +1217,7 @@ build_union_sql <- function(
       from       = x_query
     )
   }
-}
+} # nocov end
 
 
 
@@ -1221,7 +1236,7 @@ build_union_query <- function(
   x_geom, 
   y_geom = NULL, 
   x_query, 
-  y_query = NULL) {
+  y_query = NULL) { # nocov start
 
   parts     <- build_union_sql(by_feature, x_geom, y_geom, x_query, y_query)
   geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs, mode)} as {parts$geom_alias}")
@@ -1243,7 +1258,7 @@ build_union_query <- function(
     SELECT {row_id} {geom_expr}
     FROM {parts$from};
   ")
-}
+} # nocov end
 
 
 #' Gets the CRS of a table's geometry column
@@ -1256,7 +1271,7 @@ build_union_query <- function(
 #'
 #' @keywords internal
 #' @noRd
-get_table_crs <- function(conn, geom_name, table_name) {
+get_table_crs <- function(conn, geom_name, table_name) { # nocov start
 
   DBI::dbGetQuery(
     conn,
@@ -1268,7 +1283,7 @@ get_table_crs <- function(conn, geom_name, table_name) {
         LIMIT 1;")
     )$crs
 
-}
+} # nocov end
 
 
 #' Formats the geometry type for DuckDB queries based on the CRS of the data
@@ -1279,7 +1294,7 @@ get_table_crs <- function(conn, geom_name, table_name) {
 #'
 #' @keywords internal
 #' @noRd
-get_geometry_type_duckdb <- function(x) {
+get_geometry_type_duckdb <- function(x) { # nocov start
   data_crs   <- sf::st_crs(x, parameters = TRUE)
     if (length(data_crs) == 0) {
         geom_field <- glue::glue("GEOMETRY")
@@ -1287,17 +1302,24 @@ get_geometry_type_duckdb <- function(x) {
         geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
     }
     return(geom_field)
-}
+} # nocov end
 
 
 
+
+#' Helper to create a table during a geospatial operation
+#' 
+#' @returns TRUE invisibly after creating the table
+#'
+#' @keywords internal
+#' @noRd
 create_duckdb_table <- function(
   conn,
   name,
   query,
   overwrite,
   quiet
-) {
+) { # nocov start
   ## Convenient names of table and/or schema.table
   name_list <- get_query_name(name)
 
@@ -1312,10 +1334,17 @@ create_duckdb_table <- function(
   DBI::dbExecute(conn, tmp.query)
   feedback_query(quiet)
   return(invisible(TRUE))
-}
+} # nocov end
 
 
 
+
+#' Helper to create a the predicate clause for a spatial join/filter
+#' 
+#' @returns A character string with the predicate clause
+#'
+#' @keywords internal
+#' @noRd
 generate_predicate_clause <- function(
   predicate,
   conn,
@@ -1325,7 +1354,7 @@ generate_predicate_clause <- function(
   y_geom,
   distance,
   crs_x
-) {
+) { # nocov start
 
   ## For ST_Dwithin we have an extra distance argument, and the duckdb functions
   ## differ based on the CRS units (ST_DWithin vs ST_DWithin_Spheroid)
@@ -1375,17 +1404,21 @@ generate_predicate_clause <- function(
   }
 
   return(st_predicate)
-}
+} # nocov end
 
 
 
+#' Helper to validate that the CRS of two tables match before a spatial operation
+#'
+#' @keywords internal
+#' @noRd
 validate_xy_crs <- function(
   crs_x,
   crs_y,
   conn,
   x_list,
   y_list
-) {
+) { # nocov start
   if (!is.null(crs_x) && !is.null(crs_y)) {
        if (!crs_equal(crs_x, crs_y)) {
          cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
@@ -1393,4 +1426,4 @@ validate_xy_crs <- function(
     } else {
        assert_crs(conn, x_list$query_name, y_list$query_name)
     }
-}
+} # nocov end
