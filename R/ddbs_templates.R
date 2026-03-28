@@ -303,8 +303,9 @@ template_measure <- function(
   } else {
     base.query <- glue::glue("
       SELECT 
-        * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}),
-        {st_function} AS {new_column}
+        * EXCLUDE {x_geom},
+        {st_function} AS {new_column},
+        {build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}
       FROM 
         {x_list$query_name};
     ")
@@ -447,8 +448,9 @@ template_new_column <- function(
   } else {
     base.query <- glue::glue("
       SELECT 
-        * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}),
-        {fun}({x_geom}) AS {new_column}
+        * EXCLUDE {x_geom},
+        {fun}({x_geom}) AS {new_column},
+        {build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}
       FROM 
         {x_list$query_name};
     ")
