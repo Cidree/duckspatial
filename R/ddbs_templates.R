@@ -271,7 +271,7 @@ template_measure <- function(
   ## 3.2. Warn if the units aren't meters or EPSG:4326
   ## for EPSG:4326, we can use ST_*_Spheroid to get the measurement in meters
   ## so that will be an exception
-  if (crs_units != "metre" && "EPSG:4326" != crs_x$input) {
+  if (crs_units != "metre" && !crs_x$input %in% c("EPSG:4326", "WGS 84")) {
       cli::cli_warn(
         "Input is in {.val {crs_x$input}}, not {.val EPSG:4326}. {fun} calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
       )
