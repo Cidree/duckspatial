@@ -116,7 +116,7 @@ spatial extension"><meta property="og:image" content="https://cidree.github.io/d
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,7 +154,7 @@ spatial extension"><meta property="og:image" content="https://cidree.github.io/d
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Create a DuckDB connection with spatial extension</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/ddbs_utils.R" class="external-link"><code>R/ddbs_utils.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/db_utils.R" class="external-link"><code>R/db_utils.R</code></a></small>
       <div class="d-none name"><code>ddbs_create_conn.Rd</code></div>
     </div>
 
@@ -165,7 +165,7 @@ spatial extension</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_create_conn</span><span class="op">(</span>dbdir <span class="op">=</span> <span class="st">"memory"</span>, threads <span class="op">=</span> <span class="cn">NULL</span>, memory_limit_gb <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_create_conn</span><span class="op">(</span>dbdir <span class="op">=</span> <span class="st">"memory"</span>, threads <span class="op">=</span> <span class="cn">NULL</span>, memory_limit_gb <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -183,6 +183,10 @@ spatial extension</p>
 
 <dt id="arg-memory-limit-gb">memory_limit_gb<a class="anchor" aria-label="anchor" href="#arg-memory-limit-gb"></a></dt>
 <dd><p>Numeric. Memory limit in GB. If <code>NULL</code> (default), the setting is not changed, and DuckDB engine will use 80% of available operating system memory it detects (warning, on some shared HPC nodes the detected memory might be the full node memory, not the per-job allocation).</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional parameters to be passed to <code><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></code></p></dd>
 
 </dl></div>
     <div class="section level2">

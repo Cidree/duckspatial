@@ -10,7 +10,8 @@ import_view_to_connection(
   target_conn,
   source_conn,
   source_object,
-  target_name = NULL
+  target_name = NULL,
+  quiet = FALSE
 )
 ```
 
@@ -31,6 +32,11 @@ import_view_to_connection(
 - target_name:
 
   Name for view in target connection (auto-generated if NULL)
+
+- quiet:
+
+  A logical value. If `TRUE`, suppresses any informational messages.
+  Defaults to `FALSE`.
 
 ## Value
 

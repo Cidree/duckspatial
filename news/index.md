@@ -1,6 +1,6 @@
 # Changelog
 
-## duckspatial (development version)
+## duckspatial 1.0.0
 
 ### MAJOR CHANGES
 
@@ -53,8 +53,8 @@
   [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
   [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
   the `new_column` argument now defaults to a column name, as we now
-  encourage the users to keep most of the work within DuckDB, rather
-  than materialize a vector. For materializing a vector in R, use
+  encourage the users to keep most of the work inside DuckDB, rather
+  than materialize the result. For materializing a vector in R, use
   `mode = "sf"`. This argument is also moved before `conn` argument
   ([\#83](https://github.com/Cidree/duckspatial/issues/83)).
 
@@ -142,6 +142,9 @@
 - [`ddbs_options()`](https://cidree.github.io/duckspatial/reference/ddbs_options.md):
   to set some `duckspatial` default options.
 
+- [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md):
+  dwithin is now implemented for spatial join.
+
 ### MINOR CHANGES
 
 - Improve the documentation of the functions
@@ -159,6 +162,11 @@
   accepts CRS codes and `crs` objects as inputs. It returns `NULL` when
   the input doesn’t have a geometry (e.g. a `data.frame`)
   ([\#87](https://github.com/Cidree/duckspatial/issues/87)).
+
+- [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md):
+  now has … that are paseed to
+  [`dbConnect()`](https://dbi.r-dbi.org/reference/dbConnect.html) for
+  extra configuration.
 
 ### BUG FIXES
 

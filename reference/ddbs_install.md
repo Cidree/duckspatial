@@ -6,13 +6,7 @@ database
 ## Usage
 
 ``` r
-ddbs_install(
-  conn,
-  upgrade = FALSE,
-  quiet = FALSE,
-  extension = "spatial",
-  community = FALSE
-)
+ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 ```
 
 ## Arguments
@@ -34,10 +28,6 @@ ddbs_install(
 
   name of the extension to install, default is "spatial"
 
-- community:
-
-  Logical. If TRUE, installs a community extension
-
 ## Value
 
 TRUE (invisibly) for successful installation
@@ -58,8 +48,8 @@ ddbs_install(conn)
 #> ✔ spatial extension installed
 
 # install the h3 community extension
-ddbs_install(conn, extension = "h3", community = TRUE)
-#> ✔ h3 extension installed
+ddbs_install(conn, extension = "h3")
+#> ✔ h3 extension installed (from community repository)
 
 # disconnect from db
 duckdb::dbDisconnect(conn)

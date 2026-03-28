@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -156,19 +156,19 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="duckspatial-development-version">duckspatial (development version)<a class="anchor" aria-label="anchor" href="#duckspatial-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.0.0" id="duckspatial-100">duckspatial 1.0.0<a class="anchor" aria-label="anchor" href="#duckspatial-100"></a></h2>
 <div class="section level3">
-<h3 id="major-changes-development-version">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
+<h3 id="major-changes-1-0-0">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-1-0-0"></a></h3>
 <ul><li><p><code>duckspatial_df</code> becomes the main class of <code>duckspatial</code>. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (with <code><a href="../reference/ddbs_collect.html">ddbs_collect()</a></code> or <code><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf()</a></code>). Every function now accepts this class as input, and it’s the returned class by default. If the user wants to materialize the result in the same way <code>sf</code> would do, that can be done with <code>mode = "sf"</code> (<a href="https://github.com/Cidree/duckspatial/issues/55" class="external-link">#55</a>, <a href="https://github.com/Cidree/duckspatial/issues/63" class="external-link">#63</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_buffer.html">ddbs_buffer()</a></code>: now has four new arguments: <code>num_triangles</code>, <code>cap_style</code>, <code>join_style</code>, and <code>mitre_limit</code> (<a href="https://github.com/Cidree/duckspatial/issues/72" class="external-link">#72</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_union_funs.html">ddbs_union()</a></code>: is split into two new functions depending on the desired behavior: <code><a href="../reference/ddbs_union_funs.html">ddbs_union()</a></code> and <code><a href="../reference/ddbs_union_funs.html">ddbs_union_agg()</a></code> (<a href="https://github.com/Cidree/duckspatial/issues/77" class="external-link">#77</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_measure_funs.html">ddbs_length()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_area()</a></code> and <code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code>: now use by default the best DuckDB function (e.g. <code>ST_Area()</code> or <code>ST_Area_Spheroid()</code>) depending on the input’s CRS. They also return a <code>duckspatial_df</code> object by default rather than a materialized vector. In the case of <code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code>, it returns a <code>tbl_duckdb_connection</code> (<a href="https://github.com/Cidree/duckspatial/issues/80" class="external-link">#80</a>, <a href="https://github.com/Cidree/duckspatial/issues/82" class="external-link">#82</a>, <a href="https://github.com/Cidree/duckspatial/issues/103" class="external-link">#103</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_simplify.html">ddbs_simplify()</a></code>: tolerance defaults to 0; gains a new argument <code>preserve_topology</code> specified before <code>conn</code> (<a href="https://github.com/Cidree/duckspatial/issues/86" class="external-link">#86</a>).</p></li>
-<li><p><code><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_simple()</a></code>, <code><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_valid()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_area()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_length()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code>: the <code>new_column</code> argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector. For materializing a vector in R, use <code>mode = "sf"</code>. This argument is also moved before <code>conn</code> argument (<a href="https://github.com/Cidree/duckspatial/issues/83" class="external-link">#83</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_simple()</a></code>, <code><a href="../reference/ddbs_geom_validation_funs.html">ddbs_is_valid()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_area()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_length()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code>: the <code>new_column</code> argument now defaults to a column name, as we now encourage the users to keep most of the work inside DuckDB, rather than materialize the result. For materializing a vector in R, use <code>mode = "sf"</code>. This argument is also moved before <code>conn</code> argument (<a href="https://github.com/Cidree/duckspatial/issues/83" class="external-link">#83</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_predicate.html">ddbs_predicate()</a></code> and colleagues: they gain new arguments: name, mode, overwrite, and quiet. When <code>mode = "duckspatial"</code>, they return a lazy tbl backed by DuckDB. When <code>mode = "sf"</code>, they return a list/matrix (<a href="https://github.com/Cidree/duckspatial/issues/105" class="external-link">#105</a>).</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="new-features-development-version">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-1-0-0">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-1-0-0"></a></h3>
 <ul><li><p><code><a href="../reference/ddbs_as_points.html">ddbs_as_points()</a></code>: converts a table with coordinates into a spatial object (<a href="https://github.com/Cidree/duckspatial/issues/75" class="external-link">#75</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_geometry_type.html">ddbs_geometry_type()</a></code>: returns the geometry type of an object (<a href="https://github.com/Cidree/duckspatial/issues/76" class="external-link">#76</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_as_format.html">ddbs_as_geojson()</a></code>: converts the geometry to geojson format (<a href="https://github.com/Cidree/duckspatial/issues/84" class="external-link">#84</a>).</p></li>
@@ -184,16 +184,18 @@
 <li><p><code><a href="../reference/ddbs_register_vector.html">ddbs_register_vector()</a></code>, <code><a href="../reference/ddbs_write_vector.html">ddbs_write_vector()</a></code> and <code><a href="../reference/ddbs_read_vector.html">ddbs_read_vector()</a></code> deprecated in favour of <code><a href="../reference/ddbs_register_table.html">ddbs_register_table()</a></code>, <code><a href="../reference/ddbs_write_table.html">ddbs_write_table()</a></code> and <code><a href="../reference/ddbs_read_table.html">ddbs_read_table()</a></code> (<a href="https://github.com/Cidree/duckspatial/issues/100" class="external-link">#100</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_xy.html">ddbs_x()</a></code> and <code><a href="../reference/ddbs_xy.html">ddbs_y()</a></code>: extract the <code>x</code> and <code>y</code> coordinates of points (<a href="https://github.com/Cidree/duckspatial/issues/108" class="external-link">#108</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_options.html">ddbs_options()</a></code>: to set some <code>duckspatial</code> default options.</p></li>
+<li><p><code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>: dwithin is now implemented for spatial join.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="minor-changes-development-version">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-development-version"></a></h3>
+<h3 id="minor-changes-1-0-0">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-1-0-0"></a></h3>
 <ul><li><p>Improve the documentation of the functions (<a href="https://github.com/Cidree/duckspatial/issues/85" class="external-link">#85</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_buffer.html">ddbs_buffer()</a></code>: warns if the input CRS is not a projected CRS, as the distance uses its units.</p></li>
 <li><p><code><a href="../reference/ddbs_quadkey.html">ddbs_quadkey()</a></code>: can aggregate by <code>field</code> when output is <code>polygon</code> and <code>tilexy</code> (<a href="https://github.com/Cidree/duckspatial/issues/78" class="external-link">#78</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_crs.html">ddbs_crs()</a></code>: accepts CRS codes and <code>crs</code> objects as inputs. It returns <code>NULL</code> when the input doesn’t have a geometry (e.g. a <code>data.frame</code>) (<a href="https://github.com/Cidree/duckspatial/issues/87" class="external-link">#87</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: now has … that are paseed to <code><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect()</a></code> for extra configuration.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-1-0-0">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-0"></a></h3>
 <ul><li><p><code><a href="../reference/ddbs_measure_funs.html">ddbs_length()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_area()</a></code> and <code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code> were calculating the wrong measure when the CRS was geographic (<a href="https://github.com/Cidree/duckspatial/issues/82" class="external-link">#82</a>).</p></li>
 <li><p><code>ddbs_filter(predicate = "dwithin")</code> and <code>ddbs_is_within_distance</code> were calculating wrong distances for geographic CRS (<a href="https://github.com/Cidree/duckspatial/issues/88" class="external-link">#88</a>).</p></li>
 </ul></div>

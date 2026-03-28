@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,7 +152,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Get or create default DuckDB connection with spatial extension installed and loaded</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/db_utils_not_exported.R" class="external-link"><code>R/db_utils_not_exported.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/utils_not_exported.R" class="external-link"><code>R/utils_not_exported.R</code></a></small>
       <div class="d-none name"><code>ddbs_default_conn.Rd</code></div>
     </div>
 
@@ -162,7 +162,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_default_conn</span><span class="op">(</span>create <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_default_conn</span><span class="op">(</span>create <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -172,6 +172,10 @@
 <dl><dt id="arg-create">create<a class="anchor" aria-label="anchor" href="#arg-create"></a></dt>
 <dd><p>Logical. If TRUE and no connection exists, create one.
 Default is TRUE.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional parameters to pass to <code><a href="ddbs_create_conn.html">ddbs_create_conn()</a></code></p></dd>
 
 </dl></div>
     <div class="section level2">

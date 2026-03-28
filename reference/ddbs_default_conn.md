@@ -6,7 +6,7 @@ and loaded
 ## Usage
 
 ``` r
-ddbs_default_conn(create = TRUE)
+ddbs_default_conn(create = TRUE, ...)
 ```
 
 ## Arguments
@@ -15,6 +15,11 @@ ddbs_default_conn(create = TRUE)
 
   Logical. If TRUE and no connection exists, create one. Default is
   TRUE.
+
+- ...:
+
+  Additional parameters to pass to
+  [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md)
 
 ## Value
 

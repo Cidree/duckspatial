@@ -15,6 +15,7 @@ ddbs_join(
   conn_x = NULL,
   conn_y = NULL,
   name = NULL,
+  distance = NULL,
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE
@@ -75,6 +76,11 @@ ddbs_join(
   a character string of length two specifying the schema and table
   names. If `NULL` (the default), the function returns the result as an
   `sf` object
+
+- distance:
+
+  a numeric value specifying the distance for ST_DWithin. The units
+  should be specified in meters
 
 - mode:
 

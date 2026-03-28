@@ -138,7 +138,7 @@
 
     <a class="navbar-brand me-2" href="index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -193,26 +193,21 @@
 
 <!-- badges: end -->
 <blockquote>
-<p>Important note: The {duckspatial} R package is undergoing major changes in preparation for v1.0.0. This release will align with DuckDB v1.5 and its native CRS support in the Spatial extension.</p>
-<p>Previously, {duckspatial} relied on a workaround to store CRS information in a dedicated column (named “crs_duckspatial” by default and referenced via the crs_column argument). With native CRS support now available, this workaround is no longer needed and will be removed. As a result, the crs and crs_column arguments are deprecated as of v0.9.0.</p>
-<p>The upcoming version also introduces a new native spatial class, duckspatial_df. This represents a lazy spatial table backed by a temporary DuckDB view, allowing workflows to remain fully lazy until results are explicitly materialized with ddbs_collect(). In practice, this means you can work with {duckspatial} without eagerly loading data into R.</p>
-<p>Finally, v1.0.0 will include many new functions and broader API improvements.</p>
+<p>As of <strong>{duckspatial} v1.0.0</strong>, the package uses the native CRS support provided by the DuckDB Spatial extension (DuckDB ≥ 1.5). The previous workaround of storing CRS information in a dedicated column has been removed, and the <code>crs</code> and <code>crs_column</code> arguments are no longer supported.</p>
+<p>Spatial tables are now represented using the <code>duckspatial_df</code> class, a lazy spatial table backed by a temporary DuckDB table. This allows spatial workflows to remain in DuckDB until the results are explicitly materialized with <code><a href="reference/ddbs_collect.html">ddbs_collect()</a></code>, enabling efficient processing without eagerly loading data into R.</p>
+<p>This release also introduces a number of new spatial functions and API improvements, providing a more consistent and fully native integration with DuckDB’s spatial capabilities.</p>
 </blockquote>
-<div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h2>
 <p><strong>{duckspatial}</strong> provides fast, memory-efficient functions for analysing and manipulating large spatial vector datasets in R. It bridges <a href="https://duckdb.org/docs/stable/core_extensions/spatial/functions" class="external-link">DuckDB’s spatial extension</a> with R’s spatial ecosystem — in particular <strong>{sf}</strong> — so you can leverage DuckDB’s analytical power without leaving your familiar R workflow.</p>
 <div class="section level3">
 <h3 id="how-it-works">How it works<a class="anchor" aria-label="anchor" href="#how-it-works"></a>
 </h3>
-<p>Starting from v1.0.0, {duckspatial} introduces a native S3 class called <code>duckspatial_df</code>: a <code>tibble</code>-like object with a geometry column that lives <strong>outside R’s memory</strong>. Data is read and evaluated lazily (similar to how <code>duckplyr</code> handles lazy tables) and is only loaded into R when you explicitly materialise it (e.g. with <code><a href="reference/ddbs_collect.html">ddbs_collect()</a></code>).</p>
-<p>When the first <code>duckspatial_df</code> is created (either by reading a file or converting an <code>sf</code> object) a temporary view is registered in a default DuckDB connection with the spatial extension enabled. All spatial operations run inside that connection, letting DuckDB apply its own query optimisations before any data reaches R.</p>
+<p>Starting from v1.0.0, {duckspatial} introduces a native S3 class called <code>duckspatial_df</code>: a <code>tibble</code>-like object with a geometry column that lives <strong>outside R’s memory</strong>. Data is read and evaluated lazily (similar to how <code>duckplyr</code> handles lazy tables) and is only loaded into R when you explicitly materialize it (e.g. with <code><a href="reference/ddbs_collect.html">ddbs_collect()</a></code>).</p>
+<p>When the first <code>duckspatial_df</code> is created (either by reading a file or converting an <code>sf</code> object) a temporary view is registered in a default DuckDB connection with the spatial extension enabled. All spatial operations run inside that connection, letting DuckDB apply its own query optimizations before any data reaches R.</p>
 </div>
 <div class="section level3">
 <h3 id="naming-conventions">Naming conventions<a class="anchor" aria-label="anchor" href="#naming-conventions"></a>
 </h3>
 <p>All spatial functions follow the <code>ddbs_*()</code> prefix (<em>DuckDB Spatial</em>), and their names deliberately mirror the <strong>{sf}</strong> package, so users already familiar with <code>sf</code> can get started immediately.</p>
-</div>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>

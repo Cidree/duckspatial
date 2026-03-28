@@ -12,6 +12,9 @@ plans.
 
 ``` r
 # S3 method for class 'duckspatial_df'
+dplyr_reconstruct(data, template)
+
+# S3 method for class 'duckspatial_df'
 compute(x, name = NULL, temporary = TRUE, ...)
 
 # S3 method for class 'duckspatial_df'

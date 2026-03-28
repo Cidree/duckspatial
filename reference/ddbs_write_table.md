@@ -43,9 +43,10 @@ ddbs_write_table(
 - temp_view:
 
   If `TRUE`, registers the `sf` object as a temporary Arrow-backed
-  database 'view' using `ddbs_register_table` instead of creating a
-  persistent table. This is much faster but the view will not persist.
-  Defaults to `FALSE`.
+  database 'view' using
+  [ddbs_register_table](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md)
+  instead of creating a persistent table. This is much faster but the
+  view will not persist. Defaults to `FALSE`.
 
 - quiet:
 
@@ -84,6 +85,6 @@ ddbs_write_table(conn, sf_points, "points")
 ddbs_read_table(conn, "points")
 
 ## disconnect from db
-dbDisconnect(conn)
+ddbs_stop_conn(conn)
 } # }
 ```

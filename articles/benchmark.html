@@ -138,7 +138,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,7 +187,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Benchmark</h1>
 
 
-      <p class="date">2026-03-21</p>
+      <p class="date">2026-03-28</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/benchmark.qmd" class="external-link"><code>vignettes/benchmark.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -201,7 +201,7 @@
     <p>This vignette benchmarks <strong>{duckspatial}</strong> against <strong>{sf}</strong> across several spatial operations, comparing computation time and memory usage as dataset size grows. We plan to extend it with additional operation types in future releases. Versions of packages used in this vignette:</p>
 <ul>
 <li><p><code>duckspatial</code>: v1.0.0</p></li>
-<li><p><code>duckdb</code>: v1.5.0</p></li>
+<li><p><code>duckdb</code>: v1.5.1</p></li>
 <li><p><code>sf</code>: v1.1.0</p></li>
 </ul>
 <section class="section level3"><h3 id="tldr">TL;DR<a class="anchor" aria-label="anchor" href="#tldr"></a>
@@ -290,8 +290,8 @@
 <p>The spatial join aims to bring the attributes of a dataset to another dataset based in a spatial predicate. One example would be to have an <code>x</code> dataset with points that represent observations of wolves. In an <code>y</code> dataset, we could have polygons with attributes describing the geopraphical location (e.g. the name of the country, the name of the region..). So, by using a <code>ST_Join(x, y, "intersects")</code>, we would assign the attributes of <code>y</code> to <code>x</code> according to where the observation of the wolf fall.</p>
 <p>This operation can be intensive. In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-join" class="quarto-xref">Figure 1</a>.</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 31 times faster than {sf}, and allocated 18 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 25 times faster than {sf}, and allocated 16 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 50 times faster than {sf}, and allocated 18 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 35 times faster than {sf}, and allocated 16 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_join</summary><div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
@@ -318,7 +318,7 @@
 </div>
 <div id="fig-st-join" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-join-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-join-v1.5.png" class="quarto-figure quarto-figure-center">
+<img src="../reference/figures/bench/bench-st-join-v1.5.1.png" class="quarto-figure quarto-figure-center">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-join-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Benchmark that compares spatial join for duckspatial and sf
@@ -329,8 +329,8 @@ Figure 1: Benchmark that compares spatial join for duckspatial and sf
 <p>The spatial filter aims to filter rows of <code>x</code> based in a spatial relationship with <code>y</code>. For example, let’s imagine that we have an <code>x</code> dataset with observations of wolves all around the world, and we want to filter only those that are in a specific country, for instance in Spain. If the dataset has this attritbute, we can just do it with a simple <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>, but, if the wolves datase doesn’t include a column with the country, we can use a spatial filter. For that, we need a second dataset <code>y</code> with the boundaries of Spain, and by using <code>ST_Filter(x, y, "intersects")</code>, we would filter only those wolves observations that intersects with the Spain’s polygon.</p>
 <p>In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-filter" class="quarto-xref">Figure 2</a>.</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 20 times faster than {sf}, and allocated 5 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 8 times faster than {sf}, and allocated 5 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 42 times faster than {sf}, and allocated 5 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 5 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_filter</summary><div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
@@ -357,7 +357,7 @@ Figure 1: Benchmark that compares spatial join for duckspatial and sf
 </div>
 <div id="fig-st-filter" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-filter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-filter-v1.5.png" class="quarto-figure quarto-figure-center">
+<img src="../reference/figures/bench/bench-st-filter-v1.5.1.png" class="quarto-figure quarto-figure-center">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-filter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Benchmark that compares spatial filter for duckspatial and sf
@@ -366,7 +366,7 @@ Figure 2: Benchmark that compares spatial filter for duckspatial and sf
 </section><section class="section level2"><h2 id="spatial-distances">Spatial distances<a class="anchor" aria-label="anchor" href="#spatial-distances"></a>
 </h2>
 <p>The <code>ST_Distance(x, y)</code> calculates the distance between each observation in <code>x</code> against each observation in <code>y</code>. The default {duckspatial} mode will return a lazy table with three columns: (id_x) the id of the row in <code>x</code>; (id_y) the id of the row in <code>y</code>; (distance) the actual distance between those pair of observations. In the case of <code>mode = 'sf'</code>, the result will be a sparse matrix. Note that {duckspatial} will use by default the best distance for the input CRS and geometry type.</p>
-<p>When calculating the distance between 10,000 pairs of points, {duckspatial} and {sf} run during the same time, but {duckspatial} uses much less memory (&gt; 400 times).</p>
+<p>When calculating the distance between 10,000 pairs of points, {duckspatial} was about 1.5 times faster, but used much less memory (&gt; 400 times).</p>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_distance</summary><div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Helper to run the benchmark</span></span>
@@ -394,7 +394,7 @@ Figure 2: Benchmark that compares spatial filter for duckspatial and sf
 </div>
 <div id="fig-st-distance" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-distance-v1.5.png" class="quarto-figure quarto-figure-center">
+<img src="../reference/figures/bench/bench-st-distance-v1.5.1.png" class="quarto-figure quarto-figure-center">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: Benchmark that compares spatial distance for duckspatial and sf
@@ -405,8 +405,8 @@ Figure 3: Benchmark that compares spatial distance for duckspatial and sf
 <p>Dissolving geometries consist in merging/aggregating geometries that share a common attribute into a single geometry per group.</p>
 <p>In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-dissolve" class="quarto-xref">Figure 4</a>.</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 3 times faster than {sf}, and allocated 10 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 4 times faster than {sf}, and allocated 10 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 14 times faster than {sf}, and allocated 10 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 10 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_union_agg</summary><div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
@@ -435,7 +435,7 @@ Figure 3: Benchmark that compares spatial distance for duckspatial and sf
 </div>
 <div id="fig-st-dissolve" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-dissolve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-dissolve-v1.5.png" class="quarto-figure quarto-figure-center">
+<img src="../reference/figures/bench/bench-st-dissolve-v1.5.1.png" class="quarto-figure quarto-figure-center">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-dissolve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 4: Benchmark that compares dissolving geometries by group for duckspatial and sf
@@ -446,8 +446,8 @@ Figure 4: Benchmark that compares dissolving geometries by group for duckspatia
 <p>Geometry predicates are boolean functions that test spatial relationships between two geometries (they return true or false). They’re fundamental to spatial queries, letting you filter or join data based on how geometries relate to one another in space. Common examples include: ST_Contains, ST_Within, ST_Touches, ST_Overlaps, ST_Crosses, ST_Disjoint, and ST_Equals.</p>
 <p>In the following example, we compare <code>ST_Intersects(geometry A, geometry B)</code>, which returns true if the two geometries share any point in common (their interiors or boundaries overlap in any way).</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 14 times faster than {sf}, and allocated 3 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 9 times faster than {sf}, and allocated 3 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 28 times faster than {sf}, and allocated 3 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 23 times faster than {sf}, and allocated 3 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_intersects</summary><div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
@@ -474,7 +474,7 @@ Figure 4: Benchmark that compares dissolving geometries by group for duckspatia
 </div>
 <div id="fig-st-intersects" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-intersects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-intersects-v1.5.png" class="quarto-figure quarto-figure-center">
+<img src="../reference/figures/bench/bench-st-intersects-v1.5.1.png" class="quarto-figure quarto-figure-center">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-intersects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 5: Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf

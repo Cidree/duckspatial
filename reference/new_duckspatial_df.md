@@ -9,7 +9,7 @@ column).
 new_duckspatial_df(
   x,
   crs = NULL,
-  geom_col = "geom",
+  geom_col = NULL,
   source_table = NULL,
   source_conn = NULL
 )
@@ -32,6 +32,10 @@ new_duckspatial_df(
 - source_table:
 
   Name of the source table if applicable
+
+- source_conn:
+
+  Name of the source connection if applicable
 
 ## Value
 

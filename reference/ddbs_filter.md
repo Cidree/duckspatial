@@ -78,9 +78,8 @@ ddbs_filter(
 
 - distance:
 
-  a numeric value specifying the distance for ST_DWithin. Units
-  correspond to the coordinate system of the geometry (e.g. degrees or
-  meters)
+  a numeric value specifying the distance for ST_DWithin. The units
+  should be specified in meters
 
 - mode:
 

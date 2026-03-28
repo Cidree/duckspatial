@@ -138,7 +138,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,7 +187,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Areal Interpolation</h1>
 
 
-      <p class="date">2026-03-21</p>
+      <p class="date">2026-03-28</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/aw_interpolation.qmd" class="external-link"><code>vignettes/aw_interpolation.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -416,20 +416,21 @@
 <span><span class="co">#&gt; # Data backed by DuckDB (dbplyr lazy evaluation)</span></span>
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
-<span><span class="co">#&gt; # Source:   SQL [?? x 3]</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.5.0 [unknown@Linux 6.14.0-1017-azure:R 4.5.3/:memory:]</span></span>
-<span><span class="co">#&gt;    target_id x           BIR74</span></span>
-<span><span class="co">#&gt;        &lt;int&gt; &lt;list&gt;      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1         1 &lt;raw [93]&gt;  1168.</span></span>
-<span><span class="co">#&gt;  2         2 &lt;raw [93]&gt;   379.</span></span>
-<span><span class="co">#&gt;  3         6 &lt;raw [93]&gt;   753.</span></span>
-<span><span class="co">#&gt;  4         7 &lt;raw [93]&gt;  5731.</span></span>
-<span><span class="co">#&gt;  5         8 &lt;raw [93]&gt;  8000.</span></span>
-<span><span class="co">#&gt;  6        11 &lt;raw [93]&gt;  1417.</span></span>
-<span><span class="co">#&gt;  7        12 &lt;raw [93]&gt;  8314.</span></span>
-<span><span class="co">#&gt;  8        13 &lt;raw [93]&gt;  8305.</span></span>
-<span><span class="co">#&gt;  9        14 &lt;raw [93]&gt; 25694.</span></span>
-<span><span class="co">#&gt; 10        15 &lt;raw [93]&gt; 17277.</span></span></code></pre></div>
+<span><span class="co">#&gt; # Source:   table&lt;nc_grid_births&gt; [?? x 3]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]</span></span>
+<span><span class="co">#&gt;    target_id x                                                             BIR74</span></span>
+<span><span class="co">#&gt;        &lt;int&gt; &lt;wk_wkb&gt;                                                      &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1         1 &lt;POLYGON ((1054293 1348021, 1132214 1348021, 1132214 141626…  1168.</span></span>
+<span><span class="co">#&gt;  2         2 &lt;POLYGON ((1132214 1348021, 1210134 1348021, 1210134 141626…   379.</span></span>
+<span><span class="co">#&gt;  3         6 &lt;POLYGON ((1443895 1348021, 1521815 1348021, 1521815 141626…   753.</span></span>
+<span><span class="co">#&gt;  4         7 &lt;POLYGON ((1521815 1348021, 1599735 1348021, 1599735 141626…  5731.</span></span>
+<span><span class="co">#&gt;  5         8 &lt;POLYGON ((1599735 1348021, 1677656 1348021, 1677656 141626…  8000.</span></span>
+<span><span class="co">#&gt;  6        11 &lt;POLYGON ((1054293 1416262, 1132214 1416262, 1132214 148450…  1417.</span></span>
+<span><span class="co">#&gt;  7        12 &lt;POLYGON ((1132214 1416262, 1210134 1416262, 1210134 148450…  8314.</span></span>
+<span><span class="co">#&gt;  8        13 &lt;POLYGON ((1210134 1416262, 1288054 1416262, 1288054 148450…  8305.</span></span>
+<span><span class="co">#&gt;  9        14 &lt;POLYGON ((1288054 1416262, 1365975 1416262, 1365975 148450… 25694.</span></span>
+<span><span class="co">#&gt; 10        15 &lt;POLYGON ((1365975 1416262, 1443895 1416262, 1443895 148450… 17277.</span></span>
+<span><span class="co">#&gt; # ℹ more rows</span></span></code></pre></div>
 </div>
 <section class="level3"><h3 id="cleanup">Cleanup<a class="anchor" aria-label="anchor" href="#cleanup"></a>
 </h3>

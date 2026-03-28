@@ -7,7 +7,7 @@ types in future releases. Versions of packages used in this vignette:
 
 - `duckspatial`: v1.0.0
 
-- `duckdb`: v1.5.0
+- `duckdb`: v1.5.1
 
 - `sf`: v1.1.0
 
@@ -115,10 +115,10 @@ This operation can be intensive. In the current version of {duckspatial}
 we see an improvement in speed and memory usage in bigger datasets, as
 shown in [Figure 1](#fig-st-join).
 
-- Using 1 million points: {duckspatial} was about 31 times faster than
+- Using 1 million points: {duckspatial} was about 50 times faster than
   {sf}, and allocated 18 times less memory.
 
-- Using 3 million points: {duckspatial} was about 25 times faster than
+- Using 3 million points: {duckspatial} was about 35 times faster than
   {sf}, and allocated 16 times less memory.
 
 Benchmark code - ddbs_join
@@ -145,7 +145,7 @@ df_bench_join <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-join-v1.5.png)
+![](../reference/figures/bench/bench-st-join-v1.5.1.png)
 
 Figure 1: Benchmark that compares spatial join for duckspatial and sf
 
@@ -167,10 +167,10 @@ In the current version of {duckspatial} we see an improvement in speed
 and memory usage in bigger datasets, as shown in
 [Figure 2](#fig-st-filter).
 
-- Using 1 million points: {duckspatial} was about 20 times faster than
+- Using 1 million points: {duckspatial} was about 42 times faster than
   {sf}, and allocated 5 times less memory.
 
-- Using 3 million points: {duckspatial} was about 8 times faster than
+- Using 3 million points: {duckspatial} was about 12 times faster than
   {sf}, and allocated 5 times less memory.
 
 Benchmark code - ddbs_filter
@@ -197,7 +197,7 @@ df_bench_filter <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-filter-v1.5.png)
+![](../reference/figures/bench/bench-st-filter-v1.5.1.png)
 
 Figure 2: Benchmark that compares spatial filter for duckspatial and sf
 
@@ -212,8 +212,8 @@ result will be a sparse matrix. Note that {duckspatial} will use by
 default the best distance for the input CRS and geometry type.
 
 When calculating the distance between 10,000 pairs of points,
-{duckspatial} and {sf} run during the same time, but {duckspatial} uses
-much less memory (\> 400 times).
+{duckspatial} was about 1.5 times faster, but used much less memory (\>
+400 times).
 
 Benchmark code - ddbs_distance
 
@@ -241,7 +241,7 @@ df_bench_distance <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-distance-v1.5.png)
+![](../reference/figures/bench/bench-st-distance-v1.5.1.png)
 
 Figure 3: Benchmark that compares spatial distance for duckspatial and
 sf
@@ -255,10 +255,10 @@ In the current version of {duckspatial} we see an improvement in speed
 and memory usage in bigger datasets, as shown in
 [Figure 4](#fig-st-dissolve).
 
-- Using 1 million points: {duckspatial} was about 3 times faster than
+- Using 1 million points: {duckspatial} was about 14 times faster than
   {sf}, and allocated 10 times less memory.
 
-- Using 3 million points: {duckspatial} was about 4 times faster than
+- Using 3 million points: {duckspatial} was about 12 times faster than
   {sf}, and allocated 10 times less memory.
 
 Benchmark code - ddbs_union_agg
@@ -287,7 +287,7 @@ df_bench_union <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-dissolve-v1.5.png)
+![](../reference/figures/bench/bench-st-dissolve-v1.5.1.png)
 
 Figure 4: Benchmark that compares dissolving geometries by group for
 duckspatial and sf
@@ -306,10 +306,10 @@ In the following example, we compare
 geometries share any point in common (their interiors or boundaries
 overlap in any way).
 
-- Using 1 million points: {duckspatial} was about 14 times faster than
+- Using 1 million points: {duckspatial} was about 28 times faster than
   {sf}, and allocated 3 times less memory.
 
-- Using 3 million points: {duckspatial} was about 9 times faster than
+- Using 3 million points: {duckspatial} was about 23 times faster than
   {sf}, and allocated 3 times less memory.
 
 Benchmark code - ddbs_intersects
@@ -336,7 +336,7 @@ df_bench_predicate <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-intersects-v1.5.png)
+![](../reference/figures/bench/bench-st-intersects-v1.5.1.png)
 
 Figure 5: Benchmark that compares the geometry predicate
 ST_Intersects(x, y) for duckspatial and sf

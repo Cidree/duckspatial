@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,7 +152,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Import a view/table from one connection to another</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/db_utils_not_exported.R" class="external-link"><code>R/db_utils_not_exported.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/utils_not_exported.R" class="external-link"><code>R/utils_not_exported.R</code></a></small>
       <div class="d-none name"><code>import_view_to_connection.Rd</code></div>
     </div>
 
@@ -166,7 +166,8 @@
 <span>  <span class="va">target_conn</span>,</span>
 <span>  <span class="va">source_conn</span>,</span>
 <span>  <span class="va">source_object</span>,</span>
-<span>  target_name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  target_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -188,6 +189,11 @@
 
 <dt id="arg-target-name">target_name<a class="anchor" aria-label="anchor" href="#arg-target-name"></a></dt>
 <dd><p>Name for view in target connection (auto-generated if NULL)</p></dd>
+
+
+<dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
+<dd><p>A logical value. If <code>TRUE</code>, suppresses any informational messages.
+Defaults to <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -231,7 +231,8 @@ Create and work with lazy `duckspatial_df` objects
   [`st_as_sf(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
   [`print(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
   : sf methods for duckspatial_df
-- [`compute(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+- [`dplyr_reconstruct(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
+  [`compute(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
   [`select(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
   [`filter(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
   [`arrange(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_dplyr.md)
