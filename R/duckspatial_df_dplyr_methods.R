@@ -11,45 +11,45 @@ NULL
 # Core Extension: dplyr_reconstruct
 # =============================================================================
 
-# #' @rdname duckspatial_df_dplyr
-# #' @export
-# #' @importFrom dplyr dplyr_reconstruct
-# dplyr_reconstruct.duckspatial_df <- function(data, template) {
-#   # Get the base classes from data
-#   base_classes <- class(data)
+#' @rdname duckspatial_df_dplyr
+#' @export
+#' @importFrom dplyr dplyr_reconstruct
+dplyr_reconstruct.duckspatial_df <- function(data, template) {
+  # Get the base classes from data
+  base_classes <- class(data)
   
-#   # Reconstruct proper class hierarchy based on template
-#   # Template has: duckspatial_df, tbl_duckdb_connection, tbl_dbi, tbl_sql, tbl_lazy, tbl
-#   template_classes <- class(template)
+  # Reconstruct proper class hierarchy based on template
+  # Template has: duckspatial_df, tbl_duckdb_connection, tbl_dbi, tbl_sql, tbl_lazy, tbl
+  template_classes <- class(template)
   
-#   # Use template classes but only if data is likely a lazy table
-#   # (dplyr verbs on tbl_lazy usually return tbl_lazy)
-#   if (inherits(data, "tbl_sql")) {
-#     # Set class to match template structure
-#     # Ensure duckspatial_df is at the top
-#     if (!"duckspatial_df" %in% template_classes) {
-#         # Should not happen if template is duckspatial_df, but safe guard
-#         template_classes <- c("duckspatial_df", template_classes)
-#     }
-#     class(data) <- template_classes
-#   }
+  # Use template classes but only if data is likely a lazy table
+  # (dplyr verbs on tbl_lazy usually return tbl_lazy)
+  if (inherits(data, "tbl_sql")) {
+    # Set class to match template structure
+    # Ensure duckspatial_df is at the top
+    if (!"duckspatial_df" %in% template_classes) {
+        # Should not happen if template is duckspatial_df, but safe guard
+        template_classes <- c("duckspatial_df", template_classes)
+    }
+    class(data) <- template_classes
+  }
   
-#   # Restore spatial attributes from template
-#   # NOTE: We deliberately do NOT copy source_table here.
+  # Restore spatial attributes from template
+  # NOTE: We deliberately do NOT copy source_table here.
 
-#   # The source_table attribute is an optimization hint for get_query_list()
-#   # that allows direct table reference when the lazy query is unmodified.
-#   # However, dplyr_reconstruct is called AFTER dplyr verbs modify the query,
-#   # so copying source_table would cause get_query_list() to use the original
-#   # table instead of the modified lazy query (losing filters, selects, etc).
-#   #
-#   # By not setting source_table, get_query_list() will use sql_render() to
-#   # create a temporary view from the full lazy query, preserving all operations.
-#   attr(data, "sf_column") <- attr(template, "sf_column")
-#   attr(data, "crs") <- attr(template, "crs")
+  # The source_table attribute is an optimization hint for get_query_list()
+  # that allows direct table reference when the lazy query is unmodified.
+  # However, dplyr_reconstruct is called AFTER dplyr verbs modify the query,
+  # so copying source_table would cause get_query_list() to use the original
+  # table instead of the modified lazy query (losing filters, selects, etc).
+  #
+  # By not setting source_table, get_query_list() will use sql_render() to
+  # create a temporary view from the full lazy query, preserving all operations.
+  attr(data, "sf_column") <- attr(template, "sf_column")
+  attr(data, "crs") <- attr(template, "crs")
   
-#   data
-# }
+  data
+}
 
 # =============================================================================
 # collect - Special handling for geometry conversion
@@ -80,7 +80,7 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
   
   # Strip class to treat as standard lazy table for further manipulation
   x_lazy <- x
-  # class(x_lazy) <- setdiff(class(x_lazy), "duckspatial_df")
+  class(x_lazy) <- setdiff(class(x_lazy), "duckspatial_df")
   
   # --- Handle tibble case: just drop geometry and collect ---
   if (as == "tibble") {
@@ -89,9 +89,6 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
     # But if we just collect, it might fail if geom is effectively 'GEOMETRY' type?
     # DuckDB returns native blobs for GEOMETRY type. R handles them as list(raw).
     # So strictly speaking, simple collect works.
-
-    # Strip class
-    class(x_lazy) <- setdiff(class(x_lazy), "duckspatial_df")
     
     # We drop geometry to be safe/consistent with expectation of "non-spatial tibble"
     if (geom_col %in% colnames(x_lazy)) {
@@ -99,114 +96,90 @@ collect.duckspatial_df <- function(x, ..., as = NULL) {
     }
     return(dplyr::collect(x_lazy, ...))
   }
-
-  # sf/raw/geoarrow in DuckDB 1.5
-  if (geom_col %in% colnames(x_lazy)) {
-
-    # Get the table connection and name
-    conn <- attr(x, "source_conn") %||% dbplyr::remote_con(x)
-    table_name <- attr(x, "source_table")
-
-    # In order to collect, we need to cast the geometry type to an R-understandable
-    # format. We will create a temporary view that we will collect
-    temp_view <- ddbs_temp_view_name()
-    DBI::dbExecute(
-      conn,
-      glue::glue("
-        CREATE TEMP VIEW {temp_view} AS
-        SELECT * REPLACE(ST_AsWKB({geom_col}) AS {geom_col})
-        FROM {table_name};
-      ")
-    )
-    on.exit(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view}")))
-
-    # Get tbl lazily
-    x_lazy <- dplyr::tbl(conn, temp_view)
-
-  }
-
-
-
   
   # --- For sf/raw/geoarrow: we need Valid WKB data ---
   # Native DuckDB geometry blobs are NOT standard WKB.
   # We MUST inject ST_AsWKB() execution into the query.
   
   # Check if geometry column exists in the output
-  # if (geom_col %in% colnames(x_lazy)) {
-  #     conn <- dbplyr::remote_con(x_lazy)
-  #     query_sql <- dbplyr::sql_render(x_lazy)
+  if (geom_col %in% colnames(x_lazy)) {
+      conn <- dbplyr::remote_con(x_lazy)
+      query_sql <- dbplyr::sql_render(x_lazy)
       
-  #     # Inject ST_AsWKB() conversion
-  #     # We use dbplyr::sql to pass the raw SQL function
-  #     # We assume the column name is safe or quoted by dbplyr if we used sym?
-  #     # But inside sql() we must quote manually if needed. 
-  #     # dbplyr::ident handles quoting.
+      # Check column type in the lazy table
+      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
+      cached_type <- attr(x, "geom_type")
       
-  #     # Safer: use dplyr::mutate with sql snippet
-  #     # We need to construct the SQL "ST_AsWKB("colname")" safely.
-  #     # rlang::sym(geom_col) allows dbplyr to quote the column name in the generated SQL.
-  #     # But we need to wrap it in function.
+      # Inject ST_AsWKB() conversion
+      # We use dbplyr::sql to pass the raw SQL function
+      # We assume the column name is safe or quoted by dbplyr if we used sym?
+      # But inside sql() we must quote manually if needed. 
+      # dbplyr::ident handles quoting.
       
-  #     # Method: use explicit SQL string construction
-  #     # x_lazy |> mutate(geom = sql("ST_AsWKB(geom)"))
-  #     # But quoting: ST_AsWKB("geom")
+      # Safer: use dplyr::mutate with sql snippet
+      # We need to construct the SQL "ST_AsWKB("colname")" safely.
+      # rlang::sym(geom_col) allows dbplyr to quote the column name in the generated SQL.
+      # But we need to wrap it in function.
       
-  #     # Let's use dbplyr's translation if available, or raw sql.
-  #     # ST_AsWKB is standard.
+      # Method: use explicit SQL string construction
+      # x_lazy |> mutate(geom = sql("ST_AsWKB(geom)"))
+      # But quoting: ST_AsWKB("geom")
       
-  #     # Check column type in the lazy table
-  #     # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
-  #     # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
-  #     cached_type <- attr(x, "geom_type")
+      # Let's use dbplyr's translation if available, or raw sql.
+      # ST_AsWKB is standard.
       
-  #     # Variables to hold resolved state
-  #     target_col_sql <- geom_col # Default to attribute name
-  #     should_convert <- FALSE
+      # Check column type in the lazy table
+      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
+      # Use cached type from attributes if available to avoid extra DESCRIBE round-trip
+      cached_type <- attr(x, "geom_type")
       
-  #     if (!is.null(cached_type)) {
-  #         should_convert <- grepl("GEOMETRY|BLOB", cached_type, ignore.case = TRUE)
-  #     } else {
-  #         tryCatch({
-  #             # Check type of geom_col
-  #             # DESCRIBE (query) is standard DuckDB
-  #             desc <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_sql}"))
+      # Variables to hold resolved state
+      target_col_sql <- geom_col # Default to attribute name
+      should_convert <- FALSE
+      
+      if (!is.null(cached_type)) {
+          should_convert <- grepl("GEOMETRY|BLOB", cached_type, ignore.case = TRUE)
+      } else {
+          tryCatch({
+              # Check type of geom_col
+              # DESCRIBE (query) is standard DuckDB
+              desc <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {query_sql}"))
               
-  #             # Match geom_col (case insensitive search)
-  #             # use numeric index to handle NAs safely
-  #             match_idx <- which(tolower(desc$column_name) == tolower(geom_col))
+              # Match geom_col (case insensitive search)
+              # use numeric index to handle NAs safely
+              match_idx <- which(tolower(desc$column_name) == tolower(geom_col))
               
-  #             if (length(match_idx) > 0) {
-  #                 # Found column in DB stats
-  #                 idx <- match_idx[1]
-  #                 col_info <- desc[idx, ]
+              if (length(match_idx) > 0) {
+                  # Found column in DB stats
+                  idx <- match_idx[1]
+                  col_info <- desc[idx, ]
                   
-  #                 # resolving correct casing from DB for quoting
-  #                 target_col_sql <- col_info$column_name
+                  # resolving correct casing from DB for quoting
+                  target_col_sql <- col_info$column_name
                   
-  #                 ctype <- if ("column_type" %in% names(col_info)) col_info$column_type else col_info$data_type
-  #                 # We only wrap ST_AsWKB if it is GEOMETRY or BLOB/WKB_BLOB
-  #                 should_convert <- grepl("GEOMETRY|BLOB", ctype, ignore.case = TRUE)
-  #             } else {
-  #                 # Column not found in DESCRIBE? 
-  #                 # It might be present but DESCRIBE logic missed it or view shenanigans.
-  #                 # Fallback: Assume it exists and needs conversion (Safe path)
-  #                 should_convert <- TRUE
-  #             }
-  #         }, error = function(e) {
-  #             # Fallback: safer to wrap than to get raw DuckDB internal blobs
-  #             should_convert <<- TRUE 
-  #         })
-  #     }
+                  ctype <- if ("column_type" %in% names(col_info)) col_info$column_type else col_info$data_type
+                  # We only wrap ST_AsWKB if it is GEOMETRY or BLOB/WKB_BLOB
+                  should_convert <- grepl("GEOMETRY|BLOB", ctype, ignore.case = TRUE)
+              } else {
+                  # Column not found in DESCRIBE? 
+                  # It might be present but DESCRIBE logic missed it or view shenanigans.
+                  # Fallback: Assume it exists and needs conversion (Safe path)
+                  should_convert <- TRUE
+              }
+          }, error = function(e) {
+              # Fallback: safer to wrap than to get raw DuckDB internal blobs
+              should_convert <<- TRUE 
+          })
+      }
 
-  #     if (should_convert) {
-  #          x_lazy <- dplyr::mutate(
-  #              x_lazy, 
-  #               !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB({DBI::dbQuoteIdentifier(conn, target_col_sql)})"))
-  #          )
-  #     }
+      if (should_convert) {
+           x_lazy <- dplyr::mutate(
+               x_lazy, 
+                !!rlang::sym(geom_col) := dbplyr::sql(glue::glue("ST_AsWKB({DBI::dbQuoteIdentifier(conn, target_col_sql)})"))
+           )
+      }
 
-  # }
+  }
   
   # Collect with dbplyr
   collected <- dplyr::collect(x_lazy, ...)
@@ -310,9 +283,21 @@ compute.duckspatial_df <- function(x, name = NULL, temporary = TRUE, ...) {
     as.character(dbplyr::remote_name(result)),
     error = function(e) NULL
   )
+
+  # Get the new connection
+  new_conn <- tryCatch(
+    dbplyr::remote_con(result),
+    error = function(e) NULL
+  )
   
   # Re-wrap as duckspatial_df with preserved metadata
-  new_duckspatial_df(result, crs = crs, geom_col = geom_col, source_table = new_source)
+  new_duckspatial_df(
+    result, 
+    crs = crs, 
+    geom_col = geom_col, 
+    source_table = new_source,
+    source_conn = new_conn
+  )
 }
 
 
@@ -352,7 +337,7 @@ select.duckspatial_df <- function(.data, ...) {
 filter.duckspatial_df <- function(.data, ...) {
   atts <- attributes(.data)
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- dplyr::filter(.data, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -370,11 +355,11 @@ filter.duckspatial_df <- function(.data, ...) {
 arrange.duckspatial_df <- function(.data, ...) {
   atts <- attributes(.data)
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- dplyr::arrange(.data, ...)
-  structure(res,
-    class        = c("duckspatial_df", class(res)),
-    sf_column    = atts$sf_column,
+  res <- NextMethod()
+  new_duckspatial_df(
+    x            = res,
     crs          = atts$crs,
+    geom_col     = atts$sf_column,
     source_table = NULL,
     source_conn  = atts$source_conn
   )
@@ -399,11 +384,11 @@ rename.duckspatial_df <- function(.data, ...) {
   }
   
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- dplyr::rename(.data, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
-    geom_col     = atts$sf_column,
+    geom_col     = new_geom_col,
     source_table = NULL,
     source_conn  = atts$source_conn
   )
@@ -417,7 +402,7 @@ rename.duckspatial_df <- function(.data, ...) {
 slice.duckspatial_df <- function(.data, ...) {
   atts <- attributes(.data)
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- dplyr::slice(.data, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -434,10 +419,8 @@ slice.duckspatial_df <- function(.data, ...) {
 #' @importFrom utils head
 head.duckspatial_df <- function(x, n = 6L, ...) {
   atts <- attributes(x)
-
   class(x) <- setdiff(class(x), "duckspatial_df")
-  res <- head(x, n = n, ...)
-
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -446,6 +429,7 @@ head.duckspatial_df <- function(x, n = 6L, ...) {
     source_conn  = atts$source_conn
   )
 }
+
 
 #' @rdname duckspatial_df_dplyr
 #' @export
@@ -457,6 +441,9 @@ glimpse.duckspatial_df <- function(x, width = NULL, ...) {
   bbox <- st_bbox(x)
   geomtype <- ddbs_geometry_type(x, by_feature = FALSE) |> 
     as.character()
+
+  # Strip class to delegate to dplyr's glimpse.tbl_lazy
+  class(x) <- setdiff(class(x), "duckspatial_df")
 
   # Header
   cat(cli::col_white("# A duckspatial lazy spatial table\n"))
@@ -471,15 +458,7 @@ glimpse.duckspatial_df <- function(x, width = NULL, ...) {
   cat(cli::col_white("#\n"))
 
   # Execute via dplyr
-  source_table <- attr(x, "source_table")
-  head_data <- dplyr::tbl(
-    dbplyr::remote_con(x),
-    dplyr::sql(glue::glue(
-      "SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
-       FROM {source_table} LIMIT 20"
-    ))
-  )
-  dplyr::glimpse(head_data, width = width, ...)
+  NextMethod()
 
   invisible(x)
 }
@@ -498,7 +477,7 @@ glimpse.duckspatial_df <- function(x, width = NULL, ...) {
 mutate.duckspatial_df <- function(.data, ...) {
   atts <- attributes(.data)
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- dplyr::mutate(.data, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -516,7 +495,7 @@ mutate.duckspatial_df <- function(.data, ...) {
 count.duckspatial_df <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) {
   # count() aggregates — intentionally drops spatial class (no geometry)
   class(x) <- setdiff(class(x), "duckspatial_df")
-  dplyr::count(x, ..., wt = {{ wt }}, sort = sort, name = name)
+  NextMethod()
 }
 
 
@@ -528,17 +507,17 @@ distinct.duckspatial_df <- function(.data, ..., .keep_all = FALSE) {
   crs <- attr(.data, "crs")
   geom_col <- attr(.data, "sf_column")
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  out <- dplyr::distinct(.data, ..., .keep_all = .keep_all)
+  res <- NextMethod()
 
   ## if geometry column is in the table, return duckspatial_df
   ## otherwise, return a lazy tbl
-  if (geom_col %in% colnames(out)) {
-    class(out) <- c("duckspatial_df", class(out))
-    attr(out, "sf_column") <- geom_col
-    attr(out, "crs") <- crs
-    out
+  if (geom_col %in% colnames(res)) {
+    class(res) <- c("duckspatial_df", class(res))
+    attr(res, "sf_column") <- geom_col
+    attr(res, "crs") <- crs
+    res
   } else {
-    out
+    res
   }
 }
 
@@ -601,7 +580,7 @@ left_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
-  res <- dplyr::left_join(x, y, by = by, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -622,7 +601,7 @@ inner_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
-  res <- dplyr::inner_join(x, y, by = by, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -643,7 +622,7 @@ right_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
-  res <- dplyr::right_join(x, y, by = by, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -664,7 +643,7 @@ full_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
-  res <- dplyr::full_join(x, y, by = by, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -689,7 +668,7 @@ full_join.duckspatial_df <- function(x, y, by = NULL, ...) {
 group_by.duckspatial_df <- function(.data, ..., .add = FALSE, .drop = dplyr::group_by_drop_default(.data)) {
   atts <- attributes(.data)
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- dplyr::group_by(.data, ..., .add = .add, .drop = .drop)
+  res <- NextMethod()
   return(res)
 }
 
@@ -699,7 +678,7 @@ group_by.duckspatial_df <- function(.data, ..., .add = FALSE, .drop = dplyr::gro
 ungroup.duckspatial_df <- function(x, ...) {
   atts <- attributes(x)
   class(x) <- setdiff(class(x), "duckspatial_df")
-  res <- dplyr::ungroup(x, ...)
+  res <- NextMethod()
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
@@ -721,7 +700,7 @@ summarise.duckspatial_df <- function(.data, ...) {
   geom_preserved <- geom_col %in% names(dots)
 
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- dplyr::summarise(.data, ...)
+  res <- NextMethod()
 
   if (geom_preserved) {
     new_duckspatial_df(

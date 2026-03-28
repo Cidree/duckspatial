@@ -62,8 +62,7 @@ ddbs_register_table <- function(
     arrow_exists <- if (inherits(arrow_views, "try-error")) {
         FALSE
     } else {
-        # view_name %in% arrow_views
-        paste0(view_name, "_raw") %in% arrow_views
+        view_name %in% arrow_views
     }
 
     if ((name_exists || arrow_exists) && !overwrite) {
@@ -90,8 +89,7 @@ ddbs_register_table <- function(
         }
         if (arrow_exists) {
             try(
-                # duckdb::duckdb_unregister_arrow(conn, view_name),
-                duckdb::duckdb_unregister_arrow(conn, paste0(view_name, "_raw")),
+                duckdb::duckdb_unregister_arrow(conn, view_name),
                 silent = TRUE
             )
         }
@@ -104,43 +102,26 @@ ddbs_register_table <- function(
     )
 
     # 2. Register table
+  
+    ## First, split data and geometry
     df <- sf::st_drop_geometry(data_sf)
     wkb <- wk::as_wkb(sf::st_geometry(data_sf))
 
-    # Get original geometry column name
+    ## Get original geometry column name and CRS
     geom_name <- attr(data_sf, "sf_column")
-
-    # Use geoarrow to create a geoarrow vector from WKB
-    # Assign to original geometry column name instead of hardcoded "geometry"
-    df[[geom_name]] <- geoarrow::as_geoarrow_vctr(
+    crs <- sf::st_crs(data_sf, describe = TRUE)$input
+  
+    ## Create arrow table
+    arrow_table <- {
+      df[[geom_name]] <- geoarrow::as_geoarrow_vctr(
         wkb,
-        schema = geoarrow::geoarrow_wkb()
-    )
-
-    arrow_table <- tryCatch({
-       arrow::Table$create(df)
-    }, error = function(e) {
-       # Fallback to standard WKB (binary) if geoarrow fails
-       # (e.g. "NotImplemented: MakeBuilder: cannot construct builder for type geoarrow.wkb")
-       df[[geom_name]] <- wkb
-       arrow::Table$create(df)
-    })
-
-    duckdb::duckdb_register_arrow(conn, paste0(view_name, "_raw"), arrow_table)
-
-    ## Get the CRS, and define the geometry type for duckdb
-    data_crs   <- sf::st_crs(data_sf, parameters = TRUE)
-    if (length(data_crs) == 0) {
-        geom_field <- glue::glue("GEOMETRY")
-    } else {
-        geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+        schema = geoarrow::geoarrow_wkb(crs = crs)
+      )
+      arrow::Table$create(df)
     }
-    
-    DBI::dbExecute(conn, glue::glue("
-        CREATE TEMP VIEW {view_name} AS
-        SELECT * REPLACE ({geom_name}::{geom_field} AS {geom_name})
-        FROM {paste0(view_name, '_raw')}
-    "))
+
+    ## Register the table
+    duckdb::duckdb_register_arrow(conn, view_name, arrow_table)
 
 
     ## User feedback
@@ -177,11 +158,6 @@ ddbs_register_table <- function(
 #             "{.arg data} must be an {.cls sf} object, {.cls duckspatial_df}, or a readable file path."
 #         )
 #     }
-    
-#     # Remove existing crs_duckspatial column if present
-#     # if ("crs_duckspatial" %in% names(data_sf)) {
-#     #     data_sf <- dplyr::select(data_sf, -dplyr::any_of("crs_duckspatial"))
-#     # }
 
 #     tables_df <- ddbs_list_tables(conn)
 #     db_tables <- paste0(tables_df$table_schema, ".", tables_df$table_name) |>
@@ -247,22 +223,30 @@ ddbs_register_table <- function(
 #         schema = geoarrow::geoarrow_wkb()
 #     )
 
-#     # Add CRS column
-#     # data_crs <- sf::st_crs(data_sf, parameters = TRUE)
-#     # crs_value <- if (!is.null(data_crs$srid) && nchar(data_crs$srid) > 0) {
-#     #     data_crs$srid
-#     # } else {
-#     #     data_crs$Wkt
-#     # }
-#     # df$crs_duckspatial <- rep(crs_value, nrow(df))
+#     # Get the CRS (however, right now it doesnt recognize the CRS and defaults to GEOMETRY 
+#     # without SRID, which is not ideal)
+#     # data_crs <- get_geometry_type_duckdb(data_sf)
+#     data_crs <- ddbs_crs(data_sf)
 
+#     # arrow_table <- tryCatch({
+#     #    arrow::Table$create(df)
+#     # }, error = function(e) {
+#     #    # Fallback to standard WKB (binary) if geoarrow fails
+#     #    # (e.g. "NotImplemented: MakeBuilder: cannot construct builder for type geoarrow.wkb")
+#     #    df[[geom_col_name]] <- wkb
+#     #    arrow::Table$create(df)
+#     # })
 #     arrow_table <- tryCatch({
-#        arrow::Table$create(df)
-#     }, error = function(e) {
-#        # Fallback to standard WKB (binary) if geoarrow fails
-#        # (e.g. "NotImplemented: MakeBuilder: cannot construct builder for type geoarrow.wkb")
-#        df[[geom_col_name]] <- wkb
-#        arrow::Table$create(df)
+#         # Attach CRS to the geometry column via geoarrow type
+#         df[[geom_col_name]] <- as_geoarrow_vctr(
+#             df[[geom_col_name]],
+#             type = geoarrow_wkb(crs = data_crs$input)
+#         )
+#         arrow::Table$create(df)
+#         }, error = function(e) {
+#         # Fallback: use raw WKB and embed CRS metadata manually in the field
+#         df[[geom_col_name]] <- wkb
+#         arrow::Table$create(df)
 #     })
 
 #     duckdb::duckdb_register_arrow(conn, view_name, arrow_table)

@@ -6,81 +6,49 @@
 #' @param crs CRS object or string
 #' @param geom_col Name of geometry column (default: "geom")
 #' @param source_table Name of the source table if applicable
+#' @param source_conn Name of the source connection if applicable
 #' @return A duckspatial_df object
 #' @keywords internal
 new_duckspatial_df <- function(
   x, 
   crs = NULL, 
-  geom_col = "geom", 
+  geom_col = NULL, 
   source_table = NULL,
   source_conn = NULL
 ) {
-
   # Avoid double wrapping
   if (is_duckspatial_df(x)) return(x)
   
-  # For tbl_sql, we need to manage the BLOB column type
-  if (inherits(x, "tbl_sql")) {
-    geom_type <- tryCatch({
-      desc <- DBI::dbGetQuery(source_conn, glue::glue("DESCRIBE {dbplyr::sql_render(x)}"))
-      desc$column_type[desc$column_name == geom_col]
-    }, error = function(e) NULL)
+  # This will manage dplyr methods
+  # Maybe move to duckspatial_df.tbl_duckdb_connection in the future
+  if (inherits(x, "tbl_sql") && is.null(source_table) && !is.null(source_conn)) {
 
-    if (!is.null(geom_type) && grepl("BLOB", geom_type)) {
+    # Here we won't have a source table, so we will need to create it
+    source_table <- ddbs_temp_view_name()
 
-      # Here we won't have a source table, so we will need to create it
-      source_table <- ddbs_temp_view_name()
+    # Use sql_render to extract the query
+    inner_query <- dbplyr::sql_render(x)
 
-      # Get the CRS to cast the geometry column correctly
-      data_crs   <- sf::st_crs(crs, parameters = TRUE)
-      if (length(data_crs) == 0) {
-          geom_field <- glue::glue("GEOMETRY")
-      } else {
-          geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
-      }
-
-      # Use sql_render to extract the query
-      inner_query <- dbplyr::sql_render(x)
-
-      # Create the table that will be returned as source_table
-      DBI::dbExecute(
-        source_conn,
-        glue::glue("
-          CREATE OR REPLACE TEMP TABLE {source_table} AS
-          SELECT * REPLACE (ST_GeomFromWKB({geom_col})::{geom_field} AS {geom_col})
-          FROM ({inner_query});"
-        )
-      )
-      
-      # Handle as a duckdb table in the next step
-      x <- source_table
-    }
-  }
-  
-  # If we pass the name of the table, we will just store the source_name, and return
-  # Lazily the first rows of the data, so we don't need to cast everything
-  if (is.character(x)) {
-    
-    # First, we cast to BLOB the first rows creating a temporary view
-    # The temp view is used only for printing purposes, so we don't need
-    # to store all the data. Therefore, we can just take a maximum of 20 rows
-    # That message up will be added with duckdb 1.5.1
-    view_name <- ddbs_temp_view_name()
+    # Create the table that will be returned as source_table
+    # This executes the dplyr verb
     DBI::dbExecute(
       source_conn,
       glue::glue("
-        CREATE TEMP VIEW {view_name} AS
-        SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
-        FROM {x};")
+        CREATE OR REPLACE TEMP TABLE {source_table} AS
+        ({inner_query});"
       )
-
-    x <- dplyr::tbl(source_conn, view_name)
-
-  } 
+    )
+    
+    # Handle as a lazy duckdb table in the next step
+    x <- dplyr::tbl(source_conn, source_table)
+  }
   
   if (!inherits(x, "tbl_sql")) {
     cli::cli_abort("{.arg x} must be a {.cls tbl_sql} (lazy DuckDB table). Use {.fn as_duckspatial_df} for other objects.")
   }
+
+  # If geometry column is not provided, use geom by default
+  geom_col <- geom_col %||% "geom"
   
   # Prepend our class
   structure(
@@ -92,6 +60,7 @@ new_duckspatial_df <- function(
     source_conn = source_conn
   )
 }
+
 
 #' Check if object is a duckspatial_df
 #' @param x Object to test
@@ -144,27 +113,20 @@ as_duckspatial_df.sf <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ..
   ddbs_write_table(
     conn = conn,
     data = x,
-    name = paste0(view_name, '_raw'), # modified for duckdb v1.5
+    name = view_name,
     quiet = TRUE,
     temp_view = TRUE
   )
   
   # Create lazy table
-  # lazy_tbl <- dplyr::tbl(conn, view_name)
-  # new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
-
-  # Create lazy table as for duckdb v1.5
-  DBI::dbExecute(conn, glue::glue("
-    CREATE TEMP TABLE {view_name} AS
-    SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col}) FROM {paste0(view_name, '_raw')}
-  "))
   lazy_tbl <- dplyr::tbl(conn, view_name)
-  result <- new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
-  DBI::dbExecute(conn, glue::glue("
-    ALTER TABLE {dbplyr::remote_name(result)}
-    ALTER COLUMN {geom_col} SET DATA TYPE GEOMETRY
-    USING ST_GeomFROMWKB({geom_col});
-  "))
+  result <- new_duckspatial_df(
+    lazy_tbl, 
+    crs = crs, 
+    geom_col = geom_col, 
+    source_table = view_name,
+    source_conn = conn
+  )
   
   return(result)
 
@@ -172,9 +134,14 @@ as_duckspatial_df.sf <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ..
 
 #' @rdname as_duckspatial_df
 #' @export
-as_duckspatial_df.tbl_duckdb_connection <- function(x, conn = NULL, crs = NULL, 
-                                                     geom_col = NULL, ...) {
+as_duckspatial_df.tbl_duckdb_connection <- function(
+  x, 
+  conn = NULL, 
+  crs = NULL,
+  geom_col = NULL, ...
+) {
   # Auto-detect CRS if not provided (DuckDB-specific)
+  conn <- conn %||% dbplyr::remote_con(x)
   if (is.null(crs)) {
     crs <- ddbs_crs(x, conn)
   }
@@ -192,41 +159,55 @@ as_duckspatial_df.tbl_duckdb_connection <- function(x, conn = NULL, crs = NULL,
   }
   
   # Extract source table for efficient get_query_list path
-  source_table <- tryCatch(
-    as.character(dbplyr::remote_name(x)),
+  source_table <- tryCatch({
+    rem_name <- dbplyr::remote_name(x)
+    if (is.null(rem_name)) NULL else as.character(rem_name)
+  },
     error = function(e) NULL
   )
   
   # Auto-detect geometry type for collect optimization
   geom_type <- tryCatch({
-    desc <- DBI::dbGetQuery(dbplyr::remote_con(x), glue::glue("DESCRIBE {dbplyr::sql_render(x)}"))
+    desc <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {dbplyr::sql_render(x)}"))
     desc$column_type[desc$column_name == geom_col]
   }, error = function(e) NULL)
   
-  res <- new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
+  res <- new_duckspatial_df(
+    x, 
+    crs = crs, 
+    geom_col = geom_col, 
+    source_table = source_table,
+    source_conn = conn
+  )
   if (!is.null(geom_type)) attr(res, "geom_type") <- geom_type
   res
 }
 
 #' @rdname as_duckspatial_df
 #' @export
-as_duckspatial_df.tbl_lazy <- function(x, conn = NULL, crs = NULL, 
-                                        geom_col = NULL, ...) {
+as_duckspatial_df.tbl_lazy <- function(
+  x, 
+  conn = NULL, 
+  crs = NULL, 
+  geom_col = NULL, ...
+) {
   # Auto-detect CRS if not provided
+  conn <- conn %||% dbplyr::remote_con(x)
   if (is.null(crs)) {
-    crs <- ddbs_crs(x)
+    crs <- ddbs_crs(x, conn)
   }
   
   # Auto-detect geometry column
   if (is.null(geom_col)) {
-    cols <- colnames(x)
-    if ("geometry" %in% cols) {
-      geom_col <- "geometry"
-    } else if ("geom" %in% cols) {
-      geom_col <- "geom"
-    } else {
-      geom_col <- "geom"
-    }
+    geom_col <- get_geom_name(conn, x)
+    # cols <- colnames(x)
+    # if ("geometry" %in% cols) {
+    #   geom_col <- "geometry"
+    # } else if ("geom" %in% cols) {
+    #   geom_col <- "geom"
+    # } else {
+    #   geom_col <- "geom"
+    # }
   }
   
   # Extract source table for efficient get_query_list path
@@ -235,48 +216,60 @@ as_duckspatial_df.tbl_lazy <- function(x, conn = NULL, crs = NULL,
     error = function(e) NULL
   )
   
-  new_duckspatial_df(x, crs = crs, geom_col = geom_col, source_table = source_table)
+  new_duckspatial_df(
+    x, 
+    crs = crs, 
+    geom_col = geom_col, 
+    source_table = source_table,
+    source_conn = conn
+  )
 }
 
 #' @rdname as_duckspatial_df
 #' @export
-as_duckspatial_df.character <- function(x, conn = NULL, crs = NULL, 
-                                         geom_col = NULL, ...) {
+as_duckspatial_df.character <- function(
+  x, 
+  conn = NULL, 
+  crs = NULL, 
+  geom_col = NULL, ...
+) {
   if (is.null(conn)) {
     conn <- ddbs_default_conn(create = FALSE)
     if (is.null(conn)) {
       cli::cli_abort("{.arg conn} must be provided when using table names as input.")
     }
   }
+  
+  lazy_tbl <- dplyr::tbl(conn, x)
+  
+  # Auto-detect geometry column
+  if (is.null(geom_col)) {
+    geom_col <- get_geom_name(conn, x)
+  }
 
-  ## DUCKDB 1.4 AND EARLIER -----
+  # Auto-detect CRS if not provided
+  if (is.null(crs)) {
+    crs <- ddbs_crs(x, conn)
+  }
   
-  # lazy_tbl <- dplyr::tbl(conn, x)
-  
-  # # Auto-detect geometry column
-  # if (is.null(geom_col)) {
-  #   cols <- colnames(lazy_tbl)
-  #   if ("geometry" %in% cols) {
-  #     geom_col <- "geometry"
-  #   } else if ("geom" %in% cols) {
-  #     geom_col <- "geom"
-  #   } else {
-  #     geom_col <- "geom"
-  #   }
-  # }
-  
-  # new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = x)
-
-  ## DUCKDB 1.5 -------------
-  # Create lazy table as for duckdb v1.5
-  convert_geometry_duckspatial(conn, x, geom_col, crs)
+  new_duckspatial_df(
+    lazy_tbl, 
+    crs = crs, 
+    geom_col = geom_col, 
+    source_table = x,
+    source_conn = conn
+  )
 
 }
 
 #' @rdname as_duckspatial_df
 #' @export
-as_duckspatial_df.data.frame <- function(x, conn = NULL, crs = NULL, 
-                                          geom_col = NULL, ...) {
+as_duckspatial_df.data.frame <- function(
+  x, 
+  conn = NULL, 
+  crs = NULL, 
+  geom_col = NULL, ...
+) {
    # Detect if we have an sfc column that matches geom_col or any sfc column
    is_sfc <- vapply(x, inherits, logical(1), "sfc")
    
@@ -327,5 +320,11 @@ as_duckspatial_df.data.frame <- function(x, conn = NULL, crs = NULL,
    DBI::dbWriteTable(conn, view_name, x)
    
    lazy_tbl <- dplyr::tbl(conn, view_name)
-   new_duckspatial_df(lazy_tbl, crs = crs, geom_col = geom_col, source_table = view_name)
+   new_duckspatial_df(
+    lazy_tbl, 
+    crs = crs, 
+    geom_col = geom_col, 
+    source_table = view_name,
+    source_conn = conn
+  )
 }

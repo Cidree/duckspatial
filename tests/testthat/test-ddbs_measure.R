@@ -402,7 +402,7 @@ describe("ddbs_length()", {
       length_ddbs <- ddbs_length(rivers_geog, mode = "sf")
       length_sf   <- sf::st_length(rivers_geog)
       # TODO - DuckDB v1.5 has changes in the calculation, and gives different values
-      # TODO - review when ST_Spheroid_*() funs don't need to flip coords anymore
+      # - review when ST_Spheroid_*() funs don't need to flip coords anymore
       expect_equal(length_ddbs, length_sf, tolerance = .1)
     })
     
@@ -658,7 +658,7 @@ describe("ddbs_distance()", {
       ## This one retrieves the result in a different order, but same results
       output_sf_conn   <- ddbs_distance(points_sample_sf, "points", conn = conn_test) |> collect()
       
-      expect_equal(output_sf_ddbs, output_ddbs_sf |> dplyr::arrange(id_x, id_y))
+      expect_equal(output_sf_ddbs, output_ddbs_sf)
       expect_equal(output_ddbs_sf, output_sf_sf)
       expect_equal(output_ddbs_sf, output_ddbs_ddbs)
       expect_equal(output_ddbs_sf, output_conn_sf)

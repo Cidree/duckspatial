@@ -35,8 +35,6 @@ test_that("DuckDB auto-detects spatial formats", {
   res_no_ext <- duckspatial::ddbs_open_dataset(tmp_no_ext, conn = conn)
   expect_true(inherits(res_no_ext, "duckspatial_df"))
   
-  ## TODO - Review why this fails Duckdb 1.5
-  testthat::skip()
   # 4. Test Parquet auto-detection without extension (the new path)
   tmp_pq <- tempfile(fileext = ".parquet")
   # Simple dataframe - ddbs_open_dataset just needs to be able to open it

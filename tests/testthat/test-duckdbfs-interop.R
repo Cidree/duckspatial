@@ -5,10 +5,8 @@
 # normalize_spatial_input with duckdbfs
 # =============================================================================
 
-# TODO - duckdbfs open_dataset needs geometry column update
 
 test_that("normalize_spatial_input works for duckdbfs::open_dataset inputs", {
-  testthat::skip()
   skip_if_not_installed("duckdbfs")
 
   # Create a temporary parquet file
@@ -37,7 +35,6 @@ test_that("normalize_spatial_input works for duckdbfs::open_dataset inputs", {
 # =============================================================================
 
 test_that("ddbs_join works with raw duckdbfs tbl_duckdb_connection", {
-  testthat::skip()
   skip_if_not_installed("duckdbfs")
 
   countries_path <- system.file("spatial/countries.geojson", package = "duckspatial")

@@ -17,7 +17,7 @@
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
     "duckspatial 1.0.0 attached",
-    "\n* Compatible with DuckDB v1.5.0",
+    "\n* Compatible with DuckDB v1.5.1",
     "\n* This release introduces breaking changes",
     "\n* See full release notes for migration guidance"
   )

@@ -140,7 +140,7 @@ ddbs_union <- function(
     y <- normalize_spatial_input(y, conn_y)
 
     ## Resolve connections
-    resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y)
+    resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     y            <- resolve_conn$y
@@ -229,7 +229,7 @@ ddbs_union <- function(
   x <- normalize_spatial_input(x, conn)
 
   ## Resolve connection
-  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
   on.exit(resolve_conn$cleanup(), add = TRUE)
@@ -303,7 +303,7 @@ ddbs_combine <- function(
     quiet = FALSE) {
     
 
-    ## 0. Handle errors
+    # 0. Validate inputs
     assert_xy(x, "x")
     assert_conn_x_name(conn, x, name)
     assert_conn_character(conn, x)
@@ -313,42 +313,37 @@ ddbs_combine <- function(
     assert_logic(quiet, "quiet")
   
 
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x    <- ddbs_crs(x, conn)
-    sf_col_x <- attr(x, "sf_column")
-
-    ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
+    # 1. Prepare inputs
+  
+    ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+    ## validate character table names)
     x <- normalize_spatial_input(x, conn)
 
-    ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
-    mode <- get_mode(mode, name)
+    ## 1.2. Pre-extract attributes
+    crs_x    <- ddbs_crs(x, conn)
+    sf_col_x <- attr(x, "sf_column")
+    mode     <- get_mode(mode, name)
 
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+    ## 1.3. Resolve spatial connections and handle imports
+    resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
     target_conn  <- resolve_conn$conn
     x            <- resolve_conn$x
     ## register cleanup of the connection
     on.exit(resolve_conn$cleanup(), add = TRUE)
 
-    ## 2.2. Get query list of table names
+    ## 1.4. Get list with query names for the input data
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
 
-    # 3. Prepare parameters for the query
+    # 2. Prepare the query
 
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+    ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+    ## available get it from the database)
     x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
     assert_geometry_column(x_geom, x_list)
   
-    ## 3.2. Build base query
+    ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
     st_function <- glue::glue("ST_Collect(LIST({x_geom}))")
     base.query <- glue::glue("
       SELECT
@@ -357,40 +352,25 @@ ddbs_combine <- function(
         {x_list$query_name};
     ")
 
-
-    # 4. if name is not NUL
+    # 3. Table creation if name is provided, or 
+    # create duckspatial_df or sf object if name is NULL
     if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create the query
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            {base.query}
-        ")
-
-        ## execute the query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    
-    }
-  
-  
-    # 5. Apply geospatial operation
-    result <- ddbs_handle_query(
+      create_duckdb_table(
+        conn      = target_conn,
+        name      = name,
+        query     = base.query,
+        overwrite = overwrite,
+        quiet     = quiet
+      )
+    } else {
+      ddbs_handle_query(
         query  = base.query,
         conn   = target_conn,
         mode   = mode,
         crs    = crs_x,
         x_geom = x_geom
-    )
-
-    return(result)
+      )
+    }
   
 }
 
@@ -408,7 +388,7 @@ ddbs_union_agg <- function(
   quiet = FALSE) {
   
 
-  ## 0. Handle errors
+  # 0. Validate inputs
   assert_xy(x, "x")
   assert_conn_x_name(conn, x, name)
   assert_conn_character(conn, x)
@@ -418,45 +398,40 @@ ddbs_union_agg <- function(
   assert_logic(quiet, "quiet")
 
 
-  # 1. Manage connection to DB
-
-  ## 1.1. Pre-extract attributes (CRS and geometry column name)
-  ## this step should be before normalize_spatial_input()
-  crs_x    <- ddbs_crs(x, conn)
-  sf_col_x <- attr(x, "sf_column")
-
-  ## 1.2. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-  ## validate character table names
+  # 1. Prepare inputs
+  
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names)
   x <- normalize_spatial_input(x, conn)
 
-  ## 1.3. Get mode - If it's NULL, it will use the duckspatial.mode option
-  mode <- get_mode(mode, name)
+  ## 1.2. Pre-extract attributes
+  crs_x    <- ddbs_crs(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+  mode     <- get_mode(mode, name)
 
-
-  # 2. Manage connection to DB
-
-  ## 2.1. Resolve connections and handle imports
-  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn)
+  ## 1.3. Resolve spatial connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
   target_conn  <- resolve_conn$conn
   x            <- resolve_conn$x
   ## register cleanup of the connection
   on.exit(resolve_conn$cleanup(), add = TRUE)
 
-  ## 2.2. Get query list of table names
+  ## 1.4. Get list with query names for the input data
   x_list <- get_query_list(x, target_conn)
   on.exit(x_list$cleanup(), add = TRUE)
 
 
-  # 3. Prepare parameters for the query
+  # 2. Prepare the query
 
-  ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
+  ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+  ## available get it from the database)
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. Get names of the rest of the groupping columns
+  ## 2.2. Get names of the rest of the groupping columns
   by_cols <- paste0(by, collapse = ", ")
 
-  ## 3.3. Build base query
+  ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
   st_function <- glue::glue("ST_Union_Agg({x_geom})")
   base.query <- glue::glue("
     SELECT 
@@ -469,38 +444,23 @@ ddbs_union_agg <- function(
   ")
 
 
-  # 3. if name is not NULL (i.e. no SF returned)
+  # 3. Table creation if name is provided, or 
+  # create duckspatial_df or sf object if name is NULL
   if (!is.null(name)) {
-    
-    ## convenient names of table and/or schema.table
-    name_list <- get_query_name(name)
-
-    ## handle overwrite
-    overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-    ## Union of geometries grouped by specified columns
-    tmp.query <- glue::glue("
-      CREATE TABLE {name_list$query_name} AS
-      {base.query}
-    ")
-
-    ## execute union query
-    DBI::dbExecute(target_conn, tmp.query)
-    feedback_query(quiet)
-    return(invisible(TRUE))
-
-  }
-
-
-  # 4. Apply geospatial operation
-  result <- ddbs_handle_query(
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
       query  = base.query,
       conn   = target_conn,
       mode   = mode,
       crs    = crs_x,
       x_geom = x_geom
-  )
-
-  return(result)
-  
+    )
+  }
 }

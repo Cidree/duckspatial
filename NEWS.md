@@ -1,4 +1,4 @@
-# duckspatial (development version)
+# duckspatial 1.0.0
 
 ## MAJOR CHANGES
 
@@ -12,7 +12,7 @@
 
 -   `ddbs_simplify()`: tolerance defaults to 0; gains a new argument `preserve_topology` specified before `conn` (#86).
 
--   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work within DuckDB, rather than materialize a vector. For materializing a vector in R, use `mode = "sf"`. This argument is also moved before `conn` argument (#83).
+-   `ddbs_is_simple()`, `ddbs_is_valid()`, `ddbs_area()`, `ddbs_length()`, `ddbs_distance()`: the `new_column` argument now defaults to a column name, as we now encourage the users to keep most of the work inside DuckDB, rather than materialize the result. For materializing a vector in R, use `mode = "sf"`. This argument is also moved before `conn` argument (#83).
 
 -    `ddbs_predicate()` and colleagues: they gain new arguments: name, mode, overwrite, and quiet. When `mode = "duckspatial"`, they return a lazy tbl backed by DuckDB. When `mode = "sf"`, they return a list/matrix (#105).
 
@@ -48,6 +48,8 @@
 
 -   `ddbs_options()`: to set some `duckspatial` default options.
 
+-   `ddbs_join()`: dwithin is now implemented for spatial join.
+
 ## MINOR CHANGES
 
 -   Improve the documentation of the functions (#85).
@@ -58,11 +60,15 @@
 
 -   `ddbs_crs()`: accepts CRS codes and `crs` objects as inputs. It returns `NULL` when the input doesn't have a geometry (e.g. a `data.frame`) (#87).
 
+-   `ddbs_create_conn()`: now has ... that are paseed to `dbConnect()` for extra configuration.
+
 ## BUG FIXES
 
 -   `ddbs_length()`, `ddbs_area()` and `ddbs_distance()` were calculating the wrong measure when the CRS was geographic (#82).
 
 -   `ddbs_filter(predicate = "dwithin")` and `ddbs_is_within_distance` were calculating wrong distances for geographic CRS (#88).
+
+
 
 # duckspatial 0.9.0
 

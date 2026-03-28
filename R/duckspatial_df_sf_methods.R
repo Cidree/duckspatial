@@ -232,11 +232,7 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   tryCatch({
     remote_name <- attr(x, "source_table")
     remote_conn <- attr(x, "source_conn") %||% dbplyr::remote_con(x)
-    head_data <- dplyr::tbl(
-      remote_conn,
-      dplyr::sql(glue::glue("SELECT * REPLACE (ST_AsWKB({geom_col}) AS {geom_col})
-      FROM {remote_name} LIMIT {n}"))
-    )
+    head_data <- dplyr::tbl(remote_conn, remote_name)
     print(head_data, n = n)
   }, error = function(e) {
     cat(cli::col_yellow("\u26a0 Preview unavailable\n"))

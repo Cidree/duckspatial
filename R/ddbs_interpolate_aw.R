@@ -184,7 +184,7 @@ ddbs_interpolate_aw <- function(
   # 3. Manage connection to DB
 
   ## 3.1. Resolve connections and handle imports
-  resolve_res <- resolve_spatial_connections(target, source, conn)
+  resolve_res <- resolve_spatial_connections(target, source, conn, quiet = quiet)
 
   target_conn <- resolve_res$conn
   target <- resolve_res$x

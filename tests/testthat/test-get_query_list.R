@@ -11,12 +11,7 @@ test_that("get_query_list handles sf objects", {
   
   # Verify
   expect_true(grepl("temp_view_", res$query_name))
-  # expect_true(DBI::dbExistsTable(conn, res$query_name))
-  # Modified in Duckdb 1.5 because it's a view, not a table
-  expect_in(
-    res$query_name,
-    ddbs_list_tables(conn)$table_name
-  )
+  expect_true(DBI::dbExistsTable(conn, res$query_name))
   
   # Verify cleanup
   res$cleanup()
@@ -24,7 +19,7 @@ test_that("get_query_list handles sf objects", {
     res$query_name,
     ddbs_list_tables(conn)$table_name
   )
-  # expect_false(DBI::dbExistsTable(conn, res$query_name))
+  expect_false(DBI::dbExistsTable(conn, res$query_name))
 })
 
 test_that("get_query_list handles duckspatial_df with source_table", {

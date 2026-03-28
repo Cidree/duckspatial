@@ -9,7 +9,7 @@
 #' @template name
 #' @template overwrite
 #' @param temp_view If `TRUE`, registers the `sf` object as a temporary Arrow-backed database 'view' 
-#' using `ddbs_register_table` instead of creating a persistent table. This is much faster but the view 
+#' using [ddbs_register_table] instead of creating a persistent table. This is much faster but the view 
 #' will not persist. Defaults to `FALSE`.
 #' @template quiet
 #'
@@ -42,7 +42,7 @@
 #' ddbs_read_table(conn, "points")
 #'
 #' ## disconnect from db
-#' dbDisconnect(conn)
+#' ddbs_stop_conn(conn)
 #' }
 ddbs_write_table <- function(
     conn,
@@ -151,21 +151,16 @@ ddbs_write_table <- function(
         data_df[[geom_name]] <- wkb_data  # Ensure raw data is preserved
 
         ## Get the CRS, and define the geometry type for duckdb
-        data_crs   <- sf::st_crs(data, parameters = TRUE)
-        if (length(data_crs) == 0) {
-            geom_field <- glue::glue("GEOMETRY")
-        } else {
-            geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
-        }
+        geom_field <- get_geometry_type_duckdb(data)
 
         ## Warn if no CRS was found in the input data
-        if (is.null(data_crs$srid) || is.na(data_crs$srid)) {
+        if (geom_field == "GEOMETRY") {
             cli::cli_alert_warning("No CRS found in the input data. The table will be created without CRS information.")
         }
 
         ## Write data into DuckDB
         # duckdb::duckdb_register(conn, "temp_view", data_df, experimental = TRUE) # check later
-        DBI::dbWriteTable(
+        duckdb::dbWriteTable(
             conn, 
             DBI::Id(schema = name_list$schema_name, table = name_list$table_name), 
             data_df, 
@@ -184,30 +179,35 @@ ddbs_write_table <- function(
         cli::cli_abort("{.arg data} must be an {.cls sf} object, a {.cls duckspatial_df}, or a file path string.")
     } else {
         ## check file extension
-        # file_ext <- sub(".*\\.", "", data)
-        # if (file_ext == "parquet") {
-        #     ## insert data
-        #     DBI::dbExecute(
-        #         conn,
-        #         glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM read_parquet('{data}')")
-        #     )
-        #     ## specify geometry column
-        #     ## - try to get geom column name
-        #     metadata_df <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {name_list$query_name}"))
-        #     geom_name <- metadata_df$column_name[grepl("STRUCT", metadata_df$column_type)]
-        #     DBI::dbExecute(conn, glue::glue("
-        #         ALTER TABLE {name_list$query_name}
-        #         ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
-        #     "))
-        #     ## manage CRS
-        #
-        # } else {
+        file_ext <- tools::file_ext(data)
+        if (file_ext == "parquet") {
+            cli::cli_abort("Direct parquet file writting is not currently supported.")
+            ## Current state v1.5.0 - we can write parquet files, but the geometry is stored as STRUCT, and
+            ## we cannot convert it to GEOMETRY type in duckdb
+            
+            ## insert data
+            # DBI::dbExecute(
+            #     conn,
+            #     glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM read_parquet('{data}')")
+            # )
+            # ## Get the CRS
+            # get_parquet_crs(data, conn)
+            # ## specify geometry column
+            # ## - try to get geom column name
+            # metadata_df <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {name_list$query_name}"))
+            # geom_name <- metadata_df$column_name[grepl("STRUCT", metadata_df$column_type)]
+            # DBI::dbExecute(conn, glue::glue("
+            #     ALTER TABLE {name_list$query_name}
+            #     ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
+            # "))
+        
+        } else {
             ## insert files (in duckdb v1.5, ST_Read() already manages CRS)
             DBI::dbExecute(
                 conn,
                 glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM ST_Read('{data}')")
             )
-
+        }
     }
 
 

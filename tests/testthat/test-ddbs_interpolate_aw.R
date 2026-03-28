@@ -13,7 +13,7 @@ library(areal)
 race <- areal::ar_stl_race
 wards <- areal::ar_stl_wards
 
-## TODO - duckdb v1.5 doesnt support this CRS
+## Duckdb v1.5 doesnt support the ESRI CRS
 race <- sf::st_transform(race, "EPSG:3548")
 wards <- sf::st_transform(wards, "EPSG:3548")
 
