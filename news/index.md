@@ -114,9 +114,9 @@
   generates Voronoi diagrams from point geometries
   ([\#91](https://github.com/Cidree/duckspatial/issues/91)).
 
-- [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint.md):
-  extracts the endpoint of a linestring geometry
-  ([\#91](https://github.com/Cidree/duckspatial/issues/91)).
+- [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
+  and `ddbs_start_point()`: extracts the start/end point of a linestring
+  geometry ([\#91](https://github.com/Cidree/duckspatial/issues/91)).
 
 - [`ddbs_flip_coordinates()`](https://cidree.github.io/duckspatial/reference/ddbs_flip_coordinates.md):
   swaps X and Y coordinates
@@ -138,6 +138,9 @@
   [`ddbs_y()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md):
   extract the `x` and `y` coordinates of points
   ([\#108](https://github.com/Cidree/duckspatial/issues/108)).
+
+- [`ddbs_drop_geometry()`](https://cidree.github.io/duckspatial/reference/ddbs_drop_geometry.md):
+  drops the geometry column of a `duckspatial_df` object.
 
 - [`ddbs_options()`](https://cidree.github.io/duckspatial/reference/ddbs_options.md):
   to set some `duckspatial` default options.

@@ -98,12 +98,15 @@ Modify, simplify, and transform individual geometries
   : Compute the concave hull of geometries
 - [`ddbs_convex_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_convex_hull.md)
   : Compute the convex hull of geometries
-- [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint.md)
-  : Extracts the endpoint of a linestring geometry
+- [`ddbs_startpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
+  [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
+  : Extract the start or end point of a linestring geometry
 - [`ddbs_exterior_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.md)
   : Extract the exterior ring of polygons
 - [`ddbs_make_polygon()`](https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.md)
   : Create a polygon from a single closed linestring
+- [`ddbs_multi()`](https://cidree.github.io/duckspatial/reference/ddbs_multi.md)
+  : Convert geometries to multi-type
 - [`ddbs_polygonize()`](https://cidree.github.io/duckspatial/reference/ddbs_polygonize.md)
   : Assemble polygons from multiple linestrings
 - [`ddbs_union()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
@@ -223,6 +226,8 @@ Create and work with lazy `duckspatial_df` objects
   : Collect a duckspatial_df with flexible output formats
 - [`ddbs_compute()`](https://cidree.github.io/duckspatial/reference/ddbs_compute.md)
   : Force computation of a lazy duckspatial_df
+- [`ddbs_drop_geometry()`](https://cidree.github.io/duckspatial/reference/ddbs_drop_geometry.md)
+  : Drop geometry column from a duckspatial_df object
 - [`ddbs_geom_col()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_col.md)
   : Get the geometry column name
 - [`st_crs(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/duckspatial_df_sf.md)
