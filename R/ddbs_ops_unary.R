@@ -1255,3 +1255,43 @@ ddbs_flip_coordinates <- function(
     )
 
 }
+
+
+
+
+
+#' Drop geometry column from a duckspatial_df object
+#'
+#' Removes the geometry column from a \code{duckspatial_df} object, returning a 
+#' lazy tibble without spatial information.
+#'
+#' @template x
+#'
+#' @return A lazy tibble backed by dbplyr
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## drop geometry column
+#' countries_tbl <- ddbs_drop_geometry(countries_ddbs)
+#' }
+ddbs_drop_geometry <- function(x) {
+
+  ## Get geometry column name
+  geometry_col <- attr(x, "sf_column")
+
+  ## Drop duckspatial_df class
+  class(x) <- setdiff(class(x), c("duckspatial_df"))
+
+  ## Unselect geometry column
+  dplyr::select(x, -dplyr::all_of(geometry_col))
+}

@@ -285,6 +285,7 @@ reference:
   - is_duckspatial_df
   - ddbs_collect
   - ddbs_compute
+  - ddbs_drop_geometry
   - ddbs_geom_col
   - duckspatial_df_sf
   - duckspatial_df_dplyr
