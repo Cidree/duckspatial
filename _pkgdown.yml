@@ -219,9 +219,10 @@ reference:
   - ddbs_centroid
   - ddbs_concave_hull
   - ddbs_convex_hull
-  - ddbs_endpoint
+  - ddbs_endpoint_startpoint
   - ddbs_exterior_ring
   - ddbs_make_polygon
+  - ddbs_multi
   - ddbs_polygonize
   - ddbs_union_funs
   - ddbs_voronoi
@@ -285,6 +286,7 @@ reference:
   - is_duckspatial_df
   - ddbs_collect
   - ddbs_compute
+  - ddbs_drop_geometry
   - ddbs_geom_col
   - duckspatial_df_sf
   - duckspatial_df_dplyr
