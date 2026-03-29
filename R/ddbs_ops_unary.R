@@ -1121,9 +1121,9 @@ ddbs_voronoi <- function(
 
 
 
-#' Extracts the endpoint of a linestring geometry
+#' Extract the start or end point of a linestring geometry
 #'
-#' Returns the last point of a LINESTRING geometry. This function only works
+#' Returns the first or last point of a LINESTRING geometry. These functions only work
 #' with LINESTRING geometries (not MULTILINESTRING or other geometry types).
 #'
 #' @template x
@@ -1134,12 +1134,12 @@ ddbs_voronoi <- function(
 #' @template quiet
 #'
 #' @template returns_mode
-#' @export
 #'
 #' @details
-#' This function wraps DuckDB Spatial's \code{ST_EndPoint}. Input geometries must be of
-#' type LINESTRING (MULTILINESTRING is not supported). For each input feature, the final
-#' coordinate of the LINESTRING is returned as a POINT geometry.
+#' These functions wrap DuckDB Spatial's \code{ST_StartPoint} and \code{ST_EndPoint}.
+#' Input geometries must be of type LINESTRING (MULTILINESTRING is not supported).
+#' For each input feature, the first or last coordinate of the LINESTRING is returned
+#' as a POINT geometry.
 #'
 #' @examples
 #' \dontrun{
@@ -1158,12 +1158,51 @@ ddbs_voronoi <- function(
 #' ## store in duckdb
 #' ddbs_write_vector(conn, rivers_ddbs, "rivers")
 #'
+#' ## extract start points
+#' ddbs_startpoint(conn = conn, "rivers")
+#'
 #' ## extract end points
 #' ddbs_endpoint(conn = conn, "rivers")
 #'
-#' ## extract end points without using a connection
+#' ## without using a connection
+#' ddbs_startpoint(rivers_ddbs)
 #' ddbs_endpoint(rivers_ddbs)
 #' }
+#' @name ddbs_endpoint_startpoint
+#' @rdname ddbs_endpoint_startpoint
+NULL
+
+
+
+#' @rdname ddbs_endpoint_startpoint
+#' @export
+ddbs_startpoint <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    # 0. Handle function-specific error
+    assert_geom_type(x = x, conn = conn, geom = "LINESTRING", multi = FALSE)
+
+    # 1. Run the template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_StartPoint",
+        other_args = NULL
+    )
+
+}
+
+#' @rdname ddbs_endpoint_startpoint
+#' @export
 ddbs_endpoint <- function(
     x,
     conn = NULL,
@@ -1172,10 +1211,8 @@ ddbs_endpoint <- function(
     overwrite = FALSE,
     quiet = FALSE) {
 
-
     # 0. Handle function-specific error
     assert_geom_type(x = x, conn = conn, geom = "LINESTRING", multi = FALSE)
-
 
     # 1. Run the template
     template_unary_ops(
@@ -1294,4 +1331,59 @@ ddbs_drop_geometry <- function(x) {
 
   ## Unselect geometry column
   dplyr::select(x, -dplyr::all_of(geometry_col))
+}
+
+
+
+
+
+#' Convert geometries to multi-type
+#'
+#' Converts single geometries to their multi-type equivalent (e.g.,
+#' \code{POLYGON} to \code{MULTIPOLYGON}). Geometries that are already multi-type are
+#' returned unchanged.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## convert to multi-type
+#' ddbs_multi(countries_ddbs)
+#' }
+ddbs_multi <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_Multi",
+        other_args = NULL
+    )
+
 }

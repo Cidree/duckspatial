@@ -38,13 +38,15 @@
 
 -   `ddbs_voronoi()`: generates Voronoi diagrams from point geometries (#91).
 
--   `ddbs_endpoint()`: extracts the endpoint of a linestring geometry (#91).
+-   `ddbs_endpoint()` and `ddbs_start_point()`: extracts the start/end point of a linestring geometry (#91).
 
 -   `ddbs_flip_coordinates()`: swaps X and Y coordinates (#91).
 
 -   `ddbs_register_vector()`, `ddbs_write_vector()` and `ddbs_read_vector()` deprecated in favour of `ddbs_register_table()`, `ddbs_write_table()` and `ddbs_read_table()` (#100).
 
 -   `ddbs_x()` and `ddbs_y()`: extract the `x` and `y` coordinates of points (#108).
+
+-   `ddbs_drop_geometry()`: drops the geometry column of a `duckspatial_df` object.
 
 -   `ddbs_options()`: to set some `duckspatial` default options.
 
