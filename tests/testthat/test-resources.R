@@ -1,5 +1,4 @@
-library(testthat)
-library(duckspatial)
+testthat::skip_on_cran()
 
 
 test_that("ddbs_create_conn accepts threads and memory_limit_gb", {

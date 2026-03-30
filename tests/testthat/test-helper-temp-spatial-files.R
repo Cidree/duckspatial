@@ -1,3 +1,5 @@
+testthat::skip_on_cran()
+
 test_that("ddbs_create_temp_spatial_file creates file and cleans up automatically", {
   conn <- ddbs_temp_conn()
   path <- system.file("spatial/countries.geojson", package = "duckspatial")

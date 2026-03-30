@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("resolve_spatial_connections handles single connection correctly", {
   conn <- ddbs_temp_conn()
   

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()
 
 test_that("Strategy 1: SQL Recreation (View-to-View)", {
   skip_if_not_installed("sf")

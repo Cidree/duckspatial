@@ -1,4 +1,5 @@
 skip_if_not_installed("duckdb")
+testthat::skip_on_cran()
 
 test_that("ddbs_default_conn works as expected", {
   skip_if_not_installed("duckdb")

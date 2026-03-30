@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("normalize_spatial_input works for sf objects", {
   sf_obj <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(0, 0))), a = 1)
   expect_identical(duckspatial:::normalize_spatial_input(sf_obj), sf_obj)

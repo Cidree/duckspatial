@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("ddbs_temp_conn: default in-memory connection", {
   conn <- ddbs_temp_conn()
   expect_true(DBI::dbIsValid(conn))

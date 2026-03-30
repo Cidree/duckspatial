@@ -1,3 +1,4 @@
+testthat::skip_on_cran()
 
 # Tests for import_view_to_connection -------------------------------------
 

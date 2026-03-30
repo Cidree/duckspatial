@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("duckspatial_df uses efficient SQL render fallback when source_table is missing", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")

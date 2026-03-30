@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 # Test ddbs_filter and mixed inputs
 test_that("ddbs_filter works with mixed inputs", {
   skip_if_not_installed("sf")

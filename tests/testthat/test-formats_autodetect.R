@@ -1,3 +1,4 @@
+testthat::skip_on_cran()
 
 test_that("DuckDB auto-detects spatial formats", {
   skip_if_not_installed("duckdb")

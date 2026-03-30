@@ -1,3 +1,4 @@
+testthat::skip_on_cran()
 
 test_that("get_query_list handles sf objects", {
   skip_if_not_installed("sf")
