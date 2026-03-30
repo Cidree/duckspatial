@@ -1,5 +1,7 @@
 # duckspatial 1.0.0
 
+Learn more about this version [here](https://adrian-cidre.com/posts/015_duckspatial_v100/).
+
 ## MAJOR CHANGES
 
 -   `duckspatial_df` becomes the main class of `duckspatial`. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (with `ddbs_collect()` or `st_as_sf()`). Every function now accepts this class as input, and it's the returned class by default. If the user wants to materialize the result in the same way `sf` would do, that can be done with `mode = "sf"` (#55, #63).
