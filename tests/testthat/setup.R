@@ -1,6 +1,6 @@
 # skip tests on CRAN because they take too much time
 # skip_if(Sys.getenv("TEST_ONE") != "")
-testthat::skip_on_cran()
+# testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
 # read polygons data from duckspatial package
@@ -32,3 +32,9 @@ points_ddbs <- duckspatial::as_duckspatial_df(points_sf)
 # North Carolina data from sf package - used by duckspatial_df tests
 nc_sf   <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 nc_ddbs <- duckspatial::ddbs_open_dataset(system.file("shape/nc.shp", package = "sf"))
+
+## Try to limit threads
+duckspatial::ddbs_set_resources(
+    duckspatial:::ddbs_default_conn(),
+    threads = 1
+)
