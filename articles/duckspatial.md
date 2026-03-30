@@ -69,7 +69,7 @@ print(countries_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_28f11a65_00d3_4367_abc3_69a9061680f3> [?? x 8]
+#> # Source:   table<temp_view_26e4df78_b5a2_4a49_ab2c_e5bb3a11a50f> [?? x 8]
 #> # Database: DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]
 #>    OGC_FID CNTR_ID NAME_ENGL          ISO3_CODE CNTR_NAME FID   date       geom 
 #>      <dbl> <chr>   <chr>              <chr>     <chr>     <chr> <date>     <wk_>
@@ -162,7 +162,7 @@ countries_ddbs |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_a28a0178_605d_4c38_b9ca_9c193f38f72a> [?? x 8]
+#> # Source:   table<temp_view_1f9b9158_ccdf_492b_aac4_bb6fbb23358e> [?? x 8]
 #> # Database: DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
@@ -189,7 +189,7 @@ print(world_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_aee39309_f3cb_46e7_9aab_9870d09da96d> [?? x 1]
+#> # Source:   table<temp_view_b415def6_961a_4b3d_b536_e00baf9e4fb2> [?? x 1]
 #> # Database: DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]
 #>   geometry                                                                      
 #>   <wk_wkb>                                                                      
@@ -313,7 +313,7 @@ ddbs_is_valid("countries", conn = conn) |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_d6661a1d_ad19_4c27_8e5b_d19ee676b762> [?? x 8]
+#> # Source:   table<temp_view_335a709d_2d89_4448_a218_fc66caacdb46> [?? x 8]
 #> # Database: DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
