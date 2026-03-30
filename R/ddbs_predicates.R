@@ -57,7 +57,6 @@
 #' }
 #' When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 #' 
-#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -125,6 +124,7 @@ NULL
 
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_predicate <- function(
   x,
   y,
@@ -350,31 +350,37 @@ ddbs_predicate <- function(
 
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_intersects <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "intersects", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_covers <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "covers", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_touches <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "touches", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_is_within_distance <- function(x, y, distance = NULL, ...) {
   ddbs_predicate(x = x, y = y, predicate = "dwithin", distance = distance, ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_disjoint <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "disjoint", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_within <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "within", ...)
 }
@@ -385,6 +391,7 @@ ddbs_contains <- function(x, y, ...) {
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_overlaps <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "overlaps", ...)
 }
@@ -395,26 +402,31 @@ ddbs_crosses <- function(x, y, ...) {
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_equals <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "equals", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_covered_by <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "covered_by", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_intersects_extent <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "intersects_extent", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_contains_properly <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "contains_properly", ...)
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_within_properly <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "within_properly", ...)
 }
