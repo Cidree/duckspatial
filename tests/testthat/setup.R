@@ -1,6 +1,6 @@
 # skip tests on CRAN because they take too much time
 # skip_if(Sys.getenv("TEST_ONE") != "")
-# testthat::skip_on_cran()
+testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
 # read polygons data from duckspatial package
