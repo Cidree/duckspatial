@@ -34,7 +34,4 @@ nc_sf   <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE
 nc_ddbs <- duckspatial::ddbs_open_dataset(system.file("shape/nc.shp", package = "sf"))
 
 ## Try to limit threads
-duckspatial::ddbs_set_resources(
-    duckspatial:::ddbs_default_conn(),
-    threads = 1
-)
+Sys.setenv("OMP_THREAD_LIMIT" = 2)
