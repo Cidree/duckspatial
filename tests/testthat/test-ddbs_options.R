@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("ddbs_options sets and retrieves options", {
   # Save original options to restore after test
   op_orig <- options()

@@ -3,6 +3,9 @@
 # testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
+## Try to limit threads
+Sys.setenv("OMP_THREAD_LIMIT" = 2)
+
 # read polygons data from duckspatial package
 countries_sf <- sf::st_read(system.file("spatial/countries.geojson", package = "duckspatial")) |> 
     sf::st_transform("EPSG:4326")
@@ -33,5 +36,3 @@ points_ddbs <- duckspatial::as_duckspatial_df(points_sf)
 nc_sf   <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 nc_ddbs <- duckspatial::ddbs_open_dataset(system.file("shape/nc.shp", package = "sf"))
 
-## Try to limit threads
-Sys.setenv("OMP_THREAD_LIMIT" = 2)

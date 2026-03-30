@@ -4,6 +4,7 @@
 # =============================================================================
 # Format-specific tests
 # =============================================================================
+testthat::skip_on_cran()
 
 test_that("ddbs_open_dataset works with GeoJSON", {
   conn <- ddbs_temp_conn()
