@@ -157,6 +157,7 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="duckspatial-100">duckspatial 1.0.0<a class="anchor" aria-label="anchor" href="#duckspatial-100"></a></h2>
+<p>Learn more about this version <a href="https://adrian-cidre.com/posts/015_duckspatial_v100/" class="external-link">here</a>.</p>
 <div class="section level3">
 <h3 id="major-changes-1-0-0">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-1-0-0"></a></h3>
 <ul><li><p><code>duckspatial_df</code> becomes the main class of <code>duckspatial</code>. It represents a lazy, table-like object whose data is not loaded into memory until explicitly materialized (with <code><a href="../reference/ddbs_collect.html">ddbs_collect()</a></code> or <code><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf()</a></code>). Every function now accepts this class as input, and it’s the returned class by default. If the user wants to materialize the result in the same way <code>sf</code> would do, that can be done with <code>mode = "sf"</code> (<a href="https://github.com/Cidree/duckspatial/issues/55" class="external-link">#55</a>, <a href="https://github.com/Cidree/duckspatial/issues/63" class="external-link">#63</a>).</p></li>
