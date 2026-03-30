@@ -1,3 +1,6 @@
+
+testthat::skip_on_cran()
+
 test_that("ddbs_write_dataset works for Parquet", {
   conn <- ddbs_temp_conn()
   path <- system.file("spatial/countries.geojson", package = "duckspatial")

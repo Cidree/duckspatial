@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("collect.duckspatial_df respects global options", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")

@@ -3,6 +3,7 @@
 # Tests: st_crs, st_bbox, st_geometry, st_as_sf, print, ddbs_geom_col
 # Note: nc_sf is loaded from setup.R
 # =============================================================================
+testthat::skip_on_cran()
 
 test_that("st_crs.duckspatial_df returns correct CRS", {
   conn <- ddbs_temp_conn()

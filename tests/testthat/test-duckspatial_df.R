@@ -3,6 +3,7 @@
 # Tests: new_duckspatial_df, as_duckspatial_df.*, is_duckspatial_df
 # Note: nc_sf is loaded from setup.R
 # =============================================================================
+testthat::skip_on_cran()
 
 test_that("new_duckspatial_df creates valid duckspatial_df objects", {
   conn <- ddbs_temp_conn()

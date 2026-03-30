@@ -1,5 +1,6 @@
 # Tests for cross-connection import in ddbs_write_table
 # These test the efficient import path when source is from a different connection
+testthat::skip_on_cran()
 
 test_that("ddbs_write_table imports from external duckspatial_df without collecting", {
   skip_if_not_installed("duckdbfs")

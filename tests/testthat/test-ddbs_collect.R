@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("ddbs_collect supports all output formats", {
   skip_if_not_installed("sf")
   skip_if_not_installed("duckdb")

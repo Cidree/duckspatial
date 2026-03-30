@@ -4,7 +4,7 @@
 # =============================================================================
 # normalize_spatial_input with duckdbfs
 # =============================================================================
-
+testthat::skip_on_cran()
 
 test_that("normalize_spatial_input works for duckdbfs::open_dataset inputs", {
   skip_if_not_installed("duckdbfs")

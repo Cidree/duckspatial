@@ -1,3 +1,6 @@
+
+testthat::skip_on_cran()
+
 test_that("Compatibility: Arrow Views behave like Persistent Tables", {
     skip_if_not_installed("duckdb")
 

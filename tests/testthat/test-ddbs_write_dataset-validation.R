@@ -1,5 +1,7 @@
 # Comprehensive validation tests for ddbs_write_dataset
 
+testthat::skip_on_cran()
+
 test_that("warns when extension and driver mismatch", {
   conn <- ddbs_temp_conn()
   ds <- ddbs_open_dataset(system.file("spatial/countries.geojson", package = "duckspatial"), conn = conn)

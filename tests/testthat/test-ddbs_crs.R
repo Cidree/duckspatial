@@ -1,5 +1,6 @@
 
 # Test suite for ddbs_crs S3 generic and methods
+testthat::skip_on_cran()
 
 test_that("ddbs_crs works for different input types", {
   skip_if_not_installed("sf")

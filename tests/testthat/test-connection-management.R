@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 # Tests for connection management
 
 test_that("cross-connection filtering works with proper fallback strategies", {

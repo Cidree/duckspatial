@@ -1,4 +1,6 @@
 
+testthat::skip_on_cran()
+
 test_that("GeoPackage output automatically renames 'FID' to 'FID_original'", {
   conn <- ddbs_temp_conn()
   

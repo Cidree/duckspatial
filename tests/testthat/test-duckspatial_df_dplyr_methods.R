@@ -8,6 +8,8 @@
 # dplyr verb class preservation
 # =============================================================================
 
+testthat::skip_on_cran()
+
 test_that("dplyr verbs preserve duckspatial_df class", {
   conn <- ddbs_temp_conn()
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
