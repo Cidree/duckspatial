@@ -2,9 +2,9 @@
 
 ## Test environments
 
-* local Windows 11 Pro 22H2, 64 bit, R 4.4.2
+* local Windows 11 Pro 22H2, 64 bit, R 4.5.2
 
-* R Under development (unstable) x86_64-w64-mingw32 R 4.5.0 beta
+* R Under development (unstable) x86_64-w64-mingw32 R 4.6.0 alpha
 
 
 ## R CMD check results
@@ -12,7 +12,7 @@
 * local Windows 11 Pro 22H2: 
 
 ```
-Duration: 1m 52.5s
+Duration: 4m 17s
 
 0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 ```
