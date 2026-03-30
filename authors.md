@@ -14,7 +14,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/Cidree/duckspatial/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/Cidree/duckspatial/blob/v1.0.0/DESCRIPTION)
 
 Cidre González A, Kotov E, Pereira R (2026). *duckspatial: R Interface
 to 'DuckDB' Database with Spatial Extension*. R package version 1.0.0,

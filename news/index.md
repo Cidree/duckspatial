@@ -2,9 +2,6 @@
 
 ## duckspatial 1.0.0
 
-Learn more about this version
-[here](https://adrian-cidre.com/posts/015_duckspatial_v100/).
-
 ### MAJOR CHANGES
 
 - `duckspatial_df` becomes the main class of `duckspatial`. It
