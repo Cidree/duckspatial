@@ -222,10 +222,15 @@ reference:
   - ddbs_endpoint_startpoint
   - ddbs_exterior_ring
   - ddbs_make_polygon
-  - ddbs_multi
   - ddbs_polygonize
-  - ddbs_union_funs
   - ddbs_voronoi
+
+- title: Geometry Type Conversion
+  desc: Change geometry types or decompose multi-part geometries
+  contents:
+  - ddbs_dump
+  - ddbs_multi
+  - ddbs_union_funs
 
 - title: Coordinate Operations
   desc: Transform and manipulate coordinate systems

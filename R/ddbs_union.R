@@ -464,3 +464,134 @@ ddbs_union_agg <- function(
     )
   }
 }
+
+
+
+
+
+#' Dumps geometries into their component parts
+#'
+#' Decomposes multi-part or complex geometries into individual simple geometry
+#' components, returning one row per component geometry
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## aggregate rivers by name
+#' rivers_agg_ddbs <- ddbs_union_agg(rivers_ddbs, by = "RIVER_NAME")
+#'
+#' ## dump into individual geometries
+#' ddbs_dump(rivers_agg_ddbs)
+#' }
+ddbs_dump <- function(
+  x,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+) {
+
+  # 0. Validate inputs
+  assert_xy(x, "x")
+  assert_conn_x_name(conn, x, name)
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+
+  # Warn if geometry type is not multi
+  geom_type <- ddbs_geometry_type(x, by_feature = FALSE, conn)
+  if (all(geom_type %in% c("POINT", "LINESTRING", "POLYGON")) & !quiet) {
+    cli::cli_warn(c("The geometry type of {.arg x} is {.val {geom_type}}",
+      "*" = "{.fun ddbs_dump()} is typically used for multi-part geometries." ,
+      "*" = "With simple geometries it doesn't have any effect.")
+  )}
+
+
+  # 1. Prepare inputs
+
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names)
+  x <- normalize_spatial_input(x, conn)
+
+  ## 1.2. Pre-extract attributes
+  crs_x    <- ddbs_crs(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+  mode     <- get_mode(mode, name)
+
+  ## 1.3. Resolve spatial connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 1.4. Get list with query names for the input data
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 2. Prepare the query
+
+  ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+  ## available get it from the database)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+
+  ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  st_function <- glue::glue("dump.{x_geom}")
+  base.query <- glue::glue("
+    WITH dumped AS (
+    SELECT * EXCLUDE {x_geom},
+          UNNEST(ST_Dump({x_geom})) AS dump
+    FROM {x_list$query_name}
+    )
+    SELECT * EXCLUDE dump,
+          /* dump.path AS path, */
+          {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+    FROM dumped;
+  ")
+
+
+  # 3. Table creation if name is provided, or 
+  # create duckspatial_df or sf object if name is NULL
+  if (!is.null(name)) {
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
+      query  = base.query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs_x,
+      x_geom = x_geom
+    )
+  }
+  
+}
