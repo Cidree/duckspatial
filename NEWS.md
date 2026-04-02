@@ -4,6 +4,8 @@
 
 * `ddbs_dump()`: decompose multi-geometry types into individual single geometry components (#44, 117).
 
+* `ddbs_maximum_inscribed_circle()`: returns the maximum inscribed circle of the input geometry (#117).
+
 # duckspatial 1.0.0
 
 Learn more about this version [here](https://adrian-cidre.com/posts/015_duckspatial_v100/).

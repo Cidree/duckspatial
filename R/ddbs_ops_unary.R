@@ -1387,3 +1387,178 @@ ddbs_multi <- function(
     )
 
 }
+
+
+
+
+
+#' Computes the maximum inscribed circle of a geometry
+#'
+#' Returns the largest circle that fits inside the input geometry. The result
+#' is derived from a struct containing the circle's center point, the nearest
+#' point on the geometry boundary to that center, and the circle's radius.
+#'
+#' @template x
+#' @param geom a character string specifying which component of the inscribed
+#' circle to return. Must be one of \code{"center"} (default) or
+#' \code{"nearest"}. \code{"center"} returns the center point of the maximum
+#' inscribed circle; \code{"nearest"} returns the closest point on the
+#' geometry boundary to that center.
+#' @param tolerance a numeric value specifying the tolerance used when
+#' computing the inscribed circle. If \code{NULL} (default), tolerance is
+#' computed automatically as \code{max(width, height) / 1000}.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## return the center point of the maximum inscribed circle
+#' ddbs_maximum_inscribed_circle(argentina_ddbs)
+#'
+#' ## return the nearest boundary point instead
+#' ddbs_maximum_inscribed_circle(argentina_ddbs, geom = "nearest")
+#'
+#' ## use a custom tolerance
+#' ddbs_maximum_inscribed_circle(argentina_ddbs, tolerance = 0.01)
+#'
+#' ## without a connection
+#' ddbs_maximum_inscribed_circle(argentina_ddbs)
+#' }
+ddbs_maximum_inscribed_circle <- function(
+  x,
+  geom = "center",
+  tolerance = NULL,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+
+  # 0. Validate inputs
+  assert_xy(x, "x")
+  assert_conn_x_name(conn, x, name)
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+
+
+  # 1. Prepare inputs
+  
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names)
+  x <- normalize_spatial_input(x, conn)
+
+  ## 1.2. Pre-extract attributes
+  crs_x    <- ddbs_crs(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+  mode     <- get_mode(mode, name)
+
+  ## 1.3. Resolve spatial connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 1.4. Get list with query names for the input data
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 2. Prepare the query
+
+  ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+  ## available get it from the database)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+  ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  ### Add tolerance parameter if provided
+  if (is.null(tolerance)) {
+    st_function <- glue::glue("ST_MaximumInscribedCircle({x_geom})")
+  } else {
+    st_function <- glue::glue("ST_MaximumInscribedCircle({x_geom}, {tolerance})")
+  }
+  ### This function returns a data frame column. We select the radius, and the one of 
+  ### the two geometry columns (nearest or center)
+  if (geom == "nearest") {
+    nearest_function <- glue::glue("{st_function}.nearest")
+    geom_function <- glue::glue("
+      {build_geom_query(nearest_function, name, crs_x, mode)} AS {x_geom}
+    ")
+  } else if (geom == "center") {
+    center_function <- glue::glue("{st_function}.center")
+    geom_function <- glue::glue("
+      {build_geom_query(center_function, name, crs_x, mode)}  AS {x_geom}
+    ")
+  }
+  ### Finally, build the query
+  base.query <- glue::glue("
+    SELECT * EXCLUDE ({x_geom}),
+    {st_function}.radius  AS geom_radius,
+    {geom_function}
+    FROM {x_list$query_name};
+  ")
+
+
+  # 3. Table creation if name is provided, or 
+  # create duckspatial_df or sf object if name is NULL
+  if (!is.null(name)) {
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
+      query  = base.query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs_x,
+      x_geom = x_geom
+    )
+  }
+
+}
+
+
+
+ddbs_minimum_rotated_rectangle <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_MinimumRotatedRectangle",
+        other_args = NULL
+    )
+
+}
