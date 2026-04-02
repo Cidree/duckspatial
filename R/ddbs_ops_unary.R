@@ -1542,23 +1542,3 @@ ddbs_maximum_inscribed_circle <- function(
 
 
 
-ddbs_minimum_rotated_rectangle <- function(
-    x,
-    conn = NULL,
-    name = NULL,
-    mode = NULL,
-    overwrite = FALSE,
-    quiet = FALSE) {
-
-    template_unary_ops(
-        x = x,
-        conn = conn,
-        name = name,
-        mode = mode,
-        overwrite = overwrite,
-        quiet = quiet,
-        fun = "ST_MinimumRotatedRectangle",
-        other_args = NULL
-    )
-
-}

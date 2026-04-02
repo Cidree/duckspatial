@@ -6,6 +6,8 @@
 
 * `ddbs_maximum_inscribed_circle()`: returns the maximum inscribed circle of the input geometry (#117).
 
+* `ddbs_minimum_rotated_rectangle()`: returns the minimum rotated rectangle that bounds the input geometry (#117).
+
 # duckspatial 1.0.0
 
 Learn more about this version [here](https://adrian-cidre.com/posts/015_duckspatial_v100/).

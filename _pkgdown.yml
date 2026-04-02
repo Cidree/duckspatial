@@ -260,6 +260,7 @@ reference:
   contents:
   - ddbs_bbox
   - ddbs_envelope
+  - ddbs_minimum_rotated_rectangle
 
 - title: Affine Transformations
   desc: Rotate, scale, shear, and shift geometries

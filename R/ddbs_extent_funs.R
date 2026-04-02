@@ -378,3 +378,56 @@ ddbs_bbox <- function(
     }
     
 }
+
+
+
+#' Computes the minimum rotated rectangle enclosing a geometry
+#'
+#' Returns the smallest rectangle that fully contains the input geometry.
+#' Unlike [ddbs_envelope()], the rectangle is not constrained to be axis-aligned
+#' and may be rotated to minimize its area.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## without a connection
+#' ddbs_minimum_rotated_rectangle(argentina_ddbs)
+#' }
+ddbs_minimum_rotated_rectangle <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_MinimumRotatedRectangle",
+        other_args = NULL
+    )
+
+}
