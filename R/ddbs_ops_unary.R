@@ -123,6 +123,11 @@ ddbs_buffer <- function(
 #' representing its average position.
 #'
 #' @template x
+#' @param method Character string specifying the method to calculate the 
+#' centroid. Must be one of "centroid" (default) or "surface". "centroid" 
+#' calculates the default centroid, which may fall outside the geometry 
+#' for certain shapes (e.g., donuts). "surface" calculates a point guaranteed 
+#' to fall within the geometry.
 #' @template conn_null
 #' @template name
 #' @template mode
@@ -157,20 +162,28 @@ ddbs_buffer <- function(
 #' }
 ddbs_centroid <- function(
     x,
+    method = "centroid",
     conn = NULL,
     name = NULL,
     mode = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
     
+    st_fun <- switch(
+        method,
+        centroid = "ST_Centroid",
+        surface  = "ST_PointOnSurface",
+        cli::cli_abort("Invalid method. Must be one of 'centroid', or 'surface'.")
+    )
+    
     template_unary_ops(
-        x = x,
-        conn = conn,
-        name = name,
-        mode = mode,
-        overwrite = overwrite,
-        quiet = quiet,
-        fun = "ST_Centroid",
+        x          = x,
+        conn       = conn,
+        name       = name,
+        mode       = mode,
+        overwrite  = overwrite,
+        quiet      = quiet,
+        fun        = st_fun,
         other_args = NULL
     )
 
