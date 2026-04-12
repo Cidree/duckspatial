@@ -8,6 +8,10 @@
 
 * `ddbs_minimum_rotated_rectangle()`: returns the minimum rotated rectangle that bounds the input geometry (#117).
 
+## ENHANCEMENTS
+
+* `group_by` and `summarise` methods now drop the spatial attributes when the output is not a `duckspatial_df` anymore (#119).
+
 # duckspatial 1.0.0
 
 Learn more about this version [here](https://adrian-cidre.com/posts/015_duckspatial_v100/).
