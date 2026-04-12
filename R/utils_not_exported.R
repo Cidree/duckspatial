@@ -1297,7 +1297,7 @@ get_table_crs <- function(conn, geom_name, table_name) { # nocov start
 #' @noRd
 get_geometry_type_duckdb <- function(x) { # nocov start
   data_crs   <- sf::st_crs(x, parameters = TRUE)
-    if (length(data_crs) == 0 || is.na(data_crs)) {
+    if (length(data_crs) == 0 || is.na(data_crs$srid)) {
         geom_field <- glue::glue("GEOMETRY")
     } else {
         geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
