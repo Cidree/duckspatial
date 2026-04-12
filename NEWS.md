@@ -8,6 +8,8 @@
 
 * `ddbs_minimum_rotated_rectangle()`: returns the minimum rotated rectangle that bounds the input geometry (#117).
 
+* `ddbs_set_crs()`: assigns the CRS to a spatial object. No transformation is applied to the geometries (#118).
+
 ## ENHANCEMENTS
 
 * `group_by` and `summarise` methods now drop the spatial attributes when the output is not a `duckspatial_df` anymore (#119).
