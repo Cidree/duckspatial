@@ -237,6 +237,7 @@ reference:
   desc: Transform and manipulate coordinate systems
   contents:
   - ddbs_transform
+  - ddbs_set_crs
   - ddbs_flip_coordinates
   - ddbs_xy
   - ddbs_force_dim
