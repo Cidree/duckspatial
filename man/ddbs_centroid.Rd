@@ -6,6 +6,7 @@
 \usage{
 ddbs_centroid(
   x,
+  method = "centroid",
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -22,6 +23,12 @@ ddbs_centroid(
 \item A character string naming a table/view in \code{conn}
 }
 Data is returned from this object.}
+
+\item{method}{Character string specifying the method to calculate the
+centroid. Must be one of "centroid" (default) or "surface". "centroid"
+calculates the default centroid, which may fall outside the geometry
+for certain shapes (e.g., donuts). "surface" calculates a point guaranteed
+to fall within the geometry.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}

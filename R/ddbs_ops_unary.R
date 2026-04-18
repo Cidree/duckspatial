@@ -123,6 +123,11 @@ ddbs_buffer <- function(
 #' representing its average position.
 #'
 #' @template x
+#' @param method Character string specifying the method to calculate the 
+#' centroid. Must be one of "centroid" (default) or "surface". "centroid" 
+#' calculates the default centroid, which may fall outside the geometry 
+#' for certain shapes (e.g., donuts). "surface" calculates a point guaranteed 
+#' to fall within the geometry.
 #' @template conn_null
 #' @template name
 #' @template mode
@@ -157,20 +162,28 @@ ddbs_buffer <- function(
 #' }
 ddbs_centroid <- function(
     x,
+    method = "centroid",
     conn = NULL,
     name = NULL,
     mode = NULL,
     overwrite = FALSE,
     quiet     = FALSE) {
     
+    st_fun <- switch(
+        method,
+        centroid = "ST_Centroid",
+        surface  = "ST_PointOnSurface",
+        cli::cli_abort("Invalid method. Must be one of 'centroid', or 'surface'.")
+    )
+    
     template_unary_ops(
-        x = x,
-        conn = conn,
-        name = name,
-        mode = mode,
-        overwrite = overwrite,
-        quiet = quiet,
-        fun = "ST_Centroid",
+        x          = x,
+        conn       = conn,
+        name       = name,
+        mode       = mode,
+        overwrite  = overwrite,
+        quiet      = quiet,
+        fun        = st_fun,
         other_args = NULL
     )
 
@@ -632,182 +645,6 @@ ddbs_convex_hull <- function(
         other_args = NULL
     )
 
-}
-
-
-
-
-
-#' Transform the coordinate reference system of geometries
-#'
-#' Converts geometries to a different coordinate reference system (CRS), updating 
-#' their coordinates accordingly.
-#'
-#' @template x
-#' @param y Target CRS. Can be:
-#'   \itemize{
-#'     \item A character string with EPSG code (e.g., "EPSG:4326")
-#'     \item An \code{sf} object (uses its CRS)
-#'     \item Name of a DuckDB table (uses its CRS)
-#'   }
-#' @template conn_null
-#' @template conn_x_conn_y
-#' @template name
-#' @template mode
-#' @template overwrite
-#' @template quiet
-#'
-#' @template returns_mode
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ## load package
-#' library(duckspatial)
-#'
-#' # create a duckdb database in memory (with spatial extension)
-#' conn <- ddbs_create_conn(dbdir = "memory")
-#' 
-#' ## read data
-#' argentina_ddbs <- ddbs_open_dataset(
-#'   system.file("spatial/argentina.geojson", 
-#'   package = "duckspatial")
-#' )
-#' 
-#' ## store in duckdb
-#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
-#' 
-#' ## transform to different CRS using EPSG code
-#' ddbs_transform("argentina", "EPSG:3857", conn)
-#' 
-#' ## transform to match CRS of another object
-#' argentina_3857_ddbs <- ddbs_transform(argentina_ddbs, "EPSG:3857")
-#' ddbs_write_vector(conn, argentina_3857_ddbs, "argentina_3857")
-#' ddbs_transform("argentina", argentina_3857_ddbs, conn)
-#' 
-#' ## transform to match CRS of another DuckDB table
-#' ddbs_transform("argentina", "argentina_3857", conn)
-#' 
-#' ## transform without using a connection
-#' ddbs_transform(argentina_ddbs, "EPSG:3857")
-#' }
-ddbs_transform <- function(
-    x,
-    y,
-    conn = NULL,
-    conn_x = NULL,
-    conn_y = NULL,
-    name = NULL,
-    mode = NULL,
-    overwrite = FALSE,
-    quiet     = FALSE) {
-
-    ## 0. Handle errors
-    assert_xy(x, "x")
-    assert_name(name)
-    assert_name(mode, "mode")
-    assert_logic(overwrite, "overwrite")
-    assert_logic(quiet, "quiet")
-
-    # 1. Manage connection to DB
-
-    ## 1.1. Pre-extract attributes (CRS and geometry column name)
-    ## this step should be before normalize_spatial_input()
-    crs_x <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
-    crs_y <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
-    sf_col_x <- attr(x, "sf_column")
-    sf_col_y <- attr(y, "sf_column")
-
-    ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
-    if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
-    if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
-
-    ## 1.3. Normalize inputs: coerce tbl_duckdb_connection to duckspatial_df, 
-    ## validate character table names
-    x <- normalize_spatial_input(x, conn_x)
-    try(y <- normalize_spatial_input(y, conn_y), silent = TRUE)
-
-    ## 1.4. Get mode - If it's NULL, it will use the duckspatial.mode option
-    mode <- get_mode(mode, name)
-
-
-    # 2. Manage connection to DB
-
-    ## 2.1. Resolve connections and handle imports
-    resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
-    target_conn  <- resolve_conn$conn
-    x            <- resolve_conn$x
-    y            <- resolve_conn$y
-    ## register cleanup of the connection
-    if (any(is.null(conn_x), is.null(conn_y))) {
-        on.exit(resolve_conn$cleanup(), add = TRUE)   
-    }
-
-    ## 2.2. Get query list of table names
-    x_list <- get_query_list(x, target_conn)
-    on.exit(x_list$cleanup(), add = TRUE)
-    y_list <- get_query_list(y, target_conn)
-    on.exit(y_list$cleanup(), add = TRUE)
-
-    ## if CRS wasn't guessed earlier
-    if (is.null(crs_x)) crs_x <- ddbs_crs(x_list$query_name, target_conn)
-    if (is.null(crs_y)) {
-        ## try to get from `y`. if it fails, it's not sf, nor duckspatial_df
-        ## therefore, it might be a CRS or character string with CRS
-        try(crs_y <- ddbs_crs(y_list$query_name, target_conn), silent = TRUE)
-
-        if (is.null(crs_y)) crs_y <- sf::st_crs(y)
-    }
-
-    ## warn if the crs is the same
-    if (crs_x$input == crs_y$input) cli::cli_warn("The CRS of `x` and `y` is the same.")
-    
-    # 3. Prepare parameters for the query
-
-    ## 3.1. Get names of geometry columns (use saved sf_col_x from before transformation)
-    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
-    assert_geometry_column(x_geom, x_list)
-
-    ## 3.2. Build the base query
-    ## always_xy assumes [northing, easting]
-    st_function <- glue::glue("ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)")
-    base.query <- glue::glue("
-        SELECT *
-        REPLACE ({build_geom_query(st_function, name, crs_y, mode)} AS {x_geom})
-        FROM 
-            {x_list$query_name};
-    ")
-
-    # 4. if name is not NULL (i.e. no SF returned)
-    if (!is.null(name)) {
-
-        ## convenient names of table and/or schema.table
-        name_list <- get_query_name(name)
-
-        ## handle overwrite
-        overwrite_table(name_list$query_name, target_conn, quiet, overwrite)
-
-        ## create query (no st_as_text)
-        tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
-            {base.query};
-        ")
-        ## execute intersection query
-        DBI::dbExecute(target_conn, tmp.query)
-        feedback_query(quiet)
-        return(invisible(TRUE))
-    }
-
-    # 5. Apply geospatial operation
-    result <- ddbs_handle_query(
-        query      = base.query,
-        conn       = target_conn,
-        mode       = mode,
-        crs        = crs_y,
-        x_geom     = x_geom
-    )
-
-    return(result)
 }
 
 
@@ -1384,6 +1221,244 @@ ddbs_multi <- function(
         quiet = quiet,
         fun = "ST_Multi",
         other_args = NULL
+    )
+
+}
+
+
+
+
+
+#' Computes the maximum inscribed circle of a geometry
+#'
+#' Returns the largest circle that fits inside the input geometry. The result
+#' is derived from a struct containing the circle's center point, the nearest
+#' point on the geometry boundary to that center, and the circle's radius.
+#'
+#' @template x
+#' @param geom a character string specifying which component of the inscribed
+#' circle to return. Must be one of \code{"center"} (default) or
+#' \code{"nearest"}. \code{"center"} returns the center point of the maximum
+#' inscribed circle; \code{"nearest"} returns the closest point on the
+#' geometry boundary to that center.
+#' @param tolerance a numeric value specifying the tolerance used when
+#' computing the inscribed circle. If \code{NULL} (default), tolerance is
+#' computed automatically as \code{max(width, height) / 1000}.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## return the center point of the maximum inscribed circle
+#' ddbs_maximum_inscribed_circle(argentina_ddbs)
+#'
+#' ## return the nearest boundary point instead
+#' ddbs_maximum_inscribed_circle(argentina_ddbs, geom = "nearest")
+#'
+#' ## use a custom tolerance
+#' ddbs_maximum_inscribed_circle(argentina_ddbs, tolerance = 0.01)
+#'
+#' ## without a connection
+#' ddbs_maximum_inscribed_circle(argentina_ddbs)
+#' }
+ddbs_maximum_inscribed_circle <- function(
+  x,
+  geom = "center",
+  tolerance = NULL,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+
+  # 0. Validate inputs
+  assert_xy(x, "x")
+  assert_conn_x_name(conn, x, name)
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+
+
+  # 1. Prepare inputs
+  
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names)
+  x <- normalize_spatial_input(x, conn)
+
+  ## 1.2. Pre-extract attributes
+  crs_x    <- ddbs_crs(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+  mode     <- get_mode(mode, name)
+
+  ## 1.3. Resolve spatial connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 1.4. Get list with query names for the input data
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 2. Prepare the query
+
+  ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+  ## available get it from the database)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+  ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  ### Add tolerance parameter if provided
+  if (is.null(tolerance)) {
+    st_function <- glue::glue("ST_MaximumInscribedCircle({x_geom})")
+  } else {
+    st_function <- glue::glue("ST_MaximumInscribedCircle({x_geom}, {tolerance})")
+  }
+  ### This function returns a data frame column. We select the radius, and the one of 
+  ### the two geometry columns (nearest or center)
+  if (geom == "nearest") {
+    nearest_function <- glue::glue("{st_function}.nearest")
+    geom_function <- glue::glue("
+      {build_geom_query(nearest_function, name, crs_x, mode)} AS {x_geom}
+    ")
+  } else if (geom == "center") {
+    center_function <- glue::glue("{st_function}.center")
+    geom_function <- glue::glue("
+      {build_geom_query(center_function, name, crs_x, mode)}  AS {x_geom}
+    ")
+  }
+  ### Finally, build the query
+  base.query <- glue::glue("
+    SELECT * EXCLUDE ({x_geom}),
+    {st_function}.radius  AS geom_radius,
+    {geom_function}
+    FROM {x_list$query_name};
+  ")
+
+
+  # 3. Table creation if name is provided, or 
+  # create duckspatial_df or sf object if name is NULL
+  if (!is.null(name)) {
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
+      query  = base.query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs_x,
+      x_geom = x_geom
+    )
+  }
+
+}
+
+
+
+
+
+#' Interpolates a point or points along a line geometry
+#'
+#' Returns either a single point at a specified position along a line, or
+#' multiple equally-spaced points along a line, depending on the value of
+#' \code{intervals}. When \code{intervals = FALSE}, this wraps
+#' \code{ST_LineInterpolatePoint}; when \code{intervals = TRUE}, it wraps
+#' \code{ST_LineInterpolatePoints}.
+#'
+#' @template x
+#' @param fraction a numeric value between 0 and 1. When
+#' \code{intervals = FALSE}, specifies the position along the line to
+#' interpolate, where \code{0} is the start and \code{1} is the end.
+#' When \code{intervals = TRUE}, specifies the spacing between interpolated
+#' points as a proportion of the total line length. Defaults to \code{0.5}.
+#' @param intervals a logical value. If \code{FALSE} (default), returns a
+#' single \code{POINT} at the position given by \code{fraction}. If
+#' \code{TRUE}, returns a \code{MULTIPOINT} of equally-spaced points along
+#' the line at intervals defined by \code{fraction}.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## return the midpoint of a line (default)
+#' ddbs_line_interpolate(rivers_ddbs)
+#'
+#' ## return the point 25% along the line
+#' ddbs_line_interpolate(rivers_ddbs, fraction = 0.25)
+#'
+#' ## return equally-spaced points every 10% of the line length
+#' ddbs_line_interpolate(rivers_ddbs, fraction = 0.1, intervals = TRUE)
+#'
+#' ## return equally-spaced points every 50% of the line length (i.e. midpoint and end)
+#' ddbs_line_interpolate(rivers_ddbs, fraction = 0.5, intervals = TRUE)
+#' }
+ddbs_line_interpolate <- function(
+    x,
+    fraction = 0.5,
+    intervals = FALSE,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+  
+    # 0. Handle function-specific errors
+    assert_numeric(fraction, "fraction")
+    assert_numeric_interval(fraction, 0, 1)
+    assert_logic(intervals, "intervals")
+  
+    # 1. Build ST_Buffer parameters string
+    other_args <- glue::glue("{fraction}, {intervals}")
+  
+    # 2. Pass to template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_LineInterpolatePoints",
+        other_args = other_args
     )
 
 }

@@ -1,3 +1,25 @@
+# duckspatial (development version)
+
+## NEW FEATURES
+
+* `ddbs_dump()`: decompose multi-geometry types into individual single geometry components (#44, 117).
+
+* `ddbs_maximum_inscribed_circle()`: returns the maximum inscribed circle of the input geometry (#117).
+
+* `ddbs_minimum_rotated_rectangle()`: returns the minimum rotated rectangle that bounds the input geometry (#117).
+
+* `ddbs_set_crs()`: assigns the CRS to a spatial object. No transformation is applied to the geometries (#118).
+
+* `ddbs_line_interpolate()`: interpolates a point or points along a line geometry (#118).
+
+## ENHANCEMENTS
+
+* `group_by` and `summarise` methods now drop the spatial attributes when the output is not a `duckspatial_df` anymore (#119).
+
+* `ddbs_create_conn()`: gains the `upgrade` argument that is passed to `ddbs_install()`.
+
+
+
 # duckspatial 1.0.0
 
 Learn more about this version [here](https://adrian-cidre.com/posts/015_duckspatial_v100/).

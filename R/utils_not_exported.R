@@ -1296,13 +1296,14 @@ get_table_crs <- function(conn, geom_name, table_name) { # nocov start
 #' @keywords internal
 #' @noRd
 get_geometry_type_duckdb <- function(x) { # nocov start
-  data_crs   <- sf::st_crs(x, parameters = TRUE)
-    if (length(data_crs) == 0) {
-        geom_field <- glue::glue("GEOMETRY")
-    } else {
-        geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
-    }
-    return(geom_field)
+  data_crs <- sf::st_crs(x, parameters = TRUE)
+  # st_crs returns a list where srid is NA if not found
+  if (length(data_crs) == 0 || is.na(data_crs$srid)) {
+    geom_field <- "GEOMETRY"
+  } else {
+    geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
+  }
+  return(geom_field)
 } # nocov end
 
 

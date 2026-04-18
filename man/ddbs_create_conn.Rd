@@ -4,7 +4,13 @@
 \alias{ddbs_create_conn}
 \title{Create a DuckDB connection with spatial extension}
 \usage{
-ddbs_create_conn(dbdir = "memory", threads = NULL, memory_limit_gb = NULL, ...)
+ddbs_create_conn(
+  dbdir = "memory",
+  threads = NULL,
+  memory_limit_gb = NULL,
+  upgrade = FALSE,
+  ...
+)
 }
 \arguments{
 \item{dbdir}{String. Either \code{"tempdir"}, \code{"memory"}, or file path with
@@ -13,6 +19,8 @@ ddbs_create_conn(dbdir = "memory", threads = NULL, memory_limit_gb = NULL, ...)
 \item{threads}{Integer. Number of threads to use. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use all available cores it detects (warning, on some shared HPC nodes the detected number of cores might be total number of cores on the node, not the per-job allocation).}
 
 \item{memory_limit_gb}{Numeric. Memory limit in GB. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use 80\% of available operating system memory it detects (warning, on some shared HPC nodes the detected memory might be the full node memory, not the per-job allocation).}
+
+\item{upgrade}{if TRUE, it upgrades the DuckDB extension to the latest version}
 
 \item{...}{Additional parameters to be passed to \code{\link[DBI]{dbConnect}}}
 }

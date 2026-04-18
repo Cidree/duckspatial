@@ -11,7 +11,19 @@ NULL
 #' @export
 #' @importFrom sf st_crs
 st_crs.duckspatial_df <- function(x, ...) {
-  attr(x, "crs") %||% sf::st_crs(NA)
+  res <- attr(x, "crs") %||% sf::st_crs(NA)
+  
+  # If we have dots (like parameters=TRUE), we must re-dispatch
+  # to sf::st_crs to trigger the full parameter extraction.
+  # sf only extracts these parameters (srid, axes, etc.) if the input
+  # is an sf or sfc object. 
+  if (length(list(...)) > 0 && !is.na(res)) {
+    # Wrap in dummy sfc to force sf to extract parameters
+    dummy_sfc <- sf::st_sfc(sf::st_point(), crs = res)
+    return(sf::st_crs(dummy_sfc, ...))
+  }
+  
+  res
 }
 
 #' @rdname duckspatial_df_sf

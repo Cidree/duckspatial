@@ -221,16 +221,24 @@ reference:
   - ddbs_convex_hull
   - ddbs_endpoint_startpoint
   - ddbs_exterior_ring
+  - ddbs_line_interpolate
   - ddbs_make_polygon
-  - ddbs_multi
+  - ddbs_maximum_inscribed_circle
   - ddbs_polygonize
-  - ddbs_union_funs
   - ddbs_voronoi
+
+- title: Geometry Type Conversion
+  desc: Change geometry types or decompose multi-part geometries
+  contents:
+  - ddbs_dump
+  - ddbs_multi
+  - ddbs_union_funs
 
 - title: Coordinate Operations
   desc: Transform and manipulate coordinate systems
   contents:
   - ddbs_transform
+  - ddbs_set_crs
   - ddbs_flip_coordinates
   - ddbs_xy
   - ddbs_force_dim
@@ -254,6 +262,7 @@ reference:
   contents:
   - ddbs_bbox
   - ddbs_envelope
+  - ddbs_minimum_rotated_rectangle
 
 - title: Affine Transformations
   desc: Rotate, scale, shear, and shift geometries
@@ -284,6 +293,7 @@ reference:
   contents:
   - as_duckspatial_df
   - is_duckspatial_df
+  - as_nanoarrow_array_stream.duckspatial_df
   - ddbs_collect
   - ddbs_compute
   - ddbs_drop_geometry

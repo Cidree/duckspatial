@@ -5,6 +5,7 @@
 \alias{ddbs_intersection}
 \alias{ddbs_difference}
 \alias{ddbs_sym_difference}
+\alias{ddbs_crop}
 \title{Geometry binary operations}
 \usage{
 ddbs_intersection(
@@ -32,6 +33,18 @@ ddbs_difference(
 )
 
 ddbs_sym_difference(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
+
+ddbs_crop(
   x,
   y,
   conn = NULL,
@@ -106,6 +119,8 @@ These functions perform different geometric set operations:
 \describe{
 \item{\code{ddbs_intersection}}{Returns the geometric intersection of two sets
 of geometries, producing the area, line, or point shared by both.}
+\item{\code{ddbs_crop}}{Returns the geometric intersection of two sets of
+geometries, using the bounding box of \code{y}, rather than its original geometry}
 \item{\code{ddbs_difference}}{Returns the portion of the first geometry that
 does not overlap with the second geometry.}
 \item{\code{ddbs_sym_difference}}{Returns the portions of both geometries
