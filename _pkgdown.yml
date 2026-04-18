@@ -221,6 +221,7 @@ reference:
   - ddbs_convex_hull
   - ddbs_endpoint_startpoint
   - ddbs_exterior_ring
+  - ddbs_line_interpolate
   - ddbs_make_polygon
   - ddbs_maximum_inscribed_circle
   - ddbs_polygonize

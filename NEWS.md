@@ -10,6 +10,8 @@
 
 * `ddbs_set_crs()`: assigns the CRS to a spatial object. No transformation is applied to the geometries (#118).
 
+* `ddbs_line_interpolate()`: interpolates a point or points along a line geometry (#118).
+
 ## ENHANCEMENTS
 
 * `group_by` and `summarise` methods now drop the spatial attributes when the output is not a `duckspatial_df` anymore (#119).

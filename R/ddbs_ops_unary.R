@@ -1379,3 +1379,86 @@ ddbs_maximum_inscribed_circle <- function(
 
 
 
+
+
+#' Interpolates a point or points along a line geometry
+#'
+#' Returns either a single point at a specified position along a line, or
+#' multiple equally-spaced points along a line, depending on the value of
+#' \code{intervals}. When \code{intervals = FALSE}, this wraps
+#' \code{ST_LineInterpolatePoint}; when \code{intervals = TRUE}, it wraps
+#' \code{ST_LineInterpolatePoints}.
+#'
+#' @template x
+#' @param fraction a numeric value between 0 and 1. When
+#' \code{intervals = FALSE}, specifies the position along the line to
+#' interpolate, where \code{0} is the start and \code{1} is the end.
+#' When \code{intervals = TRUE}, specifies the spacing between interpolated
+#' points as a proportion of the total line length. Defaults to \code{0.5}.
+#' @param intervals a logical value. If \code{FALSE} (default), returns a
+#' single \code{POINT} at the position given by \code{fraction}. If
+#' \code{TRUE}, returns a \code{MULTIPOINT} of equally-spaced points along
+#' the line at intervals defined by \code{fraction}.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## return the midpoint of a line (default)
+#' ddbs_line_interpolate(rivers_ddbs)
+#'
+#' ## return the point 25% along the line
+#' ddbs_line_interpolate(rivers_ddbs, fraction = 0.25)
+#'
+#' ## return equally-spaced points every 10% of the line length
+#' ddbs_line_interpolate(rivers_ddbs, fraction = 0.1, intervals = TRUE)
+#'
+#' ## return equally-spaced points every 50% of the line length (i.e. midpoint and end)
+#' ddbs_line_interpolate(rivers_ddbs, fraction = 0.5, intervals = TRUE)
+#' }
+ddbs_line_interpolate <- function(
+    x,
+    fraction = 0.5,
+    intervals = FALSE,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+  
+    # 0. Handle function-specific errors
+    assert_numeric(fraction, "fraction")
+    assert_numeric_interval(fraction, 0, 1)
+    assert_logic(intervals, "intervals")
+  
+    # 1. Build ST_Buffer parameters string
+    other_args <- glue::glue("{fraction}, {intervals}")
+  
+    # 2. Pass to template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_LineInterpolatePoints",
+        other_args = other_args
+    )
+
+}
