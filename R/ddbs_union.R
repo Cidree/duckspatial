@@ -560,7 +560,7 @@ ddbs_dump <- function(
 
 
   ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
-  st_function <- glue::glue("dump.{x_geom}")
+  st_function <- "dump.geom"
   base.query <- glue::glue("
     WITH dumped AS (
     SELECT * EXCLUDE {x_geom},
