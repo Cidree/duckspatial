@@ -4,7 +4,7 @@
 \alias{as_nanoarrow_array_stream.duckspatial_df}
 \title{Convert a duckspatial_df to a nanoarrow_array_stream}
 \usage{
-\method{as_nanoarrow_array_stream}{duckspatial_df}(x, ..., schema = NULL, native = FALSE)
+as_nanoarrow_array_stream.duckspatial_df(x, ..., schema = NULL, native = FALSE)
 }
 \arguments{
 \item{x}{A \code{duckspatial_df} object}

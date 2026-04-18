@@ -14,6 +14,10 @@
 
 * `group_by` and `summarise` methods now drop the spatial attributes when the output is not a `duckspatial_df` anymore (#119).
 
+* `ddbs_create_conn()`: gains the `upgrade` argument that is passed to `ddbs_install()`.
+
+
+
 # duckspatial 1.0.0
 
 Learn more about this version [here](https://adrian-cidre.com/posts/015_duckspatial_v100/).
