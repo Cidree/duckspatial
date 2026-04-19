@@ -11,6 +11,82 @@
 
 
 
+#' Extract the start point of a linestring geometry
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `ddbs_startpoint()` was renamed to \code{\link{ddbs_line_startpoint}}.
+#'
+#' @inheritParams ddbs_endpoint_startpoint
+#' @template returns_mode
+#' @export
+#' @keywords internal
+ddbs_startpoint <- function(
+  x,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+  
+  lifecycle::deprecate_soft(
+    when    = "1.1.0",
+    what    = "ddbs_startpoint()",
+    with    = "ddbs_line_startpoint()"
+  )
+
+  ddbs_line_startpoint(
+    x = x,
+    conn = conn,
+    name = name,
+    mode = mode,
+    overwrite = overwrite,
+    quiet = quiet
+  )
+
+}
+
+
+
+
+#' Extract the end point of a linestring geometry
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `ddbs_endpoint()` was renamed to \code{\link{ddbs_line_endpoint}}.
+#'
+#' @inheritParams ddbs_endpoint_startpoint
+#' @template returns_mode
+#' @export
+#' @keywords internal
+ddbs_endpoint <- function(
+  x,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+  
+  lifecycle::deprecate_soft(
+    when    = "1.1.0",
+    what    = "ddbs_endpoint()",
+    with    = "ddbs_line_endpoint()"
+  )
+
+  ddbs_line_endpoint(
+    x = x,
+    conn = conn,
+    name = name,
+    mode = mode,
+    overwrite = overwrite,
+    quiet = quiet
+  )
+
+}
+
+
 #' Extract the start or end point of a linestring geometry
 #'
 #' Returns the first or last point of a LINESTRING geometry. These functions only work
@@ -49,14 +125,14 @@
 #' ddbs_write_vector(conn, rivers_ddbs, "rivers")
 #'
 #' ## extract start points
-#' ddbs_startpoint(conn = conn, "rivers")
+#' ddbs_line_startpoint(conn = conn, "rivers")
 #'
 #' ## extract end points
-#' ddbs_endpoint(conn = conn, "rivers")
+#' ddbs_line_endpoint(conn = conn, "rivers")
 #'
 #' ## without using a connection
-#' ddbs_startpoint(rivers_ddbs)
-#' ddbs_endpoint(rivers_ddbs)
+#' ddbs_line_startpoint(rivers_ddbs)
+#' ddbs_line_endpoint(rivers_ddbs)
 #' }
 #' @name ddbs_endpoint_startpoint
 #' @rdname ddbs_endpoint_startpoint
@@ -66,7 +142,7 @@ NULL
 
 #' @rdname ddbs_endpoint_startpoint
 #' @export
-ddbs_startpoint <- function(
+ddbs_line_startpoint <- function(
     x,
     conn = NULL,
     name = NULL,
@@ -93,7 +169,7 @@ ddbs_startpoint <- function(
 
 #' @rdname ddbs_endpoint_startpoint
 #' @export
-ddbs_endpoint <- function(
+ddbs_line_endpoint <- function(
     x,
     conn = NULL,
     name = NULL,
