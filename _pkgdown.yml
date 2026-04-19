@@ -210,22 +210,28 @@ reference:
   - ddbs_generate_points
   - ddbs_quadkey
 
-- title: Geometry Processing
+- title: Geometry Processing - General
   desc: Modify, simplify, and transform individual geometries
   contents:
   - ddbs_boundary
   - ddbs_buffer
-  - ddbs_build_area
   - ddbs_centroid
   - ddbs_concave_hull
   - ddbs_convex_hull
-  - ddbs_endpoint_startpoint
   - ddbs_exterior_ring
-  - ddbs_line_interpolate
-  - ddbs_make_polygon
   - ddbs_maximum_inscribed_circle
-  - ddbs_polygonize
   - ddbs_voronoi
+
+- title: Geometry Processing - Linestrings
+  desc: Specialized functions for working with linestring geometries
+  contents:
+  - ddbs_endpoint_startpoint
+  - ddbs_line_interpolate
+  - ddbs_line_merge
+  - ddbs_line_substring
+  - ddbs_build_area
+  - ddbs_make_polygon
+  - ddbs_polygonize
 
 - title: Geometry Type Conversion
   desc: Change geometry types or decompose multi-part geometries
