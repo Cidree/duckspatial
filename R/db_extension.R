@@ -72,6 +72,11 @@ ddbs_install <- function(
         }
     }
 
+    # Extension cannot be upgraded if it's already loaded. It will fail
+    if (isTRUE(target_ext$loaded) && isTRUE(upgrade)) {
+        cli::cli_abort("{extension} is already loaded in the connection. Upgrading the version is only allowed in non-loaded connections.")
+    }
+
     # 3. Install/upgrade extension - try core, then community, then error
     install_sql <- if (upgrade) "FORCE INSTALL {extension};" else "INSTALL {extension};"
     community_sql <- if (upgrade) "FORCE INSTALL {extension} FROM community;" else "INSTALL {extension} FROM community;"

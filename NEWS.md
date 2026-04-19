@@ -18,6 +18,8 @@
 
 * `ddbs_create_conn()`: gains the `upgrade` argument that is passed to `ddbs_install()`.
 
+* `ddbs_install()`: now returns a better error message if the extension is already loaded, and there's an attempt to upgrade it.
+
 
 
 # duckspatial 1.0.0
