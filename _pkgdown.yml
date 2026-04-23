@@ -189,6 +189,7 @@ reference:
   - ddbs_write_dataset
   - ddbs_write_table
   - ddbs_register_table
+  - ddbs_read_meta
 
 - title: Spatial Predicates
   desc: Test spatial relationships between geometries
@@ -249,14 +250,20 @@ reference:
   - ddbs_xy
   - ddbs_force_dim
 
+- title: Dimension operations
+  desc: Utility functions for M and Z dimensions
+  contents:
+  - ddbs_locate
+  - ddbs_has_dim
+
 - title: Geometry Validation
   desc: Check and repair geometry validity and dimensionality
   contents:
   - ddbs_geometry_type
   - ddbs_make_valid
+  - ddbs_remove_repeated_points
   - ddbs_simplify
   - ddbs_geom_validation_funs
-  - ddbs_has_dim
 
 - title: Format Conversion
   desc: Convert geometries to and from standard spatial formats
@@ -268,6 +275,7 @@ reference:
   contents:
   - ddbs_bbox
   - ddbs_envelope
+  - ddbs_make_envelope
   - ddbs_minimum_rotated_rectangle
 
 - title: Affine Transformations

@@ -12,6 +12,18 @@
 
 * `ddbs_line_interpolate()`: interpolates a point or points along a line geometry (#118).
 
+* `ddbs_z()` and `ddbs_m()`: to extract Z and M coordinates as a new column (#118).
+
+* `ddbs_make_envelope()`: creates a rectangular polygon from 4 coordinates (#118).
+
+* `ddbs_locate_between()`: locates points that fall with the specified M range (#118).
+
+* `ddbs_locate_along()`: locates points that match the specified M value (#118).
+
+* `ddbs_remove_repeated_points()`: removes repeated points, optionally with some tolerance (#118).
+
+* `ddbs_read_meta()`: reads the metadata of a vectorial data file (#118).
+
 ## ENHANCEMENTS
 
 * `group_by` and `summarise` methods now drop the spatial attributes when the output is not a `duckspatial_df` anymore (#119).
