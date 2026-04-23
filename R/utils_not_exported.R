@@ -894,6 +894,9 @@ ddbs_default_conn <- function(create = TRUE, ...) {
     options(duckspatial_conn = conn)
   }
 
+  # Activate macros
+  create_duckspatial_macros(conn)
+
   conn
 }
 
@@ -962,7 +965,7 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     # - LOAD just loads extension into session memory
     # - SET operations are session-level settings
     ddbs_install(conn, upgrade = FALSE, quiet = TRUE)
-    ddbs_load(conn, quiet = TRUE)
+    ddbs_load(conn, quiet = TRUE, create_macros = !read_only)
 
     # Configure resources
     ddbs_set_resources(conn, threads = threads, memory_limit_gb = memory_limit_gb)
@@ -1428,4 +1431,77 @@ validate_xy_crs <- function(
     } else {
        assert_crs(conn, x_list$query_name, y_list$query_name)
     }
+} # nocov end
+
+
+
+create_duckspatial_macros <- function(conn) { # nocov start
+
+  macros <- list(
+    
+    # --- geometry validation
+    "CREATE OR REPLACE MACRO ddbs_is_simple(geom) AS ST_IsSimple(geom);",
+    "CREATE OR REPLACE MACRO ddbs_is_valid(geom) AS ST_IsValid(geom);",
+    "CREATE OR REPLACE MACRO ddbs_is_closed(geom) AS ST_IsClosed(geom);",
+    "CREATE OR REPLACE MACRO ddbs_is_ring(geom) AS ST_IsRing(geom);",
+    "CREATE OR REPLACE MACRO ddbs_is_empty(geom) AS ST_IsEmpty(geom);",
+    "CREATE OR REPLACE MACRO ddbs_geometry_type(geom) AS ST_GeometryType(geom);",
+
+    # --- measure functions
+    "CREATE OR REPLACE MACRO ddbs_area(geom) AS (
+      CASE 
+        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Area_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Area(geom)
+      END
+    );",
+
+    "CREATE OR REPLACE MACRO ddbs_length(geom) AS (
+      CASE 
+        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Length_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Length(geom)
+      END
+    );",
+
+    "CREATE OR REPLACE MACRO ddbs_perimeter(geom) AS (
+      CASE 
+        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Perimeter_Spheroid(ST_FlipCoordinates(geom))
+        ELSE ST_Perimeter(geom)
+      END
+    );",
+
+    # --- aggregation functions
+    "CREATE OR REPLACE MACRO ddbs_union_agg(geom) AS ST_Union_Agg(geom);",
+    "CREATE OR REPLACE MACRO ddbs_union(geom) AS ST_Union_Agg(geom);",
+
+    # --- coordinate operations
+    "CREATE OR REPLACE MACRO ddbs_x(geom) AS ST_X(geom);",
+    "CREATE OR REPLACE MACRO ddbs_y(geom) AS ST_Y(geom);",
+    "CREATE OR REPLACE MACRO ddbs_m(geom) AS ST_M(geom);",
+    "CREATE OR REPLACE MACRO ddbs_z(geom) AS ST_Z(geom);",
+
+    # --- dimension operations
+    "CREATE OR REPLACE MACRO ddbs_has_z(geom) AS ST_HasZ(geom);",
+    "CREATE OR REPLACE MACRO ddbs_has_m(geom) AS ST_HasM(geom);",
+
+    # --- format conversion
+    "CREATE OR REPLACE MACRO ddbs_as_text(geom) AS ST_AsText(geom);",
+    "CREATE OR REPLACE MACRO ddbs_as_wkb(geom) AS ST_AsWKB(geom);",
+    "CREATE OR REPLACE MACRO ddbs_as_hexwkb(geom) AS ST_AsHexWKB(geom);",
+    "CREATE OR REPLACE MACRO ddbs_as_geojson(geom) AS ST_AsGeoJSON(geom);",
+
+    # --- extent functions
+    "CREATE OR REPLACE MACRO ddbs_bbox(geom) AS (
+      SELECT {
+        xmin: ST_XMin(ST_Extent(geom)),
+        ymin: ST_YMin(ST_Extent(geom)),
+        xmax: ST_XMax(ST_Extent(geom)),
+        ymax: ST_YMax(ST_Extent(geom))
+      }
+    );"
+
+
+  )
+
+  invisible(lapply(macros, DBI::dbExecute, conn = conn))
+
 } # nocov end

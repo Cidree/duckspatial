@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* Implementation of `duckspatial` macros: this allows to use some `duckspatial` functions within `dplyr` verbs (e.g. `data |> mutate(area = ddbs_area(geometry))`) (#92).
+
 * `ddbs_dump()`: decompose multi-geometry types into individual single geometry components (#44, 117).
 
 * `ddbs_maximum_inscribed_circle()`: returns the maximum inscribed circle of the input geometry (#117).

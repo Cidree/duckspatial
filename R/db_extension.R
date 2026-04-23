@@ -118,6 +118,8 @@ ddbs_install <- function(
 #' @template conn
 #' @template quiet
 #' @param extension name of the extension to load, default is "spatial"
+#' @param create_macros if TRUE (default), it creates macros that allow
+#'   some functions to be used within dplyr pipelines
 #'
 #' @returns TRUE (invisibly) for successful installation
 #' @export
@@ -138,23 +140,36 @@ ddbs_install <- function(
 #' ## disconnect from db
 #' duckdb::dbDisconnect(conn)
 #' }
-ddbs_load <- function(conn, quiet = FALSE, extension = "spatial") {
+ddbs_load <- function(
+    conn, 
+    quiet = FALSE, 
+    extension = "spatial",
+    create_macros = TRUE
+) {
 
-    # 1. Get extensions list
+    # 1. Checks
+
+    ## 1.1. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
 
-    # 2. Checks
-    ## 2.1. Check connection
+    ## 1.2. Check connection
     dbConnCheck(conn)
-    ## 2.2. Check if extension is installed
+
+    ## 1.3. Check if extension is installed
     target_ext <- ext[ext$extension_name == extension, ]
     if (!target_ext$installed)
         cli::cli_abort("{extension} extension is not installed, please use `ddbs_install(extension = '{extension}')`")
 
-    # 3. Load extension
+    
+    # 2. Setup extension
+
+    ## 2.1. Load the extension
     if (isFALSE(target_ext$loaded)) suppressMessages(DBI::dbExecute(conn, glue::glue("LOAD {extension};")))
 
+    ## 2.2. Activate macros
+    if (isTRUE(create_macros)) create_duckspatial_macros(conn)
 
+    ## 2.3. Message
     if (isFALSE(quiet)) {
         cli::cli_alert_success("{extension} extension loaded")
     }

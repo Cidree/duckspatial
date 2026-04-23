@@ -4,7 +4,7 @@
 \alias{ddbs_load}
 \title{Loads the Spatial extension}
 \usage{
-ddbs_load(conn, quiet = FALSE, extension = "spatial")
+ddbs_load(conn, quiet = FALSE, extension = "spatial", create_macros = TRUE)
 }
 \arguments{
 \item{conn}{A \code{DBIConnection} object to a DuckDB database}
@@ -13,6 +13,9 @@ ddbs_load(conn, quiet = FALSE, extension = "spatial")
 Defaults to \code{FALSE}.}
 
 \item{extension}{name of the extension to load, default is "spatial"}
+
+\item{create_macros}{if TRUE (default), it creates macros that allow
+some functions to be used within dplyr pipelines}
 }
 \value{
 TRUE (invisibly) for successful installation
