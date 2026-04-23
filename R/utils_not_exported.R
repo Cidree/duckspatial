@@ -1143,7 +1143,7 @@ build_geom_query <- function(fun, name, crs, mode) { # nocov start
     ## in the geometry column
     ## Get the CRS, and define the geometry type for duckdb    
     data_crs   <- sf::st_crs(crs, parameters = TRUE)
-    if (length(data_crs) == 0) {
+    if (length(data_crs) == 0 | is.na(data_crs$srid)) {
         geom_field <- glue::glue("GEOMETRY")
     } else {
         geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
