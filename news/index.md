@@ -1,5 +1,89 @@
 # Changelog
 
+## duckspatial (development version)
+
+### NEW FEATURES
+
+- [`ddbs_dump()`](https://cidree.github.io/duckspatial/reference/ddbs_dump.md):
+  decompose multi-geometry types into individual single geometry
+  components ([\#44](https://github.com/Cidree/duckspatial/issues/44),
+  117).
+
+- [`ddbs_maximum_inscribed_circle()`](https://cidree.github.io/duckspatial/reference/ddbs_maximum_inscribed_circle.md):
+  returns the maximum inscribed circle of the input geometry
+  ([\#117](https://github.com/Cidree/duckspatial/issues/117)).
+
+- [`ddbs_minimum_rotated_rectangle()`](https://cidree.github.io/duckspatial/reference/ddbs_minimum_rotated_rectangle.md):
+  returns the minimum rotated rectangle that bounds the input geometry
+  ([\#117](https://github.com/Cidree/duckspatial/issues/117)).
+
+- [`ddbs_set_crs()`](https://cidree.github.io/duckspatial/reference/ddbs_set_crs.md):
+  assigns the CRS to a spatial object. No transformation is applied to
+  the geometries
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_crop()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md):
+  similar to
+  [`ddbs_intersection()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md),
+  but it crops to the bounding box
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_line_interpolate()`](https://cidree.github.io/duckspatial/reference/ddbs_line_interpolate.md):
+  interpolates a point or points along a line geometry
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_line_substring()`](https://cidree.github.io/duckspatial/reference/ddbs_line_substring.md):
+  gets a fraction of a linestring
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_line_merge()`](https://cidree.github.io/duckspatial/reference/ddbs_line_merge.md):merges
+  connected multistrings
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_z()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
+  and
+  [`ddbs_m()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md):
+  to extract Z and M coordinates as a new column
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_make_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_make_envelope.md):
+  creates a rectangular polygon from 4 coordinates
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_locate_between()`](https://cidree.github.io/duckspatial/reference/ddbs_locate.md):
+  locates points that fall with the specified M range
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_locate_along()`](https://cidree.github.io/duckspatial/reference/ddbs_locate.md):
+  locates points that match the specified M value
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_remove_repeated_points()`](https://cidree.github.io/duckspatial/reference/ddbs_remove_repeated_points.md):
+  removes repeated points, optionally with some tolerance
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_read_meta()`](https://cidree.github.io/duckspatial/reference/ddbs_read_meta.md):
+  reads the metadata of a vectorial data file
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+### ENHANCEMENTS
+
+- `group_by` and `summarise` methods now drop the spatial attributes
+  when the output is not a `duckspatial_df` anymore
+  ([\#119](https://github.com/Cidree/duckspatial/issues/119)).
+
+- [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md):
+  gains the `upgrade` argument that is passed to
+  [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md).
+
+- [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md):
+  now returns a better error message if the extension is already loaded,
+  and there’s an attempt to upgrade it.
+
+- [`ddbs_centroid()`](https://cidree.github.io/duckspatial/reference/ddbs_centroid.md):
+  gains the argument `method` to implement ST_PointOnSurface
+  ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
 ## duckspatial 1.0.0
 
 CRAN release: 2026-03-30
@@ -119,7 +203,7 @@ Learn more about this version
   generates Voronoi diagrams from point geometries
   ([\#91](https://github.com/Cidree/duckspatial/issues/91)).
 
-- [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
+- [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint.md)
   and `ddbs_start_point()`: extracts the start/end point of a linestring
   geometry ([\#91](https://github.com/Cidree/duckspatial/issues/91)).
 

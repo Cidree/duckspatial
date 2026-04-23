@@ -40,6 +40,18 @@ ddbs_sym_difference(
   overwrite = FALSE,
   quiet = FALSE
 )
+
+ddbs_crop(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
 ```
 
 ## Arguments
@@ -138,6 +150,11 @@ These functions perform different geometric set operations:
 
   Returns the geometric intersection of two sets of geometries,
   producing the area, line, or point shared by both.
+
+- `ddbs_crop`:
+
+  Returns the geometric intersection of two sets of geometries, using
+  the bounding box of `y`, rather than its original geometry
 
 - `ddbs_difference`:
 

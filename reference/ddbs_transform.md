@@ -41,6 +41,9 @@ ddbs_transform(
 
   - A character string with EPSG code (e.g., "EPSG:4326")
 
+  - A `crs` object created with
+    [sf::st_crs](https://r-spatial.github.io/sf/reference/st_crs.html)
+
   - An `sf` object (uses its CRS)
 
   - Name of a DuckDB table (uses its CRS)

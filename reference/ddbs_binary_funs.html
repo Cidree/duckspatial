@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,6 +187,18 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">ddbs_sym_difference</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">y</span>,</span>
+<span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conn_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conn_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">ddbs_crop</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">y</span>,</span>
 <span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -270,6 +282,10 @@ Defaults to <code>FALSE</code>.</p></dd>
     <p>These functions perform different geometric set operations:</p><dl><dt><code>ddbs_intersection</code></dt>
 <dd><p>Returns the geometric intersection of two sets
 of geometries, producing the area, line, or point shared by both.</p></dd>
+
+<dt><code>ddbs_crop</code></dt>
+<dd><p>Returns the geometric intersection of two sets of
+geometries, using the bounding box of <code>y</code>, rather than its original geometry</p></dd>
 
 <dt><code>ddbs_difference</code></dt>
 <dd><p>Returns the portion of the first geometry that

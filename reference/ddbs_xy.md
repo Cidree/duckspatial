@@ -1,8 +1,6 @@
-# Extract X and Y coordinates from geometries
+# Extract coordinates from geometries
 
-`ddbs_x()` extracts the X coordinate (longitude) and `ddbs_y()` extracts
-the Y coordinate (latitude) from point geometries, adding them as a new
-column to the dataset.
+Extracts the X, Y, M, or Z coordinates from `POINT` geometries
 
 ## Usage
 
@@ -20,6 +18,26 @@ ddbs_x(
 ddbs_y(
   x,
   new_column = "Y",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
+
+ddbs_m(
+  x,
+  new_column = "M",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
+
+ddbs_z(
+  x,
+  new_column = "Z",
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -47,7 +65,7 @@ ddbs_y(
 - new_column:
 
   Name of the new column to store the extracted coordinate. Defaults to
-  `"X"` for `ddbs_x()` and `"Y"` for `ddbs_y()`.
+  `"X"`, `"Y"`, `"M"`, or `"Z"`.
 
 - conn:
 
@@ -99,6 +117,16 @@ Depends on the `mode` argument (or global preference set by
 When `name` is provided, the result is also written as a table or view
 in DuckDB and the function returns `TRUE` (invisibly).
 
+## Details
+
+- `ddbs_x()`: Extracts the X coordinate (longitude).
+
+- `ddbs_y()`: Extracts the Y coordinate (latitude).
+
+- `ddbs_m()`: Extracts the M coordinate (measure).
+
+- `ddbs_z()`: Extracts the Z coordinate (elevation).
+
 ## Examples
 
 ``` r
@@ -112,7 +140,7 @@ argentina_ddbs <- ddbs_open_dataset(
   package = "duckspatial")
 )
 
-## extract coordinates without using a connection
+## extract coordinates
 ddbs_x(argentina_ddbs)
 ddbs_y(argentina_ddbs)
 } # }

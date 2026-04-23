@@ -8,6 +8,7 @@ representing its average position.
 ``` r
 ddbs_centroid(
   x,
+  method = "centroid",
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -31,6 +32,14 @@ ddbs_centroid(
   - A character string naming a table/view in `conn`
 
   Data is returned from this object.
+
+- method:
+
+  Character string specifying the method to calculate the centroid. Must
+  be one of "centroid" (default) or "surface". "centroid" calculates the
+  default centroid, which may fall outside the geometry for certain
+  shapes (e.g., donuts). "surface" calculates a point guaranteed to fall
+  within the geometry.
 
 - conn:
 

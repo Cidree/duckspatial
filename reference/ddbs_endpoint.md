@@ -1,8 +1,9 @@
-# Extracts the endpoint of a linestring geometry
+# Extract the end point of a linestring geometry
 
-Returns the last point of a LINESTRING geometry. This function only
-works with LINESTRING geometries (not MULTILINESTRING or other geometry
-types).
+**\[deprecated\]**
+
+`ddbs_endpoint()` was renamed to
+[`ddbs_line_endpoint`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md).
 
 ## Usage
 
@@ -82,37 +83,3 @@ Depends on the `mode` argument (or global preference set by
 
 When `name` is provided, the result is also written as a table or view
 in DuckDB and the function returns `TRUE` (invisibly).
-
-## Details
-
-This function wraps DuckDB Spatial's `ST_EndPoint`. Input geometries
-must be of type LINESTRING (MULTILINESTRING is not supported). For each
-input feature, the final coordinate of the LINESTRING is returned as a
-POINT geometry.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-## load package
-library(duckspatial)
-
-## create a duckdb database in memory (with spatial extension)
-conn <- ddbs_create_conn(dbdir = "memory")
-
-## read data
-rivers_ddbs <- ddbs_open_dataset(
-  system.file("spatial/rivers.geojson",
-  package = "duckspatial")
-)
-
-## store in duckdb
-ddbs_write_vector(conn, rivers_ddbs, "rivers")
-
-## extract end points
-ddbs_endpoint(conn = conn, "rivers")
-
-## extract end points without using a connection
-ddbs_endpoint(rivers_ddbs)
-} # }
-```

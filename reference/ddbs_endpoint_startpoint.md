@@ -7,7 +7,7 @@ other geometry types).
 ## Usage
 
 ``` r
-ddbs_startpoint(
+ddbs_line_startpoint(
   x,
   conn = NULL,
   name = NULL,
@@ -16,7 +16,7 @@ ddbs_startpoint(
   quiet = FALSE
 )
 
-ddbs_endpoint(
+ddbs_line_endpoint(
   x,
   conn = NULL,
   name = NULL,
@@ -119,13 +119,13 @@ rivers_ddbs <- ddbs_open_dataset(
 ddbs_write_vector(conn, rivers_ddbs, "rivers")
 
 ## extract start points
-ddbs_startpoint(conn = conn, "rivers")
+ddbs_line_startpoint(conn = conn, "rivers")
 
 ## extract end points
-ddbs_endpoint(conn = conn, "rivers")
+ddbs_line_endpoint(conn = conn, "rivers")
 
 ## without using a connection
-ddbs_startpoint(rivers_ddbs)
-ddbs_endpoint(rivers_ddbs)
+ddbs_line_startpoint(rivers_ddbs)
+ddbs_line_endpoint(rivers_ddbs)
 } # }
 ```

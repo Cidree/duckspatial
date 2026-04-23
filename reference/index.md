@@ -34,6 +34,8 @@ Read and write spatial data to and from DuckDB
   : Write an SF Object to a DuckDB Database
 - [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md)
   : Register an SF Object as an Arrow Table in DuckDB
+- [`ddbs_read_meta()`](https://cidree.github.io/duckspatial/reference/ddbs_read_meta.md)
+  : Read metadata from a spatial file
 
 ## Spatial Predicates
 
@@ -63,6 +65,7 @@ Combine or subset geometries based on spatial relationships
 - [`ddbs_intersection()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
   [`ddbs_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
   [`ddbs_sym_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
+  [`ddbs_crop()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
   : Geometry binary operations
 - [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md)
   : Perform a spatial filter
@@ -82,7 +85,7 @@ Create new geometries from scratch or from existing data
 - [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md)
   : Convert point geometries to QuadKey tiles
 
-## Geometry Processing
+## Geometry Processing - General
 
 Modify, simplify, and transform individual geometries
 
@@ -90,31 +93,51 @@ Modify, simplify, and transform individual geometries
   : Get the boundary of geometries
 - [`ddbs_buffer()`](https://cidree.github.io/duckspatial/reference/ddbs_buffer.md)
   : Creates a buffer around geometries
-- [`ddbs_build_area()`](https://cidree.github.io/duckspatial/reference/ddbs_build_area.md)
-  : Build polygon areas from multiple linestrings
 - [`ddbs_centroid()`](https://cidree.github.io/duckspatial/reference/ddbs_centroid.md)
   : Calculates the centroid of geometries
 - [`ddbs_concave_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_concave_hull.md)
   : Compute the concave hull of geometries
 - [`ddbs_convex_hull()`](https://cidree.github.io/duckspatial/reference/ddbs_convex_hull.md)
   : Compute the convex hull of geometries
-- [`ddbs_startpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
-  [`ddbs_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
-  : Extract the start or end point of a linestring geometry
 - [`ddbs_exterior_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.md)
   : Extract the exterior ring of polygons
+- [`ddbs_maximum_inscribed_circle()`](https://cidree.github.io/duckspatial/reference/ddbs_maximum_inscribed_circle.md)
+  : Computes the maximum inscribed circle of a geometry
+- [`ddbs_voronoi()`](https://cidree.github.io/duckspatial/reference/ddbs_voronoi.md)
+  : Computes a Voronoi diagram from point geometries
+
+## Geometry Processing - Linestrings
+
+Specialized functions for working with linestring geometries
+
+- [`ddbs_line_startpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
+  [`ddbs_line_endpoint()`](https://cidree.github.io/duckspatial/reference/ddbs_endpoint_startpoint.md)
+  : Extract the start or end point of a linestring geometry
+- [`ddbs_line_interpolate()`](https://cidree.github.io/duckspatial/reference/ddbs_line_interpolate.md)
+  : Interpolates a point or points along a line geometry
+- [`ddbs_line_merge()`](https://cidree.github.io/duckspatial/reference/ddbs_line_merge.md)
+  : Merge line geometries into a single line
+- [`ddbs_line_substring()`](https://cidree.github.io/duckspatial/reference/ddbs_line_substring.md)
+  : Extract a substring of a line geometry
+- [`ddbs_build_area()`](https://cidree.github.io/duckspatial/reference/ddbs_build_area.md)
+  : Build polygon areas from multiple linestrings
 - [`ddbs_make_polygon()`](https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.md)
   : Create a polygon from a single closed linestring
-- [`ddbs_multi()`](https://cidree.github.io/duckspatial/reference/ddbs_multi.md)
-  : Convert geometries to multi-type
 - [`ddbs_polygonize()`](https://cidree.github.io/duckspatial/reference/ddbs_polygonize.md)
   : Assemble polygons from multiple linestrings
+
+## Geometry Type Conversion
+
+Change geometry types or decompose multi-part geometries
+
+- [`ddbs_dump()`](https://cidree.github.io/duckspatial/reference/ddbs_dump.md)
+  : Dumps geometries into their component parts
+- [`ddbs_multi()`](https://cidree.github.io/duckspatial/reference/ddbs_multi.md)
+  : Convert geometries to multi-type
 - [`ddbs_union()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
   [`ddbs_combine()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
   [`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
   : Union and combine geometries
-- [`ddbs_voronoi()`](https://cidree.github.io/duckspatial/reference/ddbs_voronoi.md)
-  : Computes a Voronoi diagram from point geometries
 
 ## Coordinate Operations
 
@@ -122,15 +145,30 @@ Transform and manipulate coordinate systems
 
 - [`ddbs_transform()`](https://cidree.github.io/duckspatial/reference/ddbs_transform.md)
   : Transform the coordinate reference system of geometries
+- [`ddbs_set_crs()`](https://cidree.github.io/duckspatial/reference/ddbs_set_crs.md)
+  : Set the coordinate reference system of geometries
 - [`ddbs_flip_coordinates()`](https://cidree.github.io/duckspatial/reference/ddbs_flip_coordinates.md)
   : Flips the X and Y coordinates of geometries
 - [`ddbs_x()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
   [`ddbs_y()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
-  : Extract X and Y coordinates from geometries
+  [`ddbs_m()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
+  [`ddbs_z()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
+  : Extract coordinates from geometries
 - [`ddbs_force_2d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
   [`ddbs_force_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
   [`ddbs_force_4d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
   : Force geometry dimensions
+
+## Dimension operations
+
+Utility functions for M and Z dimensions
+
+- [`ddbs_locate_along()`](https://cidree.github.io/duckspatial/reference/ddbs_locate.md)
+  [`ddbs_locate_between()`](https://cidree.github.io/duckspatial/reference/ddbs_locate.md)
+  : Locate geometries at specific M values
+- [`ddbs_has_z()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
+  [`ddbs_has_m()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
+  : Check geometry dimensions
 
 ## Geometry Validation
 
@@ -140,6 +178,8 @@ Check and repair geometry validity and dimensionality
   : Get the geometry type of features
 - [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md)
   : Make invalid geometries valid
+- [`ddbs_remove_repeated_points()`](https://cidree.github.io/duckspatial/reference/ddbs_remove_repeated_points.md)
+  : Remove repeated points from a geometry
 - [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md)
   : Simplify geometries
 - [`ddbs_is_simple()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
@@ -148,9 +188,6 @@ Check and repair geometry validity and dimensionality
   [`ddbs_is_empty()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
   [`ddbs_is_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.md)
   : Geometry validation functions
-- [`ddbs_has_z()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
-  [`ddbs_has_m()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
-  : Check geometry dimensions
 
 ## Format Conversion
 
@@ -170,6 +207,10 @@ Extract bounding boxes and envelopes
   : Get the bounding box of geometries
 - [`ddbs_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_envelope.md)
   : Get the envelope (bounding box) of geometries
+- [`ddbs_make_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_make_envelope.md)
+  : Create a rectangular polygon from bounding coordinates
+- [`ddbs_minimum_rotated_rectangle()`](https://cidree.github.io/duckspatial/reference/ddbs_minimum_rotated_rectangle.md)
+  : Computes the minimum rotated rectangle enclosing a geometry
 
 ## Affine Transformations
 
@@ -221,6 +262,8 @@ Create and work with lazy `duckspatial_df` objects
   : Convert objects to duckspatial_df
 - [`is_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/is_duckspatial_df.md)
   : Check if object is a duckspatial_df
+- [`as_nanoarrow_array_stream.duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_nanoarrow_array_stream.duckspatial_df.md)
+  : Convert a duckspatial_df to a nanoarrow_array_stream
 - [`collect(`*`<duckspatial_df>`*`)`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)
   [`ddbs_collect()`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)
   : Collect a duckspatial_df with flexible output formats
