@@ -10,7 +10,13 @@
 
 * `ddbs_set_crs()`: assigns the CRS to a spatial object. No transformation is applied to the geometries (#118).
 
+* `ddbs_crop()`: similar to `ddbs_intersection()`, but it crops to the bounding box (#118).
+
 * `ddbs_line_interpolate()`: interpolates a point or points along a line geometry (#118).
+
+* `ddbs_line_substring()`: gets a fraction of a linestring (#118).
+
+* `ddbs_line_merge()`:merges connected multistrings (#118).
 
 * `ddbs_z()` and `ddbs_m()`: to extract Z and M coordinates as a new column (#118).
 
@@ -32,6 +38,7 @@
 
 * `ddbs_install()`: now returns a better error message if the extension is already loaded, and there's an attempt to upgrade it.
 
+* `ddbs_centroid()`: gains the argument `method` to implement ST_PointOnSurface (#118).
 
 
 # duckspatial 1.0.0
