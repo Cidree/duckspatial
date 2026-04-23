@@ -1062,3 +1062,72 @@ ddbs_maximum_inscribed_circle <- function(
 
 
 
+#' Remove repeated points from a geometry
+#'
+#' Removes duplicate consecutive vertices from geometries, optionally within
+#' a tolerance distance.
+#'
+#' @template x
+#' @param tolerance A numeric value specifying the minimum distance between
+#'   consecutive vertices. Vertices closer than this threshold are considered
+#'   repeated and removed. Default is \code{0}, which removes only exact
+#'   duplicates.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#' library(sf)
+#'
+#' ## Create a polygon with repeated points
+#' poly <- st_polygon(list(matrix(
+#'   c(0, 0,
+#'     1, 0,
+#'     1, 0,  # repeated point
+#'     1, 1,
+#'     0, 1,
+#'     0, 0),
+#'   ncol = 2, byrow = TRUE
+#' )))
+#' 
+#' poly_sf <- st_as_sf(st_sfc(poly))
+#'
+#' ## remove exact duplicate consecutive vertices
+#' ddbs_remove_repeated_points(poly_sf)
+#'
+#' ## remove vertices within a tolerance of 1 unit
+#' ddbs_remove_repeated_points(poly_sf, tolerance = 1)
+#' }
+ddbs_remove_repeated_points <- function(
+  x,
+  tolerance = 0,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+  
+  # 0. Handle function-specific errors
+  assert_positive_numeric(tolerance, "tolerance")
+
+  # 2. Pass to template  
+  template_unary_ops(
+    x = x,
+    conn = conn,
+    name = name,
+    mode = mode,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_RemoveRepeatedPoints",
+    other_args = tolerance
+  )
+
+}
