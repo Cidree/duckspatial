@@ -484,7 +484,6 @@ ddbs_make_envelope <- function(
   assert_numeric(xmax, "xmax")
   assert_numeric(ymin, "ymin")
   assert_numeric(ymax, "ymax")
-  assert_conn_x_name(conn, x, name)
   assert_name(name)
   assert_name(mode, "mode")
   assert_logic(overwrite, "overwrite")
