@@ -4,7 +4,9 @@
 \alias{ddbs_xy}
 \alias{ddbs_x}
 \alias{ddbs_y}
-\title{Extract X and Y coordinates from geometries}
+\alias{ddbs_m}
+\alias{ddbs_z}
+\title{Extract coordinates from geometries}
 \usage{
 ddbs_x(
   x,
@@ -25,6 +27,26 @@ ddbs_y(
   overwrite = FALSE,
   quiet = FALSE
 )
+
+ddbs_m(
+  x,
+  new_column = "M",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
+
+ddbs_z(
+  x,
+  new_column = "Z",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -37,7 +59,7 @@ ddbs_y(
 Data is returned from this object.}
 
 \item{new_column}{Name of the new column to store the extracted coordinate.
-Defaults to \code{"X"} for \code{ddbs_x()} and \code{"Y"} for \code{ddbs_y()}.}
+Defaults to \code{"X"}, \code{"Y"}, \code{"M"}, or \code{"Z"}.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -71,9 +93,15 @@ Depends on the \code{mode} argument (or global preference set by \code{\link{ddb
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-\code{ddbs_x()} extracts the X coordinate (longitude) and \code{ddbs_y()} extracts
-the Y coordinate (latitude) from point geometries, adding them as a new
-column to the dataset.
+Extracts the X, Y, M, or Z coordinates from \code{POINT} geometries
+}
+\details{
+\itemize{
+\item \code{ddbs_x()}: Extracts the X coordinate (longitude).
+\item \code{ddbs_y()}: Extracts the Y coordinate (latitude).
+\item \code{ddbs_m()}: Extracts the M coordinate (measure).
+\item \code{ddbs_z()}: Extracts the Z coordinate (elevation).
+}
 }
 \examples{
 \dontrun{
@@ -86,7 +114,7 @@ argentina_ddbs <- ddbs_open_dataset(
   package = "duckspatial")
 )
 
-## extract coordinates without using a connection
+## extract coordinates
 ddbs_x(argentina_ddbs)
 ddbs_y(argentina_ddbs)
 }

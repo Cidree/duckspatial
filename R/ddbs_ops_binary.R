@@ -7,6 +7,8 @@
 #' \describe{
 #'   \item{`ddbs_intersection`}{Returns the geometric intersection of two sets 
 #'   of geometries, producing the area, line, or point shared by both.}
+#'   \item{`ddbs_crop`}{Returns the geometric intersection of two sets of
+#'   geometries, using the bounding box of `y`, rather than its original geometry}
 #'   \item{`ddbs_difference`}{Returns the portion of the first geometry that 
 #'   does not overlap with the second geometry.}
 #'   \item{`ddbs_sym_difference`}{Returns the portions of both geometries 
@@ -482,4 +484,37 @@ ddbs_sym_difference <- function(
             x_geom = x_geom
         )
     }
+}
+
+
+
+#' @rdname ddbs_binary_funs
+#' @export
+ddbs_crop <- function(
+    x,
+    y,
+    conn = NULL,
+    conn_x = NULL,
+    conn_y = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+  
+    ## When we crop we use the intersection of the envelope of y
+    y <- ddbs_envelope(y)
+
+
+    ddbs_intersection(
+        x = x,
+        y = y,
+        conn = conn,
+        conn_x = conn_x,
+        conn_y = conn_y,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet
+    )
+  
 }

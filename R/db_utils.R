@@ -197,6 +197,7 @@ ddbs_glimpse <- function(
 #' `.duckdb` or `.db` extension. Defaults to `"memory"`.
 #' @template threads
 #' @template memory_limit_gb
+#' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #' @param ... Additional parameters to be passed to \code{\link[DBI]{dbConnect}}
 #'
 #' @returns A `duckdb_connection`
@@ -221,6 +222,7 @@ ddbs_create_conn <- function(
   dbdir = "memory", 
   threads = NULL, 
   memory_limit_gb = NULL,
+  upgrade = FALSE,
   ...) {
 
     # 0. Handle errors
@@ -265,7 +267,7 @@ ddbs_create_conn <- function(
     }
 
     # Checks and installs the Spatial extension
-    ddbs_install(conn, upgrade = FALSE, quiet = TRUE)
+    ddbs_install(conn, upgrade = upgrade, quiet = TRUE)
     ddbs_load(conn, quiet = TRUE)
 
     # Configure resources if requested

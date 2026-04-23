@@ -378,3 +378,156 @@ ddbs_bbox <- function(
     }
     
 }
+
+
+
+#' Computes the minimum rotated rectangle enclosing a geometry
+#'
+#' Returns the smallest rectangle that fully contains the input geometry.
+#' Unlike [ddbs_envelope()], the rectangle is not constrained to be axis-aligned
+#' and may be rotated to minimize its area.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## without a connection
+#' ddbs_minimum_rotated_rectangle(argentina_ddbs)
+#' }
+ddbs_minimum_rotated_rectangle <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_MinimumRotatedRectangle",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+
+#' Create a rectangular polygon from bounding coordinates
+#'
+#' Creates a rectangular POLYGON geometry from four bounding coordinates.
+#'
+#' @param xmin A numeric value for the minimum X (longitude) coordinate.
+#' @param ymin A numeric value for the minimum Y (latitude) coordinate.
+#' @param xmax A numeric value for the maximum X (longitude) coordinate.
+#' @param ymax A numeric value for the maximum Y (latitude) coordinate.
+#' @param crs A character string specifying the coordinate reference system
+#'   of the output geometry. Default is \code{"EPSG:4326"}.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## without storing in duckdb
+#' finland_bbox_ddbs <- ddbs_make_envelope(
+#'   xmin = 19.1, ymin = 59.7,
+#'   xmax = 31.6, ymax = 70.1
+#' )
+#' }
+#' @export
+ddbs_make_envelope <- function(
+  xmin,
+  ymin,  
+  xmax,
+  ymax,
+  crs = "EPSG:4326",
+  name = NULL,
+  conn = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+) {
+
+  # 0. Validate inputs
+  assert_numeric(xmin, "xmin")
+  assert_numeric(xmax, "xmax")
+  assert_numeric(ymin, "ymin")
+  assert_numeric(ymax, "ymax")
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+
+
+  # 1. Prepare inputs
+
+  ## 1.1. Assign attributes
+  mode   <- get_mode(mode, name)
+  x_geom <- "geometry"
+
+  ## 1.2. Establish connection
+  if (is.null(conn)) {
+    target_conn <- ddbs_default_conn()
+  } else {
+    target_conn <- conn
+  }
+  
+  ## 1.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  st_function <- glue::glue("ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax})")
+  base.query <- glue::glue("
+    SELECT {build_geom_query(st_function, name, crs, mode)} AS {x_geom};
+  ")
+
+
+  # 2. Table creation if name is provided, or 
+  # create duckspatial_df or sf object if name is NULL
+  if (!is.null(name)) {
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
+      query  = base.query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs,
+      x_geom = x_geom
+    )
+  }
+
+}

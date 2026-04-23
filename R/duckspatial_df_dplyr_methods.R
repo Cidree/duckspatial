@@ -661,6 +661,14 @@ full_join.duckspatial_df <- function(x, y, by = NULL, ...) {
 # Grouping and aggregating methods
 # =============================================================================
 
+.strip_spatial_attrs <- function(x) {
+  attr(x, "sf_column")    <- NULL
+  attr(x, "crs")          <- NULL
+  attr(x, "source_table") <- NULL
+  attr(x, "source_conn")  <- NULL
+  x
+}
+
 
 #' @rdname duckspatial_df_dplyr
 #' @export
@@ -669,7 +677,7 @@ group_by.duckspatial_df <- function(.data, ..., .add = FALSE, .drop = dplyr::gro
   atts <- attributes(.data)
   class(.data) <- setdiff(class(.data), "duckspatial_df")
   res <- NextMethod()
-  return(res)
+  .strip_spatial_attrs(res)
 }
 
 #' @rdname duckspatial_df_dplyr
@@ -716,6 +724,6 @@ summarise.duckspatial_df <- function(.data, ...) {
       "i" = "Use a spatial aggregate like {.fn ST_Union_Agg} to preserve geometry.",
       "i" = "Result is no longer a {.cls duckspatial_df}."
     ))
-    res
+    .strip_spatial_attrs(res)
   }
 }

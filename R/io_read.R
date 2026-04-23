@@ -207,3 +207,59 @@ ddbs_read_vector <- function(
         quiet      = quiet
     )
 }
+
+
+
+
+#' Read metadata from a spatial file
+#'
+#' Retrieves file-level metadata from a spatial vector file (e.g. GeoPackage,
+#' Shapefile, GeoJSON) using DuckDB's \code{ST_Read_Meta()} function. Returns
+#' information about the file's driver and its layers as a tibble.
+#'
+#' @param path character, path to the spatial file to inspect.
+#' @template conn
+#'
+#' @returns A \code{tibble} with one row per file and the
+#'   following columns:
+#'   \describe{
+#'     \item{file_name}{Path to the file.}
+#'     \item{driver_short_name}{Short name of the GDAL driver (e.g.
+#'       \code{"GPKG"}).}
+#'     \item{driver_long_name}{Full name of the GDAL driver (e.g.
+#'       \code{"GeoPackage"}).}
+#'     \item{layers}{A list-column of data frames, one per file, each
+#'       describing the layers contained in the file. Unnest with
+#'       \code{\link[tidyr]{unnest}} to access individual layer attributes
+#'       such as name, geometry type, and feature count.}
+#'   }
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## Read metadata from a GeoPackage
+#' meta <- ddbs_read_meta(
+#'   system.file("spatial/rivers.geojson",
+#'   package = "duckspatial")
+#' )
+#' 
+#' ## View file-level metadata
+#' meta
+#'
+#' ## Inspect layer details
+#' tidyr::unnest(meta, layers)
+#' }
+ddbs_read_meta <- function(path, conn = NULL) {
+
+  if (is.null(conn)) {
+    target_conn <- ddbs_default_conn()
+  } else {
+    target_conn <- conn
+  }
+
+  DBI::dbGetQuery(target_conn, glue::glue(
+    "SELECT * FROM ST_Read_Meta('{path}')"
+  )) |> 
+    tibble::as_tibble()
+
+}

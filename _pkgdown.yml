@@ -189,6 +189,7 @@ reference:
   - ddbs_write_dataset
   - ddbs_write_table
   - ddbs_register_table
+  - ddbs_read_meta
 
 - title: Spatial Predicates
   desc: Test spatial relationships between geometries
@@ -210,39 +211,59 @@ reference:
   - ddbs_generate_points
   - ddbs_quadkey
 
-- title: Geometry Processing
+- title: Geometry Processing - General
   desc: Modify, simplify, and transform individual geometries
   contents:
   - ddbs_boundary
   - ddbs_buffer
-  - ddbs_build_area
   - ddbs_centroid
   - ddbs_concave_hull
   - ddbs_convex_hull
-  - ddbs_endpoint_startpoint
   - ddbs_exterior_ring
-  - ddbs_make_polygon
-  - ddbs_multi
-  - ddbs_polygonize
-  - ddbs_union_funs
+  - ddbs_maximum_inscribed_circle
   - ddbs_voronoi
+
+- title: Geometry Processing - Linestrings
+  desc: Specialized functions for working with linestring geometries
+  contents:
+  - ddbs_endpoint_startpoint
+  - ddbs_line_interpolate
+  - ddbs_line_merge
+  - ddbs_line_substring
+  - ddbs_build_area
+  - ddbs_make_polygon
+  - ddbs_polygonize
+
+- title: Geometry Type Conversion
+  desc: Change geometry types or decompose multi-part geometries
+  contents:
+  - ddbs_dump
+  - ddbs_multi
+  - ddbs_union_funs
 
 - title: Coordinate Operations
   desc: Transform and manipulate coordinate systems
   contents:
   - ddbs_transform
+  - ddbs_set_crs
   - ddbs_flip_coordinates
   - ddbs_xy
   - ddbs_force_dim
+
+- title: Dimension operations
+  desc: Utility functions for M and Z dimensions
+  contents:
+  - ddbs_locate
+  - ddbs_has_dim
 
 - title: Geometry Validation
   desc: Check and repair geometry validity and dimensionality
   contents:
   - ddbs_geometry_type
   - ddbs_make_valid
+  - ddbs_remove_repeated_points
   - ddbs_simplify
   - ddbs_geom_validation_funs
-  - ddbs_has_dim
 
 - title: Format Conversion
   desc: Convert geometries to and from standard spatial formats
@@ -254,6 +275,8 @@ reference:
   contents:
   - ddbs_bbox
   - ddbs_envelope
+  - ddbs_make_envelope
+  - ddbs_minimum_rotated_rectangle
 
 - title: Affine Transformations
   desc: Rotate, scale, shear, and shift geometries
@@ -284,6 +307,7 @@ reference:
   contents:
   - as_duckspatial_df
   - is_duckspatial_df
+  - as_nanoarrow_array_stream.duckspatial_df
   - ddbs_collect
   - ddbs_compute
   - ddbs_drop_geometry
