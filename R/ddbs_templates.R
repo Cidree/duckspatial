@@ -22,7 +22,8 @@ template_unary_ops <- function(
   overwrite = FALSE,
   quiet = FALSE,
   fun,
-  other_args = NULL) {
+  other_args = NULL,
+  additional_clauses = NULL) {
 
   # 0. Validate inputs
   assert_xy(x, "x")
@@ -77,6 +78,13 @@ template_unary_ops <- function(
     )
   }
 
+  ## Additional clauses for some functions
+  additional_clauses <- if (is.function(additional_clauses)) {
+    additional_clauses(x_geom)
+  } else {
+    additional_clauses %||% ""
+  }
+
   ## 2.3. Other function-specific handling
   ## - ST_Buffer, check the units and warn if they aren't in meters
   if (tolower(fun) == "st_buffer") {
@@ -89,7 +97,8 @@ template_unary_ops <- function(
   base.query <- glue::glue("
     SELECT *
     REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
-    FROM {x_list$query_name};
+    FROM {x_list$query_name}
+    {additional_clauses};
   ")
 
 
