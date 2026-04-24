@@ -265,3 +265,115 @@ testthat::describe("Extent functions", {
   })
 
 })
+
+
+# 8. Geometry processing functions ---------------------------------------
+
+# 7. Geometry processing functions ---------------------------------------
+
+testthat::describe("Geometry processing functions", {
+
+  countries_3857_ddbs <- ddbs_transform(countries_ddbs, "EPSG:3857")
+
+  ## DDBS_BOUNDARY
+  testthat::it("ddbs_boundary() macro works", {
+    normal_result <- ddbs_boundary(countries_ddbs) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_boundary(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_BUFFER
+  testthat::it("ddbs_buffer() macro works with default parameters", {
+    normal_result <- ddbs_buffer(countries_3857_ddbs, distance = 0.1) |> 
+      ddbs_collect()
+    macro_result  <- countries_3857_ddbs |>
+      dplyr::mutate(geometry = ddbs_buffer(geometry, 0.1)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  testthat::it("ddbs_buffer() macro works with custom parameters", {
+    normal_result <- ddbs_buffer(
+      countries_3857_ddbs,
+      distance      = 0.1,
+      num_triangles = 16,
+      cap_style     = "CAP_FLAT",
+      join_style    = "JOIN_MITRE",
+      mitre_limit   = 2
+    ) |> ddbs_collect()
+    macro_result  <- countries_3857_ddbs |>
+      dplyr::mutate(geometry = ddbs_buffer(geometry, 0.1, 16, "CAP_FLAT", "JOIN_MITRE", 2)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_CENTROID
+  testthat::it("ddbs_centroid() macro works", {
+    normal_result <- ddbs_centroid(countries_ddbs) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_centroid(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_CONCAVE_HULL
+  testthat::it("ddbs_concave_hull() macro works with default parameters", {
+    normal_result <- ddbs_concave_hull(countries_ddbs) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_concave_hull(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  testthat::it("ddbs_concave_hull() macro works with custom parameters", {
+    normal_result <- ddbs_concave_hull(
+      countries_ddbs,
+      ratio       = 0.3,
+      allow_holes = FALSE
+    ) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_concave_hull(geometry, 0.3, FALSE)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_CONVEX_HULL
+  testthat::it("ddbs_convex_hull() macro works", {
+    normal_result <- ddbs_convex_hull(countries_ddbs) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_convex_hull(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_EXTERIOR_RING
+  testthat::it("ddbs_exterior_ring() macro works on polygons", {
+    normal_result <- ddbs_exterior_ring(countries_ddbs) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_exterior_ring(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_VORONOI
+  testthat::it("ddbs_voronoi() macro works on points", {
+    points_multi_ddbs <- ddbs_multi(points_ddbs)
+    normal_result <- ddbs_voronoi(points_multi_ddbs) |> ddbs_collect()
+    macro_result  <- points_multi_ddbs |>
+      dplyr::mutate(geometry = ddbs_voronoi(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_BUILD_AREA
+  testthat::it("ddbs_build_area() macro works on lines", {
+    normal_result <- ddbs_build_area(rivers_ddbs) |> ddbs_collect()
+    macro_result  <- rivers_ddbs |>
+      dplyr::mutate(geom = ddbs_build_area(geom)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geom, macro_result$geom)
+  })
+
+})

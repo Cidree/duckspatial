@@ -1502,7 +1502,23 @@ create_duckspatial_macros <- function(conn) { # nocov start
         xmax: ST_XMax(ST_Extent(geom)),
         ymax: ST_YMax(ST_Extent(geom))
       }
-    );"
+    );",
+
+    # --- geometry processing general
+    "CREATE OR REPLACE MACRO ddbs_boundary(geom) AS ST_Boundary(geom);",
+    "CREATE OR REPLACE MACRO 
+      ddbs_buffer(geometry, distance, num_triangles := 8, cap_style := 'CAP_ROUND', join_style := 'JOIN_ROUND', mitre_limit := 1) AS 
+      ST_Buffer(geometry, distance::DOUBLE, num_triangles::INTEGER, cap_style::VARCHAR, join_style::VARCHAR, mitre_limit::DOUBLE);
+    ",
+    "CREATE OR REPLACE MACRO ddbs_centroid(geom) AS ST_Centroid(geom);",
+    "CREATE OR REPLACE MACRO 
+      ddbs_concave_hull(geom, ratio := 0.5, allow_holes := TRUE) AS 
+      ST_ConcaveHull(geom, ratio, allow_holes);
+    ",
+    "CREATE OR REPLACE MACRO ddbs_convex_hull(geom) AS ST_ConvexHull(geom);",
+    "CREATE OR REPLACE MACRO ddbs_exterior_ring(geom) AS ST_ExteriorRing(geom);",
+    "CREATE OR REPLACE MACRO ddbs_voronoi(geom) AS ST_VoronoiDiagram(geom);",
+    "CREATE OR REPLACE MACRO ddbs_build_area(geom) AS ST_BuildArea(geom);"
 
 
   )
