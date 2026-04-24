@@ -1435,6 +1435,11 @@ validate_xy_crs <- function(
 
 
 
+
+#' Helper to create macros for duckspatial functions
+#'
+#' @keywords internal
+#' @noRd
 create_duckspatial_macros <- function(conn) { # nocov start
 
   macros <- list(
