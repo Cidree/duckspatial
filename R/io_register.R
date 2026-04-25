@@ -110,19 +110,53 @@ ddbs_register_table <- function(
     ## Get original geometry column name and CRS
     geom_name <- attr(data_sf, "sf_column")
     crs <- sf::st_crs(data_sf, describe = TRUE)$input
-  
-    ## Create arrow table
-    arrow_table <- {
-      df[[geom_name]] <- geoarrow::as_geoarrow_vctr(
-        wkb,
-        schema = geoarrow::geoarrow_wkb(crs = crs)
-      )
-      arrow::Table$create(df)
+
+    ## Estimate chunk size from a sample. This is needed to avoid OOM errors
+    ## when creating the Arrow table for very large datasets. The chunk size is
+    ## determined based on the size of the first 1000 rows
+    n <- length(wkb)
+    sample_n <- min(1000L, n)
+    sample_bytes <- sum(vapply(unclass(wkb[seq_len(sample_n)]), length, integer(1)))
+    avg_bytes_per_feature <- sample_bytes / sample_n
+
+    ## Target ~500MB per chunk (safely under ~2GB limit)
+    target_bytes <- 500L * 1024L^2
+    chunk_size   <- max(1000L, floor(target_bytes / avg_bytes_per_feature))
+    idx          <- split(seq_len(n), ceiling(seq_len(n) / chunk_size))
+
+    ## Create:
+    ## - Arrow table: when the dataset is small (<500MB)
+    ## - Arrow Batch: when the dataset is large (>500MB)
+    if (length(idx) == 1L) {
+        ## Create a single Arrow table
+        arrow_table <- {
+            df[[geom_name]] <- geoarrow::as_geoarrow_vctr(
+                wkb,
+                schema = geoarrow::geoarrow_wkb(crs = crs)
+            )
+            arrow::Table$create(df)
+        }
+    } else {
+        ## Create an Arrow RecordBatchReader for chunked processing
+        batches <- lapply(idx, function(i) {
+            chunk <- df[i, , drop = FALSE]
+            chunk[[geom_name]] <- geoarrow::as_geoarrow_vctr(
+                wkb[i],
+                schema = geoarrow::geoarrow_wkb(crs = crs)
+            )
+            arrow::record_batch(chunk)
+        })
+        
+        ## Create the table as a batch
+        schema <- batches[[1]]$schema
+        arrow_table <- arrow::RecordBatchReader$create(
+            batches = batches, 
+            schema = schema
+        )
     }
 
     ## Register the table
     duckdb::duckdb_register_arrow(conn, view_name, arrow_table)
-
 
     ## User feedback
     if (isFALSE(quiet)) {

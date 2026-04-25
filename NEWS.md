@@ -42,6 +42,10 @@
 
 * `ddbs_centroid()`: gains the argument `method` to implement ST_PointOnSurface (#118).
 
+## BUG FIXES
+
+* Large datasets couldn't be processed because an `arrow` code limitation in `ddbs_register_table()` (#124).
+
 
 # duckspatial 1.0.0
 
