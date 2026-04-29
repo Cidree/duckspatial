@@ -77,7 +77,26 @@ describe("ddbs_as_points()", {
         crs = "EPSG:3857"
       )
 
-      expect_equal(st_crs(output_3857), st_crs("EPSG:3857"))
+      expect_equal(sf::st_crs(output_3857), sf::st_crs("EPSG:3857"))
+    })
+
+    it("supports remove and na.fail arguments", {
+      # remove = TRUE (default)
+      out_remove <- ddbs_as_points(cities_tbl, coords = c("lon", "lat"), remove = TRUE)
+      expect_false(any(c("lon", "lat") %in% colnames(out_remove)))
+      
+      # remove = FALSE
+      out_keep <- ddbs_as_points(cities_tbl, coords = c("lon", "lat"), remove = FALSE)
+      expect_true(all(c("lon", "lat") %in% colnames(out_keep)))
+      
+      # na.fail = TRUE (default)
+      cities_na <- cities_tbl
+      cities_na$lon[1] <- NA
+      expect_error(ddbs_as_points(cities_na), "Missing values found")
+      
+      # na.fail = FALSE
+      out_na <- ddbs_as_points(cities_na, na.fail = FALSE)
+      expect_s3_class(out_na, "duckspatial_df")
     })
   })
 
