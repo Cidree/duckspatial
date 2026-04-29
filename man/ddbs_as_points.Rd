@@ -64,6 +64,9 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
+
+\item{...}{Additional arguments. Currently supports \code{geom_col} to
+specify the name of the geometry column in the output.}
 }
 \value{
 Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
