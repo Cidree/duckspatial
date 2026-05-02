@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* Implementation of `duckspatial` macros: this allows to use some `duckspatial` functions within `dplyr` verbs (e.g. `data |> mutate(area = ddbs_area(geometry))`) (#92).
+
 * `ddbs_dump()`: decompose multi-geometry types into individual single geometry components (#44, 117).
 
 * `ddbs_maximum_inscribed_circle()`: returns the maximum inscribed circle of the input geometry (#117).
@@ -39,6 +41,12 @@
 * `ddbs_install()`: now returns a better error message if the extension is already loaded, and there's an attempt to upgrade it.
 
 * `ddbs_centroid()`: gains the argument `method` to implement ST_PointOnSurface (#118).
+
+* `ddbs_as_points()` allows to create a `duckspatial_df` from raw coordinate or WKT columns. It also gains two new arguments: `remove` and `na.fail` (#125).
+
+## BUG FIXES
+
+* Large datasets couldn't be processed because an `arrow` code limitation in `ddbs_register_table()` (#124).
 
 
 # duckspatial 1.0.0

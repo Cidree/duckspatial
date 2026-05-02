@@ -28,7 +28,7 @@ test_that("get_file_crs extracts CRS correctly", {
   skip_if_not_installed("duckdb")
   skip_if_not_installed("sf")
   
-  conn <- ddbs_temp_conn()
+  conn <- duckspatial:::ddbs_temp_conn()
   
   # Test with NC shapefile (EPSG:4267)
   path <- system.file("shape/nc.shp", package = "sf")

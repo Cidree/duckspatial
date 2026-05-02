@@ -214,7 +214,6 @@ reference:
 - title: Geometry Processing - General
   desc: Modify, simplify, and transform individual geometries
   contents:
-  - ddbs_boundary
   - ddbs_buffer
   - ddbs_centroid
   - ddbs_concave_hull
@@ -274,6 +273,7 @@ reference:
   desc: Extract bounding boxes and envelopes
   contents:
   - ddbs_bbox
+  - ddbs_boundary
   - ddbs_envelope
   - ddbs_make_envelope
   - ddbs_minimum_rotated_rectangle

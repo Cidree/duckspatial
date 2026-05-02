@@ -33,7 +33,13 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 \item{geom_col}{Geometry column name (default: "geom")}
 
-\item{...}{Additional arguments passed to methods}
+\item{...}{Additional arguments passed to methods:
+\describe{
+\item{\code{coords}}{Character vector of length 2 for point ingestion}
+\item{\code{wkt}}{Character name of WKT column for ingestion}
+\item{\code{remove}}{Logical. If TRUE (default), coordinate/WKT columns are removed}
+\item{\code{na.fail}}{Logical. If TRUE (default), errors on missing values}
+}}
 }
 \value{
 A duckspatial_df object
