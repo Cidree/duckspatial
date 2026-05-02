@@ -11,11 +11,17 @@
 #'        input coordinates. Can be specified as an EPSG code (e.g., \code{"EPSG:4326"} 
 #'        or \code{4326}) or a WKT string. Defaults to \code{"EPSG:4326"} (WGS84 
 #'        longitude/latitude).
+#' @param remove Logical. If \code{TRUE} (default), the coordinate columns 
+#'        specified in \code{coords} are removed from the output.
+#' @param na.fail Logical. If \code{TRUE} (default), the function errors if 
+#'        any missing values (NAs) are found in the coordinate columns.
 #' @template conn_null
 #' @template name
 #' @template mode
 #' @template overwrite
 #' @template quiet
+#' @param ... Additional arguments. Currently supports \code{geom_col} to 
+#'        specify the name of the geometry column in the output.
 #'
 #' @template returns_mode
 #' @export
@@ -36,14 +42,14 @@
 #' # option 1: convert data frame to sf object
 #' cities_ddbs <- ddbs_as_points(cities_df)
 #'
-#' # specify custom coordinate column names
+#' # specify custom coordinate column names and keep them in output
 #' cities_df2 <- data.frame(
 #'   city = c("Mendoza", "Tucumán"),
 #'   longitude = c(-68.8272, -65.2226),
 #'   latitude = c(-32.8895, -26.8241)
 #' )
 #' 
-#' ddbs_as_points(cities_df2, coords = c("longitude", "latitude"))
+#' ddbs_as_points(cities_df2, coords = c("longitude", "latitude"), remove = FALSE)
 #'
 #'
 #' ## option 2: convert table in duckdb to spatial table
@@ -67,12 +73,16 @@ ddbs_as_points <- function(
     x,
     coords = c("lon", "lat"),
     crs = "EPSG:4326",
+    remove = TRUE,
+    na.fail = TRUE,
     conn = NULL,
     name = NULL,
     mode = NULL,
     overwrite = FALSE,
-    quiet = FALSE) {
+    quiet = FALSE,
+    ...) {
         
+    dots <- list(...)
     
     # 0. Validate inputs
     assert_name(name)
@@ -81,13 +91,20 @@ ddbs_as_points <- function(
     assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    assert_logic(remove, "remove")
+    assert_logic(na.fail, "na.fail")
+
+    if (length(coords) != 2) {
+        cli::cli_abort("{.arg coords} must be a character vector of length 2.")
+    }
   
 
-    # 1. Prepare inputs
+    # Respect geom_col
+    target_geom <- dots$geom_col
   
     ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
     ## validate character table names)
-    x <- normalize_spatial_input(x, conn)
+    x <- normalize_spatial_input(x, conn, geom_col = target_geom)
 
     ## 1.2. Pre-extract attributes
     mode <- get_mode(mode, name)
@@ -106,14 +123,48 @@ ddbs_as_points <- function(
 
     # 2. Prepare the query
 
-    ## 2.1. Coords as character
-    coords_str <- paste0(coords,  collapse = ", ")
+    ## 2.1. Validate coordinates existence and NAs
+    # Use double quotes for column names to handle spaces/special characters
+    coords_quoted <- paste0('"', coords, '"')
+    
+    # Check if columns exist
+    tryCatch({
+      DBI::dbExecute(target_conn, glue::glue("SELECT {paste0(coords_quoted, collapse = ', ')} FROM {x_list$query_name} WHERE 1=0"))
+    }, error = function(e) {
+      cli::cli_abort("Coordinate columns {.val {coords}} not found in input.")
+    })
+
+    # na.fail check
+    if (na.fail) {
+      null_check_sql <- glue::glue(
+        "SELECT COUNT(*) as null_count FROM {x_list$query_name} 
+         WHERE {paste0(coords_quoted, ' IS NULL', collapse = ' OR ')}"
+      )
+      null_count <- DBI::dbGetQuery(target_conn, null_check_sql)$null_count
+      if (null_count > 0) {
+        cli::cli_abort("Missing values found in coordinate columns {.val {coords}}. Set {.code na.fail = FALSE} to ignore.")
+      }
+    }
+
+    ## 2.2. Coords as character string for ST_Point
+    coords_str <- paste0(coords_quoted, collapse = ", ")
   
-    ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
+    ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
     st_function <- glue::glue("ST_Point({coords_str})")
+    
+    # Handle 'remove' using DuckDB EXCLUDE
+    select_clause <- if (remove) {
+      glue::glue("SELECT * EXCLUDE ({coords_str}),")
+    } else {
+      "SELECT *,"
+    }
+
+    # Respect geom_col for query building
+    query_geom <- target_geom %||% "geom"
+
     base.query <- glue::glue("
-      SELECT *,
-      {build_geom_query(st_function, name, crs, mode)} as geometry
+      {select_clause}
+      {build_geom_query(st_function, name, crs, mode)} as {query_geom}
       FROM {x_list$query_name};
     ")    
 
@@ -134,7 +185,7 @@ ddbs_as_points <- function(
             conn   = target_conn,
             mode   = mode,
             crs    = crs,
-            x_geom = "geometry"
+            x_geom = query_geom
         )
     }
 }

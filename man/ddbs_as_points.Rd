@@ -8,11 +8,14 @@ ddbs_as_points(
   x,
   coords = c("lon", "lat"),
   crs = "EPSG:4326",
+  remove = TRUE,
+  na.fail = TRUE,
   conn = NULL,
   name = NULL,
   mode = NULL,
   overwrite = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  ...
 )
 }
 \arguments{
@@ -33,6 +36,12 @@ longitude and latitude columns (or X and Y coordinates). Defaults to
 input coordinates. Can be specified as an EPSG code (e.g., \code{"EPSG:4326"}
 or \code{4326}) or a WKT string. Defaults to \code{"EPSG:4326"} (WGS84
 longitude/latitude).}
+
+\item{remove}{Logical. If \code{TRUE} (default), the coordinate columns
+specified in \code{coords} are removed from the output.}
+
+\item{na.fail}{Logical. If \code{TRUE} (default), the function errors if
+any missing values (NAs) are found in the coordinate columns.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -55,6 +64,9 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
+
+\item{...}{Additional arguments. Currently supports \code{geom_col} to
+specify the name of the geometry column in the output.}
 }
 \value{
 Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
@@ -84,14 +96,14 @@ cities_df <- data.frame(
 # option 1: convert data frame to sf object
 cities_ddbs <- ddbs_as_points(cities_df)
 
-# specify custom coordinate column names
+# specify custom coordinate column names and keep them in output
 cities_df2 <- data.frame(
   city = c("Mendoza", "Tucumán"),
   longitude = c(-68.8272, -65.2226),
   latitude = c(-32.8895, -26.8241)
 )
 
-ddbs_as_points(cities_df2, coords = c("longitude", "latitude"))
+ddbs_as_points(cities_df2, coords = c("longitude", "latitude"), remove = FALSE)
 
 
 ## option 2: convert table in duckdb to spatial table

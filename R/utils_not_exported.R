@@ -34,7 +34,7 @@ dbConnCheck <- function(conn) {  # nocov start
 #' @return Normalized input ready for get_query_list()
 #' @keywords internal
 #' @noRd
-normalize_spatial_input <- function(x, conn = NULL) {
+normalize_spatial_input <- function(x, conn = NULL, geom_col = NULL) {
   # 1. sf: pass through
   if (inherits(x, "sf")) return(x)
   
@@ -43,7 +43,7 @@ normalize_spatial_input <- function(x, conn = NULL) {
   
   # 3. tbl_duckdb_connection: coerce to duckspatial_df
   if (inherits(x, "tbl_duckdb_connection")) {
-    return(as_duckspatial_df(x))
+    return(as_duckspatial_df(x, geom_col = geom_col))
   }
   
   # 4. character: verify table/view exists
@@ -746,7 +746,7 @@ ddbs_handle_query <- function(
 ) { # nocov start
 
   # First, handle simple data frames
-  if (is.na(crs) & length(x_geom) == 0) {
+  if ((is.null(crs) || (is.atomic(crs) && is.na(crs))) & length(x_geom) == 0) {
 
     ## Create the table
     view_name <- ddbs_temp_view_name()
@@ -895,7 +895,9 @@ ddbs_default_conn <- function(create = TRUE, ...) {
   }
 
   # Activate macros
-  create_duckspatial_macros(conn)
+  if (!is.null(conn)) {
+    create_duckspatial_macros(conn)
+  }
 
   conn
 }
