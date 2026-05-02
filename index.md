@@ -51,6 +51,7 @@ already familiar with `sf` can get started immediately.
 Install the stable release from CRAN:
 
 ``` r
+
 # install.packages("pak")
 pak::pak("duckspatial")
 ```
@@ -59,12 +60,14 @@ Install the latest GitHub version (more features, fewer accumulated
 bugs):
 
 ``` r
+
 pak::pak("Cidree/duckspatial")
 ```
 
 Install the development version (may be unstable):
 
 ``` r
+
 pak::pak("Cidree/duckspatial@dev")
 ```
 

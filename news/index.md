@@ -4,6 +4,11 @@
 
 ### NEW FEATURES
 
+- Implementation of `duckspatial` macros: this allows to use some
+  `duckspatial` functions within `dplyr` verbs
+  (e.g. `data |> mutate(area = ddbs_area(geometry))`)
+  ([\#92](https://github.com/Cidree/duckspatial/issues/92)).
+
 - [`ddbs_dump()`](https://cidree.github.io/duckspatial/reference/ddbs_dump.md):
   decompose multi-geometry types into individual single geometry
   components ([\#44](https://github.com/Cidree/duckspatial/issues/44),
@@ -83,6 +88,18 @@
 - [`ddbs_centroid()`](https://cidree.github.io/duckspatial/reference/ddbs_centroid.md):
   gains the argument `method` to implement ST_PointOnSurface
   ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
+
+- [`ddbs_as_points()`](https://cidree.github.io/duckspatial/reference/ddbs_as_points.md)
+  allows to create a `duckspatial_df` from raw coordinate or WKT
+  columns. It also gains two new arguments: `remove` and `na.fail`
+  ([\#125](https://github.com/Cidree/duckspatial/issues/125)).
+
+### BUG FIXES
+
+- Large datasets couldn’t be processed because an `arrow` code
+  limitation in
+  [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md)
+  ([\#124](https://github.com/Cidree/duckspatial/issues/124)).
 
 ## duckspatial 1.0.0
 

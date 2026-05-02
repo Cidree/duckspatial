@@ -159,7 +159,8 @@
 <h2 class="pkg-version" data-toc-text="development version" id="duckspatial-development-version">duckspatial (development version)<a class="anchor" aria-label="anchor" href="#duckspatial-development-version"></a></h2>
 <div class="section level3">
 <h3 id="new-features-development-version">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
-<ul><li><p><code><a href="../reference/ddbs_dump.html">ddbs_dump()</a></code>: decompose multi-geometry types into individual single geometry components (<a href="https://github.com/Cidree/duckspatial/issues/44" class="external-link">#44</a>, 117).</p></li>
+<ul><li><p>Implementation of <code>duckspatial</code> macros: this allows to use some <code>duckspatial</code> functions within <code>dplyr</code> verbs (e.g. <code>data |&gt; mutate(area = ddbs_area(geometry))</code>) (<a href="https://github.com/Cidree/duckspatial/issues/92" class="external-link">#92</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_dump.html">ddbs_dump()</a></code>: decompose multi-geometry types into individual single geometry components (<a href="https://github.com/Cidree/duckspatial/issues/44" class="external-link">#44</a>, 117).</p></li>
 <li><p><code><a href="../reference/ddbs_maximum_inscribed_circle.html">ddbs_maximum_inscribed_circle()</a></code>: returns the maximum inscribed circle of the input geometry (<a href="https://github.com/Cidree/duckspatial/issues/117" class="external-link">#117</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_minimum_rotated_rectangle.html">ddbs_minimum_rotated_rectangle()</a></code>: returns the minimum rotated rectangle that bounds the input geometry (<a href="https://github.com/Cidree/duckspatial/issues/117" class="external-link">#117</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_set_crs.html">ddbs_set_crs()</a></code>: assigns the CRS to a spatial object. No transformation is applied to the geometries (<a href="https://github.com/Cidree/duckspatial/issues/118" class="external-link">#118</a>).</p></li>
@@ -180,6 +181,11 @@
 <li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: gains the <code>upgrade</code> argument that is passed to <code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>.</p></li>
 <li><p><code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>: now returns a better error message if the extension is already loaded, and there’s an attempt to upgrade it.</p></li>
 <li><p><code><a href="../reference/ddbs_centroid.html">ddbs_centroid()</a></code>: gains the argument <code>method</code> to implement ST_PointOnSurface (<a href="https://github.com/Cidree/duckspatial/issues/118" class="external-link">#118</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_as_points.html">ddbs_as_points()</a></code> allows to create a <code>duckspatial_df</code> from raw coordinate or WKT columns. It also gains two new arguments: <code>remove</code> and <code>na.fail</code> (<a href="https://github.com/Cidree/duckspatial/issues/125" class="external-link">#125</a>).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>Large datasets couldn’t be processed because an <code>arrow</code> code limitation in <code><a href="../reference/ddbs_register_table.html">ddbs_register_table()</a></code> (<a href="https://github.com/Cidree/duckspatial/issues/124" class="external-link">#124</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">

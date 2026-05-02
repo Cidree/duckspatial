@@ -89,8 +89,6 @@ Create new geometries from scratch or from existing data
 
 Modify, simplify, and transform individual geometries
 
-- [`ddbs_boundary()`](https://cidree.github.io/duckspatial/reference/ddbs_boundary.md)
-  : Get the boundary of geometries
 - [`ddbs_buffer()`](https://cidree.github.io/duckspatial/reference/ddbs_buffer.md)
   : Creates a buffer around geometries
 - [`ddbs_centroid()`](https://cidree.github.io/duckspatial/reference/ddbs_centroid.md)
@@ -205,6 +203,8 @@ Extract bounding boxes and envelopes
 
 - [`ddbs_bbox()`](https://cidree.github.io/duckspatial/reference/ddbs_bbox.md)
   : Get the bounding box of geometries
+- [`ddbs_boundary()`](https://cidree.github.io/duckspatial/reference/ddbs_boundary.md)
+  : Get the boundary of geometries
 - [`ddbs_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_envelope.md)
   : Get the envelope (bounding box) of geometries
 - [`ddbs_make_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_make_envelope.md)

@@ -36,6 +36,7 @@ We will use the North Carolina dataset from the `sf` package as our
 accurate interpolation requires an equal-area projection.*
 
 ``` r
+
 library(duckspatial)
 library(sf)
 
@@ -66,6 +67,7 @@ should also be split in half. We use `weight = "total"` to ensure strict
 mass preservation relative to the source.
 
 ``` r
+
 # Interpolate Total Births (Extensive)
 res_extensive <- ddbs_interpolate_aw(
   target = grid,
@@ -82,6 +84,7 @@ res_extensive <- ddbs_interpolate_aw(
 original data (mass preservation).
 
 ``` r
+
 orig_sum <- sum(nc$BIR74)
 new_sum  <- sum(res_extensive$BIR74, na.rm = TRUE)
 
@@ -97,6 +100,7 @@ in both pieces. `duckspatial` handles this by calculating the
 area-weighted average.
 
 ``` r
+
 # Interpolate 'BIR74' treating it as an intensive variable (e.g. density assumption)
 res_intensive <- ddbs_interpolate_aw(
   target = grid,
@@ -116,6 +120,7 @@ values based on how much “stuff” falls into a grid cell, while intensive
 interpolation smoothes the values based on overlap.
 
 ``` r
+
 # Combine for plotting
 plot_data <- res_extensive[, "BIR74"]
 names(plot_data)[1] <- "Extensive_Count"
@@ -138,6 +143,7 @@ numbers, collect the default `duckspatial_df` using
 and is significantly faster.
 
 ``` r
+
 # Return a standard data.frame/tibble without geometry
 res_tbl <- ddbs_interpolate_aw(
   target = grid,
@@ -170,6 +176,7 @@ First, let’s establish a connection and load our spatial layers into
 tables.
 
 ``` r
+
 # Create connection
 conn <- ddbs_create_conn()
 
@@ -189,6 +196,7 @@ use the `name` argument to save the result directly to a new table
 instead of returning it to R.
 
 ``` r
+
 # Run interpolation and save to new table 'nc_grid_births'
 ddbs_interpolate_aw(
   conn = conn,
@@ -212,6 +220,7 @@ DBI::dbListTables(conn)
 We can now query this table or read it back later.
 
 ``` r
+
 # Read the result back from the database
 final_sf <- ddbs_read_vector(conn, "nc_grid_births")
 #> Warning: `ddbs_read_vector()` was deprecated in duckspatial 1.0.0.
@@ -236,6 +245,7 @@ head(final_sf)
 If we only wanted the database table, without the geometry, we could do:
 
 ``` r
+
 ddbs_interpolate_aw(
   conn = conn,
   target = "grid_table",
@@ -255,6 +265,7 @@ ddbs_interpolate_aw(
 And preview this table directly in the database:
 
 ``` r
+
 as_duckspatial_df("nc_grid_births", conn)
 #> # A duckspatial lazy spatial table
 #> # ● CRS: EPSG:5070 
@@ -265,7 +276,7 @@ as_duckspatial_df("nc_grid_births", conn)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
 #> # Source:   table<nc_grid_births> [?? x 3]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.5.3/:memory:]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
 #>    target_id x                                                             BIR74
 #>        <int> <wk_wkb>                                                      <dbl>
 #>  1         1 <POLYGON ((1054293 1348021, 1132214 1348021, 1132214 141626…  1168.
@@ -286,5 +297,6 @@ as_duckspatial_df("nc_grid_births", conn)
 Always close the connection when finished.
 
 ``` r
+
 duckdb::dbDisconnect(conn)
 ```

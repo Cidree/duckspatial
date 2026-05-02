@@ -27,6 +27,7 @@ within the globe, and 10,000 random rectangles.
 Set-up
 
 ``` r
+
 # Load necessary packages
 library(duckspatial)
 library(bench)
@@ -124,6 +125,7 @@ shown in [Figure 1](#fig-st-join).
 Benchmark code - ddbs_join
 
 ``` r
+
 # Helper to run the benchmark
 run_join_benchmark <- function(points_sf) {
   temp <- bench::mark(
@@ -176,6 +178,7 @@ and memory usage in bigger datasets, as shown in
 Benchmark code - ddbs_filter
 
 ``` r
+
 # Helper to run the benchmark
 run_filter_benchmark <- function(points_sf) {
   temp <- bench::mark(
@@ -218,6 +221,7 @@ When calculating the distance between 10,000 pairs of points,
 Benchmark code - ddbs_distance
 
 ``` r
+
 # Helper to run the benchmark
 run_distance_benchmark <- function(n) {
 
@@ -264,6 +268,7 @@ and memory usage in bigger datasets, as shown in
 Benchmark code - ddbs_union_agg
 
 ``` r
+
 # Helper to run the benchmark
 run_union_benchmark <- function(points_sf) {
   temp <- bench::mark(
@@ -315,6 +320,7 @@ overlap in any way).
 Benchmark code - ddbs_intersects
 
 ``` r
+
 # Helper to run the benchmark
 run_predicate_benchmark <- function(points_sf) {
   temp <- bench::mark(

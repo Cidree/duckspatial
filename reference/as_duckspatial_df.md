@@ -46,7 +46,23 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 - ...:
 
-  Additional arguments passed to methods
+  Additional arguments passed to methods:
+
+  `coords`
+
+  :   Character vector of length 2 for point ingestion
+
+  `wkt`
+
+  :   Character name of WKT column for ingestion
+
+  `remove`
+
+  :   Logical. If TRUE (default), coordinate/WKT columns are removed
+
+  `na.fail`
+
+  :   Logical. If TRUE (default), errors on missing values
 
 ## Value
 

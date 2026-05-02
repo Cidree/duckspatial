@@ -13,6 +13,7 @@ workflow.
 Let’s start by loading the packages we need:
 
 ``` r
+
 library(duckdb)
 library(duckspatial)
 library(dplyr)
@@ -24,6 +25,7 @@ library(sf)
 Install the stable release from CRAN:
 
 ``` r
+
 # install.packages("pak")
 pak::pak("duckspatial")
 ```
@@ -32,12 +34,14 @@ Install the latest GitHub version (more features, fewer accumulated
 bugs):
 
 ``` r
+
 pak::pak("Cidree/duckspatial")
 ```
 
 Install the development version (may be unstable):
 
 ``` r
+
 pak::pak("Cidree/duckspatial@dev")
 ```
 
@@ -53,6 +57,7 @@ you can open it lazily with
 [`ddbs_open_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.md):
 
 ``` r
+
 countries_ddbs <- ddbs_open_dataset(
   system.file(
     "spatial/countries.geojson",
@@ -69,8 +74,8 @@ print(countries_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_7aabe4a6_fbf2_4c56_b799_6efe67ec3a35> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.5.3/:memory:]
+#> # Source:   table<temp_view_3a382cb7_17bb_4e57_b09e_32d7b6c674b6> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
 #>    OGC_FID CNTR_ID NAME_ENGL          ISO3_CODE CNTR_NAME FID   date       geom 
 #>      <dbl> <chr>   <chr>              <chr>     <chr>     <chr> <date>     <wk_>
 #>  1       0 AR      Argentina          ARG       Argentina AR    2021-01-01 <POL…
@@ -97,15 +102,15 @@ print(countries_ddbs)
 Printing a `duckspatial_df` object displays the most important metadata
 at a glance:
 
-| Field               | Description                                               |
-|---------------------|-----------------------------------------------------------|
-| **CRS**             | Coordinate reference system (AUTHORITY:CODE)              |
-| **Geometry column** | Name of the column holding geometries                     |
-| **Geometry type**   | Type(s) present (e.g. `POLYGON`, `MULTIPOLYGON`, `POINT`) |
-| **Bounding box**    | Four coordinates bounding all geometries                  |
-| **Source**          | Name of the temporary view inside DuckDB                  |
-| **Database**        | DuckDB database path and version                          |
-| **Data**            | First rows of the dataset                                 |
+| Field | Description |
+|----|----|
+| **CRS** | Coordinate reference system (AUTHORITY:CODE) |
+| **Geometry column** | Name of the column holding geometries |
+| **Geometry type** | Type(s) present (e.g. `POLYGON`, `MULTIPOLYGON`, `POINT`) |
+| **Bounding box** | Four coordinates bounding all geometries |
+| **Source** | Name of the temporary view inside DuckDB |
+| **Database** | DuckDB database path and version |
+| **Data** | First rows of the dataset |
 
 The table is not in R’s memory; it lives inside the DuckDB connection.
 Every {duckspatial} operation you apply runs there, using the DuckDB
@@ -116,6 +121,7 @@ convert it to a `duckspatial_df` with
 [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md):
 
 ``` r
+
 ## read with sf as usual
 countries_sf <- read_sf(
   system.file(
@@ -151,6 +157,7 @@ subsequent
 runs inside DuckDB:
 
 ``` r
+
 countries_ddbs |>
   ddbs_is_valid() |>
   filter(!is_valid)
@@ -162,8 +169,8 @@ countries_ddbs |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_8cdcceb3_a11c_4923_8a88_9fda9c82d7c7> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.5.3/:memory:]
+#> # Source:   table<temp_view_e34dc8a7_e628_4f74_9eb7_4fd154d50f86> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
 #> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <POLYGON ((…
@@ -176,6 +183,7 @@ before computing the union, and because `duckspatial_df` objects are
 lazy, we can chain both steps in a single pipe:
 
 ``` r
+
 world_ddbs <- countries_ddbs |>
   ddbs_make_valid() |>
   ddbs_union()
@@ -189,8 +197,8 @@ print(world_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_618d84bd_51ea_4126_a934_395a8ee03976> [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.5.3/:memory:]
+#> # Source:   table<temp_view_543279b0_2782_4fd8_b661_ccd1e0196145> [?? x 1]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
 #>   geometry                                                                      
 #>   <wk_wkb>                                                                      
 #> 1 <MULTIPOLYGON (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.4843…
@@ -201,6 +209,7 @@ pull the data into R as an `sf` object. Any of the following three calls
 do that:
 
 ``` r
+
 # Option A
 world_sf <- ddbs_collect(world_ddbs)
 
@@ -212,6 +221,7 @@ world_sf <- st_as_sf(world_ddbs)
 ```
 
 ``` r
+
 world_sf <- world_ddbs |>
   ddbs_collect()
 
@@ -228,6 +238,7 @@ print(world_sf)
 ```
 
 ``` r
+
 plot(world_sf)
 ```
 
@@ -257,12 +268,14 @@ that creates a DuckDB connection, installs the Spatial extension, and
 loads it, all in one call:
 
 ``` r
+
 conn <- ddbs_create_conn()
 ```
 
 You can also limit the resources DuckDB is allowed to use:
 
 ``` r
+
 conn <- ddbs_create_conn(
   threads         = 2,
   memory_limit_gb = 8
@@ -274,6 +287,7 @@ Under the hood,
 is equivalent to:
 
 ``` r
+
 conn <- dbConnect(duckdb())
 ddbs_install(conn)
 ddbs_load(conn)
@@ -286,6 +300,7 @@ Once you have a connection, write spatial data into it with
 It accepts both `sf` and `duckspatial_df` objects:
 
 ``` r
+
 ddbs_write_table(conn, countries_sf, name = "countries")
 #> ✔ Table countries successfully imported
 ```
@@ -293,6 +308,7 @@ ddbs_write_table(conn, countries_sf, name = "countries")
 Verify the table is there:
 
 ``` r
+
 ddbs_list_tables(conn)
 #>   table_schema table_name table_type
 #> 1         main  countries BASE TABLE
@@ -303,6 +319,7 @@ that accept a `duckspatial_df` also accept a table name + connection
 pair:
 
 ``` r
+
 ddbs_is_valid("countries", conn = conn) |>
   filter(!is_valid)
 #> # A duckspatial lazy spatial table
@@ -313,8 +330,8 @@ ddbs_is_valid("countries", conn = conn) |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_c9f87807_5e82_4a37_b767_30da27935174> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.5.3/:memory:]
+#> # Source:   table<temp_view_b785da61_d5fb_47dc_937e_d4902f5d146b> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
 #> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <POLYGON ((…
@@ -324,6 +341,7 @@ You can write intermediate results as named tables in the database by
 passing a `name` argument:
 
 ``` r
+
 ddbs_make_valid("countries", conn = conn, name = "countries_valid")
 #> ✔ Query successful
 ddbs_union("countries_valid", conn = conn, name = "world")
@@ -336,6 +354,7 @@ passed straight to
 [`plot()`](https://rspatial.github.io/terra/reference/plot.html):
 
 ``` r
+
 ddbs_read_table(conn, "world") |>
   plot()
 #> ✔ table world successfully imported.
@@ -347,6 +366,7 @@ When you are done, close the connection. Because this is an in-memory
 database, all tables written to it will be discarded:
 
 ``` r
+
 ddbs_stop_conn(conn)
 ```
 
@@ -357,6 +377,7 @@ difference is the connection string, pass a file path to
 [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md):
 
 ``` r
+
 conn <- ddbs_create_conn("my_database.duckdb")
 ```
 
@@ -365,6 +386,7 @@ workflow (which is lazily evaluated inside the default connection), and
 only write the final results to the persistent database:
 
 ``` r
+
 ## open persistent connection
 conn <- ddbs_create_conn("my_database.duckdb")
 

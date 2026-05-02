@@ -166,11 +166,14 @@
 <span>  <span class="va">x</span>,</span>
 <span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>,</span>
 <span>  crs <span class="op">=</span> <span class="st">"EPSG:4326"</span>,</span>
+<span>  remove <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  na.fail <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -197,6 +200,16 @@ longitude and latitude columns (or X and Y coordinates). Defaults to
 input coordinates. Can be specified as an EPSG code (e.g., <code>"EPSG:4326"</code>
 or <code>4326</code>) or a WKT string. Defaults to <code>"EPSG:4326"</code> (WGS84
 longitude/latitude).</p></dd>
+
+
+<dt id="arg-remove">remove<a class="anchor" aria-label="anchor" href="#arg-remove"></a></dt>
+<dd><p>Logical. If <code>TRUE</code> (default), the coordinate columns
+specified in <code>coords</code> are removed from the output.</p></dd>
+
+
+<dt id="arg-na-fail">na.fail<a class="anchor" aria-label="anchor" href="#arg-na-fail"></a></dt>
+<dd><p>Logical. If <code>TRUE</code> (default), the function errors if
+any missing values (NAs) are found in the coordinate columns.</p></dd>
 
 
 <dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
@@ -227,6 +240,11 @@ to <code>FALSE</code>. This argument is ignored when <code>name</code> is <code>
 <dd><p>A logical value. If <code>TRUE</code>, suppresses any informational messages.
 Defaults to <code>FALSE</code>.</p></dd>
 
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional arguments. Currently supports <code>geom_col</code> to
+specify the name of the geometry column in the output.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -253,14 +271,14 @@ Defaults to <code>FALSE</code>.</p></dd>
 <span class="r-in"><span><span class="co"># option 1: convert data frame to sf object</span></span></span>
 <span class="r-in"><span><span class="va">cities_ddbs</span> <span class="op">&lt;-</span> <span class="fu">ddbs_as_points</span><span class="op">(</span><span class="va">cities_df</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># specify custom coordinate column names</span></span></span>
+<span class="r-in"><span><span class="co"># specify custom coordinate column names and keep them in output</span></span></span>
 <span class="r-in"><span><span class="va">cities_df2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  city <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Mendoza"</span>, <span class="st">"Tucumán"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  longitude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">68.8272</span>, <span class="op">-</span><span class="fl">65.2226</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  latitude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">32.8895</span>, <span class="op">-</span><span class="fl">26.8241</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">ddbs_as_points</span><span class="op">(</span><span class="va">cities_df2</span>, coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"longitude"</span>, <span class="st">"latitude"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">ddbs_as_points</span><span class="op">(</span><span class="va">cities_df2</span>, coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"longitude"</span>, <span class="st">"latitude"</span><span class="op">)</span>, remove <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## option 2: convert table in duckdb to spatial table</span></span></span>

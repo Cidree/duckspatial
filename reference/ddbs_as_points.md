@@ -10,11 +10,14 @@ ddbs_as_points(
   x,
   coords = c("lon", "lat"),
   crs = "EPSG:4326",
+  remove = TRUE,
+  na.fail = TRUE,
   conn = NULL,
   name = NULL,
   mode = NULL,
   overwrite = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  ...
 )
 ```
 
@@ -46,6 +49,16 @@ ddbs_as_points(
   input coordinates. Can be specified as an EPSG code (e.g.,
   `"EPSG:4326"` or `4326`) or a WKT string. Defaults to `"EPSG:4326"`
   (WGS84 longitude/latitude).
+
+- remove:
+
+  Logical. If `TRUE` (default), the coordinate columns specified in
+  `coords` are removed from the output.
+
+- na.fail:
+
+  Logical. If `TRUE` (default), the function errors if any missing
+  values (NAs) are found in the coordinate columns.
 
 - conn:
 
@@ -83,6 +96,11 @@ ddbs_as_points(
   A logical value. If `TRUE`, suppresses any informational messages.
   Defaults to `FALSE`.
 
+- ...:
+
+  Additional arguments. Currently supports `geom_col` to specify the
+  name of the geometry column in the output.
+
 ## Value
 
 Depends on the `mode` argument (or global preference set by
@@ -115,14 +133,14 @@ cities_df <- data.frame(
 # option 1: convert data frame to sf object
 cities_ddbs <- ddbs_as_points(cities_df)
 
-# specify custom coordinate column names
+# specify custom coordinate column names and keep them in output
 cities_df2 <- data.frame(
   city = c("Mendoza", "Tucumán"),
   longitude = c(-68.8272, -65.2226),
   latitude = c(-32.8895, -26.8241)
 )
 
-ddbs_as_points(cities_df2, coords = c("longitude", "latitude"))
+ddbs_as_points(cities_df2, coords = c("longitude", "latitude"), remove = FALSE)
 
 
 ## option 2: convert table in duckdb to spatial table

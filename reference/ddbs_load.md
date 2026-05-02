@@ -6,7 +6,7 @@ database
 ## Usage
 
 ``` r
-ddbs_load(conn, quiet = FALSE, extension = "spatial")
+ddbs_load(conn, quiet = FALSE, extension = "spatial", create_macros = TRUE)
 ```
 
 ## Arguments
@@ -23,6 +23,11 @@ ddbs_load(conn, quiet = FALSE, extension = "spatial")
 - extension:
 
   name of the extension to load, default is "spatial"
+
+- create_macros:
+
+  if TRUE (default), it creates macros that allow some functions to be
+  used within dplyr pipelines
 
 ## Value
 

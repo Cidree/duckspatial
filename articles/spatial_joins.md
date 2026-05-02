@@ -15,6 +15,7 @@ Let’s see a few examples. First, let’s load a few libraries and our
 sample data:
 
 ``` r
+
 library(duckspatial)
 library(sf)
 
@@ -46,6 +47,7 @@ spins up a temporary DuckDB, runs the join, and returns an `sf.`
   to persist intermediate tables.
 
 ``` r
+
 out_sf1 <- ddbs_join(
   x    = points_sf,
   y    = countries_sf,
@@ -66,6 +68,7 @@ function, which automatically install and load DuckDB spatial extension
 to the connection.
 
 ``` r
+
 # create a fresh DuckDB connection
 conn <- duckspatial::ddbs_create_conn()
 ```
@@ -75,6 +78,7 @@ DuckDB, and perform the spatial join by referencing their table names.
 Like this:
 
 ``` r
+
 # write data to DuckDB
 ddbs_write_table(conn, points_sf,   "points",    overwrite = TRUE)
 ddbs_write_table(conn, countries_sf, "countries", overwrite = TRUE)
@@ -100,6 +104,7 @@ writes a new table in the DuckDB database. You simply need to the `name`
 of the new table.
 
 ``` r
+
 ddbs_join(
     conn = conn,
     x = "points",
@@ -143,5 +148,6 @@ accepts the spatial predicates:
 Don’t forget to disconnect from the database.
 
 ``` r
+
 duckdb::dbDisconnect(conn)
 ```
