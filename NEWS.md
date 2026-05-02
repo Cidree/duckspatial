@@ -42,6 +42,8 @@
 
 * `ddbs_centroid()`: gains the argument `method` to implement ST_PointOnSurface (#118).
 
+* `ddbs_as_points()` allows to create a `duckspatial_df` from raw coordinate or WKT columns. It also gains two new arguments: `remove` and `na.fail` (#125).
+
 ## BUG FIXES
 
 * Large datasets couldn't be processed because an `arrow` code limitation in `ddbs_register_table()` (#124).
