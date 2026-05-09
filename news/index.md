@@ -71,6 +71,10 @@
   reads the metadata of a vectorial data file
   ([\#118](https://github.com/Cidree/duckspatial/issues/118)).
 
+- [`ddbs_make_line()`](https://cidree.github.io/duckspatial/reference/ddbs_make_line.md):
+  creates LINESTRINGS from POINT geometries
+  ([\#126](https://github.com/Cidree/duckspatial/issues/126)).
+
 ### ENHANCEMENTS
 
 - `group_by` and `summarise` methods now drop the spatial attributes

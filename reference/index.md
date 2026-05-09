@@ -101,6 +101,8 @@ Modify, simplify, and transform individual geometries
   : Extract the exterior ring of polygons
 - [`ddbs_maximum_inscribed_circle()`](https://cidree.github.io/duckspatial/reference/ddbs_maximum_inscribed_circle.md)
   : Computes the maximum inscribed circle of a geometry
+- [`ddbs_make_line()`](https://cidree.github.io/duckspatial/reference/ddbs_make_line.md)
+  : Create lines from point geometries
 - [`ddbs_voronoi()`](https://cidree.github.io/duckspatial/reference/ddbs_voronoi.md)
   : Computes a Voronoi diagram from point geometries
 
