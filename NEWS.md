@@ -32,6 +32,8 @@
 
 * `ddbs_read_meta()`: reads the metadata of a vectorial data file (#118).
 
+* `ddbs_make_line()`: creates LINESTRINGS from POINT geometries (#126).
+
 ## ENHANCEMENTS
 
 * `group_by` and `summarise` methods now drop the spatial attributes when the output is not a `duckspatial_df` anymore (#119).

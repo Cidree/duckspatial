@@ -1131,3 +1131,147 @@ ddbs_remove_repeated_points <- function(
   )
 
 }
+
+
+
+
+
+#' Create lines from point geometries
+#'
+#' Aggregates point geometries into a single LINESTRING by connecting them in
+#' their original order. Optionally, lines can be created per group using the
+#' \code{by} argument.
+#'
+#' @template x
+#' @param by A character vector of column names to group by before aggregating
+#' points into lines. If \code{NULL} (default), all points are combined into a
+#' single line.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#' 
+#' @details
+#' Connects input POINT geometries into a LINESTRING in row order (row 1 → row 2 → …).
+#' To control the connection order, sort the data beforehand with [dplyr::arrange()].
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' points_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/points.gpkg", package = "duckspatial")
+#' )
+#' 
+#' ## create a single line from all points
+#' ddbs_make_line(points_ddbs)
+#' 
+#' ## create lines grouped by a column
+#' ddbs_make_line(points_ddbs, by = "type")
+#' 
+#' ## return as sf object
+#' ddbs_make_line(points_ddbs, by = "type", mode = "sf")
+#' 
+#' ## screate lines groupping by 2 columns
+#' ddbs_make_line(points_ddbs, by = c("type", "class"))
+#' }
+ddbs_make_line <- function(
+  x,
+  by   = NULL,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+  
+  
+  # 0. Validate inputs
+  assert_xy(x, "x")
+  assert_conn_x_name(conn, x, name)
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+  assert_geom_type(x = x, conn = conn, geom = "POINT", multi = FALSE)
+
+
+  # 1. Prepare inputs
+  
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df, 
+  ## validate character table names)
+  x <- normalize_spatial_input(x, conn)
+
+  ## 1.2. Pre-extract attributes
+  crs_x    <- ddbs_crs(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+  mode     <- get_mode(mode, name)
+
+  ## 1.3. Resolve spatial connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 1.4. Get list with query names for the input data
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 2. Prepare the query
+
+  ## 2.1. Get the geometry column name (try to extract from attributes, if not 
+  ## available get it from the database)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+  ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  st_function <- glue::glue("ST_MakeLine(LIST({x_geom}))")
+
+  ## Add groups if specified
+  if (!is.null(by)) {
+    grps <- paste0(by, collapse = ", ")
+    base.query <- glue::glue("
+      SELECT 
+        {grps},
+        {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+      FROM {x_list$query_name}
+      GROUP BY {grps};
+    ")
+  } else {
+    base.query <- glue::glue("
+      SELECT {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+      FROM {x_list$query_name};
+    ")
+  }
+  
+
+
+  # 3. Table creation if name is provided, or 
+  # create duckspatial_df or sf object if name is NULL
+  if (!is.null(name)) {
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
+      query  = base.query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs_x,
+      x_geom = x_geom
+    )
+  }
+
+}
