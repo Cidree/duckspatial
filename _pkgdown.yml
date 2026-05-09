@@ -220,6 +220,7 @@ reference:
   - ddbs_convex_hull
   - ddbs_exterior_ring
   - ddbs_maximum_inscribed_circle
+  - ddbs_make_line
   - ddbs_voronoi
 
 - title: Geometry Processing - Linestrings
