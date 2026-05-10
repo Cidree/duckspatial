@@ -1,4 +1,4 @@
-# duckspatial (development version)
+# duckspatial 1.1.0
 
 ## NEW FEATURES
 
