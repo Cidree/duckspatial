@@ -265,3 +265,19 @@ test_that("ddbs_open_dataset handles missing file gracefully", {
     ignore.case = TRUE
   )
 })
+
+test_that("ddbs_open_dataset fails gracefully on non-compliant GeoArrow structs", {
+  skip_if_not_installed("arrow")
+  skip_if_not_installed("geoarrow")
+  
+  # Create a file with Arrow native encoding (NOT WKB) using direct write_parquet
+  # This triggers the GeoArrow native struct encoding
+  tmp_bad <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp_bad))
+  arrow::write_parquet(countries_sf, tmp_bad)
+  
+  expect_error(
+    ddbs_open_dataset(tmp_bad),
+    "encoded as a native Arrow Struct"
+  )
+})
