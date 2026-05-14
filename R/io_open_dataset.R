@@ -73,6 +73,7 @@ ddbs_open_dataset <- function(path,
   
   # Capture the call for error reporting
   fn_call <- rlang::current_call()
+  crs_override <- crs
   
   # Get or create connection
   if (is.null(conn)) {
@@ -104,30 +105,6 @@ ddbs_open_dataset <- function(path,
         ")
   }
   
-  # -- CRS DETECTION --
-  # Suppress CRS warnings for all formats since:
-  # 1. File-not-found errors will be caught later when executing the view
-  # 2. Invalid format errors will be caught later
-  # 3. CRS warnings before the main error just confuse users
-  
-  if (is.null(crs)) {
-    if (fmt == "parquet") {
-        crs <- suppressWarnings(tryCatch(get_parquet_crs(path, conn), error = function(e) NULL))
-    } else {
-        # Spatial formats: selectively suppress file/format warnings, preserve CRS warnings
-        crs <- withCallingHandlers(
-          tryCatch(get_file_crs(path, conn), error = function(e) NULL),
-          warning = function(w) {
-            if (grepl("Cannot open|No such file|not recognized|missing value where", w$message, ignore.case = TRUE)) {
-              invokeRestart("muffleWarning")
-            }
-          }
-        )
-    }
-  } else if (!inherits(crs, "crs")) {
-      crs <- sf::st_crs(crs)
-  }
-
   view_name <- ddbs_temp_view_name()
   
   # -- QUERY CONSTRUCTION --
@@ -166,8 +143,6 @@ ddbs_open_dataset <- function(path,
       
       if (is_parquet_check) {
           is_likely_parquet <- TRUE
-          # If we successfully probed likely Parquet, we might want to try to get CRS now if still NULL
-          if (is.null(crs)) crs <- get_parquet_crs(path, conn)
       }
   }
 
@@ -201,9 +176,7 @@ ddbs_open_dataset <- function(path,
 
       if (is.null(geom_col)) {
          if (!is.null(try_cols)) {
-             possibles <- c("geometry", "geom", "wkb_geometry")
-             found <- try_cols$column_name[try_cols$column_name %in% possibles]
-             if (length(found) > 0) geom_col <- found[1]
+             geom_col <- ddbs_describe_geometry_col(try_cols)
          } else {
              geom_col <- NULL
          }
@@ -305,7 +278,6 @@ ddbs_open_dataset <- function(path,
       query_str <- glue::glue("ST_Read('{path}'{args_str})")
       
       if (is.null(geom_col)) {
-         geom_col <- "geom" 
          try_cols <- tryCatch({
              DBI::dbGetQuery(conn, glue::glue("DESCRIBE SELECT * FROM {query_str}"))
          }, error = function(e) {
@@ -339,9 +311,7 @@ ddbs_open_dataset <- function(path,
          })
          
          if (!is.null(try_cols)) {
-             ctype <- if("column_type" %in% names(try_cols)) try_cols$column_type else try_cols$data_type
-             geom_cols <- try_cols$column_name[grepl("GEOMETRY|WKB_BLOB", ctype, ignore.case = TRUE)]
-             if (length(geom_cols) > 0) geom_col <- geom_cols[1]
+             geom_col <- ddbs_describe_geometry_col(try_cols)
          }
       }
       
@@ -393,8 +363,25 @@ ddbs_open_dataset <- function(path,
     # Get lazy table reference
     duck_tbl <- dplyr::tbl(conn, view_name)
 
+    if (!is.null(geom_col) && !is.na(geom_col)) {
+      view_cols <- tryCatch(
+        DBI::dbGetQuery(conn, glue::glue("DESCRIBE {view_name}")),
+        error = function(e) NULL
+      )
+      geom_col <- ddbs_describe_geometry_col(view_cols, geom_col)
+    }
+
     # Return already if there's no geometry
     if (is.null(geom_col)) return(duck_tbl)
+
+    crs <- ddbs_open_dataset_crs(
+      crs = crs_override,
+      conn = conn,
+      view_name = view_name,
+      geom_col = geom_col,
+      path = path,
+      fmt = if (is_likely_parquet) "parquet" else fmt
+    )
     
     # Return duckspatial if there's geometry col
     result <- new_duckspatial_df(
@@ -406,4 +393,90 @@ ddbs_open_dataset <- function(path,
     )    
 
     return(result)
+}
+
+#' Detect a geometry column from DuckDB DESCRIBE output
+#'
+#' @keywords internal
+#' @noRd
+ddbs_describe_geometry_col <- function(desc, geom_col = NULL) {
+  if (!is.null(geom_col) || is.null(desc) || nrow(desc) == 0) {
+    return(geom_col)
+  }
+
+  col_type <- if ("column_type" %in% names(desc)) desc$column_type else desc$data_type
+  geom_cols <- desc$column_name[grepl("^GEOMETRY(\\(|$)", col_type, ignore.case = TRUE)]
+  if (length(geom_cols) > 0) {
+    return(geom_cols[1])
+  }
+
+  known <- c("geom", "geometry", "wkb_geometry")
+  found <- desc$column_name[desc$column_name %in% known]
+  if (length(found) > 0) {
+    return(found[1])
+  }
+
+  wkb_cols <- desc$column_name[grepl("WKB_BLOB", col_type, ignore.case = TRUE)]
+  if (length(wkb_cols) > 0) {
+    return(wkb_cols[1])
+  }
+
+  NULL
+}
+
+#' Resolve CRS for an opened DuckDB-backed dataset
+#'
+#' @keywords internal
+#' @noRd
+ddbs_open_dataset_crs <- function(crs, conn, view_name, geom_col, path, fmt) {
+  if (!is.null(crs)) {
+    return(if (inherits(crs, "crs")) crs else sf::st_crs(crs))
+  }
+
+  crs_from_duckdb <- tryCatch({
+    q_geom <- DBI::dbQuoteIdentifier(conn, geom_col)
+    res <- DBI::dbGetQuery(conn, glue::glue(
+      "SELECT ST_CRS({q_geom}) AS crs ",
+      "FROM {view_name} ",
+      "WHERE {q_geom} IS NOT NULL ",
+      "LIMIT 1"
+    ))
+
+    if (nrow(res) == 0 || is.na(res$crs[1]) || identical(res$crs[1], "")) {
+      NULL
+    } else {
+      sf::st_crs(res$crs[1])
+    }
+  }, error = function(e) NULL)
+
+  if (!is.null(crs_from_duckdb) && !is.na(crs_from_duckdb)) {
+    return(crs_from_duckdb)
+  }
+
+  if (!identical(fmt, "parquet")) {
+    crs_from_gdal_meta <- withCallingHandlers(
+      tryCatch(get_file_crs(path, conn), error = function(e) NULL),
+      warning = function(w) {
+        if (grepl("Cannot open|No such file|not recognized|missing value where", w$message, ignore.case = TRUE)) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+
+    if (!is.null(crs_from_gdal_meta) && !is.na(crs_from_gdal_meta)) {
+      return(crs_from_gdal_meta)
+    }
+  }
+
+  if (identical(fmt, "parquet")) {
+    crs_from_geoparquet <- suppressWarnings(
+      tryCatch(get_parquet_crs(path, conn), error = function(e) NULL)
+    )
+
+    if (!is.null(crs_from_geoparquet) && !is.na(crs_from_geoparquet)) {
+      return(crs_from_geoparquet)
+    }
+  }
+
+  sf::st_crs(NA)
 }

@@ -147,13 +147,13 @@ test_that("ddbs_write_table respects temp_view = TRUE", {
   # Write with temp_view = TRUE
   expect_true(ddbs_write_table(conn_test, points_sf, table_name, temp_view = TRUE, overwrite = TRUE))
   
-  # Should NOT be in persistent tables
+  # The requested name should be queryable through the typed temp view
   all_tables <- DBI::dbListTables(conn_test)
-  expect_false(table_name %in% all_tables)
-  
-  # Should be in Arrow views
+  expect_true(table_name %in% all_tables)
+
+  # The raw Arrow view is hidden behind the typed SQL view
   arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-  expect_true(table_name %in% arrow_views)
+  expect_true(paste0("__raw_", table_name) %in% arrow_views)
   
   # Should be readable
   result <- ddbs_read_table(conn_test, table_name)
@@ -207,12 +207,14 @@ test_that("ddbs_write_table with temp_view=TRUE works for duckspatial_df", {
   # This should work with temp_view = TRUE
   expect_true(ddbs_write_table(conn_new, df_lazy, view_name, temp_view = TRUE, overwrite = TRUE))
   
-  # Verify view was created (should be in Arrow views, not tables)
+  # Verify the typed view was created and backed by a hidden raw Arrow view
+  all_tables <- DBI::dbListTables(conn_new)
+  expect_true(view_name %in% all_tables)
+
   arrow_views <- duckdb::duckdb_list_arrow(conn_new)
-  expect_true(view_name %in% arrow_views)
+  expect_true(paste0("__raw_", view_name) %in% arrow_views)
   
   # Should be queryable
   result <- ddbs_read_table(conn_new, view_name)
   expect_equal(nrow(result), nrow(points_sf))
 })
-

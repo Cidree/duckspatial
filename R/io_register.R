@@ -116,15 +116,21 @@ ddbs_register_table <- function(
     geom_name <- attr(data_sf, "sf_column")
     crs_obj <- sf::st_crs(data_sf)
     
-    # Extract robust CRS string (WKT preferred, or EPSG)
+    # DuckDB accepts WKT in GEOMETRY('<crs>'), but GeoArrow metadata consumed by
+    # DuckDB cannot serialize WKT here. Keep the two CRS representations separate.
     if (!is.na(crs_obj)) {
         if (!is.na(crs_obj$epsg)) {
             crs_input <- paste0("EPSG:", crs_obj$epsg)
         } else {
             crs_input <- crs_obj$wkt
         }
+        geoarrow_crs <- if (!is.na(crs_obj$epsg)) crs_input else crs_obj$proj4string
+        if (length(geoarrow_crs) == 0 || is.na(geoarrow_crs) || identical(geoarrow_crs, "")) {
+            geoarrow_crs <- NULL
+        }
     } else {
         crs_input <- NULL
+        geoarrow_crs <- NULL
     }
 
     ## Estimate chunk size from a sample. This is needed to avoid OOM errors
@@ -148,7 +154,7 @@ ddbs_register_table <- function(
         arrow_table <- {
             df[[geom_name]] <- geoarrow::as_geoarrow_vctr(
                 wkb,
-                schema = geoarrow::geoarrow_wkb(crs = crs_obj$input)
+                schema = geoarrow::geoarrow_wkb(crs = geoarrow_crs)
             )
             arrow::Table$create(df)
         }
@@ -158,7 +164,7 @@ ddbs_register_table <- function(
             chunk <- df[i, , drop = FALSE]
             chunk[[geom_name]] <- geoarrow::as_geoarrow_vctr(
                 wkb[i],
-                schema = geoarrow::geoarrow_wkb(crs = crs_obj$input)
+                schema = geoarrow::geoarrow_wkb(crs = geoarrow_crs)
             )
             arrow::record_batch(chunk)
         })

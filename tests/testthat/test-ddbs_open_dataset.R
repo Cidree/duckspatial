@@ -6,6 +6,27 @@
 # =============================================================================
 testthat::skip_on_cran()
 
+expect_duckdb_st_crs <- function(ds, conn) {
+  view_name <- attr(ds, "source_table")
+  geom_col <- attr(ds, "sf_column")
+  q_geom <- as.character(DBI::dbQuoteIdentifier(conn, geom_col))
+
+  res <- DBI::dbGetQuery(
+    conn,
+    glue::glue(
+      "SELECT ST_CRS({q_geom}) AS crs ",
+      "FROM {view_name} ",
+      "WHERE {q_geom} IS NOT NULL ",
+      "LIMIT 1"
+    )
+  )
+
+  expect_equal(nrow(res), 1)
+  expect_false(is.na(res$crs[[1]]))
+  expect_false(identical(res$crs[[1]], ""))
+  res$crs[[1]]
+}
+
 test_that("ddbs_open_dataset works with GeoJSON", {
   conn <- ddbs_temp_conn()
 
@@ -19,9 +40,9 @@ test_that("ddbs_open_dataset works with GeoJSON", {
   res <- DBI::dbGetQuery(conn, sprintf("SELECT count(*) FROM %s", view_name))
   expect_equal(as.numeric(res[[1]]), 257)
 
-  # Verify CRS detection (countries is WGS84 EPSG:4326)
-  detected_crs <- attr(ds, "crs")
-  expect_equal(sf::st_crs(detected_crs)$epsg, 4326)
+  # Verify CRS detection delegates to DuckDB when available
+  duckdb_crs <- expect_duckdb_st_crs(ds, conn)
+  expect_equal(attr(ds, "crs"), sf::st_crs(duckdb_crs))
 
   # Verify geometry is valid
   res_geom <- DBI::dbGetQuery(
@@ -51,9 +72,9 @@ test_that("ddbs_open_dataset works with GeoPackage", {
   res <- DBI::dbGetQuery(conn, sprintf("SELECT count(*) FROM %s", view_name))
   expect_equal(as.numeric(res[[1]]), nrow(countries_sf))
 
-  # Verify CRS detection (countries is WGS84 EPSG:4326)
-  detected_crs <- attr(ds, "crs")
-  expect_equal(sf::st_crs(detected_crs)$epsg, 4326)
+  # Verify CRS detection delegates to DuckDB when available
+  duckdb_crs <- expect_duckdb_st_crs(ds, conn)
+  expect_equal(attr(ds, "crs"), sf::st_crs(duckdb_crs))
 })
 
 test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
@@ -75,6 +96,10 @@ test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
 
   # Check geometry column detection
   expect_equal(attr(ds, "sf_column"), "geometry")
+
+  # Verify CRS detection delegates to DuckDB when available
+  duckdb_crs <- expect_duckdb_st_crs(ds, conn)
+  expect_equal(attr(ds, "crs"), sf::st_crs(duckdb_crs))
 })
 
 test_that("ddbs_open_dataset works with Shapefile", {
@@ -104,6 +129,30 @@ test_that("ddbs_open_dataset works with Shapefile", {
   )
   expect_true(nrow(res_geom) == 1)
   expect_true(grepl("LINESTRING", res_geom[[1]]))
+})
+
+test_that("ddbs_open_dataset detects CRS across generated and bundled formats", {
+  skip_if_not_installed("arrow")
+
+  conn <- ddbs_temp_conn()
+
+  generated_geojson <- ddbs_create_temp_spatial_file(countries_sf, ext = "geojson", conn = conn)
+  generated_geoparquet <- ddbs_create_temp_spatial_file(countries_sf, ext = "parquet", conn = conn)
+  bundled_gpkg <- system.file("spatial/points.gpkg", package = "duckspatial")
+  bundled_shp <- system.file("shape/nc.shp", package = "sf")
+
+  generated_geojson_ds <- ddbs_open_dataset(generated_geojson, conn = conn)
+  expect_equal(attr(generated_geojson_ds, "crs"), sf::st_crs(expect_duckdb_st_crs(generated_geojson_ds, conn)))
+
+  generated_geoparquet_ds <- ddbs_open_dataset(generated_geoparquet, conn = conn)
+  expect_equal(attr(generated_geoparquet_ds, "crs"), sf::st_crs(expect_duckdb_st_crs(generated_geoparquet_ds, conn)))
+  expect_false(is.na(attr(generated_geoparquet_ds, "crs")))
+
+  bundled_gpkg_ds <- ddbs_open_dataset(bundled_gpkg, conn = conn)
+  expect_equal(attr(bundled_gpkg_ds, "crs"), sf::st_crs(expect_duckdb_st_crs(bundled_gpkg_ds, conn)))
+
+  bundled_shp_ds <- ddbs_open_dataset(bundled_shp, conn = conn)
+  expect_equal(sf::st_crs(attr(bundled_shp_ds, "crs"))$epsg, 4267)
 })
 
 # =============================================================================

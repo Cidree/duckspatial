@@ -68,7 +68,7 @@ get_parquet_crs <- function(path, conn) {
         WHERE decode(key) = 'geo'
       )
       SELECT 
-        meta->'columns'->(meta->>'primary_column')->>'crs' as crs
+        json_extract_string(meta, '$.columns.' || (meta->>'primary_column') || '.crs') as crs
       FROM geo_meta
       LIMIT 1
     ")
