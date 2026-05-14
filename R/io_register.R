@@ -87,6 +87,11 @@ ddbs_register_table <- function(
                 cli::cli_alert_info("Existing object {view_name} dropped")
             }
         }
+        
+        # Also clean up any potential hidden raw arrow view
+        raw_view_name <- paste0("__raw_", view_name)
+        try(duckdb::duckdb_unregister_arrow(conn, raw_view_name), silent = TRUE)
+        
         if (arrow_exists) {
             try(
                 duckdb::duckdb_unregister_arrow(conn, view_name),
@@ -109,7 +114,18 @@ ddbs_register_table <- function(
 
     ## Get original geometry column name and CRS
     geom_name <- attr(data_sf, "sf_column")
-    crs <- sf::st_crs(data_sf, describe = TRUE)$input
+    crs_obj <- sf::st_crs(data_sf)
+    
+    # Extract robust CRS string (WKT preferred, or EPSG)
+    if (!is.na(crs_obj)) {
+        if (!is.na(crs_obj$epsg)) {
+            crs_input <- paste0("EPSG:", crs_obj$epsg)
+        } else {
+            crs_input <- crs_obj$wkt
+        }
+    } else {
+        crs_input <- NULL
+    }
 
     ## Estimate chunk size from a sample. This is needed to avoid OOM errors
     ## when creating the Arrow table for very large datasets. The chunk size is
@@ -132,7 +148,7 @@ ddbs_register_table <- function(
         arrow_table <- {
             df[[geom_name]] <- geoarrow::as_geoarrow_vctr(
                 wkb,
-                schema = geoarrow::geoarrow_wkb(crs = crs)
+                schema = geoarrow::geoarrow_wkb(crs = crs_obj$input)
             )
             arrow::Table$create(df)
         }
@@ -142,7 +158,7 @@ ddbs_register_table <- function(
             chunk <- df[i, , drop = FALSE]
             chunk[[geom_name]] <- geoarrow::as_geoarrow_vctr(
                 wkb[i],
-                schema = geoarrow::geoarrow_wkb(crs = crs)
+                schema = geoarrow::geoarrow_wkb(crs = crs_obj$input)
             )
             arrow::record_batch(chunk)
         })
@@ -155,8 +171,30 @@ ddbs_register_table <- function(
         )
     }
 
-    ## Register the table
-    duckdb::duckdb_register_arrow(conn, view_name, arrow_table)
+    ## Register the raw Arrow table under a hidden name
+    raw_view_name <- paste0("__raw_", view_name)
+    duckdb::duckdb_register_arrow(conn, raw_view_name, arrow_table)
+    
+    ## Wrap it in a user-facing typed view
+    q_geom <- DBI::dbQuoteIdentifier(conn, geom_name)
+    if (!is.null(crs_input)) {
+        # Escape single quotes in WKT for SQL safety
+        safe_crs <- gsub("'", "''", crs_input)
+        DBI::dbExecute(conn, glue::glue(
+            "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
+            "SELECT * EXCLUDE {q_geom}, ",
+            "({q_geom}::GEOMETRY('{safe_crs}')) AS {q_geom} ",
+            "FROM {raw_view_name}"
+        ))
+    } else {
+        # No CRS, just create a direct view casting to generic GEOMETRY
+        DBI::dbExecute(conn, glue::glue(
+            "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
+            "SELECT * EXCLUDE {q_geom}, ",
+            "({q_geom}::GEOMETRY) AS {q_geom} ",
+            "FROM {raw_view_name}"
+        ))
+    }
 
     ## User feedback
     if (isFALSE(quiet)) {
