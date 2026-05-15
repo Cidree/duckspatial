@@ -55,6 +55,7 @@ Suggests:
     bench,
     duckdbfs,
     ggplot2 (>= 3.3.1),
+    jsonlite,
     knitr,
     lwgeom,
     patchwork,
