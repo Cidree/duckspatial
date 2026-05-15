@@ -325,8 +325,6 @@ test_that("ddbs_open_dataset fails gracefully on non-compliant GeoArrow structs"
   on.exit(unlink(tmp_bad))
   arrow::write_parquet(countries_sf, tmp_bad)
   
-  expect_error(
-    ddbs_open_dataset(tmp_bad),
-    "encoded as a native Arrow Struct"
-  )
+  expect_error(ddbs_open_dataset(tmp_bad), "uses a native Arrow/GeoArrow struct encoding")
+
 })

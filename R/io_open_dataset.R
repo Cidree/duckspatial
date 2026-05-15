@@ -187,9 +187,9 @@ ddbs_open_dataset <- function(path,
           col_type <- try_cols$column_type[try_cols$column_name == geom_col]
           if (length(col_type) > 0 && grepl("STRUCT", toupper(col_type[1]))) {
               cli::cli_abort(c(
-                  "The geometry column {.val {geom_col}} is encoded as a native Arrow Struct, which is not supported by DuckDB's spatial extension.",
-                  "x" = "DuckDB requires standard GeoParquet 1.1 with WKB (Well-Known Binary) encoding.",
-                  "i" = "To fix this, please resave the file using:",
+                  "The geometry column {.val {geom_col}} uses a native Arrow/GeoArrow struct encoding that DuckDB's spatial extension cannot parse here.",
+                  "x" = "This file uses a GeoParquet/GeoArrow geometry encoding that {.pkg duckspatial} cannot open through DuckDB yet.",
+                  "i" = "To work around this, rewrite the geometry column to WKB GeoParquet, for example using:",
                   " " = "  {.code duckspatial::ddbs_write_dataset(data, path)}",
                   " " = "  # OR if using geoarrow:",
                   " " = "  {.code data${geom_col} <- geoarrow::as_geoarrow_vctr(data${geom_col}, schema = geoarrow::geoarrow_wkb())}",
