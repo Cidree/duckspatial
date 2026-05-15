@@ -55,23 +55,26 @@ ddbs_register_table <- function(
     db_tables <- paste0(tables_df$table_schema, ".", tables_df$table_name) |>
         sub(pattern = "^main\\.", replacement = "")
     name_exists <- view_name %in% db_tables
+    
+    raw_view_name <- paste0("__raw_", view_name)
     arrow_views <- try(
         duckdb::duckdb_list_arrow(conn),
         silent = TRUE
     )
-    arrow_exists <- if (inherits(arrow_views, "try-error")) {
-        FALSE
-    } else {
-        view_name %in% arrow_views
+    if (inherits(arrow_views, "try-error")) {
+        arrow_views <- character(0)
     }
+    
+    arrow_exists <- view_name %in% arrow_views
+    raw_exists <- raw_view_name %in% arrow_views
 
-    if ((name_exists || arrow_exists) && !overwrite) {
+    if ((name_exists || arrow_exists || raw_exists) && !overwrite) {
         cli::cli_abort(
             "The provided view (or table) name is already present in the database. Please, use `overwrite = TRUE` or choose a different name."
         )
     }
 
-    if (overwrite && (name_exists || arrow_exists)) {
+    if (overwrite && (name_exists || arrow_exists || raw_exists)) {
         if (name_exists) {
             match_idx <- which(db_tables == view_name)[1]
             table_type <- tables_df$table_type[match_idx]
@@ -89,8 +92,9 @@ ddbs_register_table <- function(
         }
         
         # Also clean up any potential hidden raw arrow view
-        raw_view_name <- paste0("__raw_", view_name)
-        try(duckdb::duckdb_unregister_arrow(conn, raw_view_name), silent = TRUE)
+        if (raw_exists) {
+            try(duckdb::duckdb_unregister_arrow(conn, raw_view_name), silent = TRUE)
+        }
         
         if (arrow_exists) {
             try(
@@ -178,7 +182,6 @@ ddbs_register_table <- function(
     }
 
     ## Register the raw Arrow table under a hidden name
-    raw_view_name <- paste0("__raw_", view_name)
     duckdb::duckdb_register_arrow(conn, raw_view_name, arrow_table)
     
     ## Wrap it in a user-facing typed view
