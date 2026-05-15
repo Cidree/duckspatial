@@ -56,7 +56,11 @@ ddbs_register_table <- function(
         sub(pattern = "^main\\.", replacement = "")
     name_exists <- view_name %in% db_tables
     
-    raw_view_name <- paste0("__raw_", view_name)
+    # Prefix only the table component if it's schema-qualified to avoid 
+    # broken names like __raw_schema.table. Also, duckdb_register_arrow 
+    # doesn't support schema-qualified names, so we use a single component.
+    raw_view_name <- paste0("__raw_", gsub("\\.", "_", view_name))
+
     arrow_views <- try(
         duckdb::duckdb_list_arrow(conn),
         silent = TRUE
@@ -187,11 +191,16 @@ ddbs_register_table <- function(
         
         ## Wrap it in a user-facing typed view
         q_geom <- DBI::dbQuoteIdentifier(conn, geom_name)
+        
+        # If view_name is qualified, DuckDB doesn't allow TEMP VIEW in other schemas.
+        # We use a regular VIEW if qualified, or a TEMP VIEW if not.
+        view_type <- if (name_list$schema_name != "main") "VIEW" else "TEMP VIEW"
+
         if (!is.null(crs_input)) {
             # Escape single quotes in WKT for SQL safety
             safe_crs <- gsub("'", "''", crs_input)
             DBI::dbExecute(conn, glue::glue(
-                "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
+                "CREATE OR REPLACE {view_type} {view_name} AS ",
                 "SELECT * EXCLUDE {q_geom}, ",
                 "({q_geom}::GEOMETRY('{safe_crs}')) AS {q_geom} ",
                 "FROM {raw_view_name}"
@@ -199,7 +208,7 @@ ddbs_register_table <- function(
         } else {
             # No CRS, just create a direct view casting to generic GEOMETRY
             DBI::dbExecute(conn, glue::glue(
-                "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
+                "CREATE OR REPLACE {view_type} {view_name} AS ",
                 "SELECT * EXCLUDE {q_geom}, ",
                 "({q_geom}::GEOMETRY) AS {q_geom} ",
                 "FROM {raw_view_name}"

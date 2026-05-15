@@ -402,15 +402,16 @@ ddbs_open_dataset <- function(path,
 #' @noRd
 ddbs_describe_geometry_col <- function(desc, geom_col = NULL) {
   if (is.null(desc) || nrow(desc) == 0) {
-    return(geom_col)
+    return(NULL)
   }
   
   col_type <- if ("column_type" %in% names(desc)) desc$column_type else desc$data_type
   
   is_geometry_type <- grepl("^GEOMETRY(\\(|$)", col_type, ignore.case = TRUE)
-  is_wkb_type <- grepl("WKB_BLOB|^BLOB$", col_type, ignore.case = TRUE)
+  is_wkb_type <- grepl("WKB_BLOB", col_type, ignore.case = TRUE)
+  is_blob_type <- grepl("^BLOB$", col_type, ignore.case = TRUE)
   is_struct_type <- grepl("^STRUCT", col_type, ignore.case = TRUE)
-  is_spatial_type <- is_geometry_type | is_wkb_type | is_struct_type
+  is_spatial_type <- is_geometry_type | is_wkb_type | is_blob_type | is_struct_type
 
   # 1. If user supplied a geom_col, validate it
   if (!is.null(geom_col) && !is.na(geom_col)) {
@@ -418,7 +419,6 @@ ddbs_describe_geometry_col <- function(desc, geom_col = NULL) {
     if (length(match_idx) > 0 && is_spatial_type[match_idx[1]]) {
       return(geom_col)
     }
-    # If supplied name is invalid or not spatial, we fall through to auto-detection
   }
 
   # 2. Auto-detection heuristics
@@ -436,7 +436,9 @@ ddbs_describe_geometry_col <- function(desc, geom_col = NULL) {
     return(found[1])
   }
 
-  # 2.3. Third priority: Known spatial formats fallback (WKB_BLOB/BLOB)
+  # 2.3. Third priority: Known spatial formats fallback (WKB_BLOB)
+  # Do not treat arbitrary BLOB columns as geometry unless they were 
+  # explicitly selected by name above or exposed as native GEOMETRY.
   wkb_cols <- desc$column_name[is_wkb_type]
   if (length(wkb_cols) > 0) {
     return(wkb_cols[1])
@@ -499,5 +501,6 @@ ddbs_open_dataset_crs <- function(crs, conn, view_name, geom_col, path, fmt) {
     }
   }
 
+  warning("CRS could not be auto-detected; returning NA CRS.", call. = FALSE)
   sf::st_crs(NA)
 }
