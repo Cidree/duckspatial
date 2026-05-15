@@ -70,12 +70,11 @@ get_parquet_crs <- function(path, conn) {
         FROM parquet_kv_metadata({safe_path})
         WHERE decode(key) = 'geo'
       )
-      SELECT 
-        json_extract(meta->'columns', meta->>'primary_column')->>'crs' as crs
+      SELECT
+        meta['columns'][meta->>'primary_column']['crs'] as crs
       FROM geo_meta
       LIMIT 1
-    ")
-    
+    ")    
     res <- DBI::dbGetQuery(conn, query)
     
     if (nrow(res) == 0 || is.na(res$crs[1]) || res$crs[1] == "null") {
