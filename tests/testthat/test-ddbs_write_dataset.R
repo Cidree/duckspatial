@@ -31,7 +31,6 @@ test_that("ddbs_write_dataset works for Parquet", {
 
   tmp_file <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp_file), add = TRUE)
-  on.exit(unlink(tmp_file), add = TRUE)
   expect_no_error(ddbs_write_dataset(ds, tmp_file, quiet = TRUE))
   expect_true(file.exists(tmp_file))
 

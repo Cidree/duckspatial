@@ -403,20 +403,26 @@ ddbs_describe_geometry_col <- function(desc, geom_col = NULL) {
   if (!is.null(geom_col) || is.null(desc) || nrow(desc) == 0) {
     return(geom_col)
   }
-
+  
   col_type <- if ("column_type" %in% names(desc)) desc$column_type else desc$data_type
-  geom_cols <- desc$column_name[grepl("^GEOMETRY(\\(|$)", col_type, ignore.case = TRUE)]
+  
+  is_geometry_type <- grepl("^GEOMETRY(\\(|$)", col_type, ignore.case = TRUE)
+  is_wkb_type <- grepl("WKB_BLOB|^BLOB$", col_type, ignore.case = TRUE)
+  is_struct_type <- grepl("^STRUCT", col_type, ignore.case = TRUE)
+  is_spatial_type <- is_geometry_type | is_wkb_type | is_struct_type
+
+  geom_cols <- desc$column_name[is_geometry_type]
   if (length(geom_cols) > 0) {
     return(geom_cols[1])
   }
 
   known <- c("geom", "geometry", "wkb_geometry")
-  found <- desc$column_name[desc$column_name %in% known]
+  found <- desc$column_name[desc$column_name %in% known & is_spatial_type]
   if (length(found) > 0) {
     return(found[1])
   }
 
-  wkb_cols <- desc$column_name[grepl("WKB_BLOB", col_type, ignore.case = TRUE)]
+  wkb_cols <- desc$column_name[is_wkb_type]
   if (length(wkb_cols) > 0) {
     return(wkb_cols[1])
   }
