@@ -362,14 +362,15 @@ ddbs_open_dataset <- function(path,
     
     # Get lazy table reference
     duck_tbl <- dplyr::tbl(conn, view_name)
-
-    if (!is.null(geom_col) && !is.na(geom_col)) {
-      view_cols <- tryCatch(
-        DBI::dbGetQuery(conn, glue::glue("DESCRIBE {view_name}")),
-        error = function(e) NULL
-      )
-      geom_col <- ddbs_describe_geometry_col(view_cols, geom_col)
-    }
+    
+    view_cols <- tryCatch(
+      DBI::dbGetQuery(conn, glue::glue("DESCRIBE {view_name}")),
+      error = function(e) NULL
+    )
+    
+    # Resolve geometry column: uses user-supplied name if valid, 
+    # otherwise falls back to auto-detection heuristic.
+    geom_col <- ddbs_describe_geometry_col(view_cols, geom_col)
 
     # Return already if there's no geometry
     if (is.null(geom_col)) return(duck_tbl)
@@ -400,7 +401,7 @@ ddbs_open_dataset <- function(path,
 #' @keywords internal
 #' @noRd
 ddbs_describe_geometry_col <- function(desc, geom_col = NULL) {
-  if (!is.null(geom_col) || is.null(desc) || nrow(desc) == 0) {
+  if (is.null(desc) || nrow(desc) == 0) {
     return(geom_col)
   }
   
@@ -411,17 +412,31 @@ ddbs_describe_geometry_col <- function(desc, geom_col = NULL) {
   is_struct_type <- grepl("^STRUCT", col_type, ignore.case = TRUE)
   is_spatial_type <- is_geometry_type | is_wkb_type | is_struct_type
 
+  # 1. If user supplied a geom_col, validate it
+  if (!is.null(geom_col) && !is.na(geom_col)) {
+    match_idx <- which(desc$column_name == geom_col)
+    if (length(match_idx) > 0 && is_spatial_type[match_idx[1]]) {
+      return(geom_col)
+    }
+    # If supplied name is invalid or not spatial, we fall through to auto-detection
+  }
+
+  # 2. Auto-detection heuristics
+  
+  # 2.1. First priority: Native GEOMETRY types
   geom_cols <- desc$column_name[is_geometry_type]
   if (length(geom_cols) > 0) {
     return(geom_cols[1])
   }
 
+  # 2.2. Second priority: Spatial column names with compatible types (WKB/BLOB/STRUCT)
   known <- c("geom", "geometry", "wkb_geometry")
   found <- desc$column_name[desc$column_name %in% known & is_spatial_type]
   if (length(found) > 0) {
     return(found[1])
   }
 
+  # 2.3. Third priority: Known spatial formats fallback (WKB_BLOB/BLOB)
   wkb_cols <- desc$column_name[is_wkb_type]
   if (length(wkb_cols) > 0) {
     return(wkb_cols[1])

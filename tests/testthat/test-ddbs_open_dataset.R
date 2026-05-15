@@ -227,11 +227,20 @@ test_that("ddbs_open_dataset OSM mode dispatch", {
   
   # ST_ReadOSM mode
   # This path is lazy/permissive and might not error on open, allowing us to inspect SQL.
+  # ST_ReadOSM mode
+  # Note: ST_ReadOSM does not produce a spatial column DuckDB understands,
+  # so it returns a regular table, not a duckspatial_df.
   ds_osm_read <- ddbs_open_dataset("dummy.osm.pbf", conn = conn, read_osm_mode = "ST_ReadOSM")
+  expect_false(inherits(ds_osm_read, "duckspatial_df"))
+
+  # The view name is stored in the remote_name for dbplyr objects
+  view_name_osm <- as.character(dbplyr::remote_name(ds_osm_read))
+
   view_sql_osm_read <- DBI::dbGetQuery(
     conn,
-    glue::glue("SELECT sql FROM duckdb_views() WHERE view_name = '{attr(ds_osm_read, 'source_table')}'")
+    glue::glue("SELECT sql FROM duckdb_views() WHERE view_name = '{view_name_osm}'")
   )$sql
+
   expect_true(grepl("st_readosm", view_sql_osm_read, ignore.case = TRUE))
 })
 
@@ -326,5 +335,4 @@ test_that("ddbs_open_dataset fails gracefully on non-compliant GeoArrow structs"
   arrow::write_parquet(countries_sf, tmp_bad)
   
   expect_error(ddbs_open_dataset(tmp_bad), "uses a native Arrow/GeoArrow struct encoding")
-
 })

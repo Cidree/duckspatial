@@ -61,10 +61,13 @@ get_parquet_crs <- function(path, conn) {
     # 2. Extract CRS PROJJSON using a single SQL query
     # We decode key and value blobs, cast value to JSON, 
     # and extract crs for the primary column.
+    # Safely quote the path to prevent SQL injection
+    safe_path <- DBI::dbQuoteString(conn, path)
+    
     query <- glue::glue("
       WITH geo_meta AS (
         SELECT decode(value)::JSON as meta
-        FROM parquet_kv_metadata('{path}')
+        FROM parquet_kv_metadata({safe_path})
         WHERE decode(key) = 'geo'
       )
       SELECT 

@@ -182,28 +182,34 @@ ddbs_register_table <- function(
     }
 
     ## Register the raw Arrow table under a hidden name
-    duckdb::duckdb_register_arrow(conn, raw_view_name, arrow_table)
-    
-    ## Wrap it in a user-facing typed view
-    q_geom <- DBI::dbQuoteIdentifier(conn, geom_name)
-    if (!is.null(crs_input)) {
-        # Escape single quotes in WKT for SQL safety
-        safe_crs <- gsub("'", "''", crs_input)
-        DBI::dbExecute(conn, glue::glue(
-            "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
-            "SELECT * EXCLUDE {q_geom}, ",
-            "({q_geom}::GEOMETRY('{safe_crs}')) AS {q_geom} ",
-            "FROM {raw_view_name}"
-        ))
-    } else {
-        # No CRS, just create a direct view casting to generic GEOMETRY
-        DBI::dbExecute(conn, glue::glue(
-            "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
-            "SELECT * EXCLUDE {q_geom}, ",
-            "({q_geom}::GEOMETRY) AS {q_geom} ",
-            "FROM {raw_view_name}"
-        ))
-    }
+    tryCatch({
+        duckdb::duckdb_register_arrow(conn, raw_view_name, arrow_table)
+        
+        ## Wrap it in a user-facing typed view
+        q_geom <- DBI::dbQuoteIdentifier(conn, geom_name)
+        if (!is.null(crs_input)) {
+            # Escape single quotes in WKT for SQL safety
+            safe_crs <- gsub("'", "''", crs_input)
+            DBI::dbExecute(conn, glue::glue(
+                "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
+                "SELECT * EXCLUDE {q_geom}, ",
+                "({q_geom}::GEOMETRY('{safe_crs}')) AS {q_geom} ",
+                "FROM {raw_view_name}"
+            ))
+        } else {
+            # No CRS, just create a direct view casting to generic GEOMETRY
+            DBI::dbExecute(conn, glue::glue(
+                "CREATE OR REPLACE TEMP VIEW {view_name} AS ",
+                "SELECT * EXCLUDE {q_geom}, ",
+                "({q_geom}::GEOMETRY) AS {q_geom} ",
+                "FROM {raw_view_name}"
+            ))
+        }
+    }, error = function(e) {
+        # Cleanup on failure to avoid stale registrations
+        try(duckdb::duckdb_unregister_arrow(conn, raw_view_name), silent = TRUE)
+        stop(e)
+    })
 
     ## User feedback
     if (isFALSE(quiet)) {
