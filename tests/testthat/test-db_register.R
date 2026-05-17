@@ -37,9 +37,9 @@ test_that("can register sf object as arrow view", {
 
     expect_true(result)
 
-    # check that view exists in arrow views
+    # check that view exists in arrow views (under hidden raw prefix)
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    expect_true("points_view" %in% arrow_views)
+    expect_true("__raw_points_view" %in% arrow_views)
 
 })
 
@@ -96,8 +96,7 @@ test_that("can register sf object from file path", {
 
     # check that view exists
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    # expect_true("countries_from_file" %in% arrow_views)
-    expect_true("countries_from_file" %in% arrow_views)
+    expect_true("__raw_countries_from_file" %in% arrow_views)
 
 })
 
@@ -117,10 +116,58 @@ test_that("registered view contains CRS column or has CRS (in duckdb 1.5+)", {
     # register sf object
     ddbs_register_table(conn_test, points_sf, "crs_test", overwrite = TRUE)
 
-    # check columns
+    # check that the requested view is queryable
+    count_result <- DBI::dbGetQuery(conn_test, "SELECT COUNT(*) as n FROM crs_test")
+    expect_equal(count_result$n, nrow(points_sf))
+
+    # check that the exposed view has a CRS-bearing geometry type
+    desc <- DBI::dbGetQuery(conn_test, "DESCRIBE crs_test")
+    geom_type <- desc$column_type[desc$column_name == attr(points_sf, "sf_column")]
+    expect_equal(geom_type, "GEOMETRY('EPSG:4326')")
+
+    duckdb_crs <- DBI::dbGetQuery(
+        conn_test,
+        "SELECT ST_CRS(geometry) AS crs FROM crs_test LIMIT 1"
+    )
+    expect_equal(duckdb_crs$crs, "EPSG:4326")
+
     crs_test <- ddbs_crs(conn_test, "crs_test")
 
     expect_s3_class(crs_test, "crs")
+})
+
+test_that("registered sf object without CRS exposes generic geometry", {
+    points_no_crs <- points_sf
+    sf::st_crs(points_no_crs) <- NA
+
+    ddbs_register_table(conn_test, points_no_crs, "no_crs_test", overwrite = TRUE)
+
+    count_result <- DBI::dbGetQuery(conn_test, "SELECT COUNT(*) as n FROM no_crs_test")
+    expect_equal(count_result$n, nrow(points_no_crs))
+
+    desc <- DBI::dbGetQuery(conn_test, "DESCRIBE no_crs_test")
+    geom_type <- desc$column_type[desc$column_name == attr(points_no_crs, "sf_column")]
+    expect_equal(geom_type, "GEOMETRY")
+})
+
+test_that("registered sf object with non-EPSG CRS keeps queryable DuckDB CRS", {
+    custom_crs <- "+proj=longlat +a=6378137 +b=6378137 +no_defs"
+    custom_sf <- sf::st_as_sf(
+        data.frame(id = 1, x = 0, y = 0),
+        coords = c("x", "y"),
+        crs = custom_crs
+    )
+
+    expect_true(is.na(sf::st_crs(custom_sf)$epsg))
+
+    ddbs_register_table(conn_test, custom_sf, "custom_crs_test", overwrite = TRUE)
+
+    duckdb_crs <- DBI::dbGetQuery(
+        conn_test,
+        "SELECT ST_CRS(geometry) AS crs FROM custom_crs_test LIMIT 1"
+    )
+    expect_false(is.na(duckdb_crs$crs[[1]]))
+    expect_s3_class(sf::st_crs(duckdb_crs$crs[[1]]), "crs")
 })
 
 # expected errors --------------------------------------------------------------
@@ -152,7 +199,7 @@ test_that("can register duckspatial_df directly", {
 
     # Verify view exists
     arrow_views <- duckdb::duckdb_list_arrow(conn_test)
-    expect_true("lazy_view_direct" %in% arrow_views)
+    expect_true("__raw_lazy_view_direct" %in% arrow_views)
 
     # Verify data is queryable
     count_result <- DBI::dbGetQuery(conn_test, "SELECT COUNT(*) as n FROM lazy_view_direct")

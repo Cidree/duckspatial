@@ -692,7 +692,9 @@ reframe_predicate_data <- function(
 #' @noRd
 #' @returns character string (e.g. "'EPSG:4326'") or "NULL"
 crs_to_sql <- function(x) {  # nocov start
-  if (is.null(x) || (is.atomic(x) && all(is.na(x)))) return("NULL")
+  if (is.null(x)) return("NULL")
+  if (inherits(x, "crs") && is.na(x)) return("NULL")
+  if (is.atomic(x) && all(is.na(x))) return("NULL")
 
   if (inherits(x, "crs")) {
     if (!is.na(x$epsg)) return(paste0("'EPSG:", x$epsg, "'"))
@@ -746,7 +748,8 @@ ddbs_handle_query <- function(
 ) { # nocov start
 
   # First, handle simple data frames
-  if ((is.null(crs) || (is.atomic(crs) && is.na(crs))) & length(x_geom) == 0) {
+  crs_is_na <- is.null(crs) || (inherits(crs, "crs") && is.na(crs)) || (is.atomic(crs) && all(is.na(crs)))
+  if (crs_is_na && length(x_geom) == 0) {
 
     ## Create the table
     view_name <- ddbs_temp_view_name()

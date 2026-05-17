@@ -6,6 +6,27 @@
 # =============================================================================
 testthat::skip_on_cran()
 
+expect_duckdb_st_crs <- function(ds, conn) {
+  view_name <- attr(ds, "source_table")
+  geom_col <- attr(ds, "sf_column")
+  q_geom <- as.character(DBI::dbQuoteIdentifier(conn, geom_col))
+
+  res <- DBI::dbGetQuery(
+    conn,
+    glue::glue(
+      "SELECT ST_CRS({q_geom}) AS crs ",
+      "FROM {view_name} ",
+      "WHERE {q_geom} IS NOT NULL ",
+      "LIMIT 1"
+    )
+  )
+
+  expect_equal(nrow(res), 1)
+  expect_false(is.na(res$crs[[1]]))
+  expect_false(identical(res$crs[[1]], ""))
+  res$crs[[1]]
+}
+
 test_that("ddbs_open_dataset works with GeoJSON", {
   conn <- ddbs_temp_conn()
 
@@ -19,9 +40,9 @@ test_that("ddbs_open_dataset works with GeoJSON", {
   res <- DBI::dbGetQuery(conn, sprintf("SELECT count(*) FROM %s", view_name))
   expect_equal(as.numeric(res[[1]]), 257)
 
-  # Verify CRS detection (countries is WGS84 EPSG:4326)
-  detected_crs <- attr(ds, "crs")
-  expect_equal(sf::st_crs(detected_crs)$epsg, 4326)
+  # Verify CRS detection delegates to DuckDB when available
+  duckdb_crs <- expect_duckdb_st_crs(ds, conn)
+  expect_equal(attr(ds, "crs"), sf::st_crs(duckdb_crs))
 
   # Verify geometry is valid
   res_geom <- DBI::dbGetQuery(
@@ -51,9 +72,9 @@ test_that("ddbs_open_dataset works with GeoPackage", {
   res <- DBI::dbGetQuery(conn, sprintf("SELECT count(*) FROM %s", view_name))
   expect_equal(as.numeric(res[[1]]), nrow(countries_sf))
 
-  # Verify CRS detection (countries is WGS84 EPSG:4326)
-  detected_crs <- attr(ds, "crs")
-  expect_equal(sf::st_crs(detected_crs)$epsg, 4326)
+  # Verify CRS detection delegates to DuckDB when available
+  duckdb_crs <- expect_duckdb_st_crs(ds, conn)
+  expect_equal(attr(ds, "crs"), sf::st_crs(duckdb_crs))
 })
 
 test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
@@ -75,6 +96,10 @@ test_that("ddbs_open_dataset works with Parquet (GeoArrow)", {
 
   # Check geometry column detection
   expect_equal(attr(ds, "sf_column"), "geometry")
+
+  # Verify CRS detection delegates to DuckDB when available
+  duckdb_crs <- expect_duckdb_st_crs(ds, conn)
+  expect_equal(attr(ds, "crs"), sf::st_crs(duckdb_crs))
 })
 
 test_that("ddbs_open_dataset works with Shapefile", {
@@ -104,6 +129,30 @@ test_that("ddbs_open_dataset works with Shapefile", {
   )
   expect_true(nrow(res_geom) == 1)
   expect_true(grepl("LINESTRING", res_geom[[1]]))
+})
+
+test_that("ddbs_open_dataset detects CRS across generated and bundled formats", {
+  skip_if_not_installed("arrow")
+
+  conn <- ddbs_temp_conn()
+
+  generated_geojson <- ddbs_create_temp_spatial_file(countries_sf, ext = "geojson", conn = conn)
+  generated_geoparquet <- ddbs_create_temp_spatial_file(countries_sf, ext = "parquet", conn = conn)
+  bundled_gpkg <- system.file("spatial/points.gpkg", package = "duckspatial")
+  bundled_shp <- system.file("shape/nc.shp", package = "sf")
+
+  generated_geojson_ds <- ddbs_open_dataset(generated_geojson, conn = conn)
+  expect_equal(attr(generated_geojson_ds, "crs"), sf::st_crs(expect_duckdb_st_crs(generated_geojson_ds, conn)))
+
+  generated_geoparquet_ds <- ddbs_open_dataset(generated_geoparquet, conn = conn)
+  expect_equal(attr(generated_geoparquet_ds, "crs"), sf::st_crs(expect_duckdb_st_crs(generated_geoparquet_ds, conn)))
+  expect_false(is.na(attr(generated_geoparquet_ds, "crs")))
+
+  bundled_gpkg_ds <- ddbs_open_dataset(bundled_gpkg, conn = conn)
+  expect_equal(attr(bundled_gpkg_ds, "crs"), sf::st_crs(expect_duckdb_st_crs(bundled_gpkg_ds, conn)))
+
+  bundled_shp_ds <- ddbs_open_dataset(bundled_shp, conn = conn)
+  expect_equal(sf::st_crs(attr(bundled_shp_ds, "crs"))$epsg, 4267)
 })
 
 # =============================================================================
@@ -178,11 +227,20 @@ test_that("ddbs_open_dataset OSM mode dispatch", {
   
   # ST_ReadOSM mode
   # This path is lazy/permissive and might not error on open, allowing us to inspect SQL.
+  # ST_ReadOSM mode
+  # Note: ST_ReadOSM does not produce a spatial column DuckDB understands,
+  # so it returns a regular table, not a duckspatial_df.
   ds_osm_read <- ddbs_open_dataset("dummy.osm.pbf", conn = conn, read_osm_mode = "ST_ReadOSM")
+  expect_false(inherits(ds_osm_read, "duckspatial_df"))
+
+  # The view name is stored in the remote_name for dbplyr objects
+  view_name_osm <- as.character(dbplyr::remote_name(ds_osm_read))
+
   view_sql_osm_read <- DBI::dbGetQuery(
     conn,
-    glue::glue("SELECT sql FROM duckdb_views() WHERE view_name = '{attr(ds_osm_read, 'source_table')}'")
+    glue::glue("SELECT sql FROM duckdb_views() WHERE view_name = '{view_name_osm}'")
   )$sql
+
   expect_true(grepl("st_readosm", view_sql_osm_read, ignore.case = TRUE))
 })
 
@@ -264,4 +322,17 @@ test_that("ddbs_open_dataset handles missing file gracefully", {
     regexp = "Unable to open file",
     ignore.case = TRUE
   )
+})
+
+test_that("ddbs_open_dataset fails gracefully on non-compliant GeoArrow structs", {
+  skip_if_not_installed("arrow")
+  skip_if_not_installed("geoarrow")
+  
+  # Create a file with Arrow native encoding (NOT WKB) using direct write_parquet
+  # This triggers the GeoArrow native struct encoding
+  tmp_bad <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp_bad))
+  arrow::write_parquet(countries_sf, tmp_bad)
+  
+  expect_error(ddbs_open_dataset(tmp_bad), "uses a native Arrow/GeoArrow struct encoding")
 })
