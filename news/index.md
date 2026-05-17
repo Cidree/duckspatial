@@ -98,6 +98,12 @@
   columns. It also gains two new arguments: `remove` and `na.fail`
   ([\#125](https://github.com/Cidree/duckspatial/issues/125)).
 
+- [`ddbs_open_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.md):
+  can open geoparquet files when the geometry is encoded as WKB
+  geoparquet. It also fails with a better error message when the
+  geometry is encoded as a native arrow/geoarrow encoding
+  ([\#129](https://github.com/Cidree/duckspatial/issues/129)).
+
 ### BUG FIXES
 
 - Large datasets couldn’t be processed because an `arrow` code

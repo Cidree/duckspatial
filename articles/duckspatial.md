@@ -74,8 +74,8 @@ print(countries_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_ea4247fe_b772_4c74_985b_6b8659e18843> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_view_60cc63ad_1ea4_4374_a3a0_8254a2e74731> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
 #>    OGC_FID CNTR_ID NAME_ENGL          ISO3_CODE CNTR_NAME FID   date       geom 
 #>      <dbl> <chr>   <chr>              <chr>     <chr>     <chr> <date>     <wk_>
 #>  1       0 AR      Argentina          ARG       Argentina AR    2021-01-01 <POL…
@@ -169,8 +169,8 @@ countries_ddbs |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_0f767c9c_355c_4988_a188_ffff3d16c1d3> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_view_8929503e_4916_48e4_92f4_c047fe5ea256> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
 #> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <POLYGON ((…
@@ -197,8 +197,8 @@ print(world_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_c1b5b1f4_3726_496d_99c8_fa3d5cd81a88> [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_view_1da8da0f_44df_4ae4_85ae_ca57ea5e7ba1> [?? x 1]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
 #>   geometry                                                                      
 #>   <wk_wkb>                                                                      
 #> 1 <MULTIPOLYGON (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.4843…
@@ -330,8 +330,8 @@ ddbs_is_valid("countries", conn = conn) |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_31f6dfd8_d8a1_4af5_8f9c_0e12a3caab3a> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1010-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_view_2c75f787_92b3_418a_b965_0d6b6a2d64ff> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
 #> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <POLYGON ((…
