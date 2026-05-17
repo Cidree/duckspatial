@@ -119,3 +119,22 @@ test_that("ddbs_open_dataset warns when file has no CRS", {
   expect_true(is.na(sf::st_crs(attr(ds, "crs"))$epsg))
 })
 
+test_that("ddbs_open_dataset ignores non-spatial columns named 'geometry'", {
+  skip_if_not_installed("duckdb")
+  
+  conn <- tryCatch(ddbs_default_conn(), error = function(e) DBI::dbConnect(duckdb::duckdb()))
+  ddbs_install(conn, quiet = TRUE)
+  ddbs_load(conn, quiet = TRUE)
+
+  # Create a CSV with a column named "geometry" that is just text
+  tmp_csv <- tempfile(fileext = ".csv")
+  writeLines("id,geometry,value\n1,this is not a geometry,10", tmp_csv)
+  on.exit(unlink(tmp_csv), add = TRUE)
+
+  # Should open as a regular table, not a duckspatial_df
+  ds <- duckspatial::ddbs_open_dataset(tmp_csv, conn = conn)
+  
+  expect_false(inherits(ds, "duckspatial_df"))
+  expect_true(inherits(ds, "tbl_lazy"))
+})
+

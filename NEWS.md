@@ -46,6 +46,8 @@
 
 * `ddbs_as_points()` allows to create a `duckspatial_df` from raw coordinate or WKT columns. It also gains two new arguments: `remove` and `na.fail` (#125).
 
+* `ddbs_open_dataset()`: can open geoparquet files when the geometry is encoded as WKB geoparquet. It also fails with a better error message when the geometry is encoded as a native arrow/geoarrow encoding (#129).
+
 ## BUG FIXES
 
 * Large datasets couldn't be processed because an `arrow` code limitation in `ddbs_register_table()` (#124).

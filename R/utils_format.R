@@ -51,39 +51,70 @@ get_file_format <- function(path) {
 #' @noRd
 get_parquet_crs <- function(path, conn) {
   # Try to read GeoParquet metadata from KV metadata
-  # We use SQL-side JSON extraction to avoid R dependencies
+  # We extract the raw blob and parse in R to be more robust across platforms
   
   tryCatch({
-    # 1. Ensure json extension is available for subsequent parsing
-    ddbs_install(conn, extension = "json", quiet = TRUE)
-    ddbs_load(conn, extension = "json", quiet = TRUE)
+    safe_path <- DBI::dbQuoteString(conn, path)
     
-    # 2. Extract CRS PROJJSON using a single SQL query
-    # We decode key and value blobs, cast value to JSON, 
-    # and extract crs for the primary column.
+    # 1. Extract the raw 'geo' metadata value
+    # We use decode(key) to handle blob keys if present
     query <- glue::glue("
-      WITH geo_meta AS (
-        SELECT decode(value)::JSON as meta
-        FROM parquet_kv_metadata('{path}')
-        WHERE decode(key) = 'geo'
-      )
-      SELECT 
-        meta->'columns'->(meta->>'primary_column')->>'crs' as crs
-      FROM geo_meta
+      SELECT value
+      FROM parquet_kv_metadata({safe_path})
+      WHERE decode(key) = 'geo'
       LIMIT 1
-    ")
-    
+    ")    
     res <- DBI::dbGetQuery(conn, query)
     
-    if (nrow(res) == 0 || is.na(res$crs[1]) || res$crs[1] == "null") {
+    if (nrow(res) == 0 || is.null(res$value[[1]])) {
       return(NULL)
     }
     
-    # 3. Convert PROJJSON string to sf CRS object
-    return(sf::st_crs(res$crs[1]))
+    # 2. Parse JSON in R
+    # DuckDB returns BLOB as a raw vector in a list
+    meta_str <- rawToChar(res$value[[1]])
+    meta <- jsonlite::fromJSON(meta_str, simplifyVector = FALSE)
+    
+    # 3. Extract CRS for the primary column
+    primary_col <- meta$primary_column
+    if (is.null(primary_col) || !primary_col %in% names(meta$columns)) {
+       return(NULL)
+    }
+    
+    crs_data <- meta$columns[[primary_col]]$crs
+    if (is.null(crs_data)) {
+      return(NULL)
+    }
+    
+    # 4. Convert to sf CRS object
+    # If it's a list (PROJJSON), try to extract EPSG or convert to string
+    if (is.list(crs_data)) {
+      # Try to extract EPSG code for better compatibility
+      # Standard PROJJSON has id: {authority: "...", code: ...}
+      authority <- crs_data$id$authority
+      code <- crs_data$id$code
+      
+      if (!is.null(authority) && !is.null(code)) {
+        return(sf::st_crs(paste0(authority, ":", code)))
+      }
+      
+      # Handle cases where id might be a list of one element
+      if (is.list(crs_data$id) && length(crs_data$id) > 0) {
+        authority <- crs_data$id[[1]]$authority
+        code <- crs_data$id[[1]]$code
+        if (!is.null(authority) && !is.null(code)) {
+          return(sf::st_crs(paste0(authority, ":", code)))
+        }
+      }
+      
+      # Fallback to JSON string for sf::st_crs
+      crs_data <- jsonlite::toJSON(crs_data, auto_unbox = TRUE)
+    }
+    
+    return(sf::st_crs(crs_data))
     
   }, error = function(e) {
-    # If anything fails (file not found, bad format, no json extension), warn and return NULL
+    # If anything fails (file not found, bad format), warn and return NULL
     cli::cli_warn("Failed to extract GeoParquet CRS: {e$message}")
     NULL
   })

@@ -281,6 +281,13 @@ ddbs_write_dataset <- function(
        DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {view_name}"))
        
        if (inherits(data, "sf")) {
+           local_sf_crs <- sf::st_crs(data)
+           local_sf_crs_text <- if (is_parquet) {
+               ddbs_write_dataset_crs_text(local_sf_crs, conn)
+           } else {
+               NULL
+           }
+
            # Explicitly convert to WKB to ensure consistent DuckDB typing (BLOB)
            wkb_col <- attr(data, "sf_column")
            data[[wkb_col]] <- sf::st_as_binary(data[[wkb_col]])
@@ -294,6 +301,11 @@ ddbs_write_dataset <- function(
            
            # Use proper quoting
            q_gcol <- DBI::dbQuoteIdentifier(conn, gcol)
+           geom_expr <- glue::glue("ST_GeomFromWKB({q_gcol})")
+           if (!is.null(local_sf_crs_text)) {
+               crs_sql <- as.character(DBI::dbQuoteString(conn, local_sf_crs_text))
+               geom_expr <- glue::glue("ST_GeomFromWKB({q_gcol})::GEOMETRY({crs_sql})")
+           }
            
            if (length(col_names) > 0) {
                # Check for potentially conflicting columns (e.g. FID in GeoPackage)
@@ -310,9 +322,9 @@ ddbs_write_dataset <- function(
                    q_cols <- DBI::dbQuoteIdentifier(conn, col_names)
                    cols_sql <- paste(q_cols, collapse = ", ")
                }
-              subquery <- glue::glue("SELECT {cols_sql}, ST_GeomFromWKB({q_gcol}) AS {q_gcol} FROM {view_name}")
+              subquery <- glue::glue("SELECT {cols_sql}, {geom_expr} AS {q_gcol} FROM {view_name}")
            } else {
-              subquery <- glue::glue("SELECT ST_GeomFromWKB({q_gcol}) AS {q_gcol} FROM {view_name}")
+              subquery <- glue::glue("SELECT {geom_expr} AS {q_gcol} FROM {view_name}")
            }
            sql_source <- paste0("(", subquery, ")")
            
@@ -425,6 +437,52 @@ ddbs_write_dataset <- function(
   }
   
   invisible(path)
+}
+
+#' Convert an sf CRS to DuckDB GEOMETRY CRS text for GeoParquet writes
+#' @noRd
+ddbs_write_dataset_crs_text <- function(crs, conn) {
+    if (is.null(crs) || is.na(crs)) {
+        return(NULL)
+    }
+
+    epsg <- crs$epsg
+    if (!is.null(epsg) && length(epsg) > 0 && !is.na(epsg)) {
+        return(paste0("EPSG:", as.integer(epsg)))
+    }
+
+    wkt <- crs$wkt
+    if (is.null(wkt) || length(wkt) == 0 || is.na(wkt) || identical(wkt, "")) {
+        cli::cli_abort(
+            "DuckDB GeoParquet export requires PROJJSON CRS metadata for custom or non-EPSG CRS values, but the input CRS has no WKT representation."
+        )
+    }
+
+    projjson <- tryCatch(
+        {
+            sf::st_as_text(crs, projjson = TRUE)
+        },
+        error = function(e) {
+            cli::cli_abort(
+                c(
+                    "DuckDB GeoParquet export requires PROJJSON CRS metadata for custom or non-EPSG CRS values.",
+                    "x" = "{.fun sf::st_as_text} failed to convert the input CRS to PROJJSON.",
+                    "i" = conditionMessage(e)
+                )
+            )
+        }
+    )
+
+    if (!grepl("^\\s*\\{", projjson) || !grepl("\\}\\s*$", projjson)) {
+        cli::cli_abort(
+            c(
+                "DuckDB GeoParquet export requires PROJJSON CRS metadata for custom or non-EPSG CRS values.",
+                "x" = "{.fun sf::st_as_text} did not return a PROJJSON object."
+            )
+        )
+    }
+
+    projjson
 }
 
 #' Helper to extract connection from object
