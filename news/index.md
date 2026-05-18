@@ -2,6 +2,8 @@
 
 ## duckspatial 1.1.0
 
+CRAN release: 2026-05-17
+
 ### NEW FEATURES
 
 - Implementation of `duckspatial` macros: this allows to use some
