@@ -8,10 +8,9 @@
 #'   (`.duckdb`, `.db`, and `.ddb`), and other GDAL-supported formats.
 #' @param crs Coordinate reference system. Can be an EPSG code (e.g., 4326),
 #'   a CRS string, or an \code{sf} crs object. If \code{NULL} (default),
-#'   attempts to auto-detect from the file. **Important:** Due to an upstream 
-#'   limitation in DuckDB (as of v1.5), CRS metadata is not reliably persisted 
-#'   in `.duckdb` files. When opening tables from persistent DuckDB files, you 
-#'   must provide this argument manually.
+#'   attempts to auto-detect from the file, including native DuckDB CRS metadata
+#'   and duckspatial-managed column-comment metadata for compatibility
+#'   `.duckdb` files.
 #' @param layer Layer name or index to read (ST_Read). For DuckDB database
 #'   files, this is required and specifies the table name to read. Default is
 #'   NULL (first layer for ST_Read).
@@ -77,6 +76,8 @@ ddbs_open_dataset <- function(path,
                                    gdal_allowed_drivers = NULL,
                                    gdal_open_options = NULL) {
   
+  ddbs_assert_duckdb_crs_support()
+
   # Capture the call for error reporting
   fn_call <- rlang::current_call()
   crs_override <- crs
@@ -127,7 +128,12 @@ ddbs_open_dataset <- function(path,
         ))
       }
 
-      local_conn <- ddbs_create_conn(path)
+      local_conn <- withCallingHandlers(
+        ddbs_create_conn(path),
+        duckspatial_storage_mismatch = function(w) {
+          invokeRestart("muffleWarning")
+        }
+      )
       name_list <- get_query_name(layer)
 
       if (!table_exists(local_conn, name_list$table_name, name_list$schema_name)) {

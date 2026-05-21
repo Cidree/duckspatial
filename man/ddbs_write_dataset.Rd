@@ -11,6 +11,8 @@ ddbs_write_dataset(
   conn = NULL,
   overwrite = FALSE,
   crs = NULL,
+  layer = "spatial",
+  storage_version = duckspatial_storage_default(),
   options = list(),
   partitioning = if (inherits(data, c("tbl_lazy", "duckspatial_df")))
     dplyr::group_vars(data) else NULL,
@@ -57,6 +59,13 @@ runs on a temporary DuckDB database.}
 
 \item{crs}{Output CRS (e.g., "EPSG:4326"). Passed to GDAL as \code{SRS} option. Ignored for Parquet.}
 
+\item{layer}{Table name for native DuckDB database output.}
+
+\item{storage_version}{Storage compatibility for newly created DuckDB
+database output. The default, \code{"v1.5.0"}, preserves CRS natively but
+requires DuckDB >= 1.5.0 to open the file. Use \code{"legacy"} to store CRS
+metadata in duckspatial-managed column comments for older DuckDB readers.}
+
 \item{options}{Named list of additional options passed to \code{COPY}.}
 
 \item{partitioning}{Character vector of columns to partition by (Parquet/CSV only).}
@@ -74,15 +83,17 @@ Defaults to \code{FALSE}.}
 The \code{path} invisibly.
 }
 \description{
-Writes spatial data to disk using DuckDB's \code{COPY} command. Supports Parquet (native)
-and various GDAL spatial formats. Format is auto-detected from file extension for
-common formats, or can be specified explicitly via \code{gdal_driver}.
+Writes spatial data to disk using DuckDB's \code{COPY} command for Parquet and
+GDAL spatial formats, or as a native DuckDB database for \code{.duckdb}, \code{.db},
+and \code{.ddb} paths. Format is auto-detected from file extension for common
+formats, or can be specified explicitly via \code{gdal_driver}.
 }
 \details{
-\strong{Recommendation:} If you need to persistently save spatial data and reliably retain
-Coordinate Reference System (CRS) metadata across sessions, \strong{GeoParquet (\code{.parquet})
-is the recommended format.} DuckDB's native \code{.duckdb} database format currently
-drops CRS metadata upon closing.
+Persistent DuckDB database files created by duckspatial use DuckDB storage
+compatibility version \code{"v1.5.0"} by default so CRS metadata is retained in
+native \code{GEOMETRY} columns. These files require DuckDB >= 1.5.0 to open; use
+\code{storage_version = "legacy"} when the output must be readable by older
+DuckDB versions.
 }
 \examples{
 \dontrun{

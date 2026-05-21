@@ -198,6 +198,11 @@ ddbs_glimpse <- function(
 #' @template threads
 #' @template memory_limit_gb
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
+#' @param storage_version Storage compatibility for newly created persistent
+#'   DuckDB files. The default, `"v1.5.0"`, preserves CRS metadata in native
+#'   DuckDB `GEOMETRY` columns but requires DuckDB >= 1.5.0 to open the file.
+#'   Use `"legacy"` to create files readable by older DuckDB versions and
+#'   persist CRS metadata in duckspatial-managed column comments.
 #' @param ... Additional parameters to be passed to \code{\link[DBI]{dbConnect}}
 #'
 #' @returns A `duckdb_connection`
@@ -223,7 +228,10 @@ ddbs_create_conn <- function(
   threads = NULL, 
   memory_limit_gb = NULL,
   upgrade = FALSE,
+  storage_version = duckspatial_storage_default(),
   ...) {
+
+    storage_version <- match.arg(storage_version, duckspatial_storage_versions())
 
     if (!dbdir %in% c("tempdir", "memory") && !has_duckdb_file_extension(dbdir)) {
       cli::cli_abort(
@@ -239,12 +247,10 @@ ddbs_create_conn <- function(
     if(dbdir == 'tempdir'){
       
       db_path <- tempfile(pattern = 'duckspatial', fileext = '.duckdb')
-      conn <- duckdb::dbConnect(
-        duckdb::duckdb(
-          dbdir = db_path
-          #, bigint = "integer64" ## in case the data includes big int
-        ),
-        geometry = "wk",
+      conn <- ddbs_open_persistent(
+        db_path,
+        storage_version = storage_version,
+        read_only = FALSE,
         ...
       )
     } else if (dbdir == 'memory') {
@@ -257,9 +263,10 @@ ddbs_create_conn <- function(
         ...
       )
     } else {
-      conn <- duckdb::dbConnect(
-        duckdb::duckdb(dbdir = dbdir), 
-        geometry = "wk",
+      conn <- ddbs_open_persistent(
+        dbdir,
+        storage_version = storage_version,
+        read_only = FALSE,
         ...
       )
     }

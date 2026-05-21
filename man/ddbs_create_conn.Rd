@@ -9,6 +9,7 @@ ddbs_create_conn(
   threads = NULL,
   memory_limit_gb = NULL,
   upgrade = FALSE,
+  storage_version = duckspatial_storage_default(),
   ...
 )
 }
@@ -21,6 +22,12 @@ file path with \code{.duckdb}, \code{.db}, or \code{.ddb} extension. Defaults to
 \item{memory_limit_gb}{Numeric. Memory limit in GB. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use 80\% of available operating system memory it detects (warning, on some shared HPC nodes the detected memory might be the full node memory, not the per-job allocation).}
 
 \item{upgrade}{if TRUE, it upgrades the DuckDB extension to the latest version}
+
+\item{storage_version}{Storage compatibility for newly created persistent
+DuckDB files. The default, \code{"v1.5.0"}, preserves CRS metadata in native
+DuckDB \code{GEOMETRY} columns but requires DuckDB >= 1.5.0 to open the file.
+Use \code{"legacy"} to create files readable by older DuckDB versions and
+persist CRS metadata in duckspatial-managed column comments.}
 
 \item{...}{Additional parameters to be passed to \code{\link[DBI]{dbConnect}}}
 }

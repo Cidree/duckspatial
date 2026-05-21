@@ -1,13 +1,15 @@
 #' Write spatial dataset to disk
 #'
-#' Writes spatial data to disk using DuckDB's `COPY` command. Supports Parquet (native) 
-#' and various GDAL spatial formats. Format is auto-detected from file extension for 
-#' common formats, or can be specified explicitly via `gdal_driver`.
+#' Writes spatial data to disk using DuckDB's `COPY` command for Parquet and
+#' GDAL spatial formats, or as a native DuckDB database for `.duckdb`, `.db`,
+#' and `.ddb` paths. Format is auto-detected from file extension for common
+#' formats, or can be specified explicitly via `gdal_driver`.
 #' 
-#' **Recommendation:** If you need to persistently save spatial data and reliably retain 
-#' Coordinate Reference System (CRS) metadata across sessions, **GeoParquet (`.parquet`) 
-#' is the recommended format.** DuckDB's native `.duckdb` database format currently 
-#' drops CRS metadata upon closing.
+#' Persistent DuckDB database files created by duckspatial use DuckDB storage
+#' compatibility version `"v1.5.0"` by default so CRS metadata is retained in
+#' native `GEOMETRY` columns. These files require DuckDB >= 1.5.0 to open; use
+#' `storage_version = "legacy"` when the output must be readable by older
+#' DuckDB versions.
 #'
 #' @param data A `duckspatial_df`, `tbl_lazy` (DuckDB), or `sf` object.
 #' @param path Path to output file.
@@ -36,6 +38,11 @@
 #' @template conn_null
 #' @param overwrite Logical. If `TRUE`, overwrites existing file.
 #' @param crs Output CRS (e.g., "EPSG:4326"). Passed to GDAL as `SRS` option. Ignored for Parquet.
+#' @param layer Table name for native DuckDB database output.
+#' @param storage_version Storage compatibility for newly created DuckDB
+#'   database output. The default, `"v1.5.0"`, preserves CRS natively but
+#'   requires DuckDB >= 1.5.0 to open the file. Use `"legacy"` to store CRS
+#'   metadata in duckspatial-managed column comments for older DuckDB readers.
 #' @param options Named list of additional options passed to `COPY`.
 #' @param partitioning Character vector of columns to partition by (Parquet/CSV only).
 #' @param parquet_compression Compression codec for Parquet.
@@ -90,6 +97,8 @@ ddbs_write_dataset <- function(
     conn = NULL,
     overwrite = FALSE,
     crs = NULL,
+    layer = "spatial",
+    storage_version = duckspatial_storage_default(),
     options = list(),
     partitioning = if (inherits(data, c("tbl_lazy", "duckspatial_df"))) dplyr::group_vars(data) else NULL,
     parquet_compression = NULL,
@@ -97,6 +106,7 @@ ddbs_write_dataset <- function(
     layer_creation_options = NULL,
     quiet = FALSE
 ) {
+  storage_version <- match.arg(storage_version, duckspatial_storage_versions())
   
   # 1. Resolve connection
   if (is.null(conn)) {
@@ -114,7 +124,8 @@ ddbs_write_dataset <- function(
   # Determine if native format
   is_parquet <- ext == "parquet"
   is_csv <- ext == "csv"
-  is_native <- is_parquet || is_csv
+  is_duckdb <- has_duckdb_file_extension(path)
+  is_native <- is_parquet || is_csv || is_duckdb
   
   # For GDAL formats, resolve driver
   driver_name <- NULL
@@ -194,8 +205,23 @@ ddbs_write_dataset <- function(
       if (!is_native) {
         unlink(path)
       }
+      if (is_duckdb) {
+        unlink(path)
+      }
       # For native (Parquet/CSV), we can use OVERWRITE_OR_IGNORE option below
     }
+  }
+
+  if (is_duckdb) {
+    return(ddbs_write_duckdb_dataset(
+      data = data,
+      path = path,
+      layer = layer,
+      overwrite = TRUE,
+      crs = crs,
+      storage_version = storage_version,
+      quiet = quiet
+    ))
   }
 
   # 4b. Auto-detect CRS if not provided
@@ -441,6 +467,44 @@ ddbs_write_dataset <- function(
       cli::cli_alert_success("Written to {.path {path}}")
   }
   
+  invisible(path)
+}
+
+#' Write a dataset to a native DuckDB database file
+#' @noRd
+ddbs_write_duckdb_dataset <- function(
+  data,
+  path,
+  layer,
+  overwrite,
+  crs,
+  storage_version,
+  quiet
+) {
+  target_conn <- ddbs_create_conn(path, storage_version = storage_version)
+  on.exit(ddbs_stop_conn(target_conn), add = TRUE)
+
+  if (!is.null(crs)) {
+    if (inherits(data, "sf")) {
+      sf::st_crs(data) <- sf::st_crs(crs)
+    } else if (inherits(data, c("duckspatial_df", "tbl_lazy", "tbl_duckdb_connection"))) {
+      data <- as_duckspatial_df(data, crs = crs)
+    }
+  }
+
+  ddbs_write_table(
+    conn = target_conn,
+    data = data,
+    name = layer,
+    overwrite = overwrite,
+    quiet = TRUE
+  )
+  ddbs_checkpoint_if_possible(target_conn)
+
+  if (!quiet) {
+    cli::cli_alert_success("Written to {.path {path}}")
+  }
+
   invisible(path)
 }
 

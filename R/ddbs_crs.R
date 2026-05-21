@@ -68,18 +68,16 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
   if (!is.null(remote_table)) {
     crs_data <- tryCatch({
       geom_name <- get_geom_name(conn, remote_table)
-      res <- DBI::dbGetQuery(
-        conn, glue::glue("SELECT ST_CRS({geom_name}) AS crs FROM {remote_table} LIMIT 1;")
+      resolve_crs(
+        conn,
+        remote_table,
+        geom_name,
+        quiet_unknown = TRUE
       )
-      if (nrow(res) > 0 && !is.na(res$crs[1])) {
-          res$crs[1]
-      } else {
-          NULL
-      }
     }, error = function(e) NULL)
 
-    if (!is.null(crs_data) && length(crs_data) > 0 && !is.na(crs_data)) {
-      return(sf::st_crs(crs_data))
+    if (!is.null(crs_data) && !is.na(crs_data)) {
+      return(crs_data)
     }
   }
 
@@ -188,14 +186,12 @@ ddbs_crs.character <- function(x, conn, ...) {
     ## Get CRS from the table
     crs_data <- tryCatch({
       geom_name <- get_geom_name(conn, x_list$query_name)
-      res <- DBI::dbGetQuery(
-        conn, glue::glue("SELECT ST_CRS({geom_name}) AS crs FROM {x_list$query_name} LIMIT 1;")
+      resolve_crs(
+        conn,
+        x_list$query_name,
+        geom_name,
+        quiet_unknown = TRUE
       )
-      if (nrow(res) > 0 && !is.na(res$crs[1])) {
-        res$crs[1]
-      } else {
-        NULL
-      }
     }, error = function(e) {
       NULL
     })
@@ -224,15 +220,15 @@ ddbs_crs.character <- function(x, conn, ...) {
       }
     
       cli::cli_warn(c(
-        "CRS could not be auto-detected for {.val {name}}.",
-        "i" = "This typically occurs when reopening a persistent DuckDB database (which natively drops CRS metadata on close) or reading data lacking a CRS.",
+        "CRS could not be detected for {.val {name}}.",
+        "i" = "This can happen when reading an older DuckDB storage file that was created before duckspatial persisted CRS metadata, or when the table has no CRS information.",
         "i" = "Use {.code as_duckspatial_df(x, crs = ...)} or {.code ddbs_open_dataset(path, crs = ...)} to set the CRS explicitly."
       ))
       return(sf::st_crs(NA))
     }
 
     # 2. Return CRS
-    return(sf::st_crs(crs_data))
+    return(crs_data)
 }
 
 #' @export
