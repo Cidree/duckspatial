@@ -915,6 +915,21 @@ ddbs_temp_view_name <- function() { # nocov start
   paste0("temp_view_", gsub("-", "_", uuid::UUIDgenerate()))
 } # nocov end
 
+ddbs_checkpoint_if_possible <- function(conn) {
+  if (!DBI::dbIsValid(conn)) {
+    return(invisible(FALSE))
+  }
+
+  ok <- tryCatch({
+    DBI::dbExecute(conn, "FORCE CHECKPOINT")
+    TRUE
+  }, error = function(e) {
+    FALSE
+  })
+
+  invisible(ok)
+}
+
 #' Create an ephemeral DuckDB connection
 #'
 #' Creates a DuckDB connection that is automatically closed when the calling
@@ -958,7 +973,12 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     if (isTRUE(read_only) && !file.exists(db_file)) {
       # Create the database file first in writable mode
       conn_init <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = FALSE)
+      ddbs_checkpoint_if_possible(conn_init)
+      drv_init <- conn_init@driver
       DBI::dbDisconnect(conn_init)
+      if (inherits(drv_init, "duckdb_driver")) {
+        duckdb::duckdb_shutdown(drv_init)
+      }
     }
     
     conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = read_only)
@@ -978,6 +998,9 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     # Cleanup: disconnect and optionally delete file
     withr::defer({
       if (DBI::dbIsValid(conn)) {
+        if (!isTRUE(read_only)) {
+          ddbs_checkpoint_if_possible(conn)
+        }
         drv <- conn@driver
         tryCatch(suppressWarnings(DBI::dbDisconnect(conn)), error = function(e) NULL)
         if (inherits(drv, "duckdb_driver")) {
