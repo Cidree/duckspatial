@@ -978,7 +978,11 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     # Cleanup: disconnect and optionally delete file
     withr::defer({
       if (DBI::dbIsValid(conn)) {
-        tryCatch(suppressWarnings(DBI::dbDisconnect(conn, shutdown = TRUE)), error = function(e) NULL)
+        drv <- conn@driver
+        tryCatch(suppressWarnings(DBI::dbDisconnect(conn)), error = function(e) NULL)
+        if (inherits(drv, "duckdb_driver")) {
+          tryCatch(duckdb::duckdb_shutdown(drv), error = function(e) NULL)
+        }
       }
       if (isTRUE(cleanup) && file.exists(db_file)) unlink(db_file)
     }, envir = envir)
@@ -987,7 +991,11 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     conn <- ddbs_create_conn(dbdir = "memory", threads = threads, memory_limit_gb = memory_limit_gb)
     withr::defer({
       if (DBI::dbIsValid(conn)) {
+        drv <- conn@driver
         tryCatch(suppressWarnings(DBI::dbDisconnect(conn)), error = function(e) NULL)
+        if (inherits(drv, "duckdb_driver")) {
+          tryCatch(duckdb::duckdb_shutdown(drv), error = function(e) NULL)
+        }
       }
     }, envir = envir)
   }

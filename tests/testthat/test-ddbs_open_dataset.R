@@ -416,15 +416,12 @@ test_that("ddbs_open_dataset opens supported DuckDB file extensions", {
 
 test_that("ddbs_open_dataset does not open DuckDB files with unsupported extensions natively", {
   tmp_txt <- tempfile(fileext = ".txt")
-  conn <- duckdb::dbConnect(duckdb::duckdb(), dbdir = tmp_txt)
   on.exit(unlink(tmp_txt), add = TRUE)
-  on.exit({
-    if (DBI::dbIsValid(conn)) {
-      DBI::dbDisconnect(conn, shutdown = TRUE)
-    }
-  }, add = TRUE)
-  DBI::dbExecute(conn, "CREATE TABLE countries AS SELECT 1 AS value")
-  DBI::dbDisconnect(conn, shutdown = TRUE)
+
+  local({
+    conn <- ddbs_temp_conn(file = tmp_txt, cleanup = FALSE)
+    DBI::dbExecute(conn, "CREATE TABLE countries AS SELECT 1 AS value")
+  })
 
   expect_error(
     ddbs_open_dataset(tmp_txt, layer = "countries"),

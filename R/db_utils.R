@@ -331,8 +331,13 @@ ddbs_stop_conn <- function(conn) {
     # Check if connection is correct
     dbConnCheck(conn)
 
-    # Disconnect from database
+    # Disconnect from database and shutdown driver
+    # Explicit driver shutdown is required on Windows to release file locks
+    drv <- conn@driver
     DBI::dbDisconnect(conn)
+    if (inherits(drv, "duckdb_driver")) {
+        duckdb::duckdb_shutdown(drv)
+    }
 
     return(invisible(TRUE))
 }
