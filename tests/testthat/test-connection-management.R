@@ -8,21 +8,20 @@ test_that("ddbs_create_conn accepts only supported DuckDB file extensions", {
     db_path <- tempfile(fileext = ext)
     on.exit(unlink(db_path), add = TRUE)
 
-    conn <- ddbs_create_conn(db_path)
-    DBI::dbExecute(conn, "CREATE TABLE extension_check AS SELECT 1 AS value")
-    ddbs_stop_conn(conn)
+    # 1. Create and write (using explicit cleanup = FALSE to keep file for step 2)
+    local({
+      conn <- ddbs_temp_conn(file = db_path, cleanup = FALSE)
+      DBI::dbExecute(conn, "CREATE TABLE extension_check AS SELECT 1 AS value")
+    })
 
-    conn <- ddbs_create_conn(db_path)
-    on.exit({
-      if (DBI::dbIsValid(conn)) {
-        ddbs_stop_conn(conn)
-      }
-    }, add = TRUE)
-    expect_equal(
-      DBI::dbGetQuery(conn, "SELECT value FROM extension_check")$value,
-      1
-    )
-    ddbs_stop_conn(conn)
+    # 2. Reopen and verify
+    local({
+      conn_reopened <- ddbs_temp_conn(file = db_path, cleanup = FALSE)
+      expect_equal(
+        DBI::dbGetQuery(conn_reopened, "SELECT value FROM extension_check")$value,
+        1
+      )
+    })
   }
 
   expect_error(

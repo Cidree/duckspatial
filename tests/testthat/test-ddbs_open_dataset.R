@@ -363,12 +363,15 @@ test_that("ddbs_open_dataset validates DuckDB files properly", {
     "not a valid DuckDB database"
   )
 
+  # Use a unique file for the valid DuckDB test to avoid any interference
+  # We use the established ddbs_temp_conn helper for clean connection management
   tmp_good_duck <- tempfile(fileext = ".duckdb")
   on.exit(unlink(tmp_good_duck), add = TRUE)
 
-  conn <- ddbs_create_conn(tmp_good_duck)
-  ddbs_write_table(conn, countries_sf, "countries")
-  ddbs_stop_conn(conn)
+  local({
+    conn <- ddbs_temp_conn(file = tmp_good_duck, cleanup = FALSE)
+    ddbs_write_table(conn, countries_sf, "countries", quiet = TRUE)
+  })
 
   expect_error(
     ddbs_open_dataset(tmp_good_duck),
@@ -381,25 +384,25 @@ test_that("ddbs_open_dataset validates DuckDB files properly", {
   )
 
   ds <- ddbs_open_dataset(tmp_good_duck, layer = "countries", crs = 4326)
-  on.exit(ddbs_stop_conn(attr(ds, "source_conn")), add = TRUE)
   expect_s3_class(ds, "duckspatial_df")
   expect_equal(as.character(dbplyr::remote_name(ds)), "countries")
   expect_equal(nrow(dplyr::collect(ds)), nrow(countries_sf))
 })
 
 test_that("ddbs_open_dataset opens supported DuckDB file extensions", {
+  # Helper to create a fresh DB file for each extension to avoid lock issues
   create_duckdb_test_file <- function(ext) {
     db_path <- tempfile(fileext = ext)
-    conn <- ddbs_create_conn(db_path)
-    on.exit(ddbs_stop_conn(conn), add = TRUE)
-    ddbs_write_table(conn, countries_sf, "countries")
+    local({
+      conn <- ddbs_temp_conn(file = db_path, cleanup = FALSE)
+      ddbs_write_table(conn, countries_sf, "countries", quiet = TRUE)
+    })
     db_path
   }
 
   expect_duckdb_open <- function(db_path) {
     on.exit(unlink(db_path), add = TRUE)
     ds <- ddbs_open_dataset(db_path, layer = "countries", crs = 4326)
-    on.exit(ddbs_stop_conn(attr(ds, "source_conn")), add = TRUE)
 
     expect_s3_class(ds, "duckspatial_df")
     expect_equal(as.character(dbplyr::remote_name(ds)), "countries")
