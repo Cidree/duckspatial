@@ -3,6 +3,11 @@
 #' Writes spatial data to disk using DuckDB's `COPY` command. Supports Parquet (native) 
 #' and various GDAL spatial formats. Format is auto-detected from file extension for 
 #' common formats, or can be specified explicitly via `gdal_driver`.
+#' 
+#' **Recommendation:** If you need to persistently save spatial data and reliably retain 
+#' Coordinate Reference System (CRS) metadata across sessions, **GeoParquet (`.parquet`) 
+#' is the recommended format.** DuckDB's native `.duckdb` database format currently 
+#' drops CRS metadata upon closing.
 #'
 #' @param data A `duckspatial_df`, `tbl_lazy` (DuckDB), or `sf` object.
 #' @param path Path to output file.

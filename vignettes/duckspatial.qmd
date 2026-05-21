@@ -261,3 +261,20 @@ ddbs_write_table(conn, world_ddbs, name = "world")
 ## close — "my_database.duckdb" will persist on disk
 ddbs_stop_conn(conn)
 ```
+
+### Reopening saved tables
+
+You can easily reopen a saved DuckDB database and lazily "register" the spatial tables using either `ddbs_open_dataset()` directly on the file, or `as_duckspatial_df()` if you are manually managing connections.
+
+**Important Note on CRS:** Due to a known upstream limitation in DuckDB (as of v1.5), CRS metadata attached to `GEOMETRY` columns is currently dropped when the database connection is closed. Therefore, you must manually provide the `crs` argument when reopening tables from a persistent `.duckdb` file:
+
+```r
+# Option 1: Direct file reading (automatically manages connection)
+reopened_world <- ddbs_open_dataset("my_database.duckdb", layer = "world", crs = 4326)
+
+# Option 2: Manual connection management
+conn <- ddbs_create_conn("my_database.duckdb")
+reopened_world <- as_duckspatial_df("world", conn = conn, crs = 4326)
+```
+
+**Recommendation:** Because of this limitation, if your workflow relies heavily on preserving precise CRS metadata across sessions without manual intervention, **saving your data to GeoParquet files (`.parquet`) via `ddbs_write_dataset()` is highly recommended** over saving tables directly into `.duckdb` files. GeoParquet natively and durably embeds the CRS.

@@ -36,7 +36,10 @@ GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, DuckDB database files
 
 \item{crs}{Coordinate reference system. Can be an EPSG code (e.g., 4326),
 a CRS string, or an \code{sf} crs object. If \code{NULL} (default),
-attempts to auto-detect from the file.}
+attempts to auto-detect from the file. \strong{Important:} Due to an upstream
+limitation in DuckDB (as of v1.5), CRS metadata is not reliably persisted
+in \code{.duckdb} files. When opening tables from persistent DuckDB files, you
+must provide this argument manually.}
 
 \item{layer}{Layer name or index to read (ST_Read). For DuckDB database
 files, this is required and specifies the table name to read. Default is

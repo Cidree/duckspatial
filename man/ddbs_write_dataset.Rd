@@ -78,6 +78,12 @@ Writes spatial data to disk using DuckDB's \code{COPY} command. Supports Parquet
 and various GDAL spatial formats. Format is auto-detected from file extension for
 common formats, or can be specified explicitly via \code{gdal_driver}.
 }
+\details{
+\strong{Recommendation:} If you need to persistently save spatial data and reliably retain
+Coordinate Reference System (CRS) metadata across sessions, \strong{GeoParquet (\code{.parquet})
+is the recommended format.} DuckDB's native \code{.duckdb} database format currently
+drops CRS metadata upon closing.
+}
 \examples{
 \dontrun{
 library(duckspatial)

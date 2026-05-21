@@ -41,6 +41,13 @@ TRUE (invisibly) for successful import
 This function writes a Simple Features (SF) object into a DuckDB database as a new table.
 The table is created in the specified schema of the DuckDB database.
 }
+\details{
+\strong{Important Note on CRS Persistence:} Due to an upstream limitation in DuckDB
+(as of v1.5), CRS metadata is not reliably persisted when a \code{.duckdb} database
+is closed and reopened. If you need to persistently save spatial data and
+seamlessly retain CRS metadata across sessions, using \code{\link[=ddbs_write_dataset]{ddbs_write_dataset()}}
+to save to a GeoParquet (\code{.parquet}) file is strongly recommended.
+}
 \examples{
 \dontrun{
 ## load packages

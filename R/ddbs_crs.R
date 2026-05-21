@@ -132,8 +132,8 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
   # Fallback: return NA CRS
   cli::cli_warn(c(
     "Could not auto-detect CRS for {.cls tbl_duckdb_connection} object.",
-    "i" = "The object may not be a view created from a spatial file.",
-    "i" = "Use {.code as_duckspatial_df(x, crs = ...)} to set CRS explicitly."
+    "i" = "This typically occurs when reopening a persistent DuckDB database (which natively drops CRS metadata on close) or reading data lacking a CRS.",
+    "i" = "Use {.code as_duckspatial_df(x, crs = ...)} to set the CRS explicitly."
   ))
   sf::st_crs(NA)
 }
@@ -188,9 +188,14 @@ ddbs_crs.character <- function(x, conn, ...) {
     ## Get CRS from the table
     crs_data <- tryCatch({
       geom_name <- get_geom_name(conn, x_list$query_name)
-      DBI::dbGetQuery(
+      res <- DBI::dbGetQuery(
         conn, glue::glue("SELECT ST_CRS({geom_name}) AS crs FROM {x_list$query_name} LIMIT 1;")
-      ) |> as.character()
+      )
+      if (nrow(res) > 0 && !is.na(res$crs[1])) {
+        res$crs[1]
+      } else {
+        NULL
+      }
     }, error = function(e) {
       NULL
     })
@@ -218,7 +223,11 @@ ddbs_crs.character <- function(x, conn, ...) {
          }
       }
     
-      cli::cli_warn("CRS could not be auto-detected.")
+      cli::cli_warn(c(
+        "CRS could not be auto-detected for {.val {name}}.",
+        "i" = "This typically occurs when reopening a persistent DuckDB database (which natively drops CRS metadata on close) or reading data lacking a CRS.",
+        "i" = "Use {.code as_duckspatial_df(x, crs = ...)} or {.code ddbs_open_dataset(path, crs = ...)} to set the CRS explicitly."
+      ))
       return(sf::st_crs(NA))
     }
 
