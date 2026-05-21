@@ -193,8 +193,8 @@ ddbs_glimpse <- function(
 #' It creates a DuckDB connection, and then it installs and loads the
 #' spatial extension
 #'
-#' @param dbdir String. Either `"tempdir"`, `"memory"`, or file path with
-#' `.duckdb` or `.db` extension. Defaults to `"memory"`.
+#' @param dbdir String. Either `"tempdir"`, `"memory"`, or a DuckDB database
+#' file path with `.duckdb`, `.db`, or `.ddb` extension. Defaults to `"memory"`.
 #' @template threads
 #' @template memory_limit_gb
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
@@ -225,12 +225,10 @@ ddbs_create_conn <- function(
   upgrade = FALSE,
   ...) {
 
-    # 0. Handle errors
-    if (!dbdir %in% c("tempdir","memory")) {
-      ## get file extension
-      db_extension <- tools::file_ext(dbdir)
-      if (!db_extension %in% c("", "duckdb", "db"))
-        cli::cli_abort("dbdir should be <'tempdir'>, <'memory'>, or have <'.duckdb'> or <'.db'> extension.")
+    if (!dbdir %in% c("tempdir", "memory") && !has_duckdb_file_extension(dbdir)) {
+      cli::cli_abort(
+        "{.arg dbdir} should be {.val tempdir}, {.val memory}, or a file path with {.file .duckdb}, {.file .db}, or {.file .ddb} extension."
+      )
     }
 
     assert_threads(threads)

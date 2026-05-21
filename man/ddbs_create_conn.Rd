@@ -13,8 +13,8 @@ ddbs_create_conn(
 )
 }
 \arguments{
-\item{dbdir}{String. Either \code{"tempdir"}, \code{"memory"}, or file path with
-\code{.duckdb} or \code{.db} extension. Defaults to \code{"memory"}.}
+\item{dbdir}{String. Either \code{"tempdir"}, \code{"memory"}, or a DuckDB database
+file path with \code{.duckdb}, \code{.db}, or \code{.ddb} extension. Defaults to \code{"memory"}.}
 
 \item{threads}{Integer. Number of threads to use. If \code{NULL} (default), the setting is not changed, and DuckDB engine will use all available cores it detects (warning, on some shared HPC nodes the detected number of cores might be total number of cores on the node, not the per-job allocation).}
 

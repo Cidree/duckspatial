@@ -3,6 +3,34 @@ testthat::skip_on_cran()
 
 # Tests for connection management
 
+test_that("ddbs_create_conn accepts only supported DuckDB file extensions", {
+  for (ext in c(".duckdb", ".db", ".ddb")) {
+    db_path <- tempfile(fileext = ext)
+    on.exit(unlink(db_path), add = TRUE)
+
+    conn <- ddbs_create_conn(db_path)
+    DBI::dbExecute(conn, "CREATE TABLE extension_check AS SELECT 1 AS value")
+    ddbs_stop_conn(conn)
+
+    conn <- ddbs_create_conn(db_path)
+    on.exit({
+      if (DBI::dbIsValid(conn)) {
+        ddbs_stop_conn(conn)
+      }
+    }, add = TRUE)
+    expect_equal(
+      DBI::dbGetQuery(conn, "SELECT value FROM extension_check")$value,
+      1
+    )
+    ddbs_stop_conn(conn)
+  }
+
+  expect_error(
+    ddbs_create_conn(tempfile(fileext = ".txt")),
+    "duckdb.*db.*ddb"
+  )
+})
+
 test_that("cross-connection filtering works with proper fallback strategies", {
   skip_if_not_installed("sf")
 

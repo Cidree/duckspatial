@@ -336,3 +336,108 @@ test_that("ddbs_open_dataset fails gracefully on non-compliant GeoArrow structs"
   
   expect_error(ddbs_open_dataset(tmp_bad), "uses a native Arrow/GeoArrow struct encoding")
 })
+
+# =============================================================================
+# DuckDB Native Format Support
+# =============================================================================
+
+test_that("ddbs_open_dataset validates DuckDB files properly", {
+  expect_error(
+    ddbs_open_dataset("/nonexistent_path.duckdb"),
+    "does not exist"
+  )
+
+  tmp_empty_duck <- tempfile(fileext = ".duckdb")
+  on.exit(unlink(tmp_empty_duck), add = TRUE)
+  file.create(tmp_empty_duck)
+  expect_error(
+    ddbs_open_dataset(tmp_empty_duck),
+    "not a valid DuckDB database"
+  )
+
+  tmp_bad_duck <- tempfile(fileext = ".duckdb")
+  on.exit(unlink(tmp_bad_duck), add = TRUE)
+  writeLines("this is just text", tmp_bad_duck)
+  expect_error(
+    ddbs_open_dataset(tmp_bad_duck),
+    "not a valid DuckDB database"
+  )
+
+  tmp_good_duck <- tempfile(fileext = ".duckdb")
+  on.exit(unlink(tmp_good_duck), add = TRUE)
+
+  conn <- ddbs_create_conn(tmp_good_duck)
+  ddbs_write_table(conn, countries_sf, "countries")
+  ddbs_stop_conn(conn)
+
+  expect_error(
+    ddbs_open_dataset(tmp_good_duck),
+    "layer"
+  )
+
+  expect_error(
+    ddbs_open_dataset(tmp_good_duck, layer = "missing_table"),
+    "not present"
+  )
+
+  ds <- ddbs_open_dataset(tmp_good_duck, layer = "countries", crs = 4326)
+  on.exit(ddbs_stop_conn(attr(ds, "source_conn")), add = TRUE)
+  expect_s3_class(ds, "duckspatial_df")
+  expect_equal(as.character(dbplyr::remote_name(ds)), "countries")
+  expect_equal(nrow(dplyr::collect(ds)), nrow(countries_sf))
+})
+
+test_that("ddbs_open_dataset opens supported DuckDB file extensions", {
+  create_duckdb_test_file <- function(ext) {
+    db_path <- tempfile(fileext = ext)
+    conn <- ddbs_create_conn(db_path)
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    ddbs_write_table(conn, countries_sf, "countries")
+    db_path
+  }
+
+  expect_duckdb_open <- function(db_path) {
+    on.exit(unlink(db_path), add = TRUE)
+    ds <- ddbs_open_dataset(db_path, layer = "countries", crs = 4326)
+    on.exit(ddbs_stop_conn(attr(ds, "source_conn")), add = TRUE)
+
+    expect_s3_class(ds, "duckspatial_df")
+    expect_equal(as.character(dbplyr::remote_name(ds)), "countries")
+    expect_equal(nrow(dplyr::collect(ds)), nrow(countries_sf))
+  }
+
+  for (ext in c(".duckdb", ".db", ".ddb")) {
+    expect_duckdb_open(create_duckdb_test_file(ext))
+  }
+})
+
+test_that("ddbs_open_dataset does not open DuckDB files with unsupported extensions natively", {
+  tmp_txt <- tempfile(fileext = ".txt")
+  conn <- duckdb::dbConnect(duckdb::duckdb(), dbdir = tmp_txt)
+  on.exit(unlink(tmp_txt), add = TRUE)
+  on.exit({
+    if (DBI::dbIsValid(conn)) {
+      DBI::dbDisconnect(conn, shutdown = TRUE)
+    }
+  }, add = TRUE)
+  DBI::dbExecute(conn, "CREATE TABLE countries AS SELECT 1 AS value")
+  DBI::dbDisconnect(conn, shutdown = TRUE)
+
+  expect_error(
+    ddbs_open_dataset(tmp_txt, layer = "countries"),
+    regexp = "Unable to open file",
+    ignore.case = TRUE
+  )
+})
+
+test_that("ddbs_open_dataset lets non-DuckDB .db files fall through to ST_Read", {
+  tmp_db <- tempfile(fileext = ".db")
+  on.exit(unlink(tmp_db), add = TRUE)
+  writeLines("not a duckdb database", tmp_db)
+
+  expect_error(
+    ddbs_open_dataset(tmp_db),
+    regexp = "Unable to open file",
+    ignore.case = TRUE
+  )
+})

@@ -162,7 +162,7 @@ So far we have been using the default, temporary DuckDB connection that {duckspa
 There are two connection modes:
 
 -   **Non-persistent (in-memory):** data exists only for the duration of the R session or until it is closed. As of v1.0.0, this mode is kept for backward compatibility, but working with `duckspatial_df` objects directly achieves the same goals with less boilerplate.
--   **Persistent:** data is written to a `.duckdb` or `.db` file on disk and survives after the session ends.
+-   **Persistent:** data is written to a DuckDB database file on disk and survives after the session ends. {duckspatial} accepts `.duckdb`, `.db`, and `.ddb` paths for persistent DuckDB databases.
 
 ## Creating a connection
 
