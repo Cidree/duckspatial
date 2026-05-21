@@ -59,6 +59,30 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
   # Try to auto-detect CRS from view SQL (for duckdbfs::open_dataset and similar)
   conn <- dbplyr::remote_con(x)
   
+  # Try to use ST_CRS() first if we have a valid table name
+  remote_table <- tryCatch({
+    rem_name <- dbplyr::remote_name(x)
+    if (is.null(rem_name)) NULL else as.character(rem_name)
+  }, error = function(e) NULL)
+
+  if (!is.null(remote_table)) {
+    crs_data <- tryCatch({
+      geom_name <- get_geom_name(conn, remote_table)
+      res <- DBI::dbGetQuery(
+        conn, glue::glue("SELECT ST_CRS({geom_name}) AS crs FROM {remote_table} LIMIT 1;")
+      )
+      if (nrow(res) > 0 && !is.na(res$crs[1])) {
+          res$crs[1]
+      } else {
+          NULL
+      }
+    }, error = function(e) NULL)
+
+    if (!is.null(crs_data) && length(crs_data) > 0 && !is.na(crs_data)) {
+      return(sf::st_crs(crs_data))
+    }
+  }
+
   # Strategy 1: Try to get view SQL from duckdb_views()
   view_sql <- tryCatch({
     table_name <- dbplyr::remote_name(x)

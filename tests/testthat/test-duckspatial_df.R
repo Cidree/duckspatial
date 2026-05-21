@@ -21,7 +21,7 @@ test_that("new_duckspatial_df creates valid duckspatial_df objects", {
   expect_s3_class(result, "duckspatial_df")
   expect_s3_class(result, "tbl_lazy")
   expect_equal(attr(result, "sf_column"), "geometry")
-  expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
+  expect_true(duckspatial:::crs_equal(attr(result, "crs"), sf::st_crs(nc_sf)))
   expect_equal(attr(result, "source_table"), "nc_test")
 })
 
@@ -56,7 +56,7 @@ test_that("as_duckspatial_df.sf works correctly", {
   
   expect_s3_class(result, "duckspatial_df")
   expect_s3_class(result, "tbl_lazy")
-  expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
+  expect_true(duckspatial:::crs_equal(attr(result, "crs"), sf::st_crs(nc_sf)))
   expect_equal(attr(result, "sf_column"), attr(nc_sf, "sf_column"))
 })
 
@@ -65,10 +65,11 @@ test_that("as_duckspatial_df.tbl_duckdb_connection works correctly", {
   ddbs_write_table(conn, nc_sf, "nc_test", quiet = TRUE)
   
   lazy_tbl <- dplyr::tbl(conn, "nc_test")
-  result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))
+  # Auto-detection should work now!
+  result <- as_duckspatial_df(lazy_tbl)
   
   expect_s3_class(result, "duckspatial_df")
-  expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
+  expect_true(duckspatial:::crs_equal(attr(result, "crs"), sf::st_crs(nc_sf)))
 })
 
 test_that("as_duckspatial_df.tbl_lazy works correctly", {
@@ -79,7 +80,7 @@ test_that("as_duckspatial_df.tbl_lazy works correctly", {
   result <- as_duckspatial_df(lazy_tbl, crs = sf::st_crs(nc_sf))  
   
   expect_s3_class(result, "duckspatial_df")
-  expect_equal(attr(result, "crs"), sf::st_crs(nc_sf))
+  expect_true(duckspatial:::crs_equal(attr(result, "crs"), sf::st_crs(nc_sf)))
 })
 
 test_that("as_duckspatial_df.character works correctly", {
