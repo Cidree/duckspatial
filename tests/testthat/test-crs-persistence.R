@@ -94,11 +94,6 @@ test_that("ddbs_write_dataset writes native DuckDB database files", {
     )
   )
 
-  conn <- ddbs_create_conn(db_path)
-  on.exit(
-    suppressWarnings(try(ddbs_stop_conn(conn), silent = TRUE)),
-    add = TRUE
-  )
   ds <- ddbs_open_dataset(db_path, layer = "points")
   on.exit(
     suppressWarnings(try(
@@ -139,6 +134,7 @@ test_that("ddbs_write_dataset legacy DuckDB output writes CRS column comments", 
 
   expect_match(comment, "\"duckspatial\"", fixed = TRUE)
   expect_equal(sf::st_crs(ddbs_crs("points", conn = conn))$epsg, 4326)
+  ddbs_stop_conn(conn)
 
   expect_no_warning({
     ds <- ddbs_open_dataset(db_path, layer = "points")
