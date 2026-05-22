@@ -42,11 +42,11 @@ This function writes a Simple Features (SF) object into a DuckDB database as a n
 The table is created in the specified schema of the DuckDB database.
 }
 \details{
-\strong{Important Note on CRS Persistence:} Due to an upstream limitation in DuckDB
-(as of v1.5), CRS metadata is not reliably persisted when a \code{.duckdb} database
-is closed and reopened. If you need to persistently save spatial data and
-seamlessly retain CRS metadata across sessions, using \code{\link[=ddbs_write_dataset]{ddbs_write_dataset()}}
-to save to a GeoParquet (\code{.parquet}) file is strongly recommended.
+\strong{CRS Persistence:} \code{duckspatial} ensures CRS metadata is retained across
+sessions using two strategies: \strong{Native Persistence} (for DuckDB 1.5.0+
+databases) and \strong{Metadata Fallback} (using column comments for older
+database versions). For file-based spatial data interchange,
+\code{\link[=ddbs_write_dataset]{ddbs_write_dataset()}} to GeoParquet (\code{.parquet}) is recommended.
 }
 \examples{
 \dontrun{

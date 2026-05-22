@@ -1,5 +1,5 @@
 testthat::skip_on_cran()
-testthat::skip_if_not_installed("duckdb", minimum_version = "1.5.0")
+testthat::skip_if_not_installed("duckdb", minimum_version = "1.5.1")
 testthat::skip_if_not_installed("sf")
 
 test_that("duckdb geometry type preserves authority and custom CRS literals", {

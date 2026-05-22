@@ -79,12 +79,16 @@ is_duckspatial_df <- function(x) {
 #' of the data directly from the database without loading it into memory. This is 
 #' the canonical way to "register" or wrap existing persistent spatial tables.
 #' 
-#' **CRS Persistence:** `duckspatial`` reads native DuckDB 1.5 CRS metadata and, for compatibility files written by duckspatial, CRS metadata stored in duckspatial-managed column comments. DuckDB files saved in pre-1.5 format without duckspatial-managed comments will not have CRS information and will default to NA with a warning. To ensure CRS persistence, use DuckDB 1.5+ and  when creating DuckDB database files.
+#' **CRS Persistence:** `duckspatial` reads native DuckDB 1.5.0+ CRS metadata 
+#' and, for compatibility with files written by older versions of `duckspatial`, 
+#' CRS metadata stored in column comments. DuckDB files saved in pre-1.5.0 
+#' format without `duckspatial`-managed comments will not have CRS information 
+#' and will default to `NA` with a warning.
 #'
 #' @param x Object to convert (sf, tbl_lazy, data.frame, or table name)
 #' @param conn DuckDB connection (required for character table names)
-#' @param crs CRS object or string (auto-detected from sf objects, but must be 
-#'   provided manually when reopening persistent DuckDB tables)
+#' @param crs CRS object or string. Auto-detected from `sf` objects and 
+#'   persistent DuckDB tables.
 #' @param geom_col Geometry column name (default: "geom")
 #' @param ... Additional arguments passed to methods:
 #'   \describe{

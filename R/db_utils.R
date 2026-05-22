@@ -199,10 +199,12 @@ ddbs_glimpse <- function(
 #' @template memory_limit_gb
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #' @param storage_version Storage compatibility for newly created persistent
-#'   DuckDB files. The default, `"v1.5.0"`, preserves CRS metadata in native
-#'   DuckDB `GEOMETRY` columns but requires DuckDB >= 1.5.0 to open the file.
-#'   Use `"legacy"` to create files readable by older DuckDB versions and
-#'   persist CRS metadata in duckspatial-managed column comments.
+#'   DuckDB files. The default, `"v1.5.0"` (**Native Persistence**), preserves 
+#'   CRS metadata in native DuckDB `GEOMETRY` columns but requires 
+#'   DuckDB >= 1.5.0 to open the file. Use `"legacy"` (**Metadata Fallback**) 
+#'   to create files readable by older DuckDB versions and persist CRS 
+#'   metadata in duckspatial-managed column comments (note that these comments 
+#'   are a duckspatial convention and not recognized by other spatial software).
 #' @param ... Additional parameters to be passed to \code{\link[DBI]{dbConnect}}
 #'
 #' @returns A `duckdb_connection`

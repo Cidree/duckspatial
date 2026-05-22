@@ -29,8 +29,8 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 \item{conn}{DuckDB connection (required for character table names)}
 
-\item{crs}{CRS object or string (auto-detected from sf objects, but must be
-provided manually when reopening persistent DuckDB tables)}
+\item{crs}{CRS object or string. Auto-detected from \code{sf} objects and
+persistent DuckDB tables.}
 
 \item{geom_col}{Geometry column name (default: "geom")}
 
@@ -52,5 +52,9 @@ table (\code{tbl_duckdb_connection}), the function creates a zero-copy represent
 of the data directly from the database without loading it into memory. This is
 the canonical way to "register" or wrap existing persistent spatial tables.
 
-\strong{CRS Persistence:} `duckspatial`` reads native DuckDB 1.5 CRS metadata and, for compatibility files written by duckspatial, CRS metadata stored in duckspatial-managed column comments. DuckDB files saved in pre-1.5 format without duckspatial-managed comments will not have CRS information and will default to NA with a warning. To ensure CRS persistence, use DuckDB 1.5+ and  when creating DuckDB database files.
+\strong{CRS Persistence:} \code{duckspatial} reads native DuckDB 1.5.0+ CRS metadata
+and, for compatibility with files written by older versions of \code{duckspatial},
+CRS metadata stored in column comments. DuckDB files saved in pre-1.5.0
+format without \code{duckspatial}-managed comments will not have CRS information
+and will default to \code{NA} with a warning.
 }

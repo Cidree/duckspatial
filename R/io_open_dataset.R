@@ -134,14 +134,19 @@ ddbs_open_dataset <- function(path,
           invokeRestart("muffleWarning")
         }
       )
-      name_list <- get_query_name(layer)
 
-      if (!table_exists(local_conn, name_list$table_name, name_list$schema_name)) {
+      result <- tryCatch({
+        name_list <- get_query_name(layer)
+        if (!table_exists(local_conn, name_list$table_name, name_list$schema_name)) {
+          cli::cli_abort("Table {.val {layer}} is not present in DuckDB database {.file {path}}.")
+        }
+        as_duckspatial_df(layer, conn = local_conn, crs = crs_override, geom_col = geom_col)
+      }, error = function(e) {
         ddbs_stop_conn(local_conn)
-        cli::cli_abort("Table {.val {layer}} is not present in DuckDB database {.file {path}}.")
-      }
+        stop(e)
+      })
 
-      return(as_duckspatial_df(layer, conn = local_conn, crs = crs_override, geom_col = geom_col))
+      return(result)
     }
   }
     

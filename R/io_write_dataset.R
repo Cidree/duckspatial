@@ -5,11 +5,11 @@
 #' and `.ddb` paths. Format is auto-detected from file extension for common
 #' formats, or can be specified explicitly via `gdal_driver`.
 #' 
-#' Persistent DuckDB database files created by duckspatial use DuckDB storage
-#' compatibility version `"v1.5.0"` by default so CRS metadata is retained in
-#' native `GEOMETRY` columns. These files require DuckDB >= 1.5.0 to open; use
-#' `storage_version = "legacy"` when the output must be readable by older
-#' DuckDB versions.
+#' Persistent DuckDB database files created by duckspatial use **Native 
+#' Persistence** (`storage_version = "v1.5.0"`) by default so CRS metadata is 
+#' retained in native `GEOMETRY` columns. These files require DuckDB >= 1.5.0 
+#' to open; use **Metadata Fallback** (`storage_version = "legacy"`) when the 
+#' output must be readable by older DuckDB versions.
 #'
 #' @param data A `duckspatial_df`, `tbl_lazy` (DuckDB), or `sf` object.
 #' @param path Path to output file.
@@ -40,9 +40,12 @@
 #' @param crs Output CRS (e.g., "EPSG:4326"). Passed to GDAL as `SRS` option. Ignored for Parquet.
 #' @param layer Table name for native DuckDB database output.
 #' @param storage_version Storage compatibility for newly created DuckDB
-#'   database output. The default, `"v1.5.0"`, preserves CRS natively but
-#'   requires DuckDB >= 1.5.0 to open the file. Use `"legacy"` to store CRS
-#'   metadata in duckspatial-managed column comments for older DuckDB readers.
+#'   database output. The default, `"v1.5.0"` (**Native Persistence**), 
+#'   preserves CRS natively but requires DuckDB >= 1.5.0 to open the file. 
+#'   Use `"legacy"` (**Metadata Fallback**) to store CRS metadata in 
+#'   duckspatial-managed column comments for older DuckDB readers (note that 
+#'   these comments are a duckspatial convention and not recognized by other 
+#'   spatial software).
 #' @param options Named list of additional options passed to `COPY`.
 #' @param partitioning Character vector of columns to partition by (Parquet/CSV only).
 #' @param parquet_compression Compression codec for Parquet.

@@ -24,10 +24,12 @@ file path with \code{.duckdb}, \code{.db}, or \code{.ddb} extension. Defaults to
 \item{upgrade}{if TRUE, it upgrades the DuckDB extension to the latest version}
 
 \item{storage_version}{Storage compatibility for newly created persistent
-DuckDB files. The default, \code{"v1.5.0"}, preserves CRS metadata in native
-DuckDB \code{GEOMETRY} columns but requires DuckDB >= 1.5.0 to open the file.
-Use \code{"legacy"} to create files readable by older DuckDB versions and
-persist CRS metadata in duckspatial-managed column comments.}
+DuckDB files. The default, \code{"v1.5.0"} (\strong{Native Persistence}), preserves
+CRS metadata in native DuckDB \code{GEOMETRY} columns but requires
+DuckDB >= 1.5.0 to open the file. Use \code{"legacy"} (\strong{Metadata Fallback})
+to create files readable by older DuckDB versions and persist CRS
+metadata in duckspatial-managed column comments (note that these comments
+are a duckspatial convention and not recognized by other spatial software).}
 
 \item{...}{Additional parameters to be passed to \code{\link[DBI]{dbConnect}}}
 }

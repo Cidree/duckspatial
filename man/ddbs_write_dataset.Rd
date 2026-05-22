@@ -62,9 +62,12 @@ runs on a temporary DuckDB database.}
 \item{layer}{Table name for native DuckDB database output.}
 
 \item{storage_version}{Storage compatibility for newly created DuckDB
-database output. The default, \code{"v1.5.0"}, preserves CRS natively but
-requires DuckDB >= 1.5.0 to open the file. Use \code{"legacy"} to store CRS
-metadata in duckspatial-managed column comments for older DuckDB readers.}
+database output. The default, \code{"v1.5.0"} (\strong{Native Persistence}),
+preserves CRS natively but requires DuckDB >= 1.5.0 to open the file.
+Use \code{"legacy"} (\strong{Metadata Fallback}) to store CRS metadata in
+duckspatial-managed column comments for older DuckDB readers (note that
+these comments are a duckspatial convention and not recognized by other
+spatial software).}
 
 \item{options}{Named list of additional options passed to \code{COPY}.}
 
@@ -89,11 +92,11 @@ and \code{.ddb} paths. Format is auto-detected from file extension for common
 formats, or can be specified explicitly via \code{gdal_driver}.
 }
 \details{
-Persistent DuckDB database files created by duckspatial use DuckDB storage
-compatibility version \code{"v1.5.0"} by default so CRS metadata is retained in
-native \code{GEOMETRY} columns. These files require DuckDB >= 1.5.0 to open; use
-\code{storage_version = "legacy"} when the output must be readable by older
-DuckDB versions.
+Persistent DuckDB database files created by duckspatial use \strong{Native
+Persistence} (\code{storage_version = "v1.5.0"}) by default so CRS metadata is
+retained in native \code{GEOMETRY} columns. These files require DuckDB >= 1.5.0
+to open; use \strong{Metadata Fallback} (\code{storage_version = "legacy"}) when the
+output must be readable by older DuckDB versions.
 }
 \examples{
 \dontrun{

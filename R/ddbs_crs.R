@@ -130,7 +130,7 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
   # Fallback: return NA CRS
   cli::cli_warn(c(
     "Could not auto-detect CRS for {.cls tbl_duckdb_connection} object.",
-    "i" = "This typically occurs when reopening a persistent DuckDB database (which natively drops CRS metadata on close) or reading data lacking a CRS.",
+    "i" = "This typically occurs when reopening a persistent DuckDB database created without recoverable CRS metadata (for example, pre-1.5 files without duckspatial comments) or when the table/file has an unknown or missing CRS.",
     "i" = "Use {.code as_duckspatial_df(x, crs = ...)} to set the CRS explicitly."
   ))
   sf::st_crs(NA)
