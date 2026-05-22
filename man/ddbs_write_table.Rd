@@ -43,8 +43,8 @@ The table is created in the specified schema of the DuckDB database.
 }
 \details{
 \strong{CRS Persistence:} \code{duckspatial} ensures CRS metadata is retained across
-sessions using two strategies: \strong{Native Persistence} (for DuckDB 1.5.0+
-databases) and \strong{Metadata Fallback} (using column comments for older
+sessions using two strategies: \strong{Native Spatial Storage} (for DuckDB 1.5.0+
+databases) and \strong{Legacy Compatibility} (using column comments for older
 database versions). For file-based spatial data interchange,
 \code{\link[=ddbs_write_dataset]{ddbs_write_dataset()}} to GeoParquet (\code{.parquet}) is recommended.
 }

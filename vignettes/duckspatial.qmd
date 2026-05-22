@@ -268,14 +268,16 @@ You can easily reopen a saved DuckDB database and lazily "register" the spatial 
 
 **A Note on CRS Persistence:** By default, `duckspatial` ensures that CRS metadata is preserved when saving tables to persistent DuckDB files. It achieves this using two complementary strategies:
 
-1. **Native Persistence** (`storage_version = "v1.5.0"`): When using DuckDB 1.5.0+ (the default mode in both `ddbs_create_conn()` and `ddbs_write_dataset()`), CRS information is stored directly within the database catalog.
-2. **Metadata Fallback** (`storage_version = "legacy"`): For older DuckDB versions or legacy storage modes, `duckspatial` embeds the CRS as a specialized JSON comment on the geometry column.
+1. **Native Spatial Storage** (`duckdb_storage_version = "v1.5.0"`): When using DuckDB 1.5.0+ (the default mode in both `ddbs_create_conn()` and `ddbs_write_dataset()`), CRS information is stored directly within the database catalog.
+2. **Legacy Compatibility** (`duckdb_storage_version = "v1.0.0"`): For older DuckDB versions or legacy storage modes, `duckspatial` embeds the CRS as a specialized JSON comment on the geometry column.
+
+For more information on DuckDB storage versions and compatibility guarantees, see the official [DuckDB Storage documentation](https://duckdb.org/docs/internals/storage).
 
 ::: {.callout-note}
 ### Technical Note on Interoperability
-The **Metadata Fallback** strategy is a `duckspatial`-specific convention. Because DuckDB does not natively support CRS metadata in older storage versions, we "hijack" the column comment field to store this information. 
+The **Legacy Compatibility** strategy is a `duckspatial`-specific convention. Because DuckDB does not natively support CRS metadata in older storage versions, we "hijack" the column comment field to store this information. 
 
-While this ensures consistent behavior within `duckspatial`, **other spatial software (like QGIS, GDAL, or other DuckDB clients) will not recognize this metadata.** If you need to share your DuckDB files with other tools while preserving CRS, we strongly recommend using the **Native Persistence** (default) or exporting to **GeoParquet**.
+While this ensures consistent behavior within `duckspatial`, **other spatial software (like QGIS, GDAL, or other DuckDB clients) will not recognize this metadata.** If you need to share your DuckDB files with other tools while preserving CRS, we strongly recommend using the **Native Spatial Storage** (default) or exporting to **GeoParquet**.
 :::
 
 This means that in most cases, you **do not** need to provide a `crs` argument when reopening a table:

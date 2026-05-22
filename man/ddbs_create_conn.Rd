@@ -9,8 +9,8 @@ ddbs_create_conn(
   threads = NULL,
   memory_limit_gb = NULL,
   upgrade = FALSE,
-  storage_version = duckspatial_storage_default(),
-  ...
+  ...,
+  duckdb_storage_version = duckspatial_storage_default()
 )
 }
 \arguments{
@@ -23,15 +23,24 @@ file path with \code{.duckdb}, \code{.db}, or \code{.ddb} extension. Defaults to
 
 \item{upgrade}{if TRUE, it upgrades the DuckDB extension to the latest version}
 
-\item{storage_version}{Storage compatibility for newly created persistent
-DuckDB files. The default, \code{"v1.5.0"} (\strong{Native Persistence}), preserves
-CRS metadata in native DuckDB \code{GEOMETRY} columns but requires
-DuckDB >= 1.5.0 to open the file. Use \code{"legacy"} (\strong{Metadata Fallback})
-to create files readable by older DuckDB versions and persist CRS
-metadata in duckspatial-managed column comments (note that these comments
-are a duckspatial convention and not recognized by other spatial software).}
-
 \item{...}{Additional parameters to be passed to \code{\link[DBI]{dbConnect}}}
+
+\item{duckdb_storage_version}{Storage compatibility for newly created persistent
+native DuckDB files (\code{.duckdb}, \code{.db}, \code{.ddb}). See
+\url{https://duckdb.org/docs/internals/storage} for more information on
+DuckDB storage versions and compatibility.
+\itemize{
+\item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
+CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
+DuckDB >= 1.5.0 to open the file.
+\item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
+files readable by older DuckDB versions (>= 1.0.0). Persists CRS
+metadata in duckspatial-managed column comments (a convention not
+recognized by other spatial software).
+\item \code{"latest"}: Use the highest storage version supported by your
+installed DuckDB engine.
+}
+Other major version strings like \code{"v1.4.0"}, \code{"v1.3.0"}, etc., are also supported.}
 }
 \value{
 A \code{duckdb_connection}

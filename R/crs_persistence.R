@@ -1,9 +1,49 @@
 duckspatial_storage_default <- function() {
-  "v1.5.0"
+  getOption("duckspatial.duckdb_storage_version", "v1.5.0")
 }
 
 duckspatial_storage_versions <- function() {
-  c(duckspatial_storage_default(), "legacy")
+  c(duckspatial_storage_default(), "v1.4.0", "v1.3.0", "v1.2.0", "v1.0.0", "latest")
+}
+
+match_duckdb_storage_version <- function(x) {
+  if (!is.character(x) || length(x) != 1) {
+    cli::cli_abort("{.arg duckdb_storage_version} must be a single string.")
+  }
+
+  choices <- duckspatial_storage_versions()
+
+  # 1. Exact match in curated list (e.g., 'latest', 'v1.5.0', 'v1.0.0')
+  if (x %in% choices) {
+    return(x)
+  }
+
+  # 2. Pass-through for strings that look like DuckDB version tags (vX.Y.Z)
+  # This automatically supports future DuckDB releases without package updates.
+  # If the version is unknown to the DuckDB binary, it will throw a descriptive
+  # error during connection.
+  if (grepl("^v[0-9]+", x)) {
+    return(x)
+  }
+
+  # 3. Fallback to standard match.arg for suggestions/error reporting
+  match.arg(x, choices)
+}
+
+is_storage_v15_or_newer <- function(tag) {
+  if (is.null(tag) || is.na(tag) || !nzchar(tag)) {
+    return(FALSE)
+  }
+
+  # DuckDB tags can be "v1.5.0+", "v1.0.0 - v1.1.3", etc.
+  # We extract the first semantic version string found.
+  version_match <- regexpr("[0-9]+\\.[0-9]+\\.[0-9]+", tag)
+  if (version_match == -1) {
+    return(FALSE)
+  }
+
+  v_str <- regmatches(tag, version_match)
+  utils::compareVersion(v_str, "1.5.0") >= 0
 }
 
 ddbs_assert_duckdb_crs_support <- function() {
@@ -337,11 +377,12 @@ ddbs_duckdb_storage_tag <- function(conn) {
 
 ddbs_open_persistent <- function(
   dbdir,
-  storage_version = duckspatial_storage_default(),
+  duckdb_storage_version = duckspatial_storage_default(),
   read_only = FALSE,
   ...
 ) {
-  storage_version <- match.arg(storage_version, duckspatial_storage_versions())
+  duckdb_storage_version <- match_duckdb_storage_version(duckdb_storage_version)
+
   if (dbdir %in% c(":memory:", "memory")) {
     conn <- DBI::dbConnect(
       duckdb::duckdb(dbdir = ":memory:"),
@@ -354,8 +395,8 @@ ddbs_open_persistent <- function(
 
   is_new <- !file.exists(dbdir)
   config <- list()
-  if (is_new && !identical(storage_version, "legacy")) {
-    config$storage_compatibility_version <- storage_version
+  if (is_new && !identical(duckdb_storage_version, "v1.0.0")) {
+    config$storage_compatibility_version <- duckdb_storage_version
   }
 
   conn <- DBI::dbConnect(
@@ -365,22 +406,34 @@ ddbs_open_persistent <- function(
   )
 
   actual <- ddbs_duckdb_storage_tag(conn)
-  requested <- if (identical(storage_version, "legacy")) {
+  requested <- if (duckdb_storage_version %in% c("v1.0.0", "latest")) {
     NA_character_
   } else {
-    paste0(storage_version, "+")
+    paste0(duckdb_storage_version, "+")
   }
-  legacy_mode <- identical(storage_version, "legacy") ||
-    (!is.na(requested) && !identical(actual, requested))
+
+  # Fallback to legacy (comment) mode if storage is older than v1.5.0
+  legacy_mode <- !is_storage_v15_or_newer(actual)
 
   if (
-    !identical(storage_version, "legacy") &&
-      isTRUE(legacy_mode) &&
+    !legacy_mode &&
+      !is.na(requested) &&
+      !identical(actual, requested) &&
       !isTRUE(read_only)
   ) {
+    # If they requested a specific modern version but got a different modern version,
+    # we still use native spatial storage but warn.
     cli::cli_warn(
       c(
-        "Requested DuckDB storage {.val {storage_version}} but file storage is {.val {actual}}.",
+        "Requested DuckDB storage {.val {duckdb_storage_version}} but file storage is {.val {actual}}.",
+        "i" = "Native CRS persistence will be used."
+      ),
+      class = "duckspatial_storage_mismatch"
+    )
+  } else if (legacy_mode && !identical(duckdb_storage_version, "v1.0.0") && !isTRUE(read_only)) {
+    cli::cli_warn(
+      c(
+        "Requested DuckDB storage {.val {duckdb_storage_version}} but file storage is {.val {actual}} (Legacy).",
         "i" = "CRS persistence will use duckspatial-managed column-comment metadata for this compatibility connection."
       ),
       class = "duckspatial_storage_mismatch"
@@ -392,7 +445,7 @@ ddbs_open_persistent <- function(
   attr(conn, "duckspatial_storage_mode") <- if (legacy_mode) {
     "legacy"
   } else {
-    storage_version
+    duckdb_storage_version
   }
   conn
 }

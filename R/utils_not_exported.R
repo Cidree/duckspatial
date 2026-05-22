@@ -930,8 +930,17 @@ ddbs_checkpoint_if_possible <- function(conn) {
 #'   parent frame (the caller's environment).
 #' @template threads
 #' @template memory_limit_gb
-#' @param storage_version Storage compatibility for newly created persistent
-#'   DuckDB files. See \code{\link{ddbs_create_conn}}.
+#' @param duckdb_storage_version Storage compatibility for newly created persistent
+#'   native DuckDB files (\code{.duckdb}, \code{.db}, \code{.ddb}).
+#'   \itemize{
+#'     \item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
+#'           CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
+#'           DuckDB >= 1.5.0 to open the file.
+#'     \item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
+#'           files readable by older DuckDB versions (>= 1.0.0). Persists CRS
+#'           metadata in duckspatial-managed column comments (a convention not
+#'           recognized by other spatial software).
+#'   }
 #'
 #' @returns A `duckdb_connection` that will be automatically closed on exit.
 #'   For file-based connections, also returns the file path as an attribute 
@@ -940,11 +949,11 @@ ddbs_checkpoint_if_possible <- function(conn) {
 #' @keywords internal
 ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, 
                             envir = parent.frame(), threads = NULL, memory_limit_gb = NULL,
-                            storage_version = duckspatial_storage_default()) {
+                            duckdb_storage_version = duckspatial_storage_default()) {
 
   assert_threads(threads)
   assert_memory_limit_gb(memory_limit_gb)
-  storage_version <- match.arg(storage_version, duckspatial_storage_versions())
+  duckdb_storage_version <- match_duckdb_storage_version(duckdb_storage_version)
 
   if (isTRUE(file) || is.character(file)) {
     # File-based connection
@@ -960,7 +969,7 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
       # Create the database file first in writable mode
       conn_init <- ddbs_open_persistent(
         db_file,
-        storage_version = storage_version,
+        duckdb_storage_version = duckdb_storage_version,
         read_only = FALSE
       )
       ddbs_checkpoint_if_possible(conn_init)
@@ -973,7 +982,7 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     
     conn <- ddbs_open_persistent(
       db_file,
-      storage_version = storage_version,
+      duckdb_storage_version = duckdb_storage_version,
       read_only = read_only
     )
     
@@ -1008,7 +1017,7 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
       dbdir = "memory",
       threads = threads,
       memory_limit_gb = memory_limit_gb,
-      storage_version = storage_version
+      duckdb_storage_version = duckdb_storage_version
     )
     withr::defer({
       if (DBI::dbIsValid(conn)) {

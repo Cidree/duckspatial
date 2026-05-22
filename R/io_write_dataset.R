@@ -6,10 +6,10 @@
 #' formats, or can be specified explicitly via `gdal_driver`.
 #' 
 #' Persistent DuckDB database files created by duckspatial use **Native 
-#' Persistence** (`storage_version = "v1.5.0"`) by default so CRS metadata is 
+#' Spatial Storage** (`storage_version = "v1.5.0"`) by default so CRS metadata is 
 #' retained in native `GEOMETRY` columns. These files require DuckDB >= 1.5.0 
-#' to open; use **Metadata Fallback** (`storage_version = "legacy"`) when the 
-#' output must be readable by older DuckDB versions.
+#' to open; use **Legacy Compatibility** (`storage_version = "v1.0.0"`) 
+#' when the output must be readable by older DuckDB versions.
 #'
 #' @param data A `duckspatial_df`, `tbl_lazy` (DuckDB), or `sf` object.
 #' @param path Path to output file.
@@ -39,19 +39,28 @@
 #' @param overwrite Logical. If `TRUE`, overwrites existing file.
 #' @param crs Output CRS (e.g., "EPSG:4326"). Passed to GDAL as `SRS` option. Ignored for Parquet.
 #' @param layer Table name for native DuckDB database output.
-#' @param storage_version Storage compatibility for newly created DuckDB
-#'   database output. The default, `"v1.5.0"` (**Native Persistence**), 
-#'   preserves CRS natively but requires DuckDB >= 1.5.0 to open the file. 
-#'   Use `"legacy"` (**Metadata Fallback**) to store CRS metadata in 
-#'   duckspatial-managed column comments for older DuckDB readers (note that 
-#'   these comments are a duckspatial convention and not recognized by other 
-#'   spatial software).
 #' @param options Named list of additional options passed to `COPY`.
 #' @param partitioning Character vector of columns to partition by (Parquet/CSV only).
 #' @param parquet_compression Compression codec for Parquet.
 #' @param parquet_row_group_size Row group size for Parquet.
 #' @param layer_creation_options GDAL layer creation options.
 #' @template quiet
+#' @param duckdb_storage_version Storage compatibility for newly created native
+#'   DuckDB database files (\code{.duckdb}, \code{.db}, \code{.ddb}). See
+#'   \url{https://duckdb.org/docs/internals/storage} for more information on
+#'   DuckDB storage versions and compatibility.
+#'   \itemize{
+#'     \item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
+#'           CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
+#'           DuckDB >= 1.5.0 to open the file.
+#'     \item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
+#'           files readable by older DuckDB versions (>= 1.0.0). Persists CRS
+#'           metadata in duckspatial-managed column comments (a convention not
+#'           recognized by other spatial software).
+#'     \item \code{"latest"}: Use the highest storage version supported by your
+#'           installed DuckDB engine.
+#'   }
+#'   Other major version strings like \code{"v1.4.0"}, \code{"v1.3.0"}, etc., are also supported.
 #'
 #' @return The `path` invisibly.
 #' 
@@ -101,15 +110,15 @@ ddbs_write_dataset <- function(
     overwrite = FALSE,
     crs = NULL,
     layer = "spatial",
-    storage_version = duckspatial_storage_default(),
     options = list(),
     partitioning = if (inherits(data, c("tbl_lazy", "duckspatial_df"))) dplyr::group_vars(data) else NULL,
     parquet_compression = NULL,
     parquet_row_group_size = NULL,
     layer_creation_options = NULL,
-    quiet = FALSE
+    quiet = FALSE,
+    duckdb_storage_version = duckspatial_storage_default()
 ) {
-  storage_version <- match.arg(storage_version, duckspatial_storage_versions())
+  duckdb_storage_version <- match_duckdb_storage_version(duckdb_storage_version)
   
   # 1. Resolve connection
   if (is.null(conn)) {
@@ -222,7 +231,7 @@ ddbs_write_dataset <- function(
       layer = layer,
       overwrite = TRUE,
       crs = crs,
-      storage_version = storage_version,
+      duckdb_storage_version = duckdb_storage_version,
       quiet = quiet
     ))
   }
@@ -481,10 +490,10 @@ ddbs_write_duckdb_dataset <- function(
   layer,
   overwrite,
   crs,
-  storage_version,
+  duckdb_storage_version,
   quiet
 ) {
-  target_conn <- ddbs_create_conn(path, storage_version = storage_version)
+  target_conn <- ddbs_create_conn(path, duckdb_storage_version = duckdb_storage_version)
   on.exit(ddbs_stop_conn(target_conn), add = TRUE)
 
   if (!is.null(crs)) {

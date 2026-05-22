@@ -54,11 +54,11 @@ test_that("ddbs_create_conn persists native CRS metadata in v1.5 storage", {
   )))
 })
 
-test_that("legacy storage writes and reads CRS column comments", {
+test_that("v1.0.0 storage (Legacy Compatibility) writes and reads CRS column comments", {
   db_path <- tempfile(fileext = ".duckdb")
   on.exit(unlink(db_path), add = TRUE)
 
-  conn <- ddbs_create_conn(db_path, storage_version = "legacy")
+  conn <- ddbs_create_conn(db_path, duckdb_storage_version = "v1.0.0")
   expect_equal(attr(conn, "duckspatial_storage_mode"), "legacy")
   on.exit(
     suppressWarnings(try(ddbs_stop_conn(conn), silent = TRUE)),
@@ -72,7 +72,7 @@ test_that("legacy storage writes and reads CRS column comments", {
   expect_equal(sf::st_crs(ddbs_crs("points", conn = conn))$epsg, 4326)
   ddbs_stop_conn(conn)
 
-  conn2 <- ddbs_create_conn(db_path, storage_version = "legacy")
+  conn2 <- ddbs_create_conn(db_path, duckdb_storage_version = "v1.0.0")
   expect_equal(attr(conn2, "duckspatial_storage_mode"), "legacy")
   on.exit(
     suppressWarnings(try(ddbs_stop_conn(conn2), silent = TRUE)),
@@ -108,7 +108,7 @@ test_that("ddbs_write_dataset writes native DuckDB database files", {
   expect_equal(sf::st_crs(ds)$epsg, 4326)
 })
 
-test_that("ddbs_write_dataset legacy DuckDB output writes CRS column comments", {
+test_that("ddbs_write_dataset v1.0.0 DuckDB output (Legacy Compatibility) writes CRS column comments", {
   db_path <- tempfile(fileext = ".duckdb")
   on.exit(unlink(db_path), add = TRUE)
 
@@ -117,12 +117,12 @@ test_that("ddbs_write_dataset legacy DuckDB output writes CRS column comments", 
       points_sf[1:3, ],
       db_path,
       layer = "points",
-      storage_version = "legacy",
+      duckdb_storage_version = "v1.0.0",
       quiet = TRUE
     )
   )
 
-  conn <- ddbs_create_conn(db_path, storage_version = "legacy")
+  conn <- ddbs_create_conn(db_path, duckdb_storage_version = "v1.0.0")
   expect_equal(attr(conn, "duckspatial_storage_mode"), "legacy")
   on.exit(
     suppressWarnings(try(ddbs_stop_conn(conn), silent = TRUE)),
@@ -184,7 +184,7 @@ test_that("custom proj4 CRS round-trips through native and comment metadata", {
   expect_true(duckspatial:::crs_equal(native_crs, sf::st_crs(custom_crs)))
   expect_false(is.na(duckspatial:::read_native_crs(native_conn2, "pts", "geom")))
 
-  compat_conn <- ddbs_create_conn(compat_db, storage_version = "legacy")
+  compat_conn <- ddbs_create_conn(compat_db, duckdb_storage_version = "v1.0.0")
   on.exit(
     suppressWarnings(try(ddbs_stop_conn(compat_conn), silent = TRUE)),
     add = TRUE
@@ -192,7 +192,7 @@ test_that("custom proj4 CRS round-trips through native and comment metadata", {
   ddbs_write_table(compat_conn, custom_points, "pts", quiet = TRUE)
   ddbs_stop_conn(compat_conn)
 
-  compat_conn2 <- ddbs_create_conn(compat_db, storage_version = "legacy")
+  compat_conn2 <- ddbs_create_conn(compat_db, duckdb_storage_version = "v1.0.0")
   on.exit(
     suppressWarnings(try(ddbs_stop_conn(compat_conn2), silent = TRUE)),
     add = TRUE

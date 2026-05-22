@@ -3,11 +3,11 @@
 #' This function writes a Simple Features (SF) object into a DuckDB database as a new table.
 #' The table is created in the specified schema of the DuckDB database.
 #' 
-#' **CRS Persistence:** `duckspatial` ensures CRS metadata is retained across 
-#' sessions using two strategies: **Native Persistence** (for DuckDB 1.5.0+ 
-#' databases) and **Metadata Fallback** (using column comments for older 
+#' **CRS Persistence:** \code{duckspatial} ensures CRS metadata is retained across 
+#' sessions using two strategies: \strong{Native Spatial Storage} (for DuckDB 1.5.0+ 
+#' databases) and \strong{Legacy Compatibility} (using column comments for older 
 #' database versions). For file-based spatial data interchange, 
-#' [ddbs_write_dataset()] to GeoParquet (`.parquet`) is recommended.
+#' [ddbs_write_dataset()] to GeoParquet (\code{.parquet}) is recommended.
 #'
 #' @template conn
 #' @param data A \code{sf} object to write to the DuckDB database, or the path to

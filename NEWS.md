@@ -2,7 +2,7 @@
 
 ## ENHANCEMENTS
 
-* `ddbs_create_conn()` and `ddbs_write_dataset()` now create persistent DuckDB files with DuckDB `v1.5.0` storage by default so CRS metadata can persist in native `GEOMETRY` columns, with opt-in legacy comment metadata via `storage_version = "legacy"` for files that must be readable by DuckDB versions older than 1.5.0.
+* `ddbs_create_conn()` and `ddbs_write_dataset()` gain a `duckdb_storage_version` argument to control DuckDB storage compatibility. They now default to DuckDB `v1.5.0` storage (**Native Spatial Storage**) so that CRS metadata can persist in native `GEOMETRY` columns. Users can specify older versions (e.g., `v1.0.0` for **Legacy Compatibility**) when the output must be readable by older DuckDB clients.
 
 * `ddbs_create_conn()`: stricter validation of `dbdir` parameter. Now only accepts `"memory"`, `"tempdir"`, or file paths with `.duckdb`, `.db`, or `.ddb` extensions.
 
