@@ -19,6 +19,9 @@ get_file_format <- function(path) {
   if (ext %in% c("parquet")) {
     return("parquet")
   }
+  if (ext %in% c("duckdb", "db", "ddb")) {
+    return("duckdb")
+  }
   if (ext == "shp") {
      return("shp")
   }
@@ -41,6 +44,50 @@ get_file_format <- function(path) {
   
   # Return the extension purely for information/fallback usage
   return(ext)
+}
+
+duckdb_file_extensions <- function() {
+  c("duckdb", "db", "ddb")
+}
+
+has_duckdb_file_extension <- function(path) {
+  if (!is.character(path) || length(path) != 1) {
+    return(FALSE)
+  }
+  tolower(tools::file_ext(path)) %in% duckdb_file_extensions()
+}
+
+duckdb_file_info <- function(path) {
+  result <- list(
+    exists = FALSE,
+    size = NA_real_,
+    valid = FALSE,
+    empty = FALSE
+  )
+
+  if (!is.character(path) || length(path) != 1 || grepl("^[[:alpha:]][[:alnum:].+-]*://", path)) {
+    return(result)
+  }
+
+  if (!file.exists(path)) {
+    return(result)
+  }
+
+  info <- file.info(path)
+  result$exists <- TRUE
+  result$size <- info$size
+  result$empty <- isTRUE(result$size == 0)
+
+  if (is.na(result$size) || isTRUE(info$isdir) || result$size < 12) {
+    return(result)
+  }
+
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  bytes <- readBin(con, "raw", n = 12)
+
+  result$valid <- length(bytes) >= 12 && identical(bytes[9:12], charToRaw("DUCK"))
+  result
 }
 
 #' Get CRS from Parquet metadata

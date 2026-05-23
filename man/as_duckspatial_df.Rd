@@ -29,7 +29,8 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 
 \item{conn}{DuckDB connection (required for character table names)}
 
-\item{crs}{CRS object or string (auto-detected from sf objects)}
+\item{crs}{CRS object or string. Auto-detected from \code{sf} objects and
+persistent DuckDB tables.}
 
 \item{geom_col}{Geometry column name (default: "geom")}
 
@@ -45,5 +46,15 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 A duckspatial_df object
 }
 \description{
-Convert objects to duckspatial_df
+\code{as_duckspatial_df()} creates a lazy spatial data frame (\code{duckspatial_df}) from
+various inputs. When \code{x} is a table name (character) or an existing DuckDB
+table (\code{tbl_duckdb_connection}), the function creates a zero-copy representation
+of the data directly from the database without loading it into memory. This is
+the canonical way to "register" or wrap existing persistent spatial tables.
+
+\strong{CRS Persistence:} \code{duckspatial} reads native DuckDB 1.5.0+ CRS metadata
+and, for compatibility with files written by older versions of \code{duckspatial},
+CRS metadata stored in column comments. DuckDB files saved in pre-1.5.0
+format without \code{duckspatial}-managed comments will not have CRS information
+and will default to \code{NA} with a warning.
 }

@@ -15,6 +15,9 @@
 #'     \item \code{"sf"}: Eagerly collected sf object (uses memory)
 #'   }
 #'   If \code{NULL} (the default), the existing option is not changed.
+#' @param duckdb_storage_version Character. The default DuckDB storage compatibility version
+#'   for newly created database files. See \url{https://duckdb.org/docs/internals/storage}
+#'   for details.
 #'
 #' @return Invisibly returns a list containing the currently set options.
 #' @export
@@ -30,7 +33,7 @@
 #' # Check current settings
 #' ddbs_options()
 #' }
-ddbs_options <- function(output_type = NULL, mode = NULL) {
+ddbs_options <- function(output_type = NULL, mode = NULL, duckdb_storage_version = NULL) {
   
   # 1. SETTER logic
   if (!is.null(output_type)) {
@@ -52,15 +55,22 @@ ddbs_options <- function(output_type = NULL, mode = NULL) {
     }
     options(duckspatial.mode = mode)
   }
+
+  if (!is.null(duckdb_storage_version)) {
+    # Use internal helper to validate
+    duckdb_storage_version <- match_duckdb_storage_version(duckdb_storage_version)
+    options(duckspatial.duckdb_storage_version = duckdb_storage_version)
+  }
   
   # 2. GETTER logic (Always retrieve current state)
   op <- list(
     duckspatial.output_type = getOption("duckspatial.output_type"),
-    duckspatial.mode = getOption("duckspatial.mode")
+    duckspatial.mode = getOption("duckspatial.mode"),
+    duckspatial.duckdb_storage_version = getOption("duckspatial.duckdb_storage_version")
   )
   
   # If we set a value, return invisibly. If just checking, return visibly.
-  if (all(is.null(output_type), is.null(mode))) {
+  if (all(is.null(output_type), is.null(mode), is.null(duckdb_storage_version))) {
     op
   } else {
     invisible(op)
@@ -87,9 +97,11 @@ ddbs_sitrep <- function() {
   
   out_type <- getOption("duckspatial.output_type", "duckspatial_df (default)")
   mode     <- getOption("duckspatial.mode", "duckspatial (default)")
+  storage_ver <- getOption("duckspatial.duckdb_storage_version", "v1.5.0")
   cli::cli_ul()
   cli::cli_li("Output Type: {.val {out_type}}")
   cli::cli_li("Mode: {.val {mode}}")
+  cli::cli_li("DuckDB Storage Version: {.val {storage_ver}}")
   cli::cli_end()
   
   # 2. Connection Status

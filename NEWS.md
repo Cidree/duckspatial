@@ -1,5 +1,16 @@
 # duckspatial 1.1.0
 
+## ENHANCEMENTS
+
+* `ddbs_create_conn()` and `ddbs_write_dataset()` gain a `duckdb_storage_version` argument to control DuckDB storage compatibility. They now default to DuckDB `v1.5.0` storage (**Native Spatial Storage**) so that CRS metadata can persist in native `GEOMETRY` columns. Users can specify older versions (e.g., `v1.0.0` for **Legacy Compatibility**) when the output must be readable by older DuckDB clients. For more details on DuckDB storage versions, see <https://duckdb.org/docs/internals/storage>.
+
+* `ddbs_create_conn()`: stricter validation of `dbdir` parameter. Now only accepts `"memory"`, `"tempdir"`, or file paths with `.duckdb`, `.db`, or `.ddb` extensions.
+
+* `ddbs_stop_conn()`: now explicitly shuts down the DuckDB driver and forces a checkpoint (necessary to release the file lock on Windows).
+
+
+# duckspatial 1.1.0
+
 ## NEW FEATURES
 
 * Implementation of `duckspatial` macros: this allows to use some `duckspatial` functions within `dplyr` verbs (e.g. `data |> mutate(area = ddbs_area(geometry))`) (#92).

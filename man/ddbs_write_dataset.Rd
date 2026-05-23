@@ -11,13 +11,15 @@ ddbs_write_dataset(
   conn = NULL,
   overwrite = FALSE,
   crs = NULL,
+  layer = "spatial",
   options = list(),
   partitioning = if (inherits(data, c("tbl_lazy", "duckspatial_df")))
     dplyr::group_vars(data) else NULL,
   parquet_compression = NULL,
   parquet_row_group_size = NULL,
   layer_creation_options = NULL,
-  quiet = FALSE
+  quiet = FALSE,
+  duckdb_storage_version = duckspatial_storage_default()
 )
 }
 \arguments{
@@ -57,6 +59,8 @@ runs on a temporary DuckDB database.}
 
 \item{crs}{Output CRS (e.g., "EPSG:4326"). Passed to GDAL as \code{SRS} option. Ignored for Parquet.}
 
+\item{layer}{Table name for native DuckDB database output.}
+
 \item{options}{Named list of additional options passed to \code{COPY}.}
 
 \item{partitioning}{Character vector of columns to partition by (Parquet/CSV only).}
@@ -69,14 +73,39 @@ runs on a temporary DuckDB database.}
 
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
+
+\item{duckdb_storage_version}{Storage compatibility for newly created native
+DuckDB database files (\code{.duckdb}, \code{.db}, \code{.ddb}). See
+\url{https://duckdb.org/docs/internals/storage} for more information on
+DuckDB storage versions and compatibility.
+\itemize{
+\item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
+CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
+DuckDB >= 1.5.0 to open the file.
+\item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
+files readable by older DuckDB versions (>= 1.0.0). Persists CRS
+metadata in duckspatial-managed column comments (a convention not
+recognized by other spatial software).
+\item \code{"latest"}: Use the highest storage version supported by your
+installed DuckDB engine.
+}
+Other major version strings like \code{"v1.4.0"}, \code{"v1.3.0"}, etc., are also supported.}
 }
 \value{
 The \code{path} invisibly.
 }
 \description{
-Writes spatial data to disk using DuckDB's \code{COPY} command. Supports Parquet (native)
-and various GDAL spatial formats. Format is auto-detected from file extension for
-common formats, or can be specified explicitly via \code{gdal_driver}.
+Writes spatial data to disk using DuckDB's \code{COPY} command for Parquet and
+GDAL spatial formats, or as a native DuckDB database for \code{.duckdb}, \code{.db},
+and \code{.ddb} paths. Format is auto-detected from file extension for common
+formats, or can be specified explicitly via \code{gdal_driver}.
+}
+\details{
+Persistent DuckDB database files created by duckspatial use \strong{Native
+Spatial Storage} (\code{storage_version = "v1.5.0"}) by default so CRS metadata is
+retained in native \code{GEOMETRY} columns. These files require DuckDB >= 1.5.0
+to open; use \strong{Legacy Compatibility} (\code{storage_version = "v1.0.0"})
+when the output must be readable by older DuckDB versions.
 }
 \examples{
 \dontrun{

@@ -72,9 +72,23 @@ is_duckspatial_df <- function(x) {
 
 #' Convert objects to duckspatial_df
 #'
+#' @description
+#' `as_duckspatial_df()` creates a lazy spatial data frame (`duckspatial_df`) from 
+#' various inputs. When `x` is a table name (character) or an existing DuckDB 
+#' table (`tbl_duckdb_connection`), the function creates a zero-copy representation 
+#' of the data directly from the database without loading it into memory. This is 
+#' the canonical way to "register" or wrap existing persistent spatial tables.
+#' 
+#' **CRS Persistence:** `duckspatial` reads native DuckDB 1.5.0+ CRS metadata 
+#' and, for compatibility with files written by older versions of `duckspatial`, 
+#' CRS metadata stored in column comments. DuckDB files saved in pre-1.5.0 
+#' format without `duckspatial`-managed comments will not have CRS information 
+#' and will default to `NA` with a warning.
+#'
 #' @param x Object to convert (sf, tbl_lazy, data.frame, or table name)
 #' @param conn DuckDB connection (required for character table names)
-#' @param crs CRS object or string (auto-detected from sf objects)
+#' @param crs CRS object or string. Auto-detected from `sf` objects and 
+#'   persistent DuckDB tables.
 #' @param geom_col Geometry column name (default: "geom")
 #' @param ... Additional arguments passed to methods:
 #'   \describe{
@@ -86,6 +100,7 @@ is_duckspatial_df <- function(x) {
 #' @return A duckspatial_df object
 #' @export
 as_duckspatial_df <- function(x, conn = NULL, crs = NULL, geom_col = NULL, ...) {
+  ddbs_assert_duckdb_crs_support()
   UseMethod("as_duckspatial_df")
 }
 

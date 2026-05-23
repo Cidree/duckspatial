@@ -4,11 +4,16 @@
 #' native Parquet reader, returning a \code{duckspatial_df} object for lazy processing.
 #'
 #' @param path Path to spatial file. Supports Parquet (`.parquet`, with optional GeoParquet metadata),
-#'   GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, and other GDAL-supported formats.
+#'   GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, DuckDB database files
+#'   (`.duckdb`, `.db`, and `.ddb`), and other GDAL-supported formats.
 #' @param crs Coordinate reference system. Can be an EPSG code (e.g., 4326),
 #'   a CRS string, or an \code{sf} crs object. If \code{NULL} (default),
-#'   attempts to auto-detect from the file.
-#' @param layer Layer name or index to read (ST_Read only). Default is NULL (first layer).
+#'   attempts to auto-detect from the file, including native DuckDB CRS metadata
+#'   and duckspatial-managed column-comment metadata for compatibility
+#'   `.duckdb` files.
+#' @param layer Layer name or index to read (ST_Read). For DuckDB database
+#'   files, this is required and specifies the table name to read. Default is
+#'   NULL (first layer for ST_Read).
 #' @param geom_col Name of the geometry column. Default is \code{NULL}, which attempts 
 #'   auto-detection.
 #' @param conn DuckDB connection to use. If NULL, uses the default connection.
@@ -71,6 +76,8 @@ ddbs_open_dataset <- function(path,
                                    gdal_allowed_drivers = NULL,
                                    gdal_open_options = NULL) {
   
+  ddbs_assert_duckdb_crs_support()
+
   # Capture the call for error reporting
   fn_call <- rlang::current_call()
   crs_override <- crs
@@ -94,6 +101,54 @@ ddbs_open_dataset <- function(path,
   # Check for dedicated readers dispatch
   is_dedicated_shp <- (fmt == "shp" && read_shp_mode == "ST_ReadSHP")
   is_dedicated_osm <- (fmt == "osm.pbf" || grepl("\\.osm\\.pbf$", path)) && read_osm_mode == "ST_ReadOSM"
+  
+  # Support opening DuckDB files natively for explicit DuckDB file extensions.
+  # Magic bytes are still the source of truth for whether a candidate is valid.
+  duckdb_ext <- has_duckdb_file_extension(path)
+  duckdb_info <- duckdb_file_info(path)
+  if (duckdb_ext) {
+    if (!duckdb_info$exists) {
+      cli::cli_abort("File {.file {path}} does not exist.")
+    }
+
+    if (!isTRUE(duckdb_info$valid)) {
+      if (isTRUE(duckdb_info$empty) || tolower(tools::file_ext(path)) %in% c("duckdb", "ddb")) {
+        cli::cli_abort(c(
+          "File {.file {path}} is not a valid DuckDB database.",
+          "x" = "The file is missing the DuckDB magic bytes."
+        ))
+      }
+      # Non-DuckDB .db files are common in the wild. Let GDAL/ST_Read attempt
+      # them instead of treating the extension alone as authoritative.
+    } else {
+      if (is.null(layer)) {
+        cli::cli_abort(c(
+          "You must specify the {.arg layer} (table name) when opening a DuckDB database file.",
+          "i" = "Example: {.code ddbs_open_dataset('{path}', layer = 'my_table')}"
+        ))
+      }
+
+      local_conn <- withCallingHandlers(
+        ddbs_create_conn(path),
+        duckspatial_storage_mismatch = function(w) {
+          invokeRestart("muffleWarning")
+        }
+      )
+
+      result <- tryCatch({
+        name_list <- get_query_name(layer)
+        if (!table_exists(local_conn, name_list$table_name, name_list$schema_name)) {
+          cli::cli_abort("Table {.val {layer}} is not present in DuckDB database {.file {path}}.")
+        }
+        as_duckspatial_df(layer, conn = local_conn, crs = crs_override, geom_col = geom_col)
+      }, error = function(e) {
+        ddbs_stop_conn(local_conn)
+        stop(e)
+      })
+
+      return(result)
+    }
+  }
     
   # Helper for temporary table construction
   # As for duckdb v1.5 we cannot work with views as the geometry type is not recognized
