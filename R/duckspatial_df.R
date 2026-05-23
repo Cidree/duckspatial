@@ -362,7 +362,7 @@ as_duckspatial_df.data.frame <- function(
    # Upload to DuckDB
    if (is.null(conn)) conn <- ddbs_default_conn()
    
-   view_name <- ddbs_temp_view_name()
+   view_name <- ddbs_temp_table_name()
    DBI::dbWriteTable(conn, view_name, x)
    
    lazy_tbl <- dplyr::tbl(conn, view_name)
@@ -392,7 +392,7 @@ handle_heterogeneous_ingestion <- function(x, conn, crs, geom_col, ...) {
   if (inherits(x, "sf")) {
      # Already handled by as_duckspatial_df.sf before calling us
   } else if (is.data.frame(x)) {
-     view_name <- ddbs_temp_view_name()
+     view_name <- ddbs_temp_table_name()
      DBI::dbWriteTable(target_conn, view_name, x)
      x <- view_name
   }

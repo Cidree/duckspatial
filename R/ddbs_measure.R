@@ -487,7 +487,7 @@ ddbs_distance <- function(
     y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
 
     ## Generate the query
-    view_name <- ddbs_temp_view_name()
+    view_name <- ddbs_temp_table_name()
     tmp.query <- glue::glue("
         CREATE TEMP TABLE {view_name} AS
         SELECT 

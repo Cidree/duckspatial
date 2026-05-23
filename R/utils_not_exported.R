@@ -734,7 +734,7 @@ ddbs_handle_query <- function(
   if (crs_is_na && length(x_geom) == 0) {
 
     ## Create the table
-    view_name <- ddbs_temp_view_name()
+    view_name <- ddbs_temp_table_name()
     DBI::dbExecute(
       conn, 
       glue::glue("CREATE TEMP TABLE {view_name} AS {query};")
@@ -791,7 +791,7 @@ ddbs_handle_query <- function(
   } else {
     # mode == "duckspatial"
     # Create a view name and the query
-    view_name <- ddbs_temp_view_name()
+    view_name <- ddbs_temp_table_name()
     query <- glue::glue("
       CREATE TEMP TABLE {view_name} AS
       {query};

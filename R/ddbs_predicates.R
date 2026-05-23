@@ -286,7 +286,7 @@ ddbs_predicate <- function(
     y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
 
     ## Name for the table to be created
-    view_name <- ddbs_temp_view_name()
+    view_name <- ddbs_temp_table_name()
 
      if (sparse) {
     
