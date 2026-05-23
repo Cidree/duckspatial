@@ -897,6 +897,16 @@ ddbs_temp_view_name <- function() { # nocov start
   paste0("temp_view_", gsub("-", "_", uuid::UUIDgenerate()))
 } # nocov end
 
+#' Generate unique temporary table name
+#'
+#' Creates a unique name for temporary tables to avoid collisions.
+#'
+#' @returns Character string with unique table name
+#' @keywords internal
+ddbs_temp_table_name <- function() { # nocov start
+  paste0("temp_table_", gsub("-", "_", uuid::UUIDgenerate()))
+} # nocov end
+
 ddbs_checkpoint_if_possible <- function(conn) {
   if (!DBI::dbIsValid(conn)) {
     return(invisible(FALSE))
@@ -911,6 +921,7 @@ ddbs_checkpoint_if_possible <- function(conn) {
 
   invisible(ok)
 }
+
 
 #' Create an ephemeral DuckDB connection
 #'

@@ -9,7 +9,8 @@ new_duckspatial_df(
   crs = NULL,
   geom_col = NULL,
   source_table = NULL,
-  source_conn = NULL
+  source_conn = NULL,
+  create_view = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,9 @@ new_duckspatial_df(
 \item{source_table}{Name of the source table if applicable}
 
 \item{source_conn}{Name of the source connection if applicable}
+
+\item{create_view}{Logical. If TRUE, creates a temporary view for the input query.
+Otherwise it generates a temporary table.}
 }
 \value{
 A duckspatial_df object
