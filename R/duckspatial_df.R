@@ -7,6 +7,8 @@
 #' @param geom_col Name of geometry column (default: "geom")
 #' @param source_table Name of the source table if applicable
 #' @param source_conn Name of the source connection if applicable
+#' @param create_view Logical. If TRUE, creates a temporary view for the input query. 
+#' Otherwise it generates a temporary table.
 #' @return A duckspatial_df object
 #' @keywords internal
 new_duckspatial_df <- function(
@@ -14,7 +16,8 @@ new_duckspatial_df <- function(
   crs = NULL, 
   geom_col = NULL, 
   source_table = NULL,
-  source_conn = NULL
+  source_conn = NULL,
+  create_view = FALSE
 ) {
   # Avoid double wrapping
   if (is_duckspatial_df(x)) return(x)
@@ -24,7 +27,13 @@ new_duckspatial_df <- function(
   if (inherits(x, "tbl_sql") && is.null(source_table) && !is.null(source_conn)) {
 
     # Here we won't have a source table, so we will need to create it
-    source_table <- ddbs_temp_view_name()
+    if (create_view) {
+      which <- "VIEW"
+      source_table <- ddbs_temp_view_name()
+    } else {
+      which <- "TABLE"
+      source_table <- ddbs_temp_table_name()
+    }
 
     # Use sql_render to extract the query
     inner_query <- dbplyr::sql_render(x)
@@ -34,7 +43,7 @@ new_duckspatial_df <- function(
     DBI::dbExecute(
       source_conn,
       glue::glue("
-        CREATE OR REPLACE TEMP TABLE {source_table} AS
+        CREATE OR REPLACE TEMP {which} {source_table} AS
         ({inner_query});"
       )
     )
@@ -353,7 +362,7 @@ as_duckspatial_df.data.frame <- function(
    # Upload to DuckDB
    if (is.null(conn)) conn <- ddbs_default_conn()
    
-   view_name <- ddbs_temp_view_name()
+   view_name <- ddbs_temp_table_name()
    DBI::dbWriteTable(conn, view_name, x)
    
    lazy_tbl <- dplyr::tbl(conn, view_name)
@@ -383,7 +392,7 @@ handle_heterogeneous_ingestion <- function(x, conn, crs, geom_col, ...) {
   if (inherits(x, "sf")) {
      # Already handled by as_duckspatial_df.sf before calling us
   } else if (is.data.frame(x)) {
-     view_name <- ddbs_temp_view_name()
+     view_name <- ddbs_temp_table_name()
      DBI::dbWriteTable(target_conn, view_name, x)
      x <- view_name
   }

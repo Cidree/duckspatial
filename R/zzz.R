@@ -17,15 +17,13 @@
 
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
-    "duckspatial 1.0.0.9000 attached",
-    "\n* Compatible with DuckDB v1.5.1",
-    "\n* This release introduces breaking changes",
-    "\n* See full release notes for migration guidance"
+    paste("duckspatial", utils::packageVersion("duckspatial"), "attached"),
+    "\n* Compatible with DuckDB >= v1.5.1"
   )
 
   # Notify about default output change
   packageStartupMessage(
-      "\nDefault output has changed:",
+      "\nDefault output has changed on v1.0.0:",
       "\n  duckspatial now returns lazy `duckspatial_df` (dbplyr) objects",
       "\n  instead of `sf` objects.",
       "\n\nTo restore the previous behaviour:",
