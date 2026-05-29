@@ -282,6 +282,7 @@ reference:
 - title: Affine Transformations
   desc: Rotate, scale, shear, and shift geometries
   contents:
+  - ddbs_affine
   - ddbs_flip
   - ddbs_rotate
   - ddbs_rotate_3d

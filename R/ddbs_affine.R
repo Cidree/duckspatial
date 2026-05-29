@@ -963,3 +963,105 @@ ddbs_shear <- function(
     return(result)
 }
 
+
+
+
+
+#' Apply an affine transformation to geometries
+#'
+#' Applies an affine transformation to geometries using a 2x3 or 3x4 matrix.
+#'
+#' @template x
+#' @param matrix A numeric matrix specifying the transformation:
+#'   \itemize{
+#'     \item 2x3: 2D transformation with rows \code{[a, b, xoff]} and \code{[d, e, yoff]}
+#'     \item 3x4: 3D transformation with rows \code{[a, b, c, xoff]}, \code{[d, e, f, yoff]}, and \code{[g, h, i, zoff]}
+#'   }
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## 2D translation (shift x by 1, y by 2)
+#' mat_2d <- matrix(c(1, 0, 1,
+#'                    0, 1, 2), nrow = 2, byrow = TRUE)
+#' ddbs_affine(argentina_ddbs, mat_2d)
+#'
+#' ## 2D scaling (scale x by 2, y by 3)
+#' mat_scale <- matrix(c(2, 0, 0,
+#'                       0, 3, 0), nrow = 2, byrow = TRUE)
+#' ddbs_affine(argentina_ddbs, mat_scale)
+#'
+#' ## 3D transformation
+#' mat_3d <- matrix(c(1, 0, 0, 1,
+#'                    0, 1, 0, 2,
+#'                    0, 0, 1, 0), nrow = 3, byrow = TRUE)
+#' ddbs_affine(argentina_ddbs, mat_3d)
+#' }
+ddbs_affine <- function(
+    x,
+    matrix,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+
+  # 0. Handle function-specific errors
+
+  ## Validate matrix input
+  if (!is.matrix(matrix) || !is.numeric(matrix)) {
+    cli::cli_abort("{.arg matrix} must be a numeric matrix.")
+  }
+
+  dims <- dim(matrix)
+  if (!identical(dims, c(2L, 3L)) && !identical(dims, c(3L, 4L))) {
+    cli::cli_abort("{.arg matrix} must be a 2x3 (2D) or 3x4 (3D) numeric matrix.")
+  }
+
+
+  # 1. Build ST_Affine parameters string
+  if (identical(dims, c(2L, 3L))) {
+    ## 2D: ST_Affine(geom, a, b, d, e, xoff, yoff)
+    affine_args <- glue::glue(
+      "{matrix[1,1]}, {matrix[1,2]}, {matrix[2,1]}, {matrix[2,2]}, {matrix[1,3]}, {matrix[2,3]}"
+    )
+  } else {
+    ## 3D: ST_Affine(geom, a, b, c, d, e, f, g, h, i, xoff, yoff, zoff)
+    affine_args <- glue::glue(
+      "{matrix[1,1]}, {matrix[1,2]}, {matrix[1,3]}, {matrix[2,1]}, {matrix[2,2]}, 
+      {matrix[2,3]}, {matrix[3,1]}, {matrix[3,2]}, {matrix[3,3]}, {matrix[1,4]}, 
+      {matrix[2,4]}, {matrix[3,4]}"
+    )
+  }
+
+
+  # 2. Pass to template
+  template_unary_ops(
+    x = x,
+    conn = conn,
+    name = name,
+    mode = mode,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Affine",
+    other_args = affine_args
+  )
+
+}
