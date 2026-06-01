@@ -1,9 +1,9 @@
 # Write spatial dataset to disk
 
-Writes spatial data to disk using DuckDB's `COPY` command. Supports
-Parquet (native) and various GDAL spatial formats. Format is
-auto-detected from file extension for common formats, or can be
-specified explicitly via `gdal_driver`.
+Writes spatial data to disk using DuckDB's `COPY` command for Parquet
+and GDAL spatial formats, or as a native DuckDB database for `.duckdb`,
+`.db`, and `.ddb` paths. Format is auto-detected from file extension for
+common formats, or can be specified explicitly via `gdal_driver`.
 
 ## Usage
 
@@ -15,13 +15,15 @@ ddbs_write_dataset(
   conn = NULL,
   overwrite = FALSE,
   crs = NULL,
+  layer = "spatial",
   options = list(),
   partitioning = if (inherits(data, c("tbl_lazy", "duckspatial_df")))
     dplyr::group_vars(data) else NULL,
   parquet_compression = NULL,
   parquet_row_group_size = NULL,
   layer_creation_options = NULL,
-  quiet = FALSE
+  quiet = FALSE,
+  duckdb_storage_version = duckspatial_storage_default()
 )
 ```
 
@@ -85,6 +87,10 @@ ddbs_write_dataset(
   Output CRS (e.g., "EPSG:4326"). Passed to GDAL as `SRS` option.
   Ignored for Parquet.
 
+- layer:
+
+  Table name for native DuckDB database output.
+
 - options:
 
   Named list of additional options passed to `COPY`.
@@ -110,9 +116,40 @@ ddbs_write_dataset(
   A logical value. If `TRUE`, suppresses any informational messages.
   Defaults to `FALSE`.
 
+- duckdb_storage_version:
+
+  Storage compatibility for newly created native DuckDB database files
+  (`.duckdb`, `.db`, `.ddb`). See
+  <https://duckdb.org/docs/internals/storage> for more information on
+  DuckDB storage versions and compatibility.
+
+  - `"v1.5.0"` (**Native Spatial Storage**, Default): Preserves CRS
+    metadata in native DuckDB `GEOMETRY` columns. Requires DuckDB \>=
+    1.5.0 to open the file.
+
+  - `"v1.0.0"` (**Legacy Compatibility**): Creates files readable by
+    older DuckDB versions (\>= 1.0.0). Persists CRS metadata in
+    duckspatial-managed column comments (a convention not recognized by
+    other spatial software).
+
+  - `"latest"`: Use the highest storage version supported by your
+    installed DuckDB engine.
+
+  Other major version strings like `"v1.4.0"`, `"v1.3.0"`, etc., are
+  also supported.
+
 ## Value
 
 The `path` invisibly.
+
+## Details
+
+Persistent DuckDB database files created by duckspatial use **Native
+Spatial Storage** (`storage_version = "v1.5.0"`) by default so CRS
+metadata is retained in native `GEOMETRY` columns. These files require
+DuckDB \>= 1.5.0 to open; use **Legacy Compatibility**
+(`storage_version = "v1.0.0"`) when the output must be readable by older
+DuckDB versions.
 
 ## References
 

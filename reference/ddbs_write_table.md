@@ -57,6 +57,16 @@ ddbs_write_table(
 
 TRUE (invisibly) for successful import
 
+## Details
+
+**CRS Persistence:** `duckspatial` ensures CRS metadata is retained
+across sessions using two strategies: **Native Spatial Storage** (for
+DuckDB 1.5.0+ databases) and **Legacy Compatibility** (using column
+comments for older database versions). For file-based spatial data
+interchange,
+[`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
+to GeoParquet (`.parquet`) is recommended.
+
 ## Examples
 
 ``` r

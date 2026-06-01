@@ -74,8 +74,8 @@ print(countries_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_3d8909db_4491_4876_ae7a_7662689e5076> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_view_a9d19709_0883_46f0_9784_cf5eb10e1a0d> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0/:memory:]
 #>    OGC_FID CNTR_ID NAME_ENGL          ISO3_CODE CNTR_NAME FID   date       geom 
 #>      <dbl> <chr>   <chr>              <chr>     <chr>     <chr> <date>     <wk_>
 #>  1       0 AR      Argentina          ARG       Argentina AR    2021-01-01 <POL…
@@ -169,8 +169,8 @@ countries_ddbs |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_a329fec4_f87a_4a36_b12d_3c5565083341> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_view_5efd6cc9_efe0_4a74_abb2_5c177115670f> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
 #> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <POLYGON ((…
@@ -197,8 +197,8 @@ print(world_ddbs)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_09d4c7d6_2f6d_4b31_8d3b_0a0d0d001f1b> [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_table_db3b4c67_0526_4363_877e_ceb01429e38d> [?? x 1]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0/:memory:]
 #>   geometry                                                                      
 #>   <wk_wkb>                                                                      
 #> 1 <MULTIPOLYGON (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.4843…
@@ -257,8 +257,9 @@ There are two connection modes:
   the R session or until it is closed. As of v1.0.0, this mode is kept
   for backward compatibility, but working with `duckspatial_df` objects
   directly achieves the same goals with less boilerplate.
-- **Persistent:** data is written to a `.duckdb` or `.db` file on disk
-  and survives after the session ends.
+- **Persistent:** data is written to a DuckDB database file on disk and
+  survives after the session ends. {duckspatial} accepts `.duckdb`,
+  `.db`, and `.ddb` paths for persistent DuckDB databases.
 
 ### Creating a connection
 
@@ -330,8 +331,8 @@ ddbs_is_valid("countries", conn = conn) |>
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<temp_view_0fbb86cc_534a_4ee1_aa62_5a71c2c16902> [?? x 8]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1013-azure:R 4.6.0/:memory:]
+#> # Source:   table<temp_view_cf0f9c34_4b0c_480c_a9a2_5952d951e5e2> [?? x 8]
+#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1015-azure:R 4.6.0/:memory:]
 #>   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    
 #>   <chr>   <chr>      <chr>     <chr>      <chr> <date>     <lgl>    <wk_wkb>    
 #> 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    <POLYGON ((…
@@ -403,3 +404,64 @@ ddbs_write_table(conn, world_ddbs, name = "world")
 ## close — "my_database.duckdb" will persist on disk
 ddbs_stop_conn(conn)
 ```
+
+#### Reopening saved tables
+
+You can easily reopen a saved DuckDB database and lazily “register” the
+spatial tables using either
+[`ddbs_open_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.md)
+directly on the file, or
+[`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md)
+if you are manually managing connections.
+
+**A Note on CRS Persistence:** By default, `duckspatial` ensures that
+CRS metadata is preserved when saving tables to persistent DuckDB files.
+It achieves this using two complementary strategies:
+
+1.  **Native Spatial Storage** (`duckdb_storage_version = "v1.5.0"`):
+    When using DuckDB 1.5.0+ (the default mode in both
+    [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md)
+    and
+    [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)),
+    CRS information is stored directly within the database catalog.
+2.  **Legacy Compatibility** (`duckdb_storage_version = "v1.0.0"`): For
+    older DuckDB versions or legacy storage modes, `duckspatial` embeds
+    the CRS as a specialized JSON comment on the geometry column.
+
+For more information on DuckDB storage versions and compatibility
+guarantees, see the official [DuckDB Storage
+documentation](https://duckdb.org/docs/internals/storage).
+
+> **Technical Note on Interoperability**
+>
+> The **Legacy Compatibility** strategy is a `duckspatial`-specific
+> convention. Because DuckDB does not natively support CRS metadata in
+> older storage versions, we “hijack” the column comment field to store
+> this information.
+>
+> While this ensures consistent behavior within `duckspatial`, **other
+> spatial software (like QGIS, GDAL, or other DuckDB clients) will not
+> recognize this metadata.** If you need to share your DuckDB files with
+> other tools while preserving CRS, we strongly recommend using the
+> **Native Spatial Storage** (default) or exporting to **GeoParquet**.
+
+This means that in most cases, you **do not** need to provide a `crs`
+argument when reopening a table:
+
+``` r
+
+# CRS is automatically detected in most cases
+reopened_world <- ddbs_open_dataset("my_database.duckdb", layer = "world")
+```
+
+Manual CRS input is typically only required if: \* The original data
+lacked CRS information entirely. \* You are reading a DuckDB file
+created by another tool that does not follow these persistence
+conventions.
+
+**Recommendation:** While DuckDB storage is now robust for spatial
+metadata, **saving your data to GeoParquet files (`.parquet`) via
+[`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)**
+remains an excellent choice for interoperability, as GeoParquet is a
+standardized format designed specifically for durable spatial data
+storage.

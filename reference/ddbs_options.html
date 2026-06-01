@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,7 +152,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Get or set global duckspatial options</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.1.0/R/ddbs_options.R" class="external-link"><code>R/ddbs_options.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/ddbs_options.R" class="external-link"><code>R/ddbs_options.R</code></a></small>
       <div class="d-none name"><code>ddbs_options.Rd</code></div>
     </div>
 
@@ -162,7 +162,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_options</span><span class="op">(</span>output_type <span class="op">=</span> <span class="cn">NULL</span>, mode <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ddbs_options</span><span class="op">(</span>output_type <span class="op">=</span> <span class="cn">NULL</span>, mode <span class="op">=</span> <span class="cn">NULL</span>, duckdb_storage_version <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -182,6 +182,12 @@ Must be one of:</p><ul><li><p><code>"sf"</code> (default): Eagerly collected <co
 <dd><p>Character. Controls the return type. Options:</p><ul><li><p><code>"duckspatial"</code> (default): Lazy spatial data frame backed by dbplyr/DuckDB</p></li>
 <li><p><code>"sf"</code>: Eagerly collected sf object (uses memory)</p></li>
 </ul><p>If <code>NULL</code> (the default), the existing option is not changed.</p></dd>
+
+
+<dt id="arg-duckdb-storage-version">duckdb_storage_version<a class="anchor" aria-label="anchor" href="#arg-duckdb-storage-version"></a></dt>
+<dd><p>Character. The default DuckDB storage compatibility version
+for newly created database files. See <a href="https://duckdb.org/docs/internals/storage" class="external-link">https://duckdb.org/docs/internals/storage</a>
+for details.</p></dd>
 
 </dl></div>
     <div class="section level2">

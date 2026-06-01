@@ -318,6 +318,8 @@ Extract bounding boxes and envelopes
 
 Rotate, scale, shear, and shift geometries
 
+- [`ddbs_affine()`](https://cidree.github.io/duckspatial/reference/ddbs_affine.md)
+  : Apply an affine transformation to geometries
 - [`ddbs_flip()`](https://cidree.github.io/duckspatial/reference/ddbs_flip.md)
   : Flip geometries horizontally or vertically
 - [`ddbs_rotate()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate.md)

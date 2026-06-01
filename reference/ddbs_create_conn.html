@@ -116,7 +116,7 @@ spatial extension"><meta property="og:image" content="https://cidree.github.io/d
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,7 +154,7 @@ spatial extension"><meta property="og:image" content="https://cidree.github.io/d
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Create a DuckDB connection with spatial extension</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.1.0/R/db_utils.R" class="external-link"><code>R/db_utils.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/db_utils.R" class="external-link"><code>R/db_utils.R</code></a></small>
       <div class="d-none name"><code>ddbs_create_conn.Rd</code></div>
     </div>
 
@@ -170,7 +170,8 @@ spatial extension</p>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  memory_limit_gb <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  upgrade <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  duckdb_storage_version <span class="op">=</span> <span class="fu">duckspatial_storage_default</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -179,8 +180,8 @@ spatial extension</p>
 
 
 <dl><dt id="arg-dbdir">dbdir<a class="anchor" aria-label="anchor" href="#arg-dbdir"></a></dt>
-<dd><p>String. Either <code>"tempdir"</code>, <code>"memory"</code>, or file path with
-<code>.duckdb</code> or <code>.db</code> extension. Defaults to <code>"memory"</code>.</p></dd>
+<dd><p>String. Either <code>"tempdir"</code>, <code>"memory"</code>, or a DuckDB database
+file path with <code>.duckdb</code>, <code>.db</code>, or <code>.ddb</code> extension. Defaults to <code>"memory"</code>.</p></dd>
 
 
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
@@ -197,6 +198,22 @@ spatial extension</p>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional parameters to be passed to <code><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></code></p></dd>
+
+
+<dt id="arg-duckdb-storage-version">duckdb_storage_version<a class="anchor" aria-label="anchor" href="#arg-duckdb-storage-version"></a></dt>
+<dd><p>Storage compatibility for newly created persistent
+native DuckDB files (<code>.duckdb</code>, <code>.db</code>, <code>.ddb</code>). See
+<a href="https://duckdb.org/docs/internals/storage" class="external-link">https://duckdb.org/docs/internals/storage</a> for more information on
+DuckDB storage versions and compatibility.</p><ul><li><p><code>"v1.5.0"</code> (<strong>Native Spatial Storage</strong>, Default): Preserves
+CRS metadata in native DuckDB <code>GEOMETRY</code> columns. Requires
+DuckDB &gt;= 1.5.0 to open the file.</p></li>
+<li><p><code>"v1.0.0"</code> (<strong>Legacy Compatibility</strong>): Creates
+files readable by older DuckDB versions (&gt;= 1.0.0). Persists CRS
+metadata in duckspatial-managed column comments (a convention not
+recognized by other spatial software).</p></li>
+<li><p><code>"latest"</code>: Use the highest storage version supported by your
+installed DuckDB engine.</p></li>
+</ul><p>Other major version strings like <code>"v1.4.0"</code>, <code>"v1.3.0"</code>, etc., are also supported.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -5,7 +5,7 @@ Get or set global duckspatial options
 ## Usage
 
 ``` r
-ddbs_options(output_type = NULL, mode = NULL)
+ddbs_options(output_type = NULL, mode = NULL, duckdb_storage_version = NULL)
 ```
 
 ## Arguments
@@ -37,6 +37,12 @@ ddbs_options(output_type = NULL, mode = NULL)
   - `"sf"`: Eagerly collected sf object (uses memory)
 
   If `NULL` (the default), the existing option is not changed.
+
+- duckdb_storage_version:
+
+  Character. The default DuckDB storage compatibility version for newly
+  created database files. See
+  <https://duckdb.org/docs/internals/storage> for details.
 
 ## Value
 

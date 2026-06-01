@@ -11,7 +11,8 @@ new_duckspatial_df(
   crs = NULL,
   geom_col = NULL,
   source_table = NULL,
-  source_conn = NULL
+  source_conn = NULL,
+  create_view = FALSE
 )
 ```
 
@@ -36,6 +37,11 @@ new_duckspatial_df(
 - source_conn:
 
   Name of the source connection if applicable
+
+- create_view:
+
+  Logical. If TRUE, creates a temporary view for the input query.
+  Otherwise it generates a temporary table.
 
 ## Value
 

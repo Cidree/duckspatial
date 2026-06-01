@@ -116,7 +116,7 @@ native Parquet reader, returning a duckspatial_df object for lazy processing."><
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,7 +154,7 @@ native Parquet reader, returning a duckspatial_df object for lazy processing."><
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Open spatial dataset lazily via DuckDB</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.1.0/R/io_open_dataset.R" class="external-link"><code>R/io_open_dataset.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/io_open_dataset.R" class="external-link"><code>R/io_open_dataset.R</code></a></small>
       <div class="d-none name"><code>ddbs_open_dataset.Rd</code></div>
     </div>
 
@@ -197,17 +197,22 @@ native Parquet reader, returning a <code>duckspatial_df</code> object for lazy p
 
 <dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
 <dd><p>Path to spatial file. Supports Parquet (<code>.parquet</code>, with optional GeoParquet metadata),
-GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, and other GDAL-supported formats.</p></dd>
+GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, DuckDB database files
+(<code>.duckdb</code>, <code>.db</code>, and <code>.ddb</code>), and other GDAL-supported formats.</p></dd>
 
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
 <dd><p>Coordinate reference system. Can be an EPSG code (e.g., 4326),
 a CRS string, or an <code>sf</code> crs object. If <code>NULL</code> (default),
-attempts to auto-detect from the file.</p></dd>
+attempts to auto-detect from the file, including native DuckDB CRS metadata
+and duckspatial-managed column-comment metadata for compatibility
+<code>.duckdb</code> files.</p></dd>
 
 
 <dt id="arg-layer">layer<a class="anchor" aria-label="anchor" href="#arg-layer"></a></dt>
-<dd><p>Layer name or index to read (ST_Read only). Default is NULL (first layer).</p></dd>
+<dd><p>Layer name or index to read (ST_Read). For DuckDB database
+files, this is required and specifies the table name to read. Default is
+NULL (first layer for ST_Read).</p></dd>
 
 
 <dt id="arg-geom-col">geom_col<a class="anchor" aria-label="anchor" href="#arg-geom-col"></a></dt>

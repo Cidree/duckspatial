@@ -39,18 +39,22 @@ ddbs_open_dataset(
 
   Path to spatial file. Supports Parquet (`.parquet`, with optional
   GeoParquet metadata), GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM
-  PBF, and other GDAL-supported formats.
+  PBF, DuckDB database files (`.duckdb`, `.db`, and `.ddb`), and other
+  GDAL-supported formats.
 
 - crs:
 
   Coordinate reference system. Can be an EPSG code (e.g., 4326), a CRS
   string, or an `sf` crs object. If `NULL` (default), attempts to
-  auto-detect from the file.
+  auto-detect from the file, including native DuckDB CRS metadata and
+  duckspatial-managed column-comment metadata for compatibility
+  `.duckdb` files.
 
 - layer:
 
-  Layer name or index to read (ST_Read only). Default is NULL (first
-  layer).
+  Layer name or index to read (ST_Read). For DuckDB database files, this
+  is required and specifies the table name to read. Default is NULL
+  (first layer for ST_Read).
 
 - geom_col:
 

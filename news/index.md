@@ -1,5 +1,43 @@
 # Changelog
 
+## duckspatial 1.1.0.9000
+
+### NEW FEATURES
+
+- [`ddbs_affine()`](https://cidree.github.io/duckspatial/reference/ddbs_affine.md):
+  applies an affine transformation to geometries using a 2x3 or 3x4
+  matrix ([\#133](https://github.com/Cidree/duckspatial/issues/133)).
+
+### ENHANCEMENTS
+
+- [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md)
+  and
+  [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
+  gain a `duckdb_storage_version` argument to control DuckDB storage
+  compatibility. They now default to DuckDB `v1.5.0` storage (**Native
+  Spatial Storage**) so that CRS metadata can persist in native
+  `GEOMETRY` columns. Users can specify older versions (e.g., `v1.0.0`
+  for **Legacy Compatibility**) when the output must be readable by
+  older DuckDB clients. For more details on DuckDB storage versions, see
+  <https://duckdb.org/docs/internals/storage>
+  ([\#130](https://github.com/Cidree/duckspatial/issues/130),
+  [\#132](https://github.com/Cidree/duckspatial/issues/132)).
+
+- [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md):
+  stricter validation of `dbdir` parameter. Now only accepts `"memory"`,
+  `"tempdir"`, or file paths with `.duckdb`, `.db`, or `.ddb` extensions
+  ([\#132](https://github.com/Cidree/duckspatial/issues/132)).
+
+- [`ddbs_stop_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.md):
+  now explicitly shuts down the DuckDB driver and forces a checkpoint
+  (necessary to release the file lock on Windows)
+  ([\#132](https://github.com/Cidree/duckspatial/issues/132)).
+
+- `dplyr` methods on `duckspatial_df` now return a lazy temporary view,
+  rather than creating a new temporary table
+  ([\#130](https://github.com/Cidree/duckspatial/issues/130),
+  [\#134](https://github.com/Cidree/duckspatial/issues/134)).
+
 ## duckspatial 1.1.0
 
 CRAN release: 2026-05-17

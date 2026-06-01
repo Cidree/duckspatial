@@ -11,7 +11,8 @@ ddbs_create_conn(
   threads = NULL,
   memory_limit_gb = NULL,
   upgrade = FALSE,
-  ...
+  ...,
+  duckdb_storage_version = duckspatial_storage_default()
 )
 ```
 
@@ -19,8 +20,8 @@ ddbs_create_conn(
 
 - dbdir:
 
-  String. Either `"tempdir"`, `"memory"`, or file path with `.duckdb` or
-  `.db` extension. Defaults to `"memory"`.
+  String. Either `"tempdir"`, `"memory"`, or a DuckDB database file path
+  with `.duckdb`, `.db`, or `.ddb` extension. Defaults to `"memory"`.
 
 - threads:
 
@@ -44,6 +45,28 @@ ddbs_create_conn(
 
   Additional parameters to be passed to
   [`dbConnect`](https://dbi.r-dbi.org/reference/dbConnect.html)
+
+- duckdb_storage_version:
+
+  Storage compatibility for newly created persistent native DuckDB files
+  (`.duckdb`, `.db`, `.ddb`). See
+  <https://duckdb.org/docs/internals/storage> for more information on
+  DuckDB storage versions and compatibility.
+
+  - `"v1.5.0"` (**Native Spatial Storage**, Default): Preserves CRS
+    metadata in native DuckDB `GEOMETRY` columns. Requires DuckDB \>=
+    1.5.0 to open the file.
+
+  - `"v1.0.0"` (**Legacy Compatibility**): Creates files readable by
+    older DuckDB versions (\>= 1.0.0). Persists CRS metadata in
+    duckspatial-managed column comments (a convention not recognized by
+    other spatial software).
+
+  - `"latest"`: Use the highest storage version supported by your
+    installed DuckDB engine.
+
+  Other major version strings like `"v1.4.0"`, `"v1.3.0"`, etc., are
+  also supported.
 
 ## Value
 

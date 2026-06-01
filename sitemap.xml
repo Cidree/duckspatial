@@ -15,6 +15,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/convert_wkb_to_sfc.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/crs_equal.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_affine.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_format.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_points.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_bbox.html</loc></url>
@@ -88,6 +89,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_sitrep.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_startpoint.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_temp_table_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_temp_view_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_transform.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_union_funs.html</loc></url>
