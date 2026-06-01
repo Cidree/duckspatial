@@ -2,6 +2,10 @@
 
 ## NEW FEATURES
 
+* `ddbs_get_npoints()`: returns the number of points (vertices) in a geometry.
+
+* `ddbs_get_ngeometries()`: returns the number of sub-geometries in a GEOMETRYCOLLECTION or MULTI* geometry.
+
 * `ddbs_affine()`: applies an affine transformation to geometries using a 2x3 or 3x4 matrix (#133).
 
 ## ENHANCEMENTS
