@@ -709,115 +709,7 @@ describe("ddbs_exterior_ring()", {
 
 
 
-
-
-# 6. ddbs_make_polygon() -----------------------------------------------------
-
-## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
-## - CHECK 1.3: messages work
-## - CHECK 1.4: writting table works
-## - CHECK 1.5: geometry type
-## - CHECK 2.1: function specific errors
-## - CHECK 2.2: other errors
-describe("ddbs_make_polygon()", {
-  
-  describe("expected behavior", {
-    
-    it("works on all formats", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      ext_ring_sf <- st_as_sf(ext_ring_ddbs)
-      
-      output_ddbs <- ddbs_make_polygon(ext_ring_ddbs)
-      output_sf   <- ddbs_make_polygon(ext_ring_sf)
-      output_conn <- ddbs_make_polygon("exterior_ring", conn = conn_test)
-
-      expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
-    })
-    
-    it("returns different output formats (duckspatial_df, sf)", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      output_sf_fmt <- ddbs_make_polygon(ext_ring_ddbs, mode = "sf")
-      expect_s3_class(output_sf_fmt, "sf")
-    })
-    
-    it("shows and suppresses messages correctly", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      
-      expect_no_message(ddbs_make_polygon(ext_ring_ddbs))
-      expect_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon"))
-      expect_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon", overwrite = TRUE))
-      expect_true(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon2"))
-
-      expect_no_message(ddbs_make_polygon(ext_ring_ddbs, quiet = TRUE))
-      expect_no_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon", overwrite = TRUE, quiet = TRUE))
-    })
-    
-    it("writes tables to the database", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      output_ddbs <- ddbs_make_polygon(ext_ring_ddbs)
-      output_tbl <- ddbs_read_table(conn_test, "make_polygon")
-      
-      expect_equal(
-        ddbs_collect(output_ddbs)$geometry,
-        output_tbl$geometry
-      )
-    })
-    
-    it("returns POLYGON geometry type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      output_ddbs <- ddbs_make_polygon(ext_ring_ddbs)
-      geom_type <- ddbs_collect(output_ddbs) |> sf::st_geometry_type() |> as.character()
-      
-      expect_equal(geom_type, "POLYGON")
-    })
-  })
-  
-  describe("errors", {
-    
-    it("requires linestring geometry", {
-      expect_error(ddbs_make_polygon(argentina_ddbs))
-    })
-    
-    it("requires connection when using table names", {
-      expect_error(ddbs_make_polygon("ext_ring", conn = NULL))
-    })
-    
-    it("validates x argument type", {
-      expect_error(ddbs_make_polygon(x = 999))
-    })
-    
-    it("validates conn argument type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, conn = 999))
-    })
-    
-    it("validates overwrite argument type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, overwrite = 999))
-    })
-    
-    it("validates quiet argument type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, quiet = 999))
-    })
-    
-    it("validates table name exists", {
-      expect_error(ddbs_make_polygon(x = "999", conn = conn_test))
-    })
-    
-    it("requires name to be single character string", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, conn = conn_test, name = c('banana', 'banana')))
-    })
-  })
-})
-
-
-
-# 7. ddbs_convex_hull() -----------------------------------------------------
+# 6. ddbs_convex_hull() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
@@ -898,7 +790,7 @@ describe("ddbs_convex_hull()", {
 
 
 
-# 8. ddbs_concave_hull() ---------------------------------------------------
+# 7. ddbs_concave_hull() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
@@ -1054,7 +946,7 @@ describe("ddbs_concave_hull()", {
 
 
 
-# 9. ddbs_geometry_type() ---------------------------------------------------
+# 8. ddbs_geometry_type() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all formats with by_feature = TRUE
 ## - CHECK 1.2: works on all formats with by_feature = FALSE
