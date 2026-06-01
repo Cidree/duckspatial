@@ -3,6 +3,31 @@ testthat::skip_on_cran()
 
 # Tests for connection management
 
+test_that("ddbs_create_conn accepts only supported DuckDB file extensions", {
+  for (ext in c(".duckdb", ".db", ".ddb")) {
+    db_path <- tempfile(fileext = ext)
+    on.exit(unlink(db_path), add = TRUE)
+
+    # 1. Create and write using public API
+    conn <- ddbs_create_conn(dbdir = db_path)
+    DBI::dbExecute(conn, "CREATE TABLE extension_check AS SELECT 1 AS value")
+    ddbs_stop_conn(conn)
+
+    # 2. Reopen and verify using public API
+    conn_reopened <- ddbs_create_conn(dbdir = db_path)
+    expect_equal(
+      DBI::dbGetQuery(conn_reopened, "SELECT value FROM extension_check")$value,
+      1
+    )
+    ddbs_stop_conn(conn_reopened)
+  }
+
+  expect_error(
+    ddbs_create_conn(tempfile(fileext = ".txt")),
+    "duckdb.*db.*ddb"
+  )
+})
+
 test_that("cross-connection filtering works with proper fallback strategies", {
   skip_if_not_installed("sf")
 
@@ -73,4 +98,29 @@ test_that("ddbs_crs works on character tables without CRS column using view anal
   # Should find EPSG:4267
   expect_false(is.na(crs))
   expect_equal(crs$epsg, 4267)
+})
+
+test_that("ddbs_open_dataset does not leak connections on error with persistent files", {
+  db_path <- tempfile(fileext = ".duckdb")
+  on.exit(unlink(db_path), add = TRUE)
+  
+  # Create a dummy duckdb file with one table
+  local({
+    conn <- ddbs_create_conn(db_path)
+    DBI::dbExecute(conn, "CREATE TABLE my_table AS SELECT 1 AS id")
+    ddbs_stop_conn(conn)
+  })
+  
+  # Try to open a NON-EXISTENT layer. This triggers the error inside tryCatch
+  # after the connection is opened.
+  expect_error(
+    ddbs_open_dataset(db_path, layer = "non_existent_layer"),
+    "not present in DuckDB database"
+  )
+  
+  # If the connection leaked, the file might be locked. 
+  # Attempting to delete it should succeed if closed.
+  # (On Windows this is a strong check; on Unix it is less so but still good practice)
+  expect_true(unlink(db_path) == 0)
+  expect_false(file.exists(db_path))
 })

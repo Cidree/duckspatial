@@ -108,26 +108,8 @@ get_conn_from_input <- function(x) {  # nocov start
 #' @return Logical indicating if CRS are equal
 #' @keywords internal
 crs_equal <- function(crs1, crs2) {  # nocov start
-  # If either is NULL, skip check
-  if (is.null(crs1) || is.null(crs2)) return(TRUE)
-  
-  # Normalize to sf crs objects
-  crs1 <- sf::st_crs(crs1)
-  crs2 <- sf::st_crs(crs2)
-  
-  # If both are NA, they're equal
-  if (is.na(crs1) && is.na(crs2)) return(TRUE)
-  
-  # If one is NA and other isn't, they're different
-  if (is.na(crs1) || is.na(crs2)) return(FALSE)
-  
-  # Compare EPSG codes if both have them
-  if (!is.na(crs1$epsg) && !is.na(crs2$epsg)) {
-    return(crs1$epsg == crs2$epsg)
-  }
-  
-  # Fallback to WKT comparison
-  identical(crs1$wkt, crs2$wkt)
+  if (is.null(crs1) || is.null(crs2)) return(FALSE)
+  isTRUE(sf::st_crs(crs1) == sf::st_crs(crs2))
 }  # nocov end
 
 #' Import a view/table from one connection to another
@@ -752,7 +734,7 @@ ddbs_handle_query <- function(
   if (crs_is_na && length(x_geom) == 0) {
 
     ## Create the table
-    view_name <- ddbs_temp_view_name()
+    view_name <- ddbs_temp_table_name()
     DBI::dbExecute(
       conn, 
       glue::glue("CREATE TEMP TABLE {view_name} AS {query};")
@@ -809,7 +791,7 @@ ddbs_handle_query <- function(
   } else {
     # mode == "duckspatial"
     # Create a view name and the query
-    view_name <- ddbs_temp_view_name()
+    view_name <- ddbs_temp_table_name()
     query <- glue::glue("
       CREATE TEMP TABLE {view_name} AS
       {query};
@@ -915,6 +897,32 @@ ddbs_temp_view_name <- function() { # nocov start
   paste0("temp_view_", gsub("-", "_", uuid::UUIDgenerate()))
 } # nocov end
 
+#' Generate unique temporary table name
+#'
+#' Creates a unique name for temporary tables to avoid collisions.
+#'
+#' @returns Character string with unique table name
+#' @keywords internal
+ddbs_temp_table_name <- function() { # nocov start
+  paste0("temp_table_", gsub("-", "_", uuid::UUIDgenerate()))
+} # nocov end
+
+ddbs_checkpoint_if_possible <- function(conn) {
+  if (!DBI::dbIsValid(conn)) {
+    return(invisible(FALSE))
+  }
+
+  ok <- tryCatch({
+    DBI::dbExecute(conn, "FORCE CHECKPOINT")
+    TRUE
+  }, error = function(e) {
+    FALSE
+  })
+
+  invisible(ok)
+}
+
+
 #' Create an ephemeral DuckDB connection
 #'
 #' Creates a DuckDB connection that is automatically closed when the calling
@@ -933,6 +941,17 @@ ddbs_temp_view_name <- function() { # nocov start
 #'   parent frame (the caller's environment).
 #' @template threads
 #' @template memory_limit_gb
+#' @param duckdb_storage_version Storage compatibility for newly created persistent
+#'   native DuckDB files (\code{.duckdb}, \code{.db}, \code{.ddb}).
+#'   \itemize{
+#'     \item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
+#'           CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
+#'           DuckDB >= 1.5.0 to open the file.
+#'     \item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
+#'           files readable by older DuckDB versions (>= 1.0.0). Persists CRS
+#'           metadata in duckspatial-managed column comments (a convention not
+#'           recognized by other spatial software).
+#'   }
 #'
 #' @returns A `duckdb_connection` that will be automatically closed on exit.
 #'   For file-based connections, also returns the file path as an attribute 
@@ -940,10 +959,12 @@ ddbs_temp_view_name <- function() { # nocov start
 #' @noRd
 #' @keywords internal
 ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE, 
-                            envir = parent.frame(), threads = NULL, memory_limit_gb = NULL) {
+                            envir = parent.frame(), threads = NULL, memory_limit_gb = NULL,
+                            duckdb_storage_version = duckspatial_storage_default()) {
 
   assert_threads(threads)
   assert_memory_limit_gb(memory_limit_gb)
+  duckdb_storage_version <- match_duckdb_storage_version(duckdb_storage_version)
 
   if (isTRUE(file) || is.character(file)) {
     # File-based connection
@@ -957,12 +978,24 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     # If creating a new tempfile with read_only=TRUE, we must create it first
     if (isTRUE(read_only) && !file.exists(db_file)) {
       # Create the database file first in writable mode
-      conn_init <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = FALSE)
+      conn_init <- ddbs_open_persistent(
+        db_file,
+        duckdb_storage_version = duckdb_storage_version,
+        read_only = FALSE
+      )
+      ddbs_checkpoint_if_possible(conn_init)
+      drv_init <- conn_init@driver
       DBI::dbDisconnect(conn_init)
+      if (inherits(drv_init, "duckdb_driver")) {
+        duckdb::duckdb_shutdown(drv_init)
+      }
     }
     
-    conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = read_only)
-    attr(conn, "db_file") <- db_file
+    conn <- ddbs_open_persistent(
+      db_file,
+      duckdb_storage_version = duckdb_storage_version,
+      read_only = read_only
+    )
     
     # Checks and installs the Spatial extension
     # NOTE: These operations work fine on read-only connections:
@@ -978,16 +1011,32 @@ ddbs_temp_conn <- function(file = FALSE, read_only = FALSE, cleanup = TRUE,
     # Cleanup: disconnect and optionally delete file
     withr::defer({
       if (DBI::dbIsValid(conn)) {
-        tryCatch(suppressWarnings(DBI::dbDisconnect(conn, shutdown = TRUE)), error = function(e) NULL)
+        if (!isTRUE(read_only)) {
+          ddbs_checkpoint_if_possible(conn)
+        }
+        drv <- conn@driver
+        tryCatch(suppressWarnings(DBI::dbDisconnect(conn)), error = function(e) NULL)
+        if (inherits(drv, "duckdb_driver")) {
+          tryCatch(duckdb::duckdb_shutdown(drv), error = function(e) NULL)
+        }
       }
       if (isTRUE(cleanup) && file.exists(db_file)) unlink(db_file)
     }, envir = envir)
   } else {
     # In-memory connection
-    conn <- ddbs_create_conn(dbdir = "memory", threads = threads, memory_limit_gb = memory_limit_gb)
+    conn <- ddbs_create_conn(
+      dbdir = "memory",
+      threads = threads,
+      memory_limit_gb = memory_limit_gb,
+      duckdb_storage_version = duckdb_storage_version
+    )
     withr::defer({
       if (DBI::dbIsValid(conn)) {
+        drv <- conn@driver
         tryCatch(suppressWarnings(DBI::dbDisconnect(conn)), error = function(e) NULL)
+        if (inherits(drv, "duckdb_driver")) {
+          tryCatch(duckdb::duckdb_shutdown(drv), error = function(e) NULL)
+        }
       }
     }, envir = envir)
   }
@@ -1149,13 +1198,7 @@ build_geom_query <- function(fun, name, crs, mode) { # nocov start
   } else {
     ## When creating a table in a connection, we preserve the CRS
     ## in the geometry column
-    ## Get the CRS, and define the geometry type for duckdb    
-    data_crs   <- sf::st_crs(crs, parameters = TRUE)
-    if (length(data_crs) == 0 | is.na(data_crs$srid)) {
-        geom_field <- glue::glue("GEOMETRY")
-    } else {
-        geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
-    }
+    geom_field <- duckdb_geometry_type(conn = NULL, crs)
     glue::glue("{fun}::{geom_field}")
   }
 } # nocov end
@@ -1303,15 +1346,8 @@ get_table_crs <- function(conn, geom_name, table_name) { # nocov start
 #'
 #' @keywords internal
 #' @noRd
-get_geometry_type_duckdb <- function(x) { # nocov start
-  data_crs <- sf::st_crs(x, parameters = TRUE)
-  # st_crs returns a list where srid is NA if not found
-  if (length(data_crs) == 0 || is.na(data_crs$srid)) {
-    geom_field <- "GEOMETRY"
-  } else {
-    geom_field <- glue::glue("GEOMETRY('{data_crs$srid}')")
-  }
-  return(geom_field)
+get_geometry_type_duckdb <- function(x, conn = NULL) { # nocov start
+  duckdb_geometry_type(conn, x)
 } # nocov end
 
 

@@ -2,6 +2,12 @@
 #'
 #' This function writes a Simple Features (SF) object into a DuckDB database as a new table.
 #' The table is created in the specified schema of the DuckDB database.
+#' 
+#' **CRS Persistence:** \code{duckspatial} ensures CRS metadata is retained across 
+#' sessions using two strategies: \strong{Native Spatial Storage} (for DuckDB 1.5.0+ 
+#' databases) and \strong{Legacy Compatibility} (using column comments for older 
+#' database versions). For file-based spatial data interchange, 
+#' [ddbs_write_dataset()] to GeoParquet (\code{.parquet}) is recommended.
 #'
 #' @template conn
 #' @param data A \code{sf} object to write to the DuckDB database, or the path to
@@ -55,6 +61,7 @@ ddbs_write_table <- function(
     # 1. Checks
     ## Check if connection is correct
     dbConnCheck(conn)
+    input_crs <- ddbs_input_crs_for_write(data, conn)
 
     ## Handle temp_view
     if (temp_view) {
@@ -107,6 +114,13 @@ ddbs_write_table <- function(
                 if (isFALSE(quiet)) {
                     cli::cli_alert_success("Table {name_list$query_name} imported via {import_result$method}")
                 }
+                geom_col <- tryCatch(get_geom_name(conn, name_list$query_name), error = function(e) NULL)
+                ddbs_write_legacy_crs_comment_if_needed(
+                    conn,
+                    name_list$query_name,
+                    geom_col = geom_col,
+                    crs = input_crs
+                )
                 return(invisible(TRUE))
             }
         }
@@ -151,7 +165,7 @@ ddbs_write_table <- function(
         data_df[[geom_name]] <- wkb_data  # Ensure raw data is preserved
 
         ## Get the CRS, and define the geometry type for duckdb
-        geom_field <- get_geometry_type_duckdb(data)
+        geom_field <- get_geometry_type_duckdb(data, conn)
 
         ## Warn if no CRS was found in the input data
         if (geom_field == "GEOMETRY") {
@@ -172,6 +186,12 @@ ddbs_write_table <- function(
             ALTER TABLE {name_list$query_name}
             ALTER COLUMN {geom_name} SET DATA TYPE {geom_field} USING ST_GeomFromWKB({geom_name});
         "))
+        ddbs_write_legacy_crs_comment_if_needed(
+            conn,
+            name_list$query_name,
+            geom_col = geom_name,
+            crs = input_crs
+        )
         # duckdb::duckdb_unregister(conn, "temp_view") |> on.exit()
         
 
@@ -206,6 +226,11 @@ ddbs_write_table <- function(
             DBI::dbExecute(
                 conn,
                 glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM ST_Read('{data}')")
+            )
+            ddbs_write_legacy_crs_comment_if_needed(
+                conn,
+                name_list$query_name,
+                crs = input_crs
             )
         }
     }

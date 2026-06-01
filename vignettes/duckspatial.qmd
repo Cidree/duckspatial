@@ -162,7 +162,7 @@ So far we have been using the default, temporary DuckDB connection that {duckspa
 There are two connection modes:
 
 -   **Non-persistent (in-memory):** data exists only for the duration of the R session or until it is closed. As of v1.0.0, this mode is kept for backward compatibility, but working with `duckspatial_df` objects directly achieves the same goals with less boilerplate.
--   **Persistent:** data is written to a `.duckdb` or `.db` file on disk and survives after the session ends.
+-   **Persistent:** data is written to a DuckDB database file on disk and survives after the session ends. {duckspatial} accepts `.duckdb`, `.db`, and `.ddb` paths for persistent DuckDB databases.
 
 ## Creating a connection
 
@@ -261,3 +261,34 @@ ddbs_write_table(conn, world_ddbs, name = "world")
 ## close — "my_database.duckdb" will persist on disk
 ddbs_stop_conn(conn)
 ```
+
+### Reopening saved tables
+
+You can easily reopen a saved DuckDB database and lazily "register" the spatial tables using either `ddbs_open_dataset()` directly on the file, or `as_duckspatial_df()` if you are manually managing connections.
+
+**A Note on CRS Persistence:** By default, `duckspatial` ensures that CRS metadata is preserved when saving tables to persistent DuckDB files. It achieves this using two complementary strategies:
+
+1. **Native Spatial Storage** (`duckdb_storage_version = "v1.5.0"`): When using DuckDB 1.5.0+ (the default mode in both `ddbs_create_conn()` and `ddbs_write_dataset()`), CRS information is stored directly within the database catalog.
+2. **Legacy Compatibility** (`duckdb_storage_version = "v1.0.0"`): For older DuckDB versions or legacy storage modes, `duckspatial` embeds the CRS as a specialized JSON comment on the geometry column.
+
+For more information on DuckDB storage versions and compatibility guarantees, see the official [DuckDB Storage documentation](https://duckdb.org/docs/internals/storage).
+
+::: {.callout-note}
+### Technical Note on Interoperability
+The **Legacy Compatibility** strategy is a `duckspatial`-specific convention. Because DuckDB does not natively support CRS metadata in older storage versions, we "hijack" the column comment field to store this information. 
+
+While this ensures consistent behavior within `duckspatial`, **other spatial software (like QGIS, GDAL, or other DuckDB clients) will not recognize this metadata.** If you need to share your DuckDB files with other tools while preserving CRS, we strongly recommend using the **Native Spatial Storage** (default) or exporting to **GeoParquet**.
+:::
+
+This means that in most cases, you **do not** need to provide a `crs` argument when reopening a table:
+
+```r
+# CRS is automatically detected in most cases
+reopened_world <- ddbs_open_dataset("my_database.duckdb", layer = "world")
+```
+
+Manual CRS input is typically only required if:
+* The original data lacked CRS information entirely.
+* You are reading a DuckDB file created by another tool that does not follow these persistence conventions.
+
+**Recommendation:** While DuckDB storage is now robust for spatial metadata, **saving your data to GeoParquet files (`.parquet`) via `ddbs_write_dataset()`** remains an excellent choice for interoperability, as GeoParquet is a standardized format designed specifically for durable spatial data storage.

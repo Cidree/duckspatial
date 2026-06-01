@@ -325,7 +325,8 @@ select.duckspatial_df <- function(.data, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -343,7 +344,8 @@ filter.duckspatial_df <- function(.data, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -361,7 +363,8 @@ arrange.duckspatial_df <- function(.data, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -390,7 +393,8 @@ rename.duckspatial_df <- function(.data, ...) {
     crs          = atts$crs,
     geom_col     = new_geom_col,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -408,7 +412,8 @@ slice.duckspatial_df <- function(.data, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -426,7 +431,8 @@ head.duckspatial_df <- function(x, n = 6L, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -483,7 +489,8 @@ mutate.duckspatial_df <- function(.data, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -586,7 +593,8 @@ left_join.duckspatial_df <- function(x, y, by = NULL, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -607,7 +615,8 @@ inner_join.duckspatial_df <- function(x, y, by = NULL, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -628,7 +637,8 @@ right_join.duckspatial_df <- function(x, y, by = NULL, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -649,7 +659,8 @@ full_join.duckspatial_df <- function(x, y, by = NULL, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -689,7 +700,8 @@ ungroup.duckspatial_df <- function(x, ...) {
     crs          = atts$crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
-    source_conn  = atts$source_conn
+    source_conn  = atts$source_conn,
+    create_view  = TRUE
   )
 }
 
@@ -713,7 +725,8 @@ summarise.duckspatial_df <- function(.data, ...) {
       crs          = atts$crs,
       geom_col     = geom_col,
       source_table = NULL,
-      source_conn  = atts$source_conn
+      source_conn  = atts$source_conn,
+      create_view  = TRUE
     )
   } else {
     cli::cli_warn(c(

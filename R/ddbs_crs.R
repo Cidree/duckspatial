@@ -59,6 +59,28 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
   # Try to auto-detect CRS from view SQL (for duckdbfs::open_dataset and similar)
   conn <- dbplyr::remote_con(x)
   
+  # Try to use ST_CRS() first if we have a valid table name
+  remote_table <- tryCatch({
+    rem_name <- dbplyr::remote_name(x)
+    if (is.null(rem_name)) NULL else as.character(rem_name)
+  }, error = function(e) NULL)
+
+  if (!is.null(remote_table)) {
+    crs_data <- tryCatch({
+      geom_name <- get_geom_name(conn, remote_table)
+      resolve_crs(
+        conn,
+        remote_table,
+        geom_name,
+        quiet_unknown = TRUE
+      )
+    }, error = function(e) NULL)
+
+    if (!is.null(crs_data) && !is.na(crs_data)) {
+      return(crs_data)
+    }
+  }
+
   # Strategy 1: Try to get view SQL from duckdb_views()
   view_sql <- tryCatch({
     table_name <- dbplyr::remote_name(x)
@@ -108,8 +130,8 @@ ddbs_crs.tbl_duckdb_connection <- function(x, ...) {
   # Fallback: return NA CRS
   cli::cli_warn(c(
     "Could not auto-detect CRS for {.cls tbl_duckdb_connection} object.",
-    "i" = "The object may not be a view created from a spatial file.",
-    "i" = "Use {.code as_duckspatial_df(x, crs = ...)} to set CRS explicitly."
+    "i" = "This typically occurs when reopening a persistent DuckDB database created without recoverable CRS metadata (for example, pre-1.5 files without duckspatial comments) or when the table/file has an unknown or missing CRS.",
+    "i" = "Use {.code as_duckspatial_df(x, crs = ...)} to set the CRS explicitly."
   ))
   sf::st_crs(NA)
 }
@@ -164,9 +186,12 @@ ddbs_crs.character <- function(x, conn, ...) {
     ## Get CRS from the table
     crs_data <- tryCatch({
       geom_name <- get_geom_name(conn, x_list$query_name)
-      DBI::dbGetQuery(
-        conn, glue::glue("SELECT ST_CRS({geom_name}) AS crs FROM {x_list$query_name} LIMIT 1;")
-      ) |> as.character()
+      resolve_crs(
+        conn,
+        x_list$query_name,
+        geom_name,
+        quiet_unknown = TRUE
+      )
     }, error = function(e) {
       NULL
     })
@@ -194,12 +219,16 @@ ddbs_crs.character <- function(x, conn, ...) {
          }
       }
     
-      cli::cli_warn("CRS could not be auto-detected.")
+      cli::cli_warn(c(
+        "CRS could not be detected for {.val {name}}.",
+        "i" = "This can happen when reading an older DuckDB storage file that was created before duckspatial persisted CRS metadata, or when the table has no CRS information.",
+        "i" = "Use {.code as_duckspatial_df(x, crs = ...)} or {.code ddbs_open_dataset(path, crs = ...)} to set the CRS explicitly."
+      ))
       return(sf::st_crs(NA))
     }
 
     # 2. Return CRS
-    return(sf::st_crs(crs_data))
+    return(crs_data)
 }
 
 #' @export

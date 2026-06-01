@@ -4,7 +4,7 @@
 \alias{ddbs_options}
 \title{Get or set global duckspatial options}
 \usage{
-ddbs_options(output_type = NULL, mode = NULL)
+ddbs_options(output_type = NULL, mode = NULL, duckdb_storage_version = NULL)
 }
 \arguments{
 \item{output_type}{Character string. Controls the default return type for \link{ddbs_collect}.
@@ -23,6 +23,10 @@ If \code{NULL} (the default), the existing option is not changed.}
 \item \code{"sf"}: Eagerly collected sf object (uses memory)
 }
 If \code{NULL} (the default), the existing option is not changed.}
+
+\item{duckdb_storage_version}{Character. The default DuckDB storage compatibility version
+for newly created database files. See \url{https://duckdb.org/docs/internals/storage}
+for details.}
 }
 \value{
 Invisibly returns a list containing the currently set options.

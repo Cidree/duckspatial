@@ -193,12 +193,28 @@ ddbs_glimpse <- function(
 #' It creates a DuckDB connection, and then it installs and loads the
 #' spatial extension
 #'
-#' @param dbdir String. Either `"tempdir"`, `"memory"`, or file path with
-#' `.duckdb` or `.db` extension. Defaults to `"memory"`.
+#' @param dbdir String. Either `"tempdir"`, `"memory"`, or a DuckDB database
+#' file path with `.duckdb`, `.db`, or `.ddb` extension. Defaults to `"memory"`.
 #' @template threads
 #' @template memory_limit_gb
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #' @param ... Additional parameters to be passed to \code{\link[DBI]{dbConnect}}
+#' @param duckdb_storage_version Storage compatibility for newly created persistent
+#'   native DuckDB files (\code{.duckdb}, \code{.db}, \code{.ddb}). See
+#'   \url{https://duckdb.org/docs/internals/storage} for more information on
+#'   DuckDB storage versions and compatibility.
+#'   \itemize{
+#'     \item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
+#'           CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
+#'           DuckDB >= 1.5.0 to open the file.
+#'     \item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
+#'           files readable by older DuckDB versions (>= 1.0.0). Persists CRS
+#'           metadata in duckspatial-managed column comments (a convention not
+#'           recognized by other spatial software).
+#'     \item \code{"latest"}: Use the highest storage version supported by your
+#'           installed DuckDB engine.
+#'   }
+#'   Other major version strings like \code{"v1.4.0"}, \code{"v1.3.0"}, etc., are also supported.
 #'
 #' @returns A `duckdb_connection`
 #' @export
@@ -223,14 +239,15 @@ ddbs_create_conn <- function(
   threads = NULL, 
   memory_limit_gb = NULL,
   upgrade = FALSE,
-  ...) {
+  ...,
+  duckdb_storage_version = duckspatial_storage_default()) {
 
-    # 0. Handle errors
-    if (!dbdir %in% c("tempdir","memory")) {
-      ## get file extension
-      db_extension <- tools::file_ext(dbdir)
-      if (!db_extension %in% c("", "duckdb", "db"))
-        cli::cli_abort("dbdir should be <'tempdir'>, <'memory'>, or have <'.duckdb'> or <'.db'> extension.")
+    duckdb_storage_version <- match_duckdb_storage_version(duckdb_storage_version)
+
+    if (!dbdir %in% c("tempdir", "memory") && !has_duckdb_file_extension(dbdir)) {
+      cli::cli_abort(
+        "{.arg dbdir} should be {.val tempdir}, {.val memory}, or a file path with {.file .duckdb}, {.file .db}, or {.file .ddb} extension."
+      )
     }
 
     assert_threads(threads)
@@ -241,12 +258,10 @@ ddbs_create_conn <- function(
     if(dbdir == 'tempdir'){
       
       db_path <- tempfile(pattern = 'duckspatial', fileext = '.duckdb')
-      conn <- duckdb::dbConnect(
-        duckdb::duckdb(
-          dbdir = db_path
-          #, bigint = "integer64" ## in case the data includes big int
-        ),
-        geometry = "wk",
+      conn <- ddbs_open_persistent(
+        db_path,
+        duckdb_storage_version = duckdb_storage_version,
+        read_only = FALSE,
         ...
       )
     } else if (dbdir == 'memory') {
@@ -259,9 +274,10 @@ ddbs_create_conn <- function(
         ...
       )
     } else {
-      conn <- duckdb::dbConnect(
-        duckdb::duckdb(dbdir = dbdir), 
-        geometry = "wk",
+      conn <- ddbs_open_persistent(
+        dbdir,
+        duckdb_storage_version = duckdb_storage_version,
+        read_only = FALSE,
         ...
       )
     }
@@ -333,8 +349,14 @@ ddbs_stop_conn <- function(conn) {
     # Check if connection is correct
     dbConnCheck(conn)
 
-    # Disconnect from database
+    # Disconnect from database and shutdown driver
+    # Explicit driver shutdown is required on Windows to release file locks
+    ddbs_checkpoint_if_possible(conn)
+    drv <- conn@driver
     DBI::dbDisconnect(conn)
+    if (inherits(drv, "duckdb_driver")) {
+        duckdb::duckdb_shutdown(drv)
+    }
 
     return(invisible(TRUE))
 }

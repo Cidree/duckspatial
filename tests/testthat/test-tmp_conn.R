@@ -56,7 +56,7 @@ test_that("ddbs_temp_conn: custom file path", {
 })
 
 test_that("ddbs_temp_conn: custom path with cleanup = FALSE", {
-  custom_path <- tempfile(fileext = ".persistent")
+  custom_path <- tempfile(fileext = ".duckdb")
   
   test_no_cleanup <- function(path) {
     c <- ddbs_temp_conn(file = path, cleanup = FALSE)
@@ -67,11 +67,12 @@ test_that("ddbs_temp_conn: custom path with cleanup = FALSE", {
   
   # File should STILL exist
   expect_true(file.exists(custom_path))
+  expect_false(file.exists(paste0(custom_path, ".wal")))
   
   # Verify we can connect to it
-  c2 <- DBI::dbConnect(duckdb::duckdb(), dbdir = custom_path)
+  c2 <- ddbs_create_conn(custom_path)
   expect_true("t" %in% DBI::dbListTables(c2))
-  DBI::dbDisconnect(c2, shutdown = TRUE)
+  ddbs_stop_conn(c2)
   
   # Clean up manually
   unlink(custom_path)

@@ -31,13 +31,18 @@ ddbs_open_dataset(
 }
 \arguments{
 \item{path}{Path to spatial file. Supports Parquet (\code{.parquet}, with optional GeoParquet metadata),
-GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, and other GDAL-supported formats.}
+GeoJSON, GeoPackage, Shapefile, FlatGeoBuf, OSM PBF, DuckDB database files
+(\code{.duckdb}, \code{.db}, and \code{.ddb}), and other GDAL-supported formats.}
 
 \item{crs}{Coordinate reference system. Can be an EPSG code (e.g., 4326),
 a CRS string, or an \code{sf} crs object. If \code{NULL} (default),
-attempts to auto-detect from the file.}
+attempts to auto-detect from the file, including native DuckDB CRS metadata
+and duckspatial-managed column-comment metadata for compatibility
+\code{.duckdb} files.}
 
-\item{layer}{Layer name or index to read (ST_Read only). Default is NULL (first layer).}
+\item{layer}{Layer name or index to read (ST_Read). For DuckDB database
+files, this is required and specifies the table name to read. Default is
+NULL (first layer for ST_Read).}
 
 \item{geom_col}{Name of the geometry column. Default is \code{NULL}, which attempts
 auto-detection.}
