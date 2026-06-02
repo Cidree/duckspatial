@@ -966,7 +966,7 @@ describe("ddbs_affine()", {
       })
 
       it("translation matrix shifts coordinates by xoff and yoff", {
-        original <- ddbs_collect(argentina_sf)
+        original <- argentina_sf
         result   <- ddbs_affine(argentina_sf, mat_translate_2d, mode = "sf")
 
         coords_orig   <- sf::st_coordinates(original)[, c("X", "Y")]
