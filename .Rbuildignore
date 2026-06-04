@@ -21,3 +21,5 @@ internal/*
 ^tools$
 ^vignettes/\.quarto$
 ^vignettes/*_files$
+^\.positai$
+^\.claude$
