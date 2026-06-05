@@ -268,9 +268,30 @@ describe("ddbs_predicate()", {
     
     it("supports both id_x and id_y parameters together", {
       output <- ddbs_predicate(countries_sf, argentina_sf, "touches", id_x = "CNTR_ID", id_y = "CNTR_ID", mode = "sf")
-      
+
       expect_equal(names(output), countries_sf$CNTR_ID)
       expect_equal(output[[2]], "AR")
+    })
+
+    it("works with equals predicate", {
+      output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "equals") |> collect()
+      output_function  <- ddbs_equals(countries_sf, argentina_sf) |> collect()
+
+      expect_equal(output_predicate, output_function)
+    })
+
+    it("returns same results as sf when sparse = FALSE for equals", {
+      output_ddbs <- ddbs_equals(countries_sf, argentina_sf, sparse = FALSE, mode = "sf")
+      output_sf   <- sf::st_equals(countries_sf, argentina_sf, sparse = FALSE)
+
+      expect_equal(output_ddbs, output_sf)
+    })
+
+    it("correctly identifies identical geometries", {
+      result_ddbs <- ddbs_equals(argentina_sf, argentina_sf, sparse = FALSE, mode = "sf")
+      result_sf   <- sf::st_equals(argentina_sf, argentina_sf, sparse = FALSE)
+
+      expect_equal(result_ddbs, result_sf)
     })
   })
   

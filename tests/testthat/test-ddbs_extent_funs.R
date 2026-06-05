@@ -321,6 +321,197 @@ describe("ddbs_bbox()", {
 })
 
 
+# 4. ddbs_make_envelope() ------------------------------------------------
+
+## - CHECK 1.1: returns a single-row duckspatial_df
+## - CHECK 1.2: returns different output formats
+## - CHECK 1.3: messages work
+## - CHECK 1.4: writing a table works
+## - CHECK 1.5: produced geometry has the expected bbox
+## - CHECK 1.6: geometry type is POLYGON
+## - CHECK 2.1: validates coordinate arguments
+## - CHECK 2.2: general errors
+
+describe("ddbs_make_envelope()", {
+
+  describe("expected behavior", {
+
+    it("returns a single-row duckspatial_df", {
+      output <- ddbs_make_envelope(0, 0, 10, 10)
+      expect_s3_class(output, "duckspatial_df")
+      expect_equal(nrow(ddbs_collect(output)), 1L)
+    })
+
+    it("returns different output formats", {
+      output_sf_fmt <- ddbs_make_envelope(0, 0, 10, 10, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_make_envelope(0, 0, 10, 10))
+      expect_message(ddbs_make_envelope(0, 0, 10, 10, conn = conn_test, name = "make_envelope"))
+      expect_message(ddbs_make_envelope(0, 0, 10, 10, conn = conn_test, name = "make_envelope", overwrite = TRUE))
+      expect_true(ddbs_make_envelope(0, 0, 10, 10, conn = conn_test, name = "make_envelope2"))
+
+      expect_no_message(ddbs_make_envelope(0, 0, 10, 10, quiet = TRUE))
+      expect_no_message(ddbs_make_envelope(0, 0, 10, 10, conn = conn_test, name = "make_envelope", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables correctly to DuckDB", {
+      output_tbl <- ddbs_read_table(conn_test, "make_envelope")
+      expect_equal(
+        ddbs_collect(ddbs_make_envelope(0, 0, 10, 10))$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    it("produces a POLYGON geometry", {
+      geom_type <- sf::st_geometry_type(ddbs_collect(ddbs_make_envelope(0, 0, 10, 10))) |> as.character()
+      expect_equal(geom_type, "POLYGON")
+    })
+
+    it("bbox of result matches the input coordinates", {
+      bbox_out <- ddbs_bbox(ddbs_make_envelope(-10, -20, 30, 40))
+      expect_equal(as.numeric(bbox_out), c(-10, -20, 30, 40))
+    })
+
+  })
+
+  describe("errors", {
+
+    it("requires numeric coordinate arguments", {
+      expect_error(ddbs_make_envelope("a", 0, 10, 10))
+      expect_error(ddbs_make_envelope(0, "b", 10, 10))
+      expect_error(ddbs_make_envelope(0, 0, "c", 10))
+      expect_error(ddbs_make_envelope(0, 0, 10, "d"))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_make_envelope(0, 0, 10, 10, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_make_envelope(0, 0, 10, 10, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_make_envelope(0, 0, 10, 10, quiet = 999))
+    })
+
+    it("requires name to be a single character string", {
+      expect_error(ddbs_make_envelope(0, 0, 10, 10, conn = conn_test, name = c("a", "b")))
+    })
+
+    it("errors on unexpected arguments", {
+      expect_error(ddbs_make_envelope(0, 0, 10, 10, new_column = 999))
+    })
+
+  })
+
+})
+
+
+# 5. ddbs_minimum_rotated_rectangle() ------------------------------------
+
+## - CHECK 1.1: works on all formats
+## - CHECK 1.2: returns different output formats
+## - CHECK 1.3: messages work
+## - CHECK 1.4: writing a table works
+## - CHECK 1.5: geometry type is POLYGON
+## - CHECK 1.6: result bbox encloses the input bbox
+## - CHECK 2.1: general errors
+
+describe("ddbs_minimum_rotated_rectangle()", {
+
+  describe("expected behavior", {
+
+    it("works on all input formats", {
+      output_ddbs <- ddbs_minimum_rotated_rectangle(countries_ddbs)
+      output_sf   <- ddbs_minimum_rotated_rectangle(countries_sf)
+      output_conn <- ddbs_minimum_rotated_rectangle("countries", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(nrow(ddbs_collect(output_ddbs)), nrow(countries_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns different output formats", {
+      output_sf_fmt <- ddbs_minimum_rotated_rectangle(countries_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_minimum_rotated_rectangle(countries_ddbs))
+      expect_message(ddbs_minimum_rotated_rectangle("countries", conn = conn_test, name = "min_rect"))
+      expect_message(ddbs_minimum_rotated_rectangle("countries", conn = conn_test, name = "min_rect", overwrite = TRUE))
+      expect_true(ddbs_minimum_rotated_rectangle("countries", conn = conn_test, name = "min_rect2"))
+
+      expect_no_message(ddbs_minimum_rotated_rectangle(countries_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_minimum_rotated_rectangle("countries", conn = conn_test, name = "min_rect", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables correctly to DuckDB", {
+      output_tbl <- ddbs_read_table(conn_test, "min_rect")
+      expect_equal(
+        ddbs_collect(ddbs_minimum_rotated_rectangle(countries_ddbs))$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    it("produces POLYGON geometry", {
+      geom_type <- sf::st_geometry_type(ddbs_collect(ddbs_minimum_rotated_rectangle(argentina_ddbs))) |> as.character()
+      expect_equal(geom_type, "POLYGON")
+    })
+
+    it("result bounding box encloses the input bounding box", {
+      result_bbox <- ddbs_bbox(ddbs_minimum_rotated_rectangle(argentina_ddbs))
+      input_bbox  <- ddbs_bbox(argentina_ddbs)
+
+      expect_lte(result_bbox[["xmin"]], input_bbox[["xmin"]])
+      expect_gte(result_bbox[["xmax"]], input_bbox[["xmax"]])
+      expect_lte(result_bbox[["ymin"]], input_bbox[["ymin"]])
+      expect_gte(result_bbox[["ymax"]], input_bbox[["ymax"]])
+    })
+
+  })
+
+  describe("errors", {
+
+    it("requires a valid connection when using table name", {
+      expect_error(ddbs_minimum_rotated_rectangle("countries", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_minimum_rotated_rectangle(x = 999))
+      expect_error(ddbs_minimum_rotated_rectangle(x = "999", conn = conn_test))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_minimum_rotated_rectangle(countries_ddbs, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_minimum_rotated_rectangle(countries_ddbs, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_minimum_rotated_rectangle(countries_ddbs, quiet = 999))
+    })
+
+    it("requires name to be a single character string", {
+      expect_error(ddbs_minimum_rotated_rectangle(countries_ddbs, conn = conn_test, name = c("a", "b")))
+    })
+
+    it("errors on unexpected arguments", {
+      expect_error(ddbs_minimum_rotated_rectangle(countries_ddbs, new_column = 999))
+    })
+
+  })
+
+})
+
+
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)
 

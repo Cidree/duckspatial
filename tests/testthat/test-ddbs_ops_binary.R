@@ -367,6 +367,90 @@ describe("ddbs_sym_difference()", {
 
 
 
+# 4. ddbs_crop() ---------------------------------------------------------
+
+## - CHECK 1.1: works on all formats
+## - CHECK 1.2: returns different output modes
+## - CHECK 1.3: messages work
+## - CHECK 1.4: writing a table works
+## - CHECK 1.5: warns when mixing connections
+## - CHECK 1.6: compare to sf
+## - CHECK 2.1: missing / invalid arguments
+## - CHECK 2.2: other errors
+
+describe("ddbs_crop()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats and matches results", {
+      output_1 <- ddbs_crop(poly1_sf, poly2_sf)
+      output_2 <- ddbs_crop(poly1_ddbs, poly2_sf)
+      output_3 <- ddbs_crop(poly1_sf, poly2_ddbs)
+      output_4 <- ddbs_crop(poly1_ddbs, poly2_ddbs)
+
+      expect_s3_class(output_1, "duckspatial_df")
+      expect_equal(ddbs_collect(output_1), ddbs_collect(output_2))
+      expect_equal(ddbs_collect(output_1), ddbs_collect(output_3))
+      expect_equal(ddbs_collect(output_1), ddbs_collect(output_4))
+    })
+
+    it("returns different outputs depending on 'mode' argument", {
+      output_sf_fmt <- ddbs_crop(poly1_sf, poly2_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("handles messages correctly", {
+      expect_no_message(ddbs_crop(poly1_sf, poly2_sf))
+      expect_message(ddbs_crop(poly1_sf, poly2_sf, conn = conn_test, name = "crop"))
+      expect_message(ddbs_crop(poly1_sf, poly2_sf, conn = conn_test, name = "crop", overwrite = TRUE))
+      expect_true(ddbs_crop(poly1_sf, poly2_sf, conn = conn_test, name = "crop2"))
+
+      expect_no_message(ddbs_crop(poly1_sf, poly2_sf, quiet = TRUE))
+    })
+
+    it("writes a table correctly", {
+      output_1   <- ddbs_crop(poly1_sf, poly2_sf)
+      output_tbl <- ddbs_read_table(conn_test, "crop")
+      expect_equal(ddbs_collect(output_1)$geometry, output_tbl$geometry)
+    })
+
+    it("warns when mixing a table name with a duckspatial_df from another connection", {
+      expect_warning(ddbs_crop("poly1", poly2_ddbs, conn = conn_test))
+    })
+
+    it("matches sf::st_crop results", {
+      sf_output   <- sf::st_crop(poly1_sf, poly2_sf)
+      ddbs_output <- ddbs_crop(poly1_sf, poly2_sf) |> sf::st_as_sf()
+
+      bbox_ddbs <- round(ddbs_bbox(ddbs_output, mode = "sf"))
+      bbox_sf   <- round(ddbs_bbox(sf_output, mode = "sf"))
+
+      expect_equal(bbox_ddbs, bbox_sf)
+    })
+
+  })
+
+  describe("errors", {
+
+    it("errors on missing or invalid arguments", {
+      expect_error(ddbs_crop(poly2_ddbs))
+      expect_error(ddbs_crop(y = poly2_ddbs))
+      expect_error(ddbs_crop("poly2", poly1_sf, conn = NULL))
+    })
+
+    it("errors on other invalid inputs", {
+      expect_error(ddbs_crop(999, poly1_sf))
+      expect_error(ddbs_crop(poly2_ddbs, poly1_sf, conn = 999))
+      expect_error(ddbs_crop(poly2_ddbs, poly1_sf, overwrite = 999))
+      expect_error(ddbs_crop(poly2_ddbs, poly1_sf, quiet = 999))
+    })
+
+  })
+
+})
+
+
+
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)
 

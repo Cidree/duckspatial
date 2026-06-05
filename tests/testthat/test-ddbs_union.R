@@ -21,6 +21,18 @@ countries_group_ddbs <- as_duckspatial_df(countries_group_sf)
 duckspatial::ddbs_write_table(conn_test, points_sf, "points")
 duckspatial::ddbs_write_table(conn_test, countries_group_sf, "countries")
 
+## two-part MULTIPOLYGON for ddbs_dump tests
+two_poly_sf <- sf::st_sf(
+  id       = 1L,
+  geometry = sf::st_sfc(sf::st_multipolygon(list(
+    list(matrix(c(0,0, 1,0, 1,1, 0,1, 0,0), ncol = 2, byrow = TRUE)),
+    list(matrix(c(2,2, 3,2, 3,3, 2,3, 2,2), ncol = 2, byrow = TRUE))
+  ))),
+  crs = 4326
+)
+two_poly_ddbs <- as_duckspatial_df(two_poly_sf)
+duckspatial::ddbs_write_table(conn_test, two_poly_sf, "two_poly")
+
 
 # 1. ddbs_union_agg() ----------------------------------------------------
 
@@ -384,6 +396,107 @@ describe("ddbs_combine()", {
       expect_error(ddbs_combine(countries_ddbs, conn = conn_test, name = c('banana', 'banana')))
     })
   })
+})
+
+
+# 4. ddbs_dump() ---------------------------------------------------------
+
+## - CHECK 1.1: works on all formats
+## - CHECK 1.2: returns different output formats
+## - CHECK 1.3: messages work
+## - CHECK 1.4: writing a table works
+## - CHECK 1.5: decomposes multi-part geometry into individual component rows
+## - CHECK 1.6: returns more rows than input for multi-part geometries
+## - CHECK 1.7: warns for simple geometries
+## - CHECK 2.1: general errors
+
+describe("ddbs_dump()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats and returns matching row counts", {
+      output_ddbs <- ddbs_dump(two_poly_ddbs)
+      output_sf   <- ddbs_dump(two_poly_sf)
+      output_conn <- ddbs_dump("two_poly", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(nrow(ddbs_collect(output_ddbs)), nrow(ddbs_collect(output_sf)))
+      expect_equal(nrow(ddbs_collect(output_ddbs)), nrow(ddbs_collect(output_conn)))
+    })
+
+    it("returns different output formats", {
+      output_sf_fmt <- ddbs_dump(two_poly_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_dump(two_poly_ddbs))
+      expect_message(ddbs_dump("two_poly", conn = conn_test, name = "dump"))
+      expect_message(ddbs_dump("two_poly", conn = conn_test, name = "dump", overwrite = TRUE))
+      expect_true(ddbs_dump("two_poly", conn = conn_test, name = "dump2"))
+
+      expect_no_message(ddbs_dump(two_poly_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_dump("two_poly", conn = conn_test, name = "dump", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables correctly to DuckDB", {
+      output_tbl <- ddbs_read_table(conn_test, "dump")
+      expect_equal(
+        ddbs_collect(ddbs_dump(two_poly_ddbs))$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    it("decomposes a 2-part MULTIPOLYGON into exactly 2 rows", {
+      n_output <- nrow(ddbs_collect(ddbs_dump(two_poly_ddbs)))
+      expect_equal(n_output, 2L)
+    })
+
+    it("returns more rows than the input multi-part geometry", {
+      n_input  <- nrow(ddbs_collect(two_poly_ddbs))
+      n_output <- nrow(ddbs_collect(ddbs_dump(two_poly_ddbs)))
+      expect_gt(n_output, n_input)
+    })
+
+    it("warns when input geometry is not multi-part", {
+      expect_warning(ddbs_dump(argentina_ddbs))
+    })
+
+  })
+
+  describe("errors", {
+
+    it("requires a valid connection when using table name", {
+      expect_error(ddbs_dump("two_poly", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_dump(x = 999))
+      expect_error(ddbs_dump(x = "999", conn = conn_test))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_dump(countries_ddbs, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_dump(countries_ddbs, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_dump(countries_ddbs, quiet = 999))
+    })
+
+    it("requires name to be a single character string", {
+      expect_error(ddbs_dump(countries_ddbs, conn = conn_test, name = c("a", "b")))
+    })
+
+    it("errors on unexpected arguments", {
+      expect_error(ddbs_dump(countries_ddbs, new_column = 999))
+    })
+
+  })
+
 })
 
 
