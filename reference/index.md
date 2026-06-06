@@ -233,6 +233,14 @@ Rotate, scale, shear, and shift geometries
 - [`ddbs_shift()`](https://cidree.github.io/duckspatial/reference/ddbs_shift.md)
   : Shift geometries by X and Y offsets
 
+## Geometry Queries
+
+Query structural properties of geometries without modifying them
+
+- [`ddbs_get_npoints()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md)
+  [`ddbs_get_ngeometries()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md)
+  : Count geometry components
+
 ## Measurements
 
 Calculate areas, distances, lengths, and perimeters
