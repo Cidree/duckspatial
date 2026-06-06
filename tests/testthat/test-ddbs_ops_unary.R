@@ -709,115 +709,7 @@ describe("ddbs_exterior_ring()", {
 
 
 
-
-
-# 6. ddbs_make_polygon() -----------------------------------------------------
-
-## - CHECK 1.1: works on all formats
-## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
-## - CHECK 1.3: messages work
-## - CHECK 1.4: writting table works
-## - CHECK 1.5: geometry type
-## - CHECK 2.1: function specific errors
-## - CHECK 2.2: other errors
-describe("ddbs_make_polygon()", {
-  
-  describe("expected behavior", {
-    
-    it("works on all formats", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      ext_ring_sf <- st_as_sf(ext_ring_ddbs)
-      
-      output_ddbs <- ddbs_make_polygon(ext_ring_ddbs)
-      output_sf   <- ddbs_make_polygon(ext_ring_sf)
-      output_conn <- ddbs_make_polygon("exterior_ring", conn = conn_test)
-
-      expect_s3_class(output_ddbs, "duckspatial_df")
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
-      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
-    })
-    
-    it("returns different output formats (duckspatial_df, sf)", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      output_sf_fmt <- ddbs_make_polygon(ext_ring_ddbs, mode = "sf")
-      expect_s3_class(output_sf_fmt, "sf")
-    })
-    
-    it("shows and suppresses messages correctly", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      
-      expect_no_message(ddbs_make_polygon(ext_ring_ddbs))
-      expect_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon"))
-      expect_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon", overwrite = TRUE))
-      expect_true(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon2"))
-
-      expect_no_message(ddbs_make_polygon(ext_ring_ddbs, quiet = TRUE))
-      expect_no_message(ddbs_make_polygon("exterior_ring", conn = conn_test, name = "make_polygon", overwrite = TRUE, quiet = TRUE))
-    })
-    
-    it("writes tables to the database", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      output_ddbs <- ddbs_make_polygon(ext_ring_ddbs)
-      output_tbl <- ddbs_read_table(conn_test, "make_polygon")
-      
-      expect_equal(
-        ddbs_collect(output_ddbs)$geometry,
-        output_tbl$geometry
-      )
-    })
-    
-    it("returns POLYGON geometry type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      output_ddbs <- ddbs_make_polygon(ext_ring_ddbs)
-      geom_type <- ddbs_collect(output_ddbs) |> sf::st_geometry_type() |> as.character()
-      
-      expect_equal(geom_type, "POLYGON")
-    })
-  })
-  
-  describe("errors", {
-    
-    it("requires linestring geometry", {
-      expect_error(ddbs_make_polygon(argentina_ddbs))
-    })
-    
-    it("requires connection when using table names", {
-      expect_error(ddbs_make_polygon("ext_ring", conn = NULL))
-    })
-    
-    it("validates x argument type", {
-      expect_error(ddbs_make_polygon(x = 999))
-    })
-    
-    it("validates conn argument type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, conn = 999))
-    })
-    
-    it("validates overwrite argument type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, overwrite = 999))
-    })
-    
-    it("validates quiet argument type", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, quiet = 999))
-    })
-    
-    it("validates table name exists", {
-      expect_error(ddbs_make_polygon(x = "999", conn = conn_test))
-    })
-    
-    it("requires name to be single character string", {
-      ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
-      expect_error(ddbs_make_polygon(ext_ring_ddbs, conn = conn_test, name = c('banana', 'banana')))
-    })
-  })
-})
-
-
-
-# 7. ddbs_convex_hull() -----------------------------------------------------
+# 6. ddbs_convex_hull() -----------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
@@ -898,7 +790,7 @@ describe("ddbs_convex_hull()", {
 
 
 
-# 8. ddbs_concave_hull() ---------------------------------------------------
+# 7. ddbs_concave_hull() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all formats
 ## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
@@ -1054,7 +946,7 @@ describe("ddbs_concave_hull()", {
 
 
 
-# 9. ddbs_geometry_type() ---------------------------------------------------
+# 8. ddbs_geometry_type() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all formats with by_feature = TRUE
 ## - CHECK 1.2: works on all formats with by_feature = FALSE
@@ -1139,6 +1031,454 @@ describe("ddbs_geometry_type()", {
       
       it("validates table name exists", {
         expect_error(ddbs_geometry_type(x = "999", conn = conn_test))
+      })
+    })
+  })
+})
+
+
+
+# 9. ddbs_flip_coordinates() -----------------------------------------------
+
+describe("ddbs_flip_coordinates()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_flip_coordinates(argentina_ddbs)
+      output_sf   <- ddbs_flip_coordinates(argentina_sf)
+      output_conn <- ddbs_flip_coordinates("argentina", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_flip_coordinates(argentina_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_flip_coordinates(argentina_ddbs))
+      expect_message(ddbs_flip_coordinates("argentina", conn = conn_test, name = "flip_coords"))
+      expect_message(ddbs_flip_coordinates("argentina", conn = conn_test, name = "flip_coords", overwrite = TRUE))
+      expect_true(ddbs_flip_coordinates("argentina", conn = conn_test, name = "flip_coords2"))
+
+      expect_no_message(ddbs_flip_coordinates(argentina_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_flip_coordinates("argentina", conn = conn_test, name = "flip_coords", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables to the database", {
+      output_ddbs <- ddbs_flip_coordinates(argentina_ddbs)
+      output_tbl  <- ddbs_read_table(conn_test, "flip_coords")
+
+      expect_equal(
+        ddbs_collect(output_ddbs)$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    it("double flip returns original geometry", {
+      flipped_twice <- ddbs_flip_coordinates(argentina_ddbs) |>
+        ddbs_flip_coordinates()
+
+      expect_equal(
+        ddbs_collect(flipped_twice)$geometry,
+        ddbs_collect(argentina_ddbs)$geometry
+      )
+    })
+  })
+
+  describe("errors", {
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_flip_coordinates("argentina", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_flip_coordinates(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_flip_coordinates(argentina_ddbs, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_flip_coordinates(argentina_ddbs, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_flip_coordinates(argentina_ddbs, quiet = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_flip_coordinates(x = "999", conn = conn_test))
+    })
+
+    it("requires name to be single character string", {
+      expect_error(ddbs_flip_coordinates(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
+    })
+  })
+})
+
+
+
+
+# 10. ddbs_drop_geometry() --------------------------------------------------
+
+describe("ddbs_drop_geometry()", {
+
+  describe("expected behavior", {
+
+    it("removes the geometry column", {
+      output    <- ddbs_drop_geometry(argentina_ddbs)
+      col_names <- dplyr::collect(output) |> names()
+      expect_false("geometry" %in% col_names)
+    })
+
+    it("result is not a duckspatial_df", {
+      output <- ddbs_drop_geometry(argentina_ddbs)
+      expect_false(inherits(output, "duckspatial_df"))
+    })
+
+    it("preserves non-geometry columns", {
+      output        <- ddbs_drop_geometry(argentina_ddbs)
+      expected_cols <- argentina_sf |> sf::st_drop_geometry() |> names()
+      output_cols   <- dplyr::collect(output) |> names()
+      expect_true(all(expected_cols %in% output_cols))
+    })
+  })
+})
+
+
+
+
+# 11. ddbs_make_line() -------------------------------------------------------
+
+describe("ddbs_make_line()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_make_line(points_ddbs)
+      output_sf   <- ddbs_make_line(points_sf)
+      output_conn <- ddbs_make_line("points", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns LINESTRING geometry", {
+      output    <- ddbs_make_line(points_ddbs, mode = "sf")
+      geom_type <- sf::st_geometry_type(output) |> as.character()
+      expect_equal(geom_type, "LINESTRING")
+    })
+
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_make_line(points_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_make_line(points_ddbs))
+      expect_message(ddbs_make_line("points", conn = conn_test, name = "make_line"))
+      expect_message(ddbs_make_line("points", conn = conn_test, name = "make_line", overwrite = TRUE))
+      expect_true(ddbs_make_line("points", conn = conn_test, name = "make_line2"))
+
+      expect_no_message(ddbs_make_line(points_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_make_line("points", conn = conn_test, name = "make_line", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables to the database", {
+      output_ddbs <- ddbs_make_line(points_ddbs)
+      output_tbl  <- ddbs_read_table(conn_test, "make_line")
+
+      expect_equal(
+        ddbs_collect(output_ddbs)$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    describe("by parameter", {
+
+      it("creates one line per group", {
+        pts_grp <- dplyr::mutate(points_sf[1:10, ], grp = rep(c("A", "B"), each = 5))
+        output  <- ddbs_make_line(pts_grp, by = "grp", mode = "sf")
+
+        expect_equal(nrow(output), 2L)
+      })
+
+      it("preserves group column in output", {
+        pts_grp <- dplyr::mutate(points_sf[1:10, ], grp = rep(c("A", "B"), each = 5))
+        output  <- ddbs_make_line(pts_grp, by = "grp", mode = "sf")
+
+        expect_true("grp" %in% names(output))
+      })
+    })
+  })
+
+  describe("errors", {
+
+    it("requires POINT geometry", {
+      expect_error(ddbs_make_line(argentina_ddbs))
+    })
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_make_line("points", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_make_line(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_make_line(points_ddbs, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_make_line(points_ddbs, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_make_line(points_ddbs, quiet = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_make_line(x = "999", conn = conn_test))
+    })
+
+    it("requires name to be single character string", {
+      expect_error(ddbs_make_line(points_ddbs, conn = conn_test, name = c('banana', 'banana')))
+    })
+  })
+})
+
+
+
+
+# 12. ddbs_maximum_inscribed_circle() ----------------------------------------
+
+describe("ddbs_maximum_inscribed_circle()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_maximum_inscribed_circle(argentina_ddbs)
+      output_sf   <- ddbs_maximum_inscribed_circle(argentina_sf)
+      output_conn <- ddbs_maximum_inscribed_circle("argentina", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns POINT geometry for center", {
+      output    <- ddbs_maximum_inscribed_circle(argentina_ddbs, mode = "sf")
+      geom_type <- sf::st_geometry_type(output) |> as.character()
+      expect_true(all(geom_type == "POINT"))
+    })
+
+    it("includes geom_radius column", {
+      output <- ddbs_maximum_inscribed_circle(argentina_ddbs, mode = "sf")
+      expect_true("geom_radius" %in% names(output))
+    })
+
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_maximum_inscribed_circle(argentina_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_maximum_inscribed_circle(argentina_ddbs))
+      expect_message(ddbs_maximum_inscribed_circle("argentina", conn = conn_test, name = "max_inscribed"))
+      expect_message(ddbs_maximum_inscribed_circle("argentina", conn = conn_test, name = "max_inscribed", overwrite = TRUE))
+      expect_true(ddbs_maximum_inscribed_circle("argentina", conn = conn_test, name = "max_inscribed2"))
+
+      expect_no_message(ddbs_maximum_inscribed_circle(argentina_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_maximum_inscribed_circle("argentina", conn = conn_test, name = "max_inscribed", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables to the database", {
+      output_ddbs <- ddbs_maximum_inscribed_circle(argentina_ddbs)
+      output_tbl  <- ddbs_read_table(conn_test, "max_inscribed")
+
+      expect_equal(
+        ddbs_collect(output_ddbs)$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    describe("geom parameter", {
+
+      it("accepts 'center' (default)", {
+        output <- ddbs_maximum_inscribed_circle(argentina_ddbs, geom = "center")
+        expect_s3_class(output, "duckspatial_df")
+      })
+
+      it("accepts 'nearest'", {
+        output <- ddbs_maximum_inscribed_circle(argentina_ddbs, geom = "nearest")
+        expect_s3_class(output, "duckspatial_df")
+      })
+    })
+
+    describe("tolerance parameter", {
+
+      it("works with custom tolerance", {
+        output <- ddbs_maximum_inscribed_circle(argentina_ddbs, tolerance = 0.01)
+        expect_s3_class(output, "duckspatial_df")
+      })
+    })
+  })
+
+  describe("errors", {
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_maximum_inscribed_circle("argentina", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_maximum_inscribed_circle(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_maximum_inscribed_circle(argentina_ddbs, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_maximum_inscribed_circle(argentina_ddbs, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_maximum_inscribed_circle(argentina_ddbs, quiet = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_maximum_inscribed_circle(x = "999", conn = conn_test))
+    })
+
+    it("requires name to be single character string", {
+      expect_error(ddbs_maximum_inscribed_circle(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
+    })
+  })
+})
+
+
+
+
+# 13. ddbs_remove_repeated_points() ------------------------------------------
+
+describe("ddbs_remove_repeated_points()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_remove_repeated_points(argentina_ddbs)
+      output_sf   <- ddbs_remove_repeated_points(argentina_sf)
+      output_conn <- ddbs_remove_repeated_points("argentina", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_remove_repeated_points(argentina_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_remove_repeated_points(argentina_ddbs))
+      expect_message(ddbs_remove_repeated_points("argentina", conn = conn_test, name = "remove_repeated"))
+      expect_message(ddbs_remove_repeated_points("argentina", conn = conn_test, name = "remove_repeated", overwrite = TRUE))
+      expect_true(ddbs_remove_repeated_points("argentina", conn = conn_test, name = "remove_repeated2"))
+
+      expect_no_message(ddbs_remove_repeated_points(argentina_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_remove_repeated_points("argentina", conn = conn_test, name = "remove_repeated", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables to the database", {
+      output_ddbs <- ddbs_remove_repeated_points(argentina_ddbs)
+      output_tbl  <- ddbs_read_table(conn_test, "remove_repeated")
+
+      expect_equal(
+        ddbs_collect(output_ddbs)$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    it("removes repeated consecutive vertices", {
+      poly_repeated <- sf::st_as_sf(sf::st_sfc(
+        sf::st_polygon(list(matrix(
+          c(0, 0,  1, 0,  1, 0,  1, 1,  0, 1,  0, 0),
+          ncol = 2, byrow = TRUE
+        ))),
+        crs = 4326
+      ))
+
+      output       <- ddbs_remove_repeated_points(poly_repeated, mode = "sf")
+      n_pts_before <- nrow(sf::st_coordinates(poly_repeated))
+      n_pts_after  <- nrow(sf::st_coordinates(output))
+
+      expect_lt(n_pts_after, n_pts_before)
+    })
+
+    describe("tolerance parameter", {
+
+      it("works with default value (0)", {
+        output <- ddbs_remove_repeated_points(argentina_ddbs, tolerance = 0)
+        expect_s3_class(output, "duckspatial_df")
+      })
+
+      it("works with custom tolerance", {
+        output <- ddbs_remove_repeated_points(argentina_ddbs, tolerance = 0.01)
+        expect_s3_class(output, "duckspatial_df")
+      })
+    })
+  })
+
+  describe("errors", {
+
+    describe("tolerance parameter validation", {
+
+      it("rejects negative values", {
+        expect_error(ddbs_remove_repeated_points(argentina_ddbs, tolerance = -1))
+      })
+
+      it("rejects non-numeric values", {
+        expect_error(ddbs_remove_repeated_points(argentina_ddbs, tolerance = "0.5"))
+      })
+    })
+
+    describe("basic argument validation", {
+
+      it("requires connection when using table names", {
+        expect_error(ddbs_remove_repeated_points("argentina", conn = NULL))
+      })
+
+      it("validates x argument type", {
+        expect_error(ddbs_remove_repeated_points(x = 999))
+      })
+
+      it("validates conn argument type", {
+        expect_error(ddbs_remove_repeated_points(argentina_ddbs, conn = 999))
+      })
+
+      it("validates overwrite argument type", {
+        expect_error(ddbs_remove_repeated_points(argentina_ddbs, overwrite = 999))
+      })
+
+      it("validates quiet argument type", {
+        expect_error(ddbs_remove_repeated_points(argentina_ddbs, quiet = 999))
+      })
+
+      it("validates table name exists", {
+        expect_error(ddbs_remove_repeated_points(x = "999", conn = conn_test))
+      })
+
+      it("requires name to be single character string", {
+        expect_error(ddbs_remove_repeated_points(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
       })
     })
   })

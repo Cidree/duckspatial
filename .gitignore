@@ -11,3 +11,4 @@ private
 .DS_Store
 inst/doc
 **/.quarto/
+.positai

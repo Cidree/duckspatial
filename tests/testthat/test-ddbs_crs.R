@@ -64,3 +64,171 @@ test_that("ddbs_crs works for different input types", {
   expect_error(ddbs_crs(NULL))
   expect_error(ddbs_crs(123))
 })
+
+
+
+# 2. ddbs_set_crs() -------------------------------------------------------
+
+## - CHECK 1.1: works on ddbs input (string, crs object, NA)
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
+## - CHECK 1.3: works on sf input
+## - CHECK 1.4: sf returns different outputs (duckspatial_df, sf)
+## - CHECK 1.5: works on DuckDB table input
+## - CHECK 1.6: DuckDB table returns different outputs (duckspatial_df, sf)
+## - CHECK 1.7: message is shown with quiet = FALSE
+## - CHECK 1.8: no message is shown with quiet = TRUE
+## - CHECK 1.9: CRS is set correctly from EPSG string
+## - CHECK 1.10: CRS is set correctly from sf::st_crs() object
+## - CHECK 1.11: CRS is NA after removal
+## - CHECK 1.12: CRS roundtrip (remove then re-assign)
+## - CHECK 2.1: requires connection for character input
+## - CHECK 2.2: other errors
+
+conn_set_crs <- duckspatial::ddbs_create_conn()
+ddbs_write_table(conn_set_crs, argentina_sf, "argentina_scrs")
+
+describe("ddbs_set_crs()", {
+
+  ### EXPECTED BEHAVIOR -------------------------------------------------
+
+  describe("expected behavior", {
+
+    it("works on ddbs input", {
+      output_ddbs_1 <- ddbs_set_crs(argentina_ddbs, "EPSG:4326")
+      output_ddbs_2 <- ddbs_set_crs(argentina_ddbs, sf::st_crs("EPSG:4326"))
+      output_ddbs_3 <- ddbs_set_crs(argentina_ddbs, sf::st_crs(NA))
+      output_ddbs_4 <- ddbs_set_crs(argentina_ddbs, "EPSG:4326", quiet = TRUE)
+
+      expect_s3_class(output_ddbs_1, "duckspatial_df")
+      expect_s3_class(output_ddbs_2, "duckspatial_df")
+      expect_s3_class(output_ddbs_3, "duckspatial_df")
+      expect_s3_class(output_ddbs_4, "duckspatial_df")
+    })
+
+    it("returns different output formats for ddbs input", {
+      output_sf <- ddbs_set_crs(argentina_ddbs, "EPSG:4326", mode = "sf")
+      expect_s3_class(output_sf, "sf")
+    })
+
+    it("works on sf input", {
+      output_sf_1 <- ddbs_set_crs(argentina_sf, "EPSG:4326")
+      output_sf_2 <- ddbs_set_crs(argentina_sf, sf::st_crs("EPSG:4326"))
+      output_sf_3 <- ddbs_set_crs(argentina_sf, sf::st_crs(NA))
+      output_sf_4 <- ddbs_set_crs(argentina_sf, "EPSG:4326", quiet = TRUE)
+
+      expect_s3_class(output_sf_1, "duckspatial_df")
+      expect_s3_class(output_sf_2, "duckspatial_df")
+      expect_s3_class(output_sf_3, "duckspatial_df")
+      expect_s3_class(output_sf_4, "duckspatial_df")
+    })
+
+    it("returns different output formats for sf input", {
+      output_sf <- ddbs_set_crs(argentina_sf, "EPSG:4326", mode = "sf")
+      expect_s3_class(output_sf, "sf")
+    })
+
+    it("works on DuckDB table input", {
+      output_conn_1 <- ddbs_set_crs("argentina_scrs", "EPSG:4326", conn = conn_set_crs)
+      output_conn_2 <- ddbs_set_crs("argentina_scrs", sf::st_crs("EPSG:4326"), conn = conn_set_crs)
+      output_conn_3 <- ddbs_set_crs("argentina_scrs", sf::st_crs(NA), conn = conn_set_crs)
+      output_conn_4 <- ddbs_set_crs("argentina_scrs", "EPSG:4326", conn = conn_set_crs, quiet = TRUE)
+
+      expect_s3_class(output_conn_1, "duckspatial_df")
+      expect_s3_class(output_conn_2, "duckspatial_df")
+      expect_s3_class(output_conn_3, "duckspatial_df")
+      expect_s3_class(output_conn_4, "duckspatial_df")
+    })
+
+    it("returns different output formats for DuckDB table input", {
+      output_sf <- ddbs_set_crs("argentina_scrs", "EPSG:4326", conn = conn_set_crs, mode = "sf")
+      expect_s3_class(output_sf, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_set_crs(argentina_ddbs, "EPSG:4326"))
+      expect_message(ddbs_set_crs("argentina_scrs", "EPSG:4326", conn = conn_set_crs, name = "argentina_scrs_out"))
+      expect_message(ddbs_set_crs("argentina_scrs", "EPSG:4326", conn = conn_set_crs, name = "argentina_scrs_out", overwrite = TRUE))
+      expect_true(ddbs_set_crs("argentina_scrs", "EPSG:4326", conn = conn_set_crs, name = "argentina_scrs_out2"))
+
+      expect_no_message(ddbs_set_crs(argentina_ddbs, "EPSG:4326", quiet = TRUE))
+      expect_no_message(
+        ddbs_set_crs(
+          "argentina_scrs",
+          "EPSG:4326",
+          conn      = conn_set_crs,
+          name      = "argentina_scrs_out",
+          overwrite = TRUE,
+          quiet     = TRUE
+        )
+      )
+    })
+
+    describe("CRS assignment", {
+
+      it("sets CRS correctly from EPSG string", {
+        result <- ddbs_set_crs(argentina_ddbs, "EPSG:4326")
+        expect_equal(ddbs_crs(result)$epsg, 4326L)
+      })
+
+      it("sets CRS correctly from sf::st_crs() object", {
+        result <- ddbs_set_crs(argentina_ddbs, sf::st_crs("EPSG:4326"))
+        expect_equal(ddbs_crs(result)$epsg, 4326L)
+      })
+
+      it("removes CRS when set to sf::st_crs(NA)", {
+        result <- ddbs_set_crs(argentina_ddbs, sf::st_crs(NA))
+        expect_true(is.na(ddbs_crs(result)))
+      })
+
+      it("re-assigns CRS after removal", {
+        no_crs   <- ddbs_set_crs(argentina_ddbs, sf::st_crs(NA))
+        with_crs <- ddbs_set_crs(no_crs, "EPSG:4326")
+        expect_equal(ddbs_crs(with_crs)$epsg, 4326L)
+      })
+
+      it("tags geometry with a different CRS without transforming coordinates", {
+        result_sf   <- ddbs_set_crs(argentina_ddbs, "EPSG:3035", mode = "sf")
+        orig_coords <- sf::st_coordinates(argentina_sf)[, c("X", "Y")]
+        res_coords  <- sf::st_coordinates(result_sf)[, c("X", "Y")]
+
+        expect_equal(res_coords, orig_coords, tolerance = 1e-6)
+        expect_equal(sf::st_crs(result_sf)$epsg, 3035L)
+      })
+    })
+  })
+
+  ### EXPECTED ERRORS ---------------------------------------------------
+
+  describe("errors", {
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_set_crs("argentina_scrs", "EPSG:4326", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_set_crs(x = 999, "EPSG:4326"))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_set_crs(argentina_ddbs, "EPSG:4326", conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_set_crs(argentina_ddbs, "EPSG:4326", overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_set_crs(argentina_ddbs, "EPSG:4326", quiet = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_set_crs("nonexistent_table", "EPSG:4326", conn = conn_set_crs))
+    })
+
+    it("requires name to be a single character string", {
+      expect_error(ddbs_set_crs(argentina_ddbs, "EPSG:4326", conn = conn_set_crs, name = c("a", "b")))
+    })
+  })
+})
+
+duckspatial::ddbs_stop_conn(conn_set_crs)

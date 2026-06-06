@@ -846,5 +846,229 @@ describe("ddbs_shear()", {
 
 
 
+# 7. ddbs_affine -------------------------------------------------------
+
+## - CHECK 1.1: works on ddbs
+## - CHECK 1.2: ddbs returns different outputs (duckspatial_df, sf)
+## - CHECK 1.3: works on sf
+## - CHECK 1.4: sf returns different outputs (duckspatial_df, sf)
+## - CHECK 1.5: works on duckdb table
+## - CHECK 1.6: duckdb table returns different outputs (duckspatial_df, sf)
+## - CHECK 1.7: message is shown with quiet = FALSE
+## - CHECK 1.8: no message is shown with quiet = TRUE
+## - CHECK 1.9: 2D identity matrix preserves geometry
+## - CHECK 1.10: 2D translation matrix shifts geometry correctly
+## - CHECK 1.11: 2D scaling matrix scales geometry correctly
+## - CHECK 1.12: 3D identity matrix preserves geometry
+## - CHECK 2.1: matrix must be a matrix object
+## - CHECK 2.2: matrix must be numeric
+## - CHECK 2.3: matrix must be 2x3 or 3x4
+## - CHECK 2.4: combination of inputs / missing arguments
+## - CHECK 2.5: other errors
+describe("ddbs_affine()", {
+
+  mat_identity_2d  <- matrix(c(1, 0, 0,
+                                0, 1, 0), nrow = 2, byrow = TRUE)
+  mat_translate_2d <- matrix(c(1, 0, 1,
+                                0, 1, 2), nrow = 2, byrow = TRUE)
+  mat_scale_2d     <- matrix(c(2, 0, 0,
+                                0, 2, 0), nrow = 2, byrow = TRUE)
+  mat_identity_3d  <- matrix(c(1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0), nrow = 3, byrow = TRUE)
+
+  ### EXPECTED BEHAVIOR -------------------------------------------------
+
+  describe("expected behavior", {
+
+    it("works on ddbs input", {
+      output_ddbs_1 <- ddbs_affine(argentina_ddbs, mat_identity_2d)
+      output_ddbs_2 <- ddbs_affine(argentina_ddbs, mat_translate_2d)
+      output_ddbs_3 <- ddbs_affine(argentina_ddbs, mat_scale_2d)
+      output_ddbs_4 <- ddbs_affine(argentina_ddbs, mat_identity_3d)
+      output_ddbs_5 <- ddbs_affine(argentina_ddbs, mat_identity_2d, quiet = TRUE)
+
+      expect_s3_class(output_ddbs_1, "duckspatial_df")
+      expect_s3_class(output_ddbs_2, "duckspatial_df")
+      expect_s3_class(output_ddbs_3, "duckspatial_df")
+      expect_s3_class(output_ddbs_4, "duckspatial_df")
+      expect_s3_class(output_ddbs_5, "duckspatial_df")
+    })
+
+    it("returns different output formats for ddbs input", {
+      output_sf <- ddbs_affine(argentina_ddbs, mat_identity_2d, mode = "sf")
+      expect_s3_class(output_sf, "sf")
+    })
+
+    it("works on sf input", {
+      output_sf_1 <- ddbs_affine(argentina_sf, mat_identity_2d)
+      output_sf_2 <- ddbs_affine(argentina_sf, mat_translate_2d)
+      output_sf_3 <- ddbs_affine(argentina_sf, mat_scale_2d)
+      output_sf_4 <- ddbs_affine(argentina_sf, mat_identity_3d)
+      output_sf_5 <- ddbs_affine(argentina_sf, mat_identity_2d, quiet = TRUE)
+
+      expect_s3_class(output_sf_1, "duckspatial_df")
+      expect_s3_class(output_sf_2, "duckspatial_df")
+      expect_s3_class(output_sf_3, "duckspatial_df")
+      expect_s3_class(output_sf_4, "duckspatial_df")
+      expect_s3_class(output_sf_5, "duckspatial_df")
+    })
+
+    it("returns different output formats for sf input", {
+      output_sf <- ddbs_affine(argentina_sf, mat_identity_2d, mode = "sf")
+      expect_s3_class(output_sf, "sf")
+    })
+
+    it("works on DuckDB table input", {
+      output_conn_1 <- ddbs_affine("argentina", mat_identity_2d, conn = conn_test)
+      output_conn_2 <- ddbs_affine("argentina", mat_translate_2d, conn = conn_test)
+      output_conn_3 <- ddbs_affine("argentina", mat_scale_2d, conn = conn_test)
+      output_conn_4 <- ddbs_affine("argentina", mat_identity_3d, conn = conn_test)
+      output_conn_5 <- ddbs_affine("argentina", mat_identity_2d, conn = conn_test, quiet = TRUE)
+
+      expect_s3_class(output_conn_1, "duckspatial_df")
+      expect_s3_class(output_conn_2, "duckspatial_df")
+      expect_s3_class(output_conn_3, "duckspatial_df")
+      expect_s3_class(output_conn_4, "duckspatial_df")
+      expect_s3_class(output_conn_5, "duckspatial_df")
+    })
+
+    it("returns different output formats for DuckDB table input", {
+      output_sf <- ddbs_affine("argentina", mat_identity_2d, conn = conn_test, mode = "sf")
+      expect_s3_class(output_sf, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_affine(argentina_ddbs, mat_identity_2d))
+      expect_message(ddbs_affine("argentina", mat_identity_2d, conn = conn_test, name = "affine"))
+      expect_message(ddbs_affine("argentina", mat_identity_2d, conn = conn_test, name = "affine", overwrite = TRUE))
+      expect_true(ddbs_affine("argentina", mat_identity_2d, conn = conn_test, name = "affine2"))
+
+      expect_no_message(ddbs_affine(argentina_ddbs, mat_identity_2d, quiet = TRUE))
+      expect_no_message(
+        ddbs_affine(
+          "argentina",
+          mat_identity_2d,
+          conn     = conn_test,
+          name     = "affine",
+          overwrite = TRUE,
+          quiet    = TRUE
+        )
+      )
+    })
+
+    describe("2D matrix transformations", {
+
+      it("identity matrix preserves geometry", {
+        original <- ddbs_collect(argentina_ddbs)
+        result   <- ddbs_affine(argentina_ddbs, mat_identity_2d) |> ddbs_collect()
+        expect_equal(original$geometry, result$geometry)
+      })
+
+      it("translation matrix shifts coordinates by xoff and yoff", {
+        original <- argentina_sf
+        result   <- ddbs_affine(argentina_sf, mat_translate_2d, mode = "sf")
+
+        coords_orig   <- sf::st_coordinates(original)[, c("X", "Y")]
+        coords_result <- sf::st_coordinates(result)[, c("X", "Y")]
+
+        expect_equal(coords_result[, "X"], coords_orig[, "X"] + 1, tolerance = 1e-6)
+        expect_equal(coords_result[, "Y"], coords_orig[, "Y"] + 2, tolerance = 1e-6)
+      })
+
+      it("scaling matrix multiplies coordinates", {
+        original <- argentina_sf
+        result   <- ddbs_affine(argentina_sf, mat_scale_2d, mode = "sf")
+
+        coords_orig   <- sf::st_coordinates(original)[, c("X", "Y")]
+        coords_result <- sf::st_coordinates(result)[, c("X", "Y")]
+
+        expect_equal(coords_result[, "X"], coords_orig[, "X"] * 2, tolerance = 1e-6)
+        expect_equal(coords_result[, "Y"], coords_orig[, "Y"] * 2, tolerance = 1e-6)
+      })
+    })
+
+    describe("3D matrix transformations", {
+
+      it("3D identity matrix preserves geometry", {
+        original <- ddbs_collect(argentina_ddbs)
+        result   <- ddbs_affine(argentina_ddbs, mat_identity_3d) |> ddbs_collect()
+        expect_equal(original$geometry, result$geometry)
+      })
+
+      it("3D translation matrix shifts X and Y coordinates", {
+        mat_translate_3d <- matrix(c(1, 0, 0, 5,
+                                     0, 1, 0, 3,
+                                     0, 0, 1, 0), nrow = 3, byrow = TRUE)
+        original <- argentina_sf
+        result   <- ddbs_affine(argentina_sf, mat_translate_3d, mode = "sf")
+
+        coords_orig   <- sf::st_coordinates(original)[, c("X", "Y")]
+        coords_result <- sf::st_coordinates(result)[, c("X", "Y")]
+
+        expect_equal(coords_result[, "X"], coords_orig[, "X"] + 5, tolerance = 1e-6)
+        expect_equal(coords_result[, "Y"], coords_orig[, "Y"] + 3, tolerance = 1e-6)
+      })
+    })
+  })
+
+  ### EXPECTED ERRORS ---------------------------------------------------
+
+  describe("errors", {
+
+    describe("matrix argument validation", {
+
+      it("rejects non-matrix input", {
+        expect_error(ddbs_affine(argentina_ddbs, matrix = c(1, 0, 0, 0, 1, 0)))
+        expect_error(ddbs_affine(argentina_ddbs, matrix = list(1, 0, 0, 0, 1, 0)))
+        expect_error(ddbs_affine(argentina_ddbs, matrix = "1, 0, 0, 0, 1, 0"))
+      })
+
+      it("rejects non-numeric matrix", {
+        expect_error(
+          ddbs_affine(argentina_ddbs, matrix = matrix(c("a", "b", "c", "d", "e", "f"), nrow = 2))
+        )
+      })
+
+      it("rejects wrong matrix dimensions", {
+        expect_error(ddbs_affine(argentina_ddbs, matrix = matrix(1:4, nrow = 2)))
+        expect_error(ddbs_affine(argentina_ddbs, matrix = matrix(1:6, nrow = 3)))
+        expect_error(ddbs_affine(argentina_ddbs, matrix = matrix(1:9, nrow = 3)))
+        expect_error(ddbs_affine(argentina_ddbs, matrix = matrix(1:12, nrow = 4)))
+      })
+    })
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_affine("argentina", mat_identity_2d, conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_affine(x = 999, matrix = mat_identity_2d))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_affine(argentina_ddbs, mat_identity_2d, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_affine(argentina_ddbs, mat_identity_2d, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_affine(argentina_ddbs, mat_identity_2d, quiet = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_affine(x = "999", mat_identity_2d, conn = conn_test))
+    })
+
+    it("requires name to be single character string", {
+      expect_error(ddbs_affine(argentina_ddbs, mat_identity_2d, conn = conn_test, name = c("banana", "banana")))
+    })
+  })
+})
+
+
+
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)

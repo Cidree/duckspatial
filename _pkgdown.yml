@@ -290,6 +290,11 @@ reference:
   - ddbs_shear
   - ddbs_shift
 
+- title: Geometry Queries
+  desc: Query structural properties of geometries without modifying them
+  contents:
+  - ddbs_get_npoints
+
 - title: Measurements
   desc: Calculate areas, distances, lengths, and perimeters
   contents:

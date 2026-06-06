@@ -121,38 +121,40 @@ ddbs_locate_along <- function(
     )
 
     ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
-    ## We drop empty geometries
+    ## We drop empty geometries. Two steps are required:
+    ## (1) apply ST_LocateAlong keeping the result as raw GEOMETRY so ST_IsEmpty works,
+    ## (2) filter empties, then convert to the requested output format in the outer SELECT.
     st_function <- glue::glue("ST_LocateAlong({args})")
     base.query <- glue::glue("
-        WITH processed AS (
-        SELECT *
-        REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
-        FROM {x_list$query_name}
+        WITH located AS (
+          SELECT * REPLACE ({st_function} AS {x_geom})
+          FROM {x_list$query_name}
         )
-        SELECT *
-        FROM processed
+        SELECT * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom})
+        FROM located
         WHERE NOT ST_IsEmpty({x_geom});
-    ")
+      ")
+    
 
 
     # 3. Table creation if name is provided, or 
     # create duckspatial_df or sf object if name is NULL
     if (!is.null(name)) {
         create_duckdb_table(
-        conn      = target_conn,
-        name      = name,
-        query     = base.query,
-        overwrite = overwrite,
-        quiet     = quiet
+          conn      = target_conn,
+          name      = name,
+          query     = base.query,
+          overwrite = overwrite,
+          quiet     = quiet
         )
     } else {
-        ddbs_handle_query(
+      ddbs_handle_query(
         query  = base.query,
         conn   = target_conn,
         mode   = mode,
         crs    = crs_x,
         x_geom = x_geom
-        )
+      )
     }
 
 }
@@ -224,18 +226,20 @@ ddbs_locate_between <- function(
   )
 
   ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
-  ## We drop empty geometries
+  ## We drop empty geometries. Two steps are required:
+  ## (1) apply ST_LocateBetween keeping the result as raw GEOMETRY so ST_IsEmpty works,
+  ## (2) filter empties, then convert to the requested output format in the outer SELECT.
   st_function <- glue::glue("ST_LocateBetween({args})")
   base.query <- glue::glue("
-    WITH processed AS (
-       SELECT *
-       REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
-       FROM {x_list$query_name}
+    WITH located AS (
+      SELECT * REPLACE ({st_function} AS {x_geom})
+      FROM {x_list$query_name}
     )
-    SELECT *
-    FROM processed
+    SELECT * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom})
+    FROM located
     WHERE NOT ST_IsEmpty({x_geom});
   ")
+  
 
 
   # 3. Table creation if name is provided, or 
