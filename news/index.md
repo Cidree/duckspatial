@@ -1,8 +1,6 @@
 # Changelog
 
-## duckspatial 1.1.1
-
-CRAN release: 2026-06-06
+## duckspatial 1.1.0.9000
 
 ### NEW FEATURES
 
