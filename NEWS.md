@@ -1,4 +1,4 @@
-# duckspatial 1.1.0.9000
+# duckspatial 1.1.1
 
 ## NEW FEATURES
 
