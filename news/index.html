@@ -152,19 +152,19 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.1.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/Cidree/duckspatial/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.1.0.9000" id="duckspatial-1109000">duckspatial 1.1.0.9000<a class="anchor" aria-label="anchor" href="#duckspatial-1109000"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.1.1" id="duckspatial-111">duckspatial 1.1.1<a class="anchor" aria-label="anchor" href="#duckspatial-111"></a></h2><p class="text-muted">CRAN release: 2026-06-06</p>
 <div class="section level3">
-<h3 id="new-features-1-1-0-9000">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-1-1-0-9000"></a></h3>
+<h3 id="new-features-1-1-1">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-1-1-1"></a></h3>
 <ul><li><p><code><a href="../reference/ddbs_get_npoints.html">ddbs_get_npoints()</a></code>: returns the number of points (vertices) in a geometry.</p></li>
 <li><p><code><a href="../reference/ddbs_get_npoints.html">ddbs_get_ngeometries()</a></code>: returns the number of sub-geometries in a GEOMETRYCOLLECTION or MULTI* geometry.</p></li>
 <li><p><code><a href="../reference/ddbs_affine.html">ddbs_affine()</a></code>: applies an affine transformation to geometries using a 2x3 or 3x4 matrix (<a href="https://github.com/Cidree/duckspatial/issues/133" class="external-link">#133</a>).</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="enhancements-1-1-0-9000">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-1-1-0-9000"></a></h3>
+<h3 id="enhancements-1-1-1">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-1-1-1"></a></h3>
 <ul><li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> and <code><a href="../reference/ddbs_write_dataset.html">ddbs_write_dataset()</a></code> gain a <code>duckdb_storage_version</code> argument to control DuckDB storage compatibility. They now default to DuckDB <code>v1.5.0</code> storage (<strong>Native Spatial Storage</strong>) so that CRS metadata can persist in native <code>GEOMETRY</code> columns. Users can specify older versions (e.g., <code>v1.0.0</code> for <strong>Legacy Compatibility</strong>) when the output must be readable by older DuckDB clients. For more details on DuckDB storage versions, see <a href="https://duckdb.org/docs/internals/storage" class="external-link uri">https://duckdb.org/docs/internals/storage</a> (<a href="https://github.com/Cidree/duckspatial/issues/130" class="external-link">#130</a>, <a href="https://github.com/Cidree/duckspatial/issues/132" class="external-link">#132</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: stricter validation of <code>dbdir</code> parameter. Now only accepts <code>"memory"</code>, <code>"tempdir"</code>, or file paths with <code>.duckdb</code>, <code>.db</code>, or <code>.ddb</code> extensions (<a href="https://github.com/Cidree/duckspatial/issues/132" class="external-link">#132</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_stop_conn.html">ddbs_stop_conn()</a></code>: now explicitly shuts down the DuckDB driver and forces a checkpoint (necessary to release the file lock on Windows) (<a href="https://github.com/Cidree/duckspatial/issues/132" class="external-link">#132</a>).</p></li>
