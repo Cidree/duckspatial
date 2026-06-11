@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -156,9 +156,25 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="duckspatial-development-version">duckspatial (development version)<a class="anchor" aria-label="anchor" href="#duckspatial-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.1.1" id="duckspatial-111">duckspatial 1.1.1<a class="anchor" aria-label="anchor" href="#duckspatial-111"></a></h2><p class="text-muted">CRAN release: 2026-06-06</p>
 <div class="section level3">
-<h3 id="new-features-development-version">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-1-1-1">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-1-1-1"></a></h3>
+<ul><li><p><code><a href="../reference/ddbs_get_npoints.html">ddbs_get_npoints()</a></code>: returns the number of points (vertices) in a geometry.</p></li>
+<li><p><code><a href="../reference/ddbs_get_npoints.html">ddbs_get_ngeometries()</a></code>: returns the number of sub-geometries in a GEOMETRYCOLLECTION or MULTI* geometry.</p></li>
+<li><p><code><a href="../reference/ddbs_affine.html">ddbs_affine()</a></code>: applies an affine transformation to geometries using a 2x3 or 3x4 matrix (<a href="https://github.com/Cidree/duckspatial/issues/133" class="external-link">#133</a>).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="enhancements-1-1-1">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-1-1-1"></a></h3>
+<ul><li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> and <code><a href="../reference/ddbs_write_dataset.html">ddbs_write_dataset()</a></code> gain a <code>duckdb_storage_version</code> argument to control DuckDB storage compatibility. They now default to DuckDB <code>v1.5.0</code> storage (<strong>Native Spatial Storage</strong>) so that CRS metadata can persist in native <code>GEOMETRY</code> columns. Users can specify older versions (e.g., <code>v1.0.0</code> for <strong>Legacy Compatibility</strong>) when the output must be readable by older DuckDB clients. For more details on DuckDB storage versions, see <a href="https://duckdb.org/docs/internals/storage" class="external-link uri">https://duckdb.org/docs/internals/storage</a> (<a href="https://github.com/Cidree/duckspatial/issues/130" class="external-link">#130</a>, <a href="https://github.com/Cidree/duckspatial/issues/132" class="external-link">#132</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: stricter validation of <code>dbdir</code> parameter. Now only accepts <code>"memory"</code>, <code>"tempdir"</code>, or file paths with <code>.duckdb</code>, <code>.db</code>, or <code>.ddb</code> extensions (<a href="https://github.com/Cidree/duckspatial/issues/132" class="external-link">#132</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_stop_conn.html">ddbs_stop_conn()</a></code>: now explicitly shuts down the DuckDB driver and forces a checkpoint (necessary to release the file lock on Windows) (<a href="https://github.com/Cidree/duckspatial/issues/132" class="external-link">#132</a>).</p></li>
+<li><p><code>dplyr</code> methods on <code>duckspatial_df</code> now return a lazy temporary view, rather than creating a new temporary table (<a href="https://github.com/Cidree/duckspatial/issues/130" class="external-link">#130</a>, <a href="https://github.com/Cidree/duckspatial/issues/134" class="external-link">#134</a>).</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="duckspatial-110">duckspatial 1.1.0<a class="anchor" aria-label="anchor" href="#duckspatial-110"></a></h2><p class="text-muted">CRAN release: 2026-05-17</p>
+<div class="section level3">
+<h3 id="new-features-1-1-0">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-1-1-0"></a></h3>
 <ul><li><p>Implementation of <code>duckspatial</code> macros: this allows to use some <code>duckspatial</code> functions within <code>dplyr</code> verbs (e.g. <code>data |&gt; mutate(area = ddbs_area(geometry))</code>) (<a href="https://github.com/Cidree/duckspatial/issues/92" class="external-link">#92</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_dump.html">ddbs_dump()</a></code>: decompose multi-geometry types into individual single geometry components (<a href="https://github.com/Cidree/duckspatial/issues/44" class="external-link">#44</a>, 117).</p></li>
 <li><p><code><a href="../reference/ddbs_maximum_inscribed_circle.html">ddbs_maximum_inscribed_circle()</a></code>: returns the maximum inscribed circle of the input geometry (<a href="https://github.com/Cidree/duckspatial/issues/117" class="external-link">#117</a>).</p></li>
@@ -174,17 +190,19 @@
 <li><p><code><a href="../reference/ddbs_locate.html">ddbs_locate_along()</a></code>: locates points that match the specified M value (<a href="https://github.com/Cidree/duckspatial/issues/118" class="external-link">#118</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_remove_repeated_points.html">ddbs_remove_repeated_points()</a></code>: removes repeated points, optionally with some tolerance (<a href="https://github.com/Cidree/duckspatial/issues/118" class="external-link">#118</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_read_meta.html">ddbs_read_meta()</a></code>: reads the metadata of a vectorial data file (<a href="https://github.com/Cidree/duckspatial/issues/118" class="external-link">#118</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_make_line.html">ddbs_make_line()</a></code>: creates LINESTRINGS from POINT geometries (<a href="https://github.com/Cidree/duckspatial/issues/126" class="external-link">#126</a>).</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="enhancements-development-version">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-development-version"></a></h3>
+<h3 id="enhancements-1-1-0">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-1-1-0"></a></h3>
 <ul><li><p><code>group_by</code> and <code>summarise</code> methods now drop the spatial attributes when the output is not a <code>duckspatial_df</code> anymore (<a href="https://github.com/Cidree/duckspatial/issues/119" class="external-link">#119</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>: gains the <code>upgrade</code> argument that is passed to <code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>.</p></li>
 <li><p><code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>: now returns a better error message if the extension is already loaded, and there’s an attempt to upgrade it.</p></li>
 <li><p><code><a href="../reference/ddbs_centroid.html">ddbs_centroid()</a></code>: gains the argument <code>method</code> to implement ST_PointOnSurface (<a href="https://github.com/Cidree/duckspatial/issues/118" class="external-link">#118</a>).</p></li>
 <li><p><code><a href="../reference/ddbs_as_points.html">ddbs_as_points()</a></code> allows to create a <code>duckspatial_df</code> from raw coordinate or WKT columns. It also gains two new arguments: <code>remove</code> and <code>na.fail</code> (<a href="https://github.com/Cidree/duckspatial/issues/125" class="external-link">#125</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_open_dataset.html">ddbs_open_dataset()</a></code>: can open geoparquet files when the geometry is encoded as WKB geoparquet. It also fails with a better error message when the geometry is encoded as a native arrow/geoarrow encoding (<a href="https://github.com/Cidree/duckspatial/issues/129" class="external-link">#129</a>).</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-1-1-0">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0"></a></h3>
 <ul><li>Large datasets couldn’t be processed because an <code>arrow</code> code limitation in <code><a href="../reference/ddbs_register_table.html">ddbs_register_table()</a></code> (<a href="https://github.com/Cidree/duckspatial/issues/124" class="external-link">#124</a>).</li>
 </ul></div>
 </div>

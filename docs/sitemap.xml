@@ -16,6 +16,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/convert_wkb_to_sfc.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/crs_equal.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/dbConnCheck.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_affine.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_format.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_points.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_as_spatial.html</loc></url>
@@ -49,6 +50,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_geometry_type.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_geom_col.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_geom_validation_funs.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_glimpse.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_has_dim.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_install.html</loc></url>
@@ -61,6 +63,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_load.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_locate.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_envelope.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_line.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_polygon.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_make_valid.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_maximum_inscribed_circle.html</loc></url>
@@ -89,6 +92,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_sitrep.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_startpoint.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_temp_table_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_temp_view_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_transform.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_union_funs.html</loc></url>
