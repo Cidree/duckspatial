@@ -2,6 +2,7 @@
 ## Line operations:
 ## - ddbs_line_merge
 ## - ddbs_line_interpolate
+## - ddbs_line_locate_point
 ## - ddbs_line_substring
 ## - ddbs_endpoint
 ## - ddbs_startpoint
@@ -647,6 +648,203 @@ ddbs_build_area <- function(
     fun = "ST_BuildArea",
     other_args = NULL
   )
+
+}
+
+
+
+
+#' Locate a point along a linestring
+#'
+#' Returns a value between 0 and 1 representing the position of the closest
+#' point on the line to the reference point, as a fraction of the line's
+#' total length. 0 corresponds to the start of the line and 1 to the end.
+#'
+#' @template x
+#' @param y The reference point. One of:
+#'   \itemize{
+#'     \item An \code{sf} object with exactly 1 point feature.
+#'     \item A \code{duckspatial_df} with exactly 1 point feature.
+#'     \item A character string naming a DuckDB table that contains exactly 1
+#'       point feature (requires \code{conn}).
+#'   }
+#' @template new_column
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read river data
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson", package = "duckspatial")
+#' )
+#'
+#' ## define a single reference point (sf with 1 row)
+#' ref_pt <- sf::st_sf(
+#'   geometry = sf::st_sfc(sf::st_point(c(-8, 43)), crs = 4326)
+#' )
+#'
+#' ## locate the fraction along each river closest to the reference point
+#' ddbs_line_locate_point(rivers_ddbs, y = ref_pt)
+#' }
+ddbs_line_locate_point <- function(
+    x,
+    y,
+    new_column = "line_fraction",
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    # 0. Validate inputs
+
+    ## common input checks
+    assert_xy(x, "x")
+    assert_name(name)
+    assert_name(mode, "mode")
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+    assert_character_scalar(new_column, "new_column")
+
+    ## y type check
+    if (!inherits(y, c("sf", "duckspatial_df", "tbl_duckdb_connection")) && !is.character(y)) {
+        cli::cli_abort(
+            "{.arg y} must be an {.cls sf} object, a {.cls duckspatial_df}, or a character table name.",
+            call = NULL
+        )
+    }
+
+    ## early row-count check for sf (no DB needed)
+    if (inherits(y, "sf") && nrow(y) != 1L) {
+        cli::cli_abort(
+            "{.arg y} must have exactly 1 feature when passed as an {.cls sf} object, not {nrow(y)}.",
+            call = NULL
+        )
+    }
+
+    ## connection requirements
+    assert_conn_x_name(conn, x, name)
+    assert_conn_character(conn, x, y)
+
+
+    # 1. Prepare inputs
+
+    ## 1.1. Resolve conn defaults for character inputs (mirrors binary ops pattern)
+    conn_x <- if (is.character(x)) conn else NULL
+    conn_y <- if (is.character(y)) conn else NULL
+
+    ## 1.2. Normalize x
+    x        <- normalize_spatial_input(x, conn_x)
+    crs_x    <- ddbs_crs(x, conn_x)
+    sf_col_x <- attr(x, "sf_column")
+    mode     <- get_mode(mode, name)
+
+
+    # 2. Resolve connections and build y_sql based on y type
+
+    if (inherits(y, "sf")) {
+        ## y is sf: use an inline WKT literal — no connection resolution for y
+        y_wkt <- sf::st_as_text(sf::st_geometry(y)[[1]])
+
+        resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
+        target_conn  <- resolve_conn$conn
+        x            <- resolve_conn$x
+        on.exit(resolve_conn$cleanup(), add = TRUE)
+
+        x_list <- get_query_list(x, target_conn)
+        on.exit(x_list$cleanup(), add = TRUE)
+
+        x_geom <- (sf_col_x %||% get_geom_name(target_conn, x_list$query_name))[1]
+        assert_geometry_column(x_geom, x_list)
+
+        y_sql <- glue::glue("ST_GeomFromText('{y_wkt}')")
+
+    } else {
+        ## y is duckspatial_df or character table: normalize and resolve both
+        y        <- normalize_spatial_input(y, conn_y)
+        sf_col_y <- attr(y, "sf_column")
+
+        resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
+        target_conn <- resolve_res$conn
+        x           <- resolve_res$x
+        y           <- resolve_res$y
+        on.exit(resolve_res$cleanup(), add = TRUE)
+
+        x_list <- get_query_list(x, target_conn)
+        on.exit(x_list$cleanup(), add = TRUE)
+
+        y_list <- get_query_list(y, target_conn)
+        on.exit(y_list$cleanup(), add = TRUE)
+
+        x_geom <- (sf_col_x %||% get_geom_name(target_conn, x_list$query_name))[1]
+        y_geom <- (sf_col_y %||% get_geom_name(target_conn, y_list$query_name))[1]
+        assert_geometry_column(x_geom, x_list)
+
+        ## validate row count of y (after resolution so the table exists in target_conn)
+        y_n <- DBI::dbGetQuery(
+            target_conn,
+            glue::glue("SELECT COUNT(*) AS n FROM {y_list$query_name}")
+        )$n
+        if (y_n != 1L) {
+            cli::cli_abort(
+                "{.arg y} must contain exactly 1 feature, but has {y_n} row{?s}.",
+                call = NULL
+            )
+        }
+
+        y_sql <- glue::glue("(SELECT {y_geom}::GEOMETRY FROM {y_list$query_name})")
+    }
+
+
+    # 3. Build the base query
+    if (mode == "sf") {
+        base.query <- glue::glue("
+            SELECT ST_LineLocatePoint({x_geom}, {y_sql}) AS {new_column},
+            FROM {x_list$query_name};
+        ")
+    } else {
+        base.query <- glue::glue("
+            SELECT
+                * EXCLUDE {x_geom},
+                ST_LineLocatePoint({x_geom}, {y_sql}) AS {new_column},
+                {build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}
+            FROM
+                {x_list$query_name};
+        ")
+    }
+
+
+    # 4. Table creation if name is provided, or
+    # create duckspatial_df or sf object if name is NULL
+    if (!is.null(name)) {
+        create_duckdb_table(
+            conn      = target_conn,
+            name      = name,
+            query     = base.query,
+            overwrite = overwrite,
+            quiet     = quiet
+        )
+    } else {
+        ddbs_handle_query(
+            query     = base.query,
+            conn      = target_conn,
+            mode      = mode,
+            crs       = crs_x,
+            x_geom    = x_geom,
+            fun_group = 2,
+            units     = NULL
+        )
+    }
 
 }
 

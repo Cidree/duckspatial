@@ -14,6 +14,36 @@ conn_test <- duckspatial::ddbs_create_conn()
 ddbs_write_table(conn_test, argentina_sf, "argentina")
 ddbs_write_table(conn_test, rivers_sf,    "rivers")
 
+## locate fixture: 3 identical horizontal lines in conn_test and a reference point table
+DBI::dbExecute(conn_test, "
+    CREATE TABLE locate_test AS
+    SELECT 1 AS id, ST_GeomFromText('LINESTRING (0 0, 1 0)') AS geometry
+    UNION ALL SELECT 2, ST_GeomFromText('LINESTRING (0 0, 1 0)')
+    UNION ALL SELECT 3, ST_GeomFromText('LINESTRING (0 0, 1 0)')
+")
+DBI::dbExecute(conn_test, "
+    CREATE TABLE ref_point AS
+    SELECT ST_GeomFromText('POINT (0.3 0)') AS geometry
+")
+
+## R-side fixtures for sf / duckspatial_df tests
+locate_lines_sf <- sf::st_sf(
+  id = 1:3,
+  geometry = sf::st_sfc(
+    sf::st_linestring(matrix(c(0,0, 1,0), ncol = 2, byrow = TRUE)),
+    sf::st_linestring(matrix(c(0,0, 1,0), ncol = 2, byrow = TRUE)),
+    sf::st_linestring(matrix(c(0,0, 1,0), ncol = 2, byrow = TRUE))
+  ),
+  crs = 4326
+)
+locate_ddbs <- as_duckspatial_df(locate_lines_sf)
+
+## single reference point at fraction 0.3 of the unit horizontal line
+ref_point_sf   <- sf::st_sf(
+  geometry = sf::st_sfc(sf::st_point(c(0.3, 0)), crs = 4326)
+)
+ref_point_ddbs <- as_duckspatial_df(ref_point_sf)
+
 ## prepare exterior_ring table (closed LINESTRING) needed by ddbs_make_polygon tests
 ddbs_exterior_ring("argentina", conn = conn_test, name = "exterior_ring", quiet = TRUE)
 ext_ring_ddbs <- ddbs_exterior_ring(argentina_ddbs)
@@ -805,6 +835,229 @@ describe("deprecated ddbs_startpoint() and ddbs_endpoint()", {
     output_new <- ddbs_line_endpoint(rivers_ddbs, mode = "sf")
 
     expect_equal(output_dep$geom, output_new$geom)
+  })
+})
+
+
+
+# 9. ddbs_line_locate_point() --------------------------------------------
+
+## y = sf (single point) tests
+## - CHECK 1.1: returns duckspatial_df by default
+## - CHECK 1.2: returns numeric vector with mode sf
+## - CHECK 1.3: messages shown/suppressed correctly
+## - CHECK 1.4: fraction = 0.3 for reference point at (0.3, 0)
+## - CHECK 1.5: materializes data correctly
+## - CHECK 1.6: vector and column outputs are identical
+## y = duckspatial_df (single point) tests
+## - CHECK 2.1: returns duckspatial_df by default
+## - CHECK 2.2: returns numeric vector with mode sf
+## - CHECK 2.3: messages shown/suppressed correctly
+## - CHECK 2.4: fraction = 0.3 for reference point at (0.3, 0)
+## - CHECK 2.5: identical results with sf and duckspatial_df y
+## y = character (DuckDB table) tests
+## - CHECK 3.1: returns duckspatial_df by default
+## - CHECK 3.2: returns numeric vector with mode sf
+## - CHECK 3.3: table is written into the database
+## - CHECK 3.4: messages shown/suppressed correctly
+## - CHECK 3.5: fraction = 0.3 for reference point at (0.3, 0)
+## - CHECK 3.6: materializes data correctly
+## - CHECK 3.7: vector and column outputs are identical
+## Check that errors work
+## - CHECK 4.1: overwrite = FALSE rejects existing table
+## - CHECK 4.2: y with more than 1 row (sf)
+## - CHECK 4.3: y with more than 1 row (duckspatial_df)
+## - CHECK 4.4: invalid y type
+## - CHECK 4.5: non-character new_column argument
+## - CHECK 4.6: conn required when x or y is a table name
+## - CHECK 4.7: invalid x type
+describe("ddbs_line_locate_point()", {
+
+  ### y = sf
+
+  describe("expected behavior with sf y", {
+
+    it("returns a duckspatial_df by default", {
+      output <- ddbs_line_locate_point(locate_ddbs, y = ref_point_sf)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a numeric vector with mode sf", {
+      output <- ddbs_line_locate_point(locate_ddbs, y = ref_point_sf, mode = "sf")
+      expect_true(is.numeric(output))
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_line_locate_point(locate_ddbs, y = ref_point_sf))
+      expect_no_message(ddbs_line_locate_point(locate_ddbs, y = ref_point_sf, quiet = TRUE))
+    })
+
+    it("returns 0.3 for reference point at (0.3, 0) on a unit horizontal line", {
+      result <- ddbs_line_locate_point(locate_ddbs, y = ref_point_sf, mode = "sf")
+      expect_equal(result[1], 0.3, tolerance = 1e-6)
+    })
+
+    it("materializes data correctly (st_as_sf, collect, ddbs_collect)", {
+      output <- ddbs_line_locate_point(locate_ddbs, y = ref_point_sf)
+      output_sf_mat  <- output |> st_as_sf()
+      output_collect <- output |> collect()
+      output_ddbs    <- output |> ddbs_collect()
+      expect_identical(output_sf_mat, output_collect)
+      expect_identical(output_collect, output_ddbs)
+      expect_s3_class(output_sf_mat, "sf")
+    })
+
+    it("produces identical results for vector and column outputs", {
+      output_vec    <- ddbs_line_locate_point(locate_ddbs, y = ref_point_sf, mode = "sf")
+      output_column <- ddbs_line_locate_point(locate_ddbs, y = ref_point_sf) |> ddbs_collect()
+      expect_equal(output_vec, output_column$line_fraction)
+    })
+  })
+
+
+  ### y = duckspatial_df
+
+  describe("expected behavior with duckspatial_df y", {
+
+    it("returns a duckspatial_df by default", {
+      output <- ddbs_line_locate_point(locate_ddbs, y = ref_point_ddbs)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a numeric vector with mode sf", {
+      output <- ddbs_line_locate_point(locate_ddbs, y = ref_point_ddbs, mode = "sf")
+      expect_true(is.numeric(output))
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_line_locate_point(locate_ddbs, y = ref_point_ddbs))
+    })
+
+    it("returns 0.3 for reference point at (0.3, 0) on a unit horizontal line", {
+      result <- ddbs_line_locate_point(locate_ddbs, y = ref_point_ddbs, mode = "sf")
+      expect_equal(result[1], 0.3, tolerance = 1e-6)
+    })
+
+    it("produces identical results with sf and duckspatial_df y", {
+      output_sf_y   <- ddbs_line_locate_point(locate_ddbs, y = ref_point_sf,   mode = "sf")
+      output_ddbs_y <- ddbs_line_locate_point(locate_ddbs, y = ref_point_ddbs, mode = "sf")
+      expect_equal(output_sf_y, output_ddbs_y)
+    })
+  })
+
+
+  ### y = character (DuckDB table)
+
+  describe("expected behavior with character table y", {
+
+    it("returns a duckspatial_df by default", {
+      output <- ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns a numeric vector with mode sf", {
+      output <- ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test, mode = "sf")
+      expect_true(is.numeric(output))
+    })
+
+    it("writes tables to the database", {
+      output <- ddbs_line_locate_point(
+        "locate_test", y = "ref_point", conn = conn_test,
+        name = "ll_tbl", new_column = "frac"
+      )
+      expect_true(output)
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(
+        ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test)
+      )
+      expect_message(
+        ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test,
+          name = "ll_tbl2", new_column = "frac")
+      )
+      expect_no_message(
+        ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test, quiet = TRUE)
+      )
+      expect_no_message(
+        ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test,
+          name = "ll_tbl3", new_column = "frac", quiet = TRUE)
+      )
+    })
+
+    it("returns 0.3 for reference point at (0.3, 0) on a unit horizontal line", {
+      result <- ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test, mode = "sf")
+      expect_equal(result[1], 0.3, tolerance = 1e-6)
+    })
+
+    it("materializes data correctly (collect, ddbs_collect)", {
+      output <- ddbs_line_locate_point("locate_test", y = "ref_point", conn = conn_test)
+      output_collect <- output |> collect()
+      output_ddbs    <- output |> ddbs_collect()
+      expect_identical(output_collect, output_ddbs)
+    })
+
+    it("produces identical results for vector and column outputs", {
+      output_vec    <- ddbs_line_locate_point(
+        "locate_test", y = "ref_point", conn = conn_test, mode = "sf"
+      )
+      output_column <- ddbs_line_locate_point(
+        "locate_test", y = "ref_point", conn = conn_test
+      ) |> ddbs_collect()
+      expect_equal(output_vec, output_column$line_fraction)
+    })
+  })
+
+
+  ### errors
+
+  describe("errors", {
+
+    it("errors if overwrite = FALSE and table already exists", {
+      ddbs_line_locate_point(
+        "locate_test", y = "ref_point", conn = conn_test, name = "dup_ll_tbl", new_column = "frac"
+      )
+      expect_error(
+        ddbs_line_locate_point(
+          "locate_test", y = "ref_point", conn = conn_test, name = "dup_ll_tbl", new_column = "frac"
+        )
+      )
+    })
+
+    it("errors if y has more than 1 row (sf)", {
+      multi_pt_sf <- sf::st_sf(
+        geometry = sf::st_sfc(sf::st_point(c(0.3, 0)), sf::st_point(c(0.5, 0))),
+        crs = 4326
+      )
+      expect_error(ddbs_line_locate_point(locate_ddbs, y = multi_pt_sf))
+    })
+
+    it("errors if y has more than 1 row (duckspatial_df)", {
+      multi_pt_ddbs <- as_duckspatial_df(sf::st_sf(
+        geometry = sf::st_sfc(sf::st_point(c(0.3, 0)), sf::st_point(c(0.5, 0))),
+        crs = 4326
+      ))
+      expect_error(ddbs_line_locate_point(locate_ddbs, y = multi_pt_ddbs))
+    })
+
+    it("errors if y is an invalid type", {
+      expect_error(ddbs_line_locate_point(locate_ddbs, y = 123))
+      expect_error(ddbs_line_locate_point(locate_ddbs, y = TRUE))
+    })
+
+    it("errors if new_column is not a character scalar", {
+      expect_error(ddbs_line_locate_point(locate_ddbs, y = ref_point_sf, new_column = 1))
+    })
+
+    it("requires conn when x or y is a table name", {
+      expect_error(ddbs_line_locate_point("locate_test", y = ref_point_sf, conn = NULL))
+      expect_error(ddbs_line_locate_point(locate_ddbs,   y = "ref_point",  conn = NULL))
+    })
+
+    it("errors on invalid x type", {
+      expect_error(ddbs_line_locate_point(999,  y = ref_point_sf))
+      expect_error(ddbs_line_locate_point(TRUE, y = ref_point_sf))
+    })
   })
 })
 

@@ -228,6 +228,7 @@ reference:
   contents:
   - ddbs_endpoint_startpoint
   - ddbs_line_interpolate
+  - ddbs_line_locate_point
   - ddbs_line_merge
   - ddbs_line_substring
   - ddbs_build_area
