@@ -249,6 +249,7 @@ reference:
   - ddbs_set_crs
   - ddbs_flip_coordinates
   - ddbs_xy
+  - ddbs_coord_bounds
   - ddbs_force_dim
 
 - title: Dimension operations

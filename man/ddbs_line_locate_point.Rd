@@ -6,7 +6,7 @@
 \usage{
 ddbs_line_locate_point(
   x,
-  point,
+  y,
   new_column = "line_fraction",
   conn = NULL,
   name = NULL,
@@ -25,8 +25,13 @@ ddbs_line_locate_point(
 }
 Data is returned from this object.}
 
-\item{point}{A character string giving the name of a column in \code{x}
-that contains the reference \code{GEOMETRY} (point) values.}
+\item{y}{The reference point. One of:
+\itemize{
+\item An \code{sf} object with exactly 1 point feature.
+\item A \code{duckspatial_df} with exactly 1 point feature.
+\item A character string naming a DuckDB table that contains exactly 1
+point feature (requires \code{conn}).
+}}
 
 \item{new_column}{Name of the new column to create on the input data. Ignored
 with \code{mode = "sf"}.}
@@ -71,21 +76,18 @@ total length. 0 corresponds to the start of the line and 1 to the end.
 \dontrun{
 ## load package
 library(duckspatial)
-library(dplyr)
 
-## create a connection
-conn <- ddbs_create_conn()
-
-## load rivers and their start points
+## read river data
 rivers_ddbs <- ddbs_open_dataset(
   system.file("spatial/rivers.geojson", package = "duckspatial")
 )
 
-## add a reference point column (e.g., the start point of each river)
-rivers_with_pt <- rivers_ddbs |>
-  mutate(pt = ST_StartPoint(geom))
+## define a single reference point (sf with 1 row)
+ref_pt <- sf::st_sf(
+  geometry = sf::st_sfc(sf::st_point(c(-8, 43)), crs = 4326)
+)
 
-## locate each start point along its own line (should return 0 for all)
-ddbs_line_locate_point(rivers_with_pt, point = "pt")
+## locate the fraction along each river closest to the reference point
+ddbs_line_locate_point(rivers_ddbs, y = ref_pt)
 }
 }

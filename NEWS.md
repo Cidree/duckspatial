@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* `ddbs_xmax()`, `ddbs_xmin()`, `ddbs_ymax()`, `ddbs_ymin()`, `ddbs_zmax()`, `ddbs_zmin()`, `ddbs_mmax()`, `ddbs_mmin()`: return the maximum or minimum coordinate value for each geometry (`by_feature = TRUE`) or the global extreme across the dataset (`by_feature = FALSE`).
+
 * `ddbs_dimension()`: returns the topological dimension of each geometry (0 = point, 1 = line, 2 = polygon, -1 = empty).
 
 * `ddbs_line_locate_point()`: returns the fractional position (0–1) of the closest point on a linestring to a reference point. The `y` argument accepts an `sf` object, a `duckspatial_df`, or a character DuckDB table name (each must contain exactly 1 point feature).
