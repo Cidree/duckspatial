@@ -208,6 +208,7 @@ reference:
   desc: Create new geometries from scratch or from existing data
   contents:
   - ddbs_as_points
+  - ddbs_point
   - ddbs_generate_points
   - ddbs_quadkey
 

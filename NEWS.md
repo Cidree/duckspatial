@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* `ddbs_point()`: creates POINT geometries from numeric coordinate vectors. Supports 2D, 3D (Z), and 4D (Z + M) coordinates, extra attribute columns via `...`, and CRS assignment.
+
 * `ddbs_xmax()`, `ddbs_xmin()`, `ddbs_ymax()`, `ddbs_ymin()`, `ddbs_zmax()`, `ddbs_zmin()`, `ddbs_mmax()`, `ddbs_mmin()`: return the maximum or minimum coordinate value for each geometry (`by_feature = TRUE`) or the global extreme across the dataset (`by_feature = FALSE`).
 
 * `ddbs_dimension()`: returns the topological dimension of each geometry (0 = point, 1 = line, 2 = polygon, -1 = empty).
