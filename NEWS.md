@@ -1,5 +1,9 @@
 # duckspatial (development version)
 
+## NEW FEATURES
+
+* `ddbs_dimension()`: returns the topological dimension of each geometry (0 = point, 1 = line, 2 = polygon, -1 = empty).
+
 # duckspatial 1.1.1
 
 ## NEW FEATURES

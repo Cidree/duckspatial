@@ -294,6 +294,7 @@ reference:
   desc: Query structural properties of geometries without modifying them
   contents:
   - ddbs_get_npoints
+  - ddbs_dimension
 
 - title: Measurements
   desc: Calculate areas, distances, lengths, and perimeters

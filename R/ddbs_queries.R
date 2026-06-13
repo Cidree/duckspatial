@@ -95,3 +95,60 @@ ddbs_get_ngeometries <- function(
   )
 
 }
+
+
+
+
+#' Get the topological dimension of a geometry
+#'
+#' Returns the topological dimension of each geometry: 0 for points, 1 for
+#' lines, 2 for polygons, and -1 for empty geometries.
+#'
+#' @template x
+#' @template new_column
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#'
+#' @examples
+#' \dontrun{
+#' ## load packages
+#' library(dplyr)
+#' library(duckspatial)
+#'
+#' ## read data
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## get topological dimension (2 for polygons)
+#' ddbs_dimension(countries_ddbs)
+#' }
+#'
+#' @export
+ddbs_dimension <- function(
+  x,
+  new_column = "dimension",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+
+  template_new_column(
+    x = x,
+    new_column = new_column,
+    conn = conn,
+    name = name,
+    mode = mode,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Dimension"
+  )
+
+}
