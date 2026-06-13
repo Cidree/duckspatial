@@ -1275,3 +1275,57 @@ ddbs_make_line <- function(
   }
 
 }
+
+#' Collect all vertices of a geometry into a MULTIPOINT
+#'
+#' Returns a MULTIPOINT containing all vertices of the input geometry. This
+#' works for any geometry type: points, linestrings, polygons, and their
+#' multi- and collection variants.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## collect vertices
+#' ddbs_vertices(argentina_ddbs)
+#'
+#' ## collect vertices and return as sf
+#' ddbs_vertices(argentina_ddbs, mode = "sf")
+#' }
+ddbs_vertices <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_Points",
+        other_args = NULL
+    )
+
+}

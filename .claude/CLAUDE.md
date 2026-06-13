@@ -120,3 +120,19 @@ Add one bullet under `## NEW FEATURES` of the **topmost** (development) version 
 ### 4. _pkgdown.yml
 
 Read `_pkgdown.yml` to find the most appropriate `reference:` section and add the function name to its `contents:` list. If no existing section fits, create a new one following the same `title` / `desc` / `contents` structure.
+
+### 5. Git commit
+
+Use a conventional commit with this exact format:
+
+```
+feat: New function: ddbs_fun (#issue_number).
+```
+
+For a group of related functions introduced together, use the group name instead of individual names:
+
+```
+feat: New functions: ddbs_group_name (#issue_number).
+```
+
+(e.g. `ddbs_coord_bounds` for `ddbs_xmin`, `ddbs_xmax`, etc.)

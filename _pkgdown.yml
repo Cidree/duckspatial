@@ -222,6 +222,7 @@ reference:
   - ddbs_exterior_ring
   - ddbs_maximum_inscribed_circle
   - ddbs_make_line
+  - ddbs_vertices
   - ddbs_voronoi
 
 - title: Geometry Processing - Linestrings
