@@ -6,8 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **duckspatial** is an R package that bridges DuckDB's spatial extension with R's spatial ecosystem (primarily `sf`). It exposes 100+ functions under the `ddbs_*` naming convention and introduces a `duckspatial_df` class — a lazy spatial data frame backed by temporary DuckDB tables/views with `dbplyr`.
 
-Functions of the DuckDB's spatial extension can be consulted [here](https://duckdb.org/docs/current/core_extensions/spatial/functions).
-
 Key design principle: operations stay in DuckDB until the user explicitly collects results, enabling out-of-memory spatial workflows.
 
 ## Common Commands
@@ -96,6 +94,8 @@ Tests use **testthat edition 3**. `tests/testthat/setup.R` loads shared spatial 
 When implementing a new exported function, complete **all four steps** before considering the task done.
 
 ### 1. Implementation and documentation
+
+Find the official function's documentation [here](https://duckdb.org/docs/current/core_extensions/spatial/functions).
 
 Write the function in the R file that best matches its category (see Key File Map above). Add full `roxygen2` documentation using the template tags already present in the file (`@template x`, `@template conn_null`, etc.) — reuse them rather than duplicating the parameter prose. Run `devtools::document()` afterwards.
 
