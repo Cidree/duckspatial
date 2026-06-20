@@ -6,6 +6,7 @@
 \alias{ddbs_length}
 \alias{ddbs_perimeter}
 \alias{ddbs_distance}
+\alias{ddbs_azimuth}
 \title{Calculate geometric measurements}
 \usage{
 ddbs_area(
@@ -52,6 +53,21 @@ ddbs_distance(
   overwrite = FALSE,
   quiet = FALSE
 )
+
+ddbs_azimuth(
+  x,
+  y,
+  unit = "radians",
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{x}{Input geometry (sf object, duckspatial_df, or table name in DuckDB)}
@@ -81,7 +97,7 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
 
-\item{y}{Second input geometry for distance calculations (sf object, duckspatial_df, or table name)}
+\item{y}{Second input geometry for distance and azimuth calculations (sf object, duckspatial_df, or table name)}
 
 \item{dist_type}{Character. Distance type to be calculated. By default it uses
 the best option for the input CRS (see details).}
@@ -97,6 +113,8 @@ be used to name the list elements. If \code{NULL}, integer row numbers of \code{
 
 \item{id_y}{Character; optional name of the column in \code{y} whose values will
 replace the integer indices returned in each element of the list.}
+
+\item{unit}{Character. Output unit: \code{"radians"} (default) or \code{"degrees"}.}
 }
 \value{
 For \code{ddbs_area}, \code{ddbs_length}, and \code{ddbs_perimeter}:
@@ -107,6 +125,11 @@ For \code{ddbs_area}, \code{ddbs_length}, and \code{ddbs_perimeter}:
 }
 
 For \code{ddbs_distance}: A \code{units} matrix in meters with dimensions nrow(x), nrow(y).
+
+For \code{ddbs_azimuth}: A numeric matrix of azimuth values (in the specified \code{unit})
+with dimensions nrow(x) by nrow(y) when \code{mode = "sf"}, or a lazy
+\code{tbl_duckdb_connection} with columns \code{id_x}, \code{id_y}, and \code{azimuth} otherwise.
+Both inputs must contain only POINT geometries.
 }
 \description{
 Compute area, length, perimeter, or distance of geometries with automatic
@@ -271,6 +294,28 @@ head(dist_matrix_sph)
 
 # Close connection
 ddbs_stop_conn(conn)
+}
+\dontrun{
+library(duckspatial)
+
+# Create two sets of points in a projected CRS
+origins <- sf::st_as_sf(
+  data.frame(id = 1:2, x = c(0, 0), y = c(0, 0)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+destinations <- sf::st_as_sf(
+  data.frame(id = 1:2, x = c(0, 1), y = c(1, 0)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+
+# Returns a numeric matrix (nrow(origins) x nrow(destinations))
+ddbs_azimuth(origins, destinations, mode = "sf")
+
+# In degrees
+ddbs_azimuth(origins, destinations, unit = "degrees", mode = "sf")
+
+# Lazy tbl with all pairs (default mode)
+ddbs_azimuth(origins, destinations)
 }
 }
 \references{

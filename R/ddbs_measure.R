@@ -6,12 +6,14 @@
 #'
 #' @name ddbs_measure_funs
 #' @rdname ddbs_measure_funs
-#' @aliases ddbs_area ddbs_length ddbs_perimeter ddbs_distance
+#' @aliases ddbs_area ddbs_length ddbs_perimeter ddbs_distance ddbs_azimuth
 #'
 #' @param x Input geometry (sf object, duckspatial_df, or table name in DuckDB)
-#' @param y Second input geometry for distance calculations (sf object, duckspatial_df, or table name)
+#' @param y Second input geometry for distance and azimuth calculations (sf object, duckspatial_df, or table name)
 #' @param dist_type Character. Distance type to be calculated. By default it uses
 #'   the best option for the input CRS (see details).
+#' @param unit Character. Output unit for \code{ddbs_azimuth}: \code{"radians"}
+#'   (default) or \code{"degrees"}.
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
@@ -33,6 +35,11 @@
 #' }
 #' 
 #' For \code{ddbs_distance}: A \code{units} matrix in meters with dimensions nrow(x), nrow(y).
+#'
+#' For \code{ddbs_azimuth}: A numeric matrix of azimuth values (in the specified \code{unit})
+#' with dimensions nrow(x) by nrow(y) when \code{mode = "sf"}, or a lazy
+#' \code{tbl_duckdb_connection} with columns \code{id_x}, \code{id_y}, and \code{azimuth} otherwise.
+#' Both inputs must contain only POINT geometries.
 #'
 #' @details
 #' These functions automatically select the appropriate calculation method based on the input CRS:
@@ -490,7 +497,7 @@ ddbs_distance <- function(
     view_name <- ddbs_temp_table_name()
     tmp.query <- glue::glue("
         CREATE TEMP TABLE {view_name} AS
-        SELECT 
+        SELECT
             x.id_x,
             y.id_y,
             {st_distance_fun} AS distance
@@ -505,5 +512,190 @@ ddbs_distance <- function(
 
 
   }
-  
+
+}
+
+
+
+
+#' @rdname ddbs_measure_funs
+#' @param unit Character. Output unit: \code{"radians"} (default) or \code{"degrees"}.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(duckspatial)
+#'
+#' # Create two sets of points in a projected CRS
+#' origins <- sf::st_as_sf(
+#'   data.frame(id = 1:2, x = c(0, 0), y = c(0, 0)),
+#'   coords = c("x", "y"), crs = "EPSG:3857"
+#' )
+#' destinations <- sf::st_as_sf(
+#'   data.frame(id = 1:2, x = c(0, 1), y = c(1, 0)),
+#'   coords = c("x", "y"), crs = "EPSG:3857"
+#' )
+#'
+#' # Returns a numeric matrix (nrow(origins) x nrow(destinations))
+#' ddbs_azimuth(origins, destinations, mode = "sf")
+#'
+#' # In degrees
+#' ddbs_azimuth(origins, destinations, unit = "degrees", mode = "sf")
+#'
+#' # Lazy tbl with all pairs (default mode)
+#' ddbs_azimuth(origins, destinations)
+#' }
+ddbs_azimuth <- function(
+  x,
+  y,
+  unit = "radians",
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+
+  # 0. Validate inputs
+  assert_xy(x, "x")
+  assert_xy(y, "y")
+  assert_name(unit, "unit")
+  assert_name(id_x, "id_x")
+  assert_name(id_y, "id_y")
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+
+  valid_units <- c("radians", "degrees")
+  if (!unit %in% valid_units) {
+    cli::cli_abort(
+      "{.arg unit} must be one of {.or {.val {valid_units}}}, not {.val {unit}}."
+    )
+  }
+
+
+  # 1. Manage connection to DB
+
+  ## 1.1. Pre-extract attributes (CRS and geometry column name)
+  ## this step should be before normalize_spatial_input()
+  crs_x    <- if (is.null(conn_x)) ddbs_crs(x, conn) else ddbs_crs(x, conn_x)
+  crs_y    <- if (is.null(conn_y)) ddbs_crs(y, conn) else ddbs_crs(y, conn_y)
+  sf_col_x <- attr(x, "sf_column")
+  sf_col_y <- attr(y, "sf_column")
+
+  ## 1.2. Resolve conn_x/conn_y defaults from 'conn' for character inputs
+  if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+  if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+  ## 1.3. Normalize inputs
+  x <- normalize_spatial_input(x, conn_x)
+  y <- normalize_spatial_input(y, conn_y)
+
+  ## 1.4. Get mode
+  mode <- get_mode(mode, name)
+
+
+  # 2. Resolve connections and handle imports
+
+  resolve_conn <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  y            <- resolve_conn$y
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 2.1. Get query lists
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+  y_list <- get_query_list(y, target_conn)
+  on.exit(y_list$cleanup(), add = TRUE)
+
+  ## 2.2. Check id columns exist
+  assert_predicate_id(id_x, target_conn, x_list$query_name)
+  assert_predicate_id(id_y, target_conn, y_list$query_name)
+
+  ## 2.3. Check CRS compatibility
+  if (!is.null(crs_x) && !is.null(crs_y)) {
+    if (!crs_equal(crs_x, crs_y)) {
+      cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
+    }
+  } else {
+    assert_crs(target_conn, x_list$query_name, y_list$query_name)
+  }
+
+  ## 2.4. Check both inputs are POINT geometries
+  geom_type_x <- as.character(ddbs_geometry_type(x, conn = target_conn, by_feature = FALSE))
+  geom_type_y <- as.character(ddbs_geometry_type(y, conn = target_conn, by_feature = FALSE))
+
+  if (geom_type_x != "POINT") {
+    cli::cli_abort("{.arg x} must contain POINT geometries, not {.val {geom_type_x}}.")
+  }
+  if (geom_type_y != "POINT") {
+    cli::cli_abort("{.arg y} must contain POINT geometries, not {.val {geom_type_y}}.")
+  }
+
+
+  # 3. Prepare parameters for the query
+
+  ## 3.1. Get geometry column names
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+  assert_geometry_column(y_geom, y_list)
+
+  ## 3.2. Build the ST_Azimuth expression, with optional degree conversion
+  st_azimuth_expr <- if (unit == "degrees") {
+    glue::glue("ST_Azimuth(x.{x_geom}, y.{y_geom}) * 180.0 / pi()")
+  } else {
+    glue::glue("ST_Azimuth(x.{x_geom}, y.{y_geom})")
+  }
+
+
+  # 4. Execute query and return based on mode
+
+  if (mode == "sf") {
+
+    tmp.query <- glue::glue("
+      SELECT {st_azimuth_expr} AS azimuth
+      FROM {x_list$query_name} x
+      CROSS JOIN {y_list$query_name} y
+    ")
+
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+
+    nrowx <- get_nrow(target_conn, x_list$query_name)
+    nrowy <- get_nrow(target_conn, y_list$query_name)
+
+    az_mat <- matrix(
+      data_tbl[["azimuth"]],
+      nrow = nrowx,
+      ncol = nrowy,
+      byrow = TRUE
+    )
+    return(az_mat)
+
+  } else {
+
+    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{id_x} AS id_x")
+    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
+
+    view_name <- ddbs_temp_table_name()
+    tmp.query <- glue::glue("
+      CREATE TEMP TABLE {view_name} AS
+      SELECT
+        x.id_x,
+        y.id_y,
+        {st_azimuth_expr} AS azimuth
+      FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+    ")
+
+    DBI::dbExecute(target_conn, tmp.query)
+    return(dplyr::tbl(target_conn, view_name))
+
+  }
+
 }

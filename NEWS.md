@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* `ddbs_azimuth()`: computes the clockwise azimuth (bearing from north) between two sets of POINT geometries. Returns a numeric matrix (`mode = "sf"`) or a lazy tbl with all pairs (default). Supports radians (default) and degrees via the `unit` argument.
+
 * `ddbs_vertices()`: collects all vertices of a geometry into a MULTIPOINT.
 
 * `ddbs_point()`: creates POINT geometries from numeric coordinate vectors. Supports 2D, 3D (Z), and 4D (Z + M) coordinates, extra attribute columns via `...`, and CRS assignment.

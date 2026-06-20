@@ -301,9 +301,10 @@ reference:
   - ddbs_dimension
 
 - title: Measurements
-  desc: Calculate areas, distances, lengths, and perimeters
+  desc: Calculate areas, distances, lengths, perimeters, and bearings
   contents:
   - ddbs_measure_funs
+  - ddbs_azimuth
 
 - title: Database Utilities
   desc: Helper functions for managing DuckDB schemas and metadata
