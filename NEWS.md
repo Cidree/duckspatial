@@ -12,6 +12,10 @@
 
 * `ddbs_line_locate_point()`: returns the fractional position (0–1) of the closest point on a linestring to a reference point. The `y` argument accepts an `sf` object, a `duckspatial_df`, or a character DuckDB table name (each must contain exactly 1 point feature).
 
+## ENHANCEMENTS
+
+* `ddbs_union_agg()`: gains a `mem` argument. Set `mem = TRUE` to use `ST_MemUnion_Agg()` instead of `ST_Union_Agg()` — slower but more memory efficient.
+
 # duckspatial 1.1.1
 
 ## NEW FEATURES

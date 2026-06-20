@@ -113,8 +113,19 @@ describe("ddbs_union_agg()", {
     
     it("supports grouping by multiple columns", {
       output <- ddbs_union_agg(countries_group_ddbs, by = c("n", "n_2"))
-      
+
       expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("mem = TRUE works", {
+      output_default <- ddbs_union_agg(countries_group_ddbs, by = "n")
+      output_mem     <- ddbs_union_agg(countries_group_ddbs, by = "n", mem = TRUE)
+
+      expect_s3_class(output_mem, "duckspatial_df")
+      expect_equal(
+        ddbs_collect(output_default) |> dplyr::arrange(n) |> dplyr::pull(n),
+        ddbs_collect(output_mem)     |> dplyr::arrange(n) |> dplyr::pull(n)
+      )
     })
   })
   
@@ -150,6 +161,10 @@ describe("ddbs_union_agg()", {
     
     it("validates quiet argument type", {
       expect_error(ddbs_union_agg(countries_group_ddbs, quiet = 999))
+    })
+
+    it("validates mem argument type", {
+      expect_error(ddbs_union_agg(countries_group_ddbs, mem = 999))
     })
   })
 })
