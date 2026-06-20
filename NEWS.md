@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* `ddbs_shortest_line()`: returns the LINESTRING connecting the closest points between each pair of geometries from `x` and `y`.
+
 * `ddbs_azimuth()`: computes the clockwise azimuth (bearing from north) between two sets of POINT geometries. Returns a numeric matrix (`mode = "sf"`) or a lazy tbl with all pairs (default). Supports radians (default) and degrees via the `unit` argument.
 
 * `ddbs_vertices()`: collects all vertices of a geometry into a MULTIPOINT.

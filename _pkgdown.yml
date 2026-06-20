@@ -200,6 +200,7 @@ reference:
   desc: Combine or subset geometries based on spatial relationships
   contents:
   - ddbs_binary_funs
+  - ddbs_shortest_line
   - ddbs_filter
   - ddbs_interpolate_aw
   - ddbs_join

@@ -451,6 +451,128 @@ describe("ddbs_crop()", {
 
 
 
+# ddbs_shortest_line() ---------------------------------------------------
+
+## Fixtures: two separate POINT datasets in a projected CRS.
+## (0,0) → (3,4): known Euclidean distance = 5 m in EPSG:3857.
+pt_a_sf   <- sf::st_as_sf(data.frame(id = 1L, x = 0, y = 0), coords = c("x", "y"), crs = "EPSG:3857")
+pt_b_sf   <- sf::st_as_sf(data.frame(id = 2L, x = 3, y = 4), coords = c("x", "y"), crs = "EPSG:3857")
+pt_a_ddbs <- as_duckspatial_df(pt_a_sf)
+pt_b_ddbs <- as_duckspatial_df(pt_b_sf)
+ddbs_write_table(conn_test, pt_a_sf, "pt_a")
+ddbs_write_table(conn_test, pt_b_sf, "pt_b")
+
+describe("ddbs_shortest_line()", {
+
+  describe("expected behavior on sf input", {
+
+    it("returns a duckspatial_df by default", {
+      output <- ddbs_shortest_line(pt_a_sf, pt_b_sf)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns an sf object with mode sf", {
+      output <- ddbs_shortest_line(pt_a_sf, pt_b_sf, mode = "sf")
+      expect_s3_class(output, "sf")
+    })
+
+    it("output geometry is LINESTRING", {
+      output <- ddbs_shortest_line(pt_a_sf, pt_b_sf, mode = "sf")
+      expect_equal(as.character(sf::st_geometry_type(output)), "LINESTRING")
+    })
+
+    it("shortest line length equals the planar distance between the points", {
+      line   <- ddbs_shortest_line(pt_a_sf, pt_b_sf, mode = "sf")
+      expect_equal(as.numeric(sf::st_length(line)), 5, tolerance = 1e-6)
+    })
+
+    it("writes to a table when name is provided", {
+      output <- ddbs_shortest_line(pt_a_sf, pt_b_sf, conn = conn_test, name = "shortest_tbl")
+      expect_true(output)
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_message(
+        ddbs_shortest_line(pt_a_sf, pt_b_sf, conn = conn_test, name = "shortest_tbl2")
+      )
+      expect_no_message(
+        ddbs_shortest_line(pt_a_sf, pt_b_sf, conn = conn_test, name = "shortest_tbl3", quiet = TRUE)
+      )
+    })
+  })
+
+  describe("expected behavior on duckspatial_df input", {
+
+    it("returns a duckspatial_df by default", {
+      output <- ddbs_shortest_line(pt_a_ddbs, pt_b_ddbs)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns an sf object with mode sf", {
+      output <- ddbs_shortest_line(pt_a_ddbs, pt_b_ddbs, mode = "sf")
+      expect_s3_class(output, "sf")
+    })
+
+    it("warns when mixing connections", {
+      expect_warning(ddbs_shortest_line(pt_a_ddbs, pt_b_sf, conn = conn_test))
+    })
+
+    it("matches sf input result", {
+      out_sf   <- ddbs_shortest_line(pt_a_sf,   pt_b_sf,   mode = "sf")
+      out_ddbs <- ddbs_shortest_line(pt_a_ddbs, pt_b_ddbs, mode = "sf")
+      expect_equal(sf::st_geometry(out_sf), sf::st_geometry(out_ddbs))
+    })
+  })
+
+  describe("expected behavior on DuckDB table input", {
+
+    it("returns a duckspatial_df by default", {
+      output <- ddbs_shortest_line("pt_a", "pt_b", conn = conn_test)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns an sf object with mode sf", {
+      output <- ddbs_shortest_line("pt_a", "pt_b", conn = conn_test, mode = "sf")
+      expect_s3_class(output, "sf")
+    })
+
+    it("matches sf input result", {
+      out_sf   <- ddbs_shortest_line(pt_a_sf, pt_b_sf, mode = "sf")
+      out_conn <- ddbs_shortest_line("pt_a",  "pt_b",  conn = conn_test, mode = "sf")
+      expect_equal(sf::st_geometry(out_sf), sf::st_geometry(out_conn))
+    })
+  })
+
+  describe("errors", {
+
+    it("requires both x and y", {
+      expect_error(ddbs_shortest_line(pt_a_sf))
+      expect_error(ddbs_shortest_line(y = pt_b_sf))
+    })
+
+    it("requires a connection for character table names", {
+      expect_error(ddbs_shortest_line("pt_a", "pt_b", conn = NULL))
+    })
+
+    it("rejects mismatched CRS", {
+      pt_b_4326_sf <- sf::st_transform(pt_b_sf, "EPSG:4326")
+      expect_error(ddbs_shortest_line(pt_a_sf, pt_b_4326_sf))
+    })
+
+    it("rejects invalid x and y types", {
+      expect_error(ddbs_shortest_line(999, pt_b_sf))
+      expect_error(ddbs_shortest_line(pt_a_sf, 999))
+    })
+
+    it("validates conn, overwrite, quiet argument types", {
+      expect_error(ddbs_shortest_line(pt_a_sf, pt_b_sf, conn = 999))
+      expect_error(ddbs_shortest_line(pt_a_sf, pt_b_sf, overwrite = 999))
+      expect_error(ddbs_shortest_line(pt_a_sf, pt_b_sf, quiet = 999))
+    })
+  })
+})
+
+
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)
 
