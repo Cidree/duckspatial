@@ -87,8 +87,8 @@ ddbs_make_polygon(ring_ddbs)
 \seealso{
 \code{\link[=ddbs_polygonize]{ddbs_polygonize()}}, \code{\link[=ddbs_build_area]{ddbs_build_area()}}
 
-Other polygon construction: 
-\code{\link{ddbs_build_area}()},
-\code{\link{ddbs_polygonize}()}
+Other polygon construction:
+\code{\link[=ddbs_build_area]{ddbs_build_area()}},
+\code{\link[=ddbs_polygonize]{ddbs_polygonize()}}
 }
 \concept{polygon construction}
