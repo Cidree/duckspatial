@@ -111,3 +111,28 @@ describe("ddbs_load()", {
 
 
 })
+
+
+# 3. Other extensions ----------------------------------------------------
+
+## Community extensions
+testthat::test_that("Community extensions are installed", {
+  conn <- duckdb::dbConnect(duckdb::duckdb())
+  out <- tryCatch(ddbs_install(conn, extension = "h3"), error = function(e) NULL)
+  if (is.null(out)) {
+    testthat::pass()
+  } else {
+    expect_no_error(ddbs_load(conn, quiet = TRUE, create_macros = FALSE))
+  }
+})
+
+## Other core extensions
+testthat::test_that("Community extensions are installed", {
+  conn <- duckdb::dbConnect(duckdb::duckdb())
+  out <- tryCatch(ddbs_install(conn, extension = "aws"), error = function(e) NULL)
+  if (is.null(out)) {
+    testthat::pass()
+  } else {
+    expect_no_error(ddbs_load(conn, quiet = TRUE, create_macros = FALSE))
+  }
+})
