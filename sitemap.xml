@@ -28,10 +28,12 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_compute.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_concave_hull.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_convex_hull.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_create_conn.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_create_schema.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_crs.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_default_conn.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_dimension.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_drivers.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_drop_geometry.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_dump.html</loc></url>
@@ -55,6 +57,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_interpolate_aw.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_join.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_line_interpolate.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_line_locate_point.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_line_merge.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_line_substring.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_list_tables.html</loc></url>
@@ -70,6 +73,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_multi.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_options.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_point.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_polygonize.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_predicate.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_quadkey.html</loc></url>
@@ -94,6 +98,7 @@
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_temp_view_name.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_transform.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_union_funs.html</loc></url>
+<url><loc>https://cidree.github.io/duckspatial/reference/ddbs_vertices.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_voronoi.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.html</loc></url>
 <url><loc>https://cidree.github.io/duckspatial/reference/ddbs_write_table.html</loc></url>

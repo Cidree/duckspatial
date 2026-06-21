@@ -47,10 +47,13 @@ conn <- duckdb::dbConnect(duckdb::duckdb())
 ddbs_install(conn)
 #> ✔ spatial extension installed
 
-# install the h3 community extension
-ddbs_install(conn, extension = "h3")
-#> ✔ h3 extension installed (from community repository)
-
 # disconnect from db
 duckdb::dbDisconnect(conn)
+
+if (FALSE) { # \dontrun{
+# install the h3 community extension (requires network access)
+conn <- duckdb::dbConnect(duckdb::duckdb())
+ddbs_install(conn, extension = "h3")
+duckdb::dbDisconnect(conn)
+} # }
 ```

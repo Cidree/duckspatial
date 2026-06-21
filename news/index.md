@@ -1,5 +1,55 @@
 # Changelog
 
+## duckspatial (development version)
+
+### NEW FEATURES
+
+- [`ddbs_shortest_line()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md):
+  returns the LINESTRING connecting the closest points between each pair
+  of geometries from `x` and `y`.
+
+- [`ddbs_azimuth()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md):
+  computes the clockwise azimuth (bearing from north) between two sets
+  of POINT geometries. Returns a numeric matrix (`mode = "sf"`) or a
+  lazy tbl with all pairs (default). Supports radians (default) and
+  degrees via the `unit` argument.
+
+- [`ddbs_vertices()`](https://cidree.github.io/duckspatial/reference/ddbs_vertices.md):
+  collects all vertices of a geometry into a MULTIPOINT.
+
+- [`ddbs_point()`](https://cidree.github.io/duckspatial/reference/ddbs_point.md):
+  creates POINT geometries from numeric coordinate vectors. Supports 2D,
+  3D (Z), and 4D (Z + M) coordinates, extra attribute columns via `...`,
+  and CRS assignment.
+
+- [`ddbs_xmax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_xmin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_ymax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_ymin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_zmax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_zmin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_mmax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_mmin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md):
+  return the maximum or minimum coordinate value for each geometry
+  (`by_feature = TRUE`) or the global extreme across the dataset
+  (`by_feature = FALSE`).
+
+- [`ddbs_dimension()`](https://cidree.github.io/duckspatial/reference/ddbs_dimension.md):
+  returns the topological dimension of each geometry (0 = point, 1 =
+  line, 2 = polygon, -1 = empty).
+
+- [`ddbs_line_locate_point()`](https://cidree.github.io/duckspatial/reference/ddbs_line_locate_point.md):
+  returns the fractional position (0–1) of the closest point on a
+  linestring to a reference point. The `y` argument accepts an `sf`
+  object, a `duckspatial_df`, or a character DuckDB table name (each
+  must contain exactly 1 point feature).
+
+### ENHANCEMENTS
+
+- [`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md):
+  gains a `mem` argument. Set `mem = TRUE` to use `ST_MemUnion_Agg()`
+  instead of `ST_Union_Agg()` — slower but more memory efficient.
+
 ## duckspatial 1.1.1
 
 CRAN release: 2026-06-06

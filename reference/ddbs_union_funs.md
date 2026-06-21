@@ -38,6 +38,7 @@ ddbs_combine(
 ddbs_union_agg(
   x,
   by,
+  mem = FALSE,
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -138,6 +139,12 @@ ddbs_union_agg(
   computing unions. Geometries will be unioned within each group.
   Default is `NULL`
 
+- mem:
+
+  Logical. If `TRUE`, uses `ST_MemUnion_Agg()` instead of
+  `ST_Union_Agg()` — slower but more memory efficient. Default is
+  `FALSE`. Only applies to `ddbs_union_agg()`.
+
 ## Value
 
 Depends on the `mode` argument (or global preference set by
@@ -171,7 +178,8 @@ Performs geometric union operations that dissolve internal boundaries:
 
 Groups geometries by one or more columns, then unions geometries within
 each group. Useful for dissolving boundaries between features that share
-common attributes.
+common attributes. Set `mem = TRUE` to use `ST_MemUnion_Agg()` when
+memory is a constraint.
 
 ### ddbs_combine(x)
 

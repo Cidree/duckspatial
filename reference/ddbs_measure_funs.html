@@ -116,7 +116,7 @@ method selection based on the coordinate reference system (CRS)."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -208,6 +208,21 @@ method selection based on the coordinate reference system (CRS).</p>
 <span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">ddbs_azimuth</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">y</span>,</span>
+<span>  unit <span class="op">=</span> <span class="st">"radians"</span>,</span>
+<span>  conn <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conn_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conn_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  id_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  id_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -254,7 +269,7 @@ Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>Second input geometry for distance calculations (sf object, duckspatial_df, or table name)</p></dd>
+<dd><p>Second input geometry for distance and azimuth calculations (sf object, duckspatial_df, or table name)</p></dd>
 
 
 <dt id="arg-dist-type">dist_type<a class="anchor" aria-label="anchor" href="#arg-dist-type"></a></dt>
@@ -281,6 +296,10 @@ be used to name the list elements. If <code>NULL</code>, integer row numbers of 
 <dd><p>Character; optional name of the column in <code>y</code> whose values will
 replace the integer indices returned in each element of the list.</p></dd>
 
+
+<dt id="arg-unit">unit<a class="anchor" aria-label="anchor" href="#arg-unit"></a></dt>
+<dd><p>Character. Output unit: <code>"radians"</code> (default) or <code>"degrees"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -288,6 +307,10 @@ replace the integer indices returned in each element of the list.</p></dd>
 <li><p><code>mode = "sf"</code>: An eagerly collected vector in R memory.</p></li>
 <li><p>When <code>name</code> is provided: writes the table in the DuckDB connection and returns <code>TRUE</code> (invisibly).</p></li>
 </ul><p>For <code>ddbs_distance</code>: A <code>units</code> matrix in meters with dimensions nrow(x), nrow(y).</p>
+<p>For <code>ddbs_azimuth</code>: A numeric matrix of azimuth values (in the specified <code>unit</code>)
+with dimensions nrow(x) by nrow(y) when <code>mode = "sf"</code>, or a lazy
+<code>tbl_duckdb_connection</code> with columns <code>id_x</code>, <code>id_y</code>, and <code>azimuth</code> otherwise.
+Both inputs must contain only POINT geometries.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -437,6 +460,28 @@ replace the integer indices returned in each element of the list.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Close connection</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ddbs_stop_conn.html">ddbs_stop_conn</a></span><span class="op">(</span><span class="va">conn</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cidree.github.io/duckspatial/">duckspatial</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create two sets of points in a projected CRS</span></span></span>
+<span class="r-in"><span><span class="va">origins</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="st">"EPSG:3857"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">destinations</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="st">"EPSG:3857"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Returns a numeric matrix (nrow(origins) x nrow(destinations))</span></span></span>
+<span class="r-in"><span><span class="fu">ddbs_azimuth</span><span class="op">(</span><span class="va">origins</span>, <span class="va">destinations</span>, mode <span class="op">=</span> <span class="st">"sf"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># In degrees</span></span></span>
+<span class="r-in"><span><span class="fu">ddbs_azimuth</span><span class="op">(</span><span class="va">origins</span>, <span class="va">destinations</span>, unit <span class="op">=</span> <span class="st">"degrees"</span>, mode <span class="op">=</span> <span class="st">"sf"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Lazy tbl with all pairs (default mode)</span></span></span>
+<span class="r-in"><span><span class="fu">ddbs_azimuth</span><span class="op">(</span><span class="va">origins</span>, <span class="va">destinations</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -155,6 +155,24 @@
       <small>Source: <a href="https://github.com/Cidree/duckspatial/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="duckspatial-development-version">duckspatial (development version)<a class="anchor" aria-label="anchor" href="#duckspatial-development-version"></a></h2>
+<div class="section level3">
+<h3 id="new-features-development-version">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li><p><code><a href="../reference/ddbs_binary_funs.html">ddbs_shortest_line()</a></code>: returns the LINESTRING connecting the closest points between each pair of geometries from <code>x</code> and <code>y</code>.</p></li>
+<li><p><code><a href="../reference/ddbs_measure_funs.html">ddbs_azimuth()</a></code>: computes the clockwise azimuth (bearing from north) between two sets of POINT geometries. Returns a numeric matrix (<code>mode = "sf"</code>) or a lazy tbl with all pairs (default). Supports radians (default) and degrees via the <code>unit</code> argument.</p></li>
+<li><p><code><a href="../reference/ddbs_vertices.html">ddbs_vertices()</a></code>: collects all vertices of a geometry into a MULTIPOINT.</p></li>
+<li><p><code><a href="../reference/ddbs_point.html">ddbs_point()</a></code>: creates POINT geometries from numeric coordinate vectors. Supports 2D, 3D (Z), and 4D (Z + M) coordinates, extra attribute columns via <code>...</code>, and CRS assignment.</p></li>
+<li><p><code><a href="../reference/ddbs_coord_bounds.html">ddbs_xmax()</a></code>, <code><a href="../reference/ddbs_coord_bounds.html">ddbs_xmin()</a></code>, <code><a href="../reference/ddbs_coord_bounds.html">ddbs_ymax()</a></code>, <code><a href="../reference/ddbs_coord_bounds.html">ddbs_ymin()</a></code>, <code><a href="../reference/ddbs_coord_bounds.html">ddbs_zmax()</a></code>, <code><a href="../reference/ddbs_coord_bounds.html">ddbs_zmin()</a></code>, <code><a href="../reference/ddbs_coord_bounds.html">ddbs_mmax()</a></code>, <code><a href="../reference/ddbs_coord_bounds.html">ddbs_mmin()</a></code>: return the maximum or minimum coordinate value for each geometry (<code>by_feature = TRUE</code>) or the global extreme across the dataset (<code>by_feature = FALSE</code>).</p></li>
+<li><p><code><a href="../reference/ddbs_dimension.html">ddbs_dimension()</a></code>: returns the topological dimension of each geometry (0 = point, 1 = line, 2 = polygon, -1 = empty).</p></li>
+<li><p><code><a href="../reference/ddbs_line_locate_point.html">ddbs_line_locate_point()</a></code>: returns the fractional position (0–1) of the closest point on a linestring to a reference point. The <code>y</code> argument accepts an <code>sf</code> object, a <code>duckspatial_df</code>, or a character DuckDB table name (each must contain exactly 1 point feature).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="enhancements-development-version">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/ddbs_union_funs.html">ddbs_union_agg()</a></code>: gains a <code>mem</code> argument. Set <code>mem = TRUE</code> to use <code>ST_MemUnion_Agg()</code> instead of <code>ST_Union_Agg()</code> — slower but more memory efficient.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.1" id="duckspatial-111">duckspatial 1.1.1<a class="anchor" aria-label="anchor" href="#duckspatial-111"></a></h2><p class="text-muted">CRAN release: 2026-06-06</p>
 <div class="section level3">

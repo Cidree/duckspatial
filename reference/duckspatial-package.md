@@ -24,6 +24,9 @@ Useful links:
 
 Authors:
 
+- Adrián Cidre González <adrian.cidre@gmail.com>
+  ([ORCID](https://orcid.org/0000-0002-3310-3052))
+
 - Egor Kotov <kotov.egor@gmail.com>
   ([ORCID](https://orcid.org/0000-0001-6690-5345))
 

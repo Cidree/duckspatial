@@ -66,6 +66,7 @@ Combine or subset geometries based on spatial relationships
   [`ddbs_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
   [`ddbs_sym_difference()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
   [`ddbs_crop()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
+  [`ddbs_shortest_line()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
   : Geometry binary operations
 - [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md)
   : Perform a spatial filter
@@ -80,6 +81,8 @@ Create new geometries from scratch or from existing data
 
 - [`ddbs_as_points()`](https://cidree.github.io/duckspatial/reference/ddbs_as_points.md)
   : Generate point geometries from coordinates
+- [`ddbs_point()`](https://cidree.github.io/duckspatial/reference/ddbs_point.md)
+  : Create point geometries from coordinate vectors
 - [`ddbs_generate_points()`](https://cidree.github.io/duckspatial/reference/ddbs_generate_points.md)
   : Generate random points within bounding boxes of geometries
 - [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md)
@@ -103,6 +106,8 @@ Modify, simplify, and transform individual geometries
   : Computes the maximum inscribed circle of a geometry
 - [`ddbs_make_line()`](https://cidree.github.io/duckspatial/reference/ddbs_make_line.md)
   : Create lines from point geometries
+- [`ddbs_vertices()`](https://cidree.github.io/duckspatial/reference/ddbs_vertices.md)
+  : Collect all vertices of a geometry into a MULTIPOINT
 - [`ddbs_voronoi()`](https://cidree.github.io/duckspatial/reference/ddbs_voronoi.md)
   : Computes a Voronoi diagram from point geometries
 
@@ -115,6 +120,8 @@ Specialized functions for working with linestring geometries
   : Extract the start or end point of a linestring geometry
 - [`ddbs_line_interpolate()`](https://cidree.github.io/duckspatial/reference/ddbs_line_interpolate.md)
   : Interpolates a point or points along a line geometry
+- [`ddbs_line_locate_point()`](https://cidree.github.io/duckspatial/reference/ddbs_line_locate_point.md)
+  : Locate a point along a linestring
 - [`ddbs_line_merge()`](https://cidree.github.io/duckspatial/reference/ddbs_line_merge.md)
   : Merge line geometries into a single line
 - [`ddbs_line_substring()`](https://cidree.github.io/duckspatial/reference/ddbs_line_substring.md)
@@ -154,6 +161,15 @@ Transform and manipulate coordinate systems
   [`ddbs_m()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
   [`ddbs_z()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
   : Extract coordinates from geometries
+- [`ddbs_xmax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  [`ddbs_xmin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  [`ddbs_ymax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  [`ddbs_ymin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  [`ddbs_zmax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  [`ddbs_zmin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  [`ddbs_mmax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  [`ddbs_mmin()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md)
+  : Coordinate bounds of geometries
 - [`ddbs_force_2d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
   [`ddbs_force_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
   [`ddbs_force_4d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
@@ -240,15 +256,18 @@ Query structural properties of geometries without modifying them
 - [`ddbs_get_npoints()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md)
   [`ddbs_get_ngeometries()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md)
   : Count geometry components
+- [`ddbs_dimension()`](https://cidree.github.io/duckspatial/reference/ddbs_dimension.md)
+  : Get the topological dimension of a geometry
 
 ## Measurements
 
-Calculate areas, distances, lengths, and perimeters
+Calculate areas, distances, lengths, perimeters, and bearings
 
 - [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  [`ddbs_azimuth()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
   : Calculate geometric measurements
 
 ## Database Utilities

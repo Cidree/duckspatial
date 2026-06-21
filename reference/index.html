@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -291,7 +291,7 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_binary_funs.html">ddbs_intersection()</a></code> <code><a href="ddbs_binary_funs.html">ddbs_difference()</a></code> <code><a href="ddbs_binary_funs.html">ddbs_sym_difference()</a></code> <code><a href="ddbs_binary_funs.html">ddbs_crop()</a></code>
+          <code><a href="ddbs_binary_funs.html">ddbs_intersection()</a></code> <code><a href="ddbs_binary_funs.html">ddbs_difference()</a></code> <code><a href="ddbs_binary_funs.html">ddbs_sym_difference()</a></code> <code><a href="ddbs_binary_funs.html">ddbs_crop()</a></code> <code><a href="ddbs_binary_funs.html">ddbs_shortest_line()</a></code>
 
         </dt>
         <dd>Geometry binary operations</dd>
@@ -332,6 +332,13 @@
 
         </dt>
         <dd>Generate point geometries from coordinates</dd>
+
+        <dt>
+
+          <code><a href="ddbs_point.html">ddbs_point()</a></code>
+
+        </dt>
+        <dd>Create point geometries from coordinate vectors</dd>
 
         <dt>
 
@@ -407,6 +414,13 @@
 
         <dt>
 
+          <code><a href="ddbs_vertices.html">ddbs_vertices()</a></code>
+
+        </dt>
+        <dd>Collect all vertices of a geometry into a MULTIPOINT</dd>
+
+        <dt>
+
           <code><a href="ddbs_voronoi.html">ddbs_voronoi()</a></code>
 
         </dt>
@@ -434,6 +448,13 @@
 
         </dt>
         <dd>Interpolates a point or points along a line geometry</dd>
+
+        <dt>
+
+          <code><a href="ddbs_line_locate_point.html">ddbs_line_locate_point()</a></code>
+
+        </dt>
+        <dd>Locate a point along a linestring</dd>
 
         <dt>
 
@@ -536,6 +557,13 @@
 
         </dt>
         <dd>Extract coordinates from geometries</dd>
+
+        <dt>
+
+          <code><a href="ddbs_coord_bounds.html">ddbs_xmax()</a></code> <code><a href="ddbs_coord_bounds.html">ddbs_xmin()</a></code> <code><a href="ddbs_coord_bounds.html">ddbs_ymax()</a></code> <code><a href="ddbs_coord_bounds.html">ddbs_ymin()</a></code> <code><a href="ddbs_coord_bounds.html">ddbs_zmax()</a></code> <code><a href="ddbs_coord_bounds.html">ddbs_zmin()</a></code> <code><a href="ddbs_coord_bounds.html">ddbs_mmax()</a></code> <code><a href="ddbs_coord_bounds.html">ddbs_mmin()</a></code>
+
+        </dt>
+        <dd>Coordinate bounds of geometries</dd>
 
         <dt>
 
@@ -744,10 +772,17 @@
 
         </dt>
         <dd>Count geometry components</dd>
+
+        <dt>
+
+          <code><a href="ddbs_dimension.html">ddbs_dimension()</a></code>
+
+        </dt>
+        <dd>Get the topological dimension of a geometry</dd>
       </dl></div><div class="section level2">
       <h2 id="measurements">Measurements<a class="anchor" aria-label="anchor" href="#measurements"></a></h2>
 
-      <div class="section-desc"><p>Calculate areas, distances, lengths, and perimeters</p></div>
+      <div class="section-desc"><p>Calculate areas, distances, lengths, perimeters, and bearings</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -756,7 +791,7 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_measure_funs.html">ddbs_area()</a></code> <code><a href="ddbs_measure_funs.html">ddbs_length()</a></code> <code><a href="ddbs_measure_funs.html">ddbs_perimeter()</a></code> <code><a href="ddbs_measure_funs.html">ddbs_distance()</a></code>
+          <code><a href="ddbs_measure_funs.html">ddbs_area()</a></code> <code><a href="ddbs_measure_funs.html">ddbs_length()</a></code> <code><a href="ddbs_measure_funs.html">ddbs_perimeter()</a></code> <code><a href="ddbs_measure_funs.html">ddbs_distance()</a></code> <code><a href="ddbs_measure_funs.html">ddbs_azimuth()</a></code>
 
         </dt>
         <dd>Calculate geometric measurements</dd>

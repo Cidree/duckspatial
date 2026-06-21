@@ -52,6 +52,18 @@ ddbs_crop(
   overwrite = FALSE,
   quiet = FALSE
 )
+
+ddbs_shortest_line(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
 ```
 
 ## Arguments
@@ -166,6 +178,14 @@ These functions perform different geometric set operations:
   Returns the portions of both geometries that do not overlap with each
   other. Equivalent to `(A - B) UNION (B - A)`.
 
+- `ddbs_shortest_line`:
+
+  Returns a LINESTRING connecting the closest points between each pair
+  of geometries from `x` and `y`. Performs a cross join (all
+  combinations), so the output contains columns from both `x` and `y`
+  (excluding `y`'s geometry column). For each pair the line has the same
+  length as `ST_Distance`.
+
 ## Examples
 
 ``` r
@@ -225,5 +245,27 @@ ddbs_sym_difference("poly_x", "poly_y", conn)
 
 # Save results to database table
 ddbs_difference("poly_x", "poly_y", conn, name = "diff_result")
+} # }
+
+if (FALSE) { # \dontrun{
+library(duckspatial)
+library(sf)
+
+# Two separate point clouds in a projected CRS
+origins <- st_as_sf(
+  data.frame(id = 1:3, x = c(0, 5, 10), y = c(0, 0, 0)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+targets <- st_as_sf(
+  data.frame(id = 1:3, x = c(0, 5, 10), y = c(3, 4, 5)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+
+# Returns LINESTRING geometries connecting the closest points
+ddbs_shortest_line(origins, targets)
+ddbs_shortest_line(origins, targets, mode = "sf")
+
+# Works with any geometry type
+ddbs_shortest_line(origins, argentina_ddbs)
 } # }
 ```

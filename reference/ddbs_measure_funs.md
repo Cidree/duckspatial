@@ -51,6 +51,21 @@ ddbs_distance(
   overwrite = FALSE,
   quiet = FALSE
 )
+
+ddbs_azimuth(
+  x,
+  y,
+  unit = "radians",
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  id_x = NULL,
+  id_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
 ```
 
 ## Arguments
@@ -102,8 +117,8 @@ ddbs_distance(
 
 - y:
 
-  Second input geometry for distance calculations (sf object,
-  duckspatial_df, or table name)
+  Second input geometry for distance and azimuth calculations (sf
+  object, duckspatial_df, or table name)
 
 - dist_type:
 
@@ -131,6 +146,10 @@ ddbs_distance(
   Character; optional name of the column in `y` whose values will
   replace the integer indices returned in each element of the list.
 
+- unit:
+
+  Character. Output unit: `"radians"` (default) or `"degrees"`.
+
 ## Value
 
 For `ddbs_area`, `ddbs_length`, and `ddbs_perimeter`:
@@ -145,6 +164,11 @@ For `ddbs_area`, `ddbs_length`, and `ddbs_perimeter`:
 
 For `ddbs_distance`: A `units` matrix in meters with dimensions nrow(x),
 nrow(y).
+
+For `ddbs_azimuth`: A numeric matrix of azimuth values (in the specified
+`unit`) with dimensions nrow(x) by nrow(y) when `mode = "sf"`, or a lazy
+`tbl_duckdb_connection` with columns `id_x`, `id_y`, and `azimuth`
+otherwise. Both inputs must contain only POINT geometries.
 
 ## Details
 
@@ -324,5 +348,27 @@ head(dist_matrix_sph)
 
 # Close connection
 ddbs_stop_conn(conn)
+} # }
+if (FALSE) { # \dontrun{
+library(duckspatial)
+
+# Create two sets of points in a projected CRS
+origins <- sf::st_as_sf(
+  data.frame(id = 1:2, x = c(0, 0), y = c(0, 0)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+destinations <- sf::st_as_sf(
+  data.frame(id = 1:2, x = c(0, 1), y = c(1, 0)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+
+# Returns a numeric matrix (nrow(origins) x nrow(destinations))
+ddbs_azimuth(origins, destinations, mode = "sf")
+
+# In degrees
+ddbs_azimuth(origins, destinations, unit = "degrees", mode = "sf")
+
+# Lazy tbl with all pairs (default mode)
+ddbs_azimuth(origins, destinations)
 } # }
 ```

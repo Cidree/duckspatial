@@ -275,8 +275,8 @@ as_duckspatial_df("nc_grid_births", conn)
 #> # Data backed by DuckDB (dbplyr lazy evaluation)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
-#> # Source:   table<nc_grid_births> [?? x 3]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0/:memory:]
+#> # A query:  ?? x 3
+#> # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1018-azure:R 4.6.0/:memory:]
 #>    target_id x                                                             BIR74
 #>        <int> <wk_wkb>                                                      <dbl>
 #>  1         1 <POLYGON ((1054293 1348021, 1132214 1348021, 1132214 141626…  1168.
