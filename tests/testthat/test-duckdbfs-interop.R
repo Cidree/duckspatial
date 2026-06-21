@@ -6,6 +6,15 @@
 # =============================================================================
 testthat::skip_on_cran()
 
+## Create connection
+conn <- ddbs_default_conn()
+
+## Try to install h3 before duckdbfs
+h3_ext <- tryCatch(ddbs_install(conn, extension = "h3"), error = function(e) NULL)
+
+## Skip tests if h3 installation failed
+if (is.null(h3_ext)) testthat::skip()
+
 test_that("normalize_spatial_input works for duckdbfs::open_dataset inputs", {
   skip_if_not_installed("duckdbfs")
 

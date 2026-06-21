@@ -1485,5 +1485,87 @@ describe("ddbs_remove_repeated_points()", {
 })
 
 
+
+
+# N. ddbs_vertices() -------------------------------------------------------
+
+describe("ddbs_vertices()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_vertices(argentina_ddbs)
+      output_sf   <- ddbs_vertices(argentina_sf)
+      output_conn <- ddbs_vertices("argentina", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns MULTIPOINT geometries", {
+      output <- ddbs_vertices(argentina_ddbs, mode = "sf")
+      expect_true(all(sf::st_geometry_type(output) == "MULTIPOINT"))
+    })
+
+    it("returns different output formats (duckspatial_df, sf)", {
+      output_sf_fmt <- ddbs_vertices(argentina_ddbs, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_vertices(argentina_ddbs))
+      expect_message(ddbs_vertices("argentina", conn = conn_test, name = "vertices"))
+      expect_message(ddbs_vertices("argentina", conn = conn_test, name = "vertices", overwrite = TRUE))
+      expect_true(ddbs_vertices("argentina", conn = conn_test, name = "vertices2"))
+
+      expect_no_message(ddbs_vertices(argentina_ddbs, quiet = TRUE))
+      expect_no_message(ddbs_vertices("argentina", conn = conn_test, name = "vertices", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables to the database", {
+      output_ddbs <- ddbs_vertices(argentina_ddbs)
+      output_tbl  <- ddbs_read_table(conn_test, "vertices")
+
+      expect_equal(
+        ddbs_collect(output_ddbs)$geometry,
+        output_tbl$geometry
+      )
+    })
+  })
+
+  describe("errors", {
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_vertices("argentina", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_vertices(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_vertices(argentina_ddbs, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_vertices(argentina_ddbs, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_vertices(argentina_ddbs, quiet = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_vertices(x = "999", conn = conn_test))
+    })
+
+    it("requires name to be single character string", {
+      expect_error(ddbs_vertices(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
+    })
+  })
+})
+
+
 ## stop connection
 ddbs_stop_conn(conn_test)

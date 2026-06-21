@@ -62,8 +62,8 @@ the resulting polygons.
 \seealso{
 \code{\link[=ddbs_make_polygon]{ddbs_make_polygon()}}, \code{\link[=ddbs_build_area]{ddbs_build_area()}}
 
-Other polygon construction: 
-\code{\link{ddbs_build_area}()},
-\code{\link{ddbs_make_polygon}()}
+Other polygon construction:
+\code{\link[=ddbs_build_area]{ddbs_build_area()}},
+\code{\link[=ddbs_make_polygon]{ddbs_make_polygon()}}
 }
 \concept{polygon construction}

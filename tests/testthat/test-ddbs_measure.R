@@ -1055,5 +1055,168 @@ describe("ddbs_perimeter()", {
 
 
 
+# 5. ddbs_azimuth --------------------------------------------------------
+
+## Create synthetic POINT data in a projected CRS for known-value tests.
+## In EPSG:3857 (Web Mercator), axis order is (easting, northing).
+## From origin (0,0):
+##   due north → (0, 1):  azimuth = 0 rad
+##   due east  → (1, 0):  azimuth = pi/2 rad
+##   due south → (0,-1):  azimuth = pi rad
+##   due west  → (-1,0):  azimuth = 3*pi/2 rad
+origin_sf <- sf::st_as_sf(
+  data.frame(id = 1L, x = 0, y = 0),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+dirs_sf <- sf::st_as_sf(
+  data.frame(
+    id = 1:4,
+    x = c(0,  1, 0, -1),
+    y = c(1,  0, -1,  0)
+  ),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+origin_ddbs <- as_duckspatial_df(origin_sf)
+dirs_ddbs   <- as_duckspatial_df(dirs_sf)
+
+duckspatial::ddbs_write_table(conn_test, origin_sf, "azimuth_origin")
+duckspatial::ddbs_write_table(conn_test, dirs_sf,   "azimuth_dirs")
+
+describe("ddbs_azimuth()", {
+
+  ### EXPECTED BEHAVIOUR - SF INPUT
+
+  describe("expected behavior on sf input", {
+
+    it("returns a tbl by default", {
+      output <- ddbs_azimuth(origin_sf, dirs_sf)
+      expect_s3_class(output, "tbl_duckdb_connection")
+    })
+
+    it("returns a numeric matrix with mode sf", {
+      output <- ddbs_azimuth(origin_sf, dirs_sf, mode = "sf")
+      expect_true(is.matrix(output))
+      expect_true(is.numeric(output))
+    })
+
+    it("returns a matrix with correct dimensions", {
+      output <- ddbs_azimuth(origin_sf, dirs_sf, mode = "sf")
+      expect_equal(dim(output), c(nrow(origin_sf), nrow(dirs_sf)))
+    })
+
+    it("calculates azimuth correctly in radians", {
+      output <- ddbs_azimuth(origin_sf, dirs_sf, mode = "sf")
+      expect_equal(output[1, 1], 0,         tolerance = 1e-6)  # due north
+      expect_equal(output[1, 2], pi / 2,    tolerance = 1e-6)  # due east
+      expect_equal(output[1, 3], pi,        tolerance = 1e-6)  # due south
+      expect_equal(output[1, 4], 3 * pi / 2, tolerance = 1e-6) # due west
+    })
+
+    it("calculates azimuth correctly in degrees", {
+      output <- ddbs_azimuth(origin_sf, dirs_sf, unit = "degrees", mode = "sf")
+      expect_equal(output[1, 1],   0, tolerance = 1e-6)
+      expect_equal(output[1, 2],  90, tolerance = 1e-6)
+      expect_equal(output[1, 3], 180, tolerance = 1e-6)
+      expect_equal(output[1, 4], 270, tolerance = 1e-6)
+    })
+
+    it("degrees output equals radians output * 180/pi", {
+      rad <- ddbs_azimuth(origin_sf, dirs_sf, mode = "sf")
+      deg <- ddbs_azimuth(origin_sf, dirs_sf, unit = "degrees", mode = "sf")
+      expect_equal(rad * 180 / pi, deg, tolerance = 1e-10)
+    })
+  })
+
+  ### EXPECTED BEHAVIOUR - DUCKSPATIAL_DF INPUT
+
+  describe("expected behavior on duckspatial_df input", {
+
+    it("returns a tbl by default", {
+      output <- ddbs_azimuth(origin_ddbs, dirs_ddbs)
+      expect_s3_class(output, "tbl_duckdb_connection")
+    })
+
+    it("returns a numeric matrix with mode sf", {
+      output <- ddbs_azimuth(origin_ddbs, dirs_ddbs, mode = "sf")
+      expect_true(is.matrix(output))
+      expect_true(is.numeric(output))
+    })
+
+    it("warns when creating table from different connections", {
+      expect_warning(ddbs_azimuth(origin_ddbs, dirs_sf, conn = conn_test))
+    })
+
+    it("produces identical results as sf input", {
+      output_sf   <- ddbs_azimuth(origin_sf, dirs_sf, mode = "sf")
+      output_ddbs <- ddbs_azimuth(origin_ddbs, dirs_ddbs, mode = "sf")
+      expect_equal(output_sf, output_ddbs)
+    })
+  })
+
+  ### EXPECTED BEHAVIOUR - DUCKDB TABLE INPUT
+
+  describe("expected behavior on DuckDB table input", {
+
+    it("returns a tbl by default", {
+      output <- ddbs_azimuth("azimuth_origin", "azimuth_dirs", conn = conn_test)
+      expect_s3_class(output, "tbl_duckdb_connection")
+    })
+
+    it("returns a numeric matrix with mode sf", {
+      output <- ddbs_azimuth("azimuth_origin", "azimuth_dirs", conn = conn_test, mode = "sf")
+      expect_true(is.matrix(output))
+      expect_true(is.numeric(output))
+    })
+
+    it("produces identical results as sf input", {
+      output_sf   <- ddbs_azimuth(origin_sf, dirs_sf, mode = "sf")
+      output_conn <- ddbs_azimuth("azimuth_origin", "azimuth_dirs", conn = conn_test, mode = "sf")
+      expect_equal(output_sf, output_conn)
+    })
+  })
+
+  ### EXPECTED ERRORS
+
+  describe("errors", {
+
+    it("rejects non-POINT geometries for x", {
+      expect_error(ddbs_azimuth(countries_sf, origin_sf))
+    })
+
+    it("rejects non-POINT geometries for y", {
+      expect_error(ddbs_azimuth(origin_sf, countries_sf))
+    })
+
+    it("rejects mismatched CRS", {
+      origin_4326_sf <- sf::st_transform(origin_sf, "EPSG:4326")
+      expect_error(ddbs_azimuth(origin_sf, origin_4326_sf))
+    })
+
+    it("rejects invalid unit", {
+      expect_error(ddbs_azimuth(origin_sf, dirs_sf, unit = "gradians"))
+      expect_error(ddbs_azimuth(origin_sf, dirs_sf, unit = 42))
+    })
+
+    it("requires both x and y", {
+      expect_error(ddbs_azimuth(x = origin_sf))
+      expect_error(ddbs_azimuth(y = dirs_sf))
+    })
+
+    it("requires a connection for character table names", {
+      expect_error(ddbs_azimuth("azimuth_origin", "azimuth_dirs", conn = NULL))
+    })
+
+    it("validates x and y argument types", {
+      expect_error(ddbs_azimuth(x = 999, y = origin_sf))
+      expect_error(ddbs_azimuth(x = "nonexistent_tbl", y = dirs_sf, conn = conn_test))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_azimuth(origin_sf, dirs_sf, quiet = 999))
+    })
+  })
+})
+
+
 ## stop connection
 ddbs_stop_conn(conn_test)

@@ -5,15 +5,20 @@
 #' @details
 #' These functions perform different geometric set operations:
 #' \describe{
-#'   \item{`ddbs_intersection`}{Returns the geometric intersection of two sets 
+#'   \item{`ddbs_intersection`}{Returns the geometric intersection of two sets
 #'   of geometries, producing the area, line, or point shared by both.}
 #'   \item{`ddbs_crop`}{Returns the geometric intersection of two sets of
 #'   geometries, using the bounding box of `y`, rather than its original geometry}
-#'   \item{`ddbs_difference`}{Returns the portion of the first geometry that 
+#'   \item{`ddbs_difference`}{Returns the portion of the first geometry that
 #'   does not overlap with the second geometry.}
-#'   \item{`ddbs_sym_difference`}{Returns the portions of both geometries 
-#'   that do not overlap with each other. Equivalent to 
+#'   \item{`ddbs_sym_difference`}{Returns the portions of both geometries
+#'   that do not overlap with each other. Equivalent to
 #'   `(A - B) UNION (B - A)`.}
+#'   \item{`ddbs_shortest_line`}{Returns a LINESTRING connecting the closest
+#'   points between each pair of geometries from \code{x} and \code{y}. Performs
+#'   a cross join (all combinations), so the output contains columns from both
+#'   \code{x} and \code{y} (excluding \code{y}'s geometry column). For each pair
+#'   the line has the same length as \code{ST_Distance}.}
 #' }
 #'
 #' @template x
@@ -88,6 +93,7 @@
 #'
 #' @name ddbs_binary_funs
 #' @rdname ddbs_binary_funs
+#' @aliases ddbs_intersection ddbs_difference ddbs_sym_difference ddbs_crop ddbs_shortest_line
 NULL
 
 
@@ -500,7 +506,7 @@ ddbs_crop <- function(
     mode = NULL,
     overwrite = FALSE,
     quiet = FALSE) {
-  
+
     ## When we crop we use the intersection of the envelope of y
     y <- ddbs_envelope(y)
 
@@ -516,5 +522,138 @@ ddbs_crop <- function(
         overwrite = overwrite,
         quiet = quiet
     )
-  
+
+}
+
+
+
+
+#' @rdname ddbs_binary_funs
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(duckspatial)
+#' library(sf)
+#'
+#' # Two separate point clouds in a projected CRS
+#' origins <- st_as_sf(
+#'   data.frame(id = 1:3, x = c(0, 5, 10), y = c(0, 0, 0)),
+#'   coords = c("x", "y"), crs = "EPSG:3857"
+#' )
+#' targets <- st_as_sf(
+#'   data.frame(id = 1:3, x = c(0, 5, 10), y = c(3, 4, 5)),
+#'   coords = c("x", "y"), crs = "EPSG:3857"
+#' )
+#'
+#' # Returns LINESTRING geometries connecting the closest points
+#' ddbs_shortest_line(origins, targets)
+#' ddbs_shortest_line(origins, targets, mode = "sf")
+#'
+#' # Works with any geometry type
+#' ddbs_shortest_line(origins, argentina_ddbs)
+#' }
+ddbs_shortest_line <- function(
+    x,
+    y,
+    conn = NULL,
+    conn_x = NULL,
+    conn_y = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+
+    # 0. Validate inputs
+    assert_xy(x, "x")
+    assert_xy(y, "y")
+    assert_name(name)
+    assert_name(mode, "mode")
+    assert_logic(overwrite, "overwrite")
+    assert_logic(quiet, "quiet")
+
+
+    # 1. Prepare inputs
+
+    ## 1.1. Resolve conn_x/conn_y defaults from 'conn' for character inputs
+    if (is.null(conn_x) && !is.null(conn) && is.character(x)) conn_x <- conn
+    if (is.null(conn_y) && !is.null(conn) && is.character(y)) conn_y <- conn
+
+    ## 1.2. Normalize inputs
+    x <- normalize_spatial_input(x, conn_x)
+    y <- normalize_spatial_input(y, conn_y)
+
+    ## 1.3. Pre-extract attributes
+    crs_x    <- ddbs_crs(x, conn_x)
+    crs_y    <- ddbs_crs(y, conn_y)
+    sf_col_x <- attr(x, "sf_column")
+    sf_col_y <- attr(y, "sf_column")
+    mode     <- get_mode(mode, name)
+
+    ## 1.4. Resolve spatial connections and handle imports
+    resolve_res <- resolve_spatial_connections(x, y, conn, conn_x, conn_y, quiet = quiet)
+    target_conn <- resolve_res$conn
+    x           <- resolve_res$x
+    y           <- resolve_res$y
+
+    if (any(is.null(conn_x), is.null(conn_y))) {
+        on.exit(resolve_res$cleanup(), add = TRUE)
+    }
+
+    ## 1.5. Get query lists
+    x_list <- get_query_list(x, target_conn)
+    on.exit(x_list$cleanup(), add = TRUE)
+    y_list <- get_query_list(y, target_conn)
+    on.exit(y_list$cleanup(), add = TRUE)
+
+    ## 1.6. Validate CRS
+    validate_xy_crs(
+        crs_x  = crs_x,
+        crs_y  = crs_y,
+        conn   = target_conn,
+        x_list = x_list,
+        y_list = y_list
+    )
+
+
+    # 2. Prepare the query
+
+    ## 2.1. Get geometry column names
+    x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+    y_geom <- sf_col_y %||% get_geom_name(target_conn, y_list$query_name)
+    assert_geometry_column(x_geom, x_list)
+    assert_geometry_column(y_geom, y_list)
+
+    ## 2.2. Build the base query (cross join, no filter)
+    ## y's non-geometry columns are included so the user knows which y each row was paired with.
+    st_function <- glue::glue("ST_ShortestLine(v1.{x_geom}, v2.{y_geom})")
+    base.query <- glue::glue("
+        SELECT
+            v1.* REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}),
+            v2.* EXCLUDE ({y_geom})
+        FROM
+            {x_list$query_name} v1,
+            {y_list$query_name} v2
+    ")
+
+
+    # 3. Return result
+    if (!is.null(name)) {
+        create_duckdb_table(
+            conn      = target_conn,
+            name      = name,
+            query     = base.query,
+            overwrite = overwrite,
+            quiet     = quiet
+        )
+    } else {
+        ddbs_handle_query(
+            query  = base.query,
+            conn   = target_conn,
+            mode   = mode,
+            crs    = crs_x,
+            x_geom = x_geom
+        )
+    }
 }

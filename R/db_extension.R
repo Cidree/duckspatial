@@ -21,12 +21,16 @@
 #'
 #' # install the spatial extension
 #' ddbs_install(conn)
-#' 
-#' # install the h3 community extension
-#' ddbs_install(conn, extension = "h3")
 #'
 #' # disconnect from db
 #' duckdb::dbDisconnect(conn)
+#'
+#' \dontrun{
+#' # install the h3 community extension (requires network access)
+#' conn <- duckdb::dbConnect(duckdb::duckdb())
+#' ddbs_install(conn, extension = "h3")
+#' duckdb::dbDisconnect(conn)
+#' }
 ddbs_install <- function(
     conn, 
     upgrade = FALSE, 
@@ -97,6 +101,7 @@ ddbs_install <- function(
         cli::cli_abort(c(
             "Failed to {if (upgrade) 'upgrade' else 'install'} the {extension} extension.",
             "i" = "It could not be found in the core or community repositories.",
+            "i" = "It might not be available for this version of DuckDB",
             "i" = "Check that the extension name is correct: {.url https://duckdb.org/docs/extensions/overview}"
         ))
     }

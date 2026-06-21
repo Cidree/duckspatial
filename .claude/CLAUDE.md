@@ -6,8 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **duckspatial** is an R package that bridges DuckDB's spatial extension with R's spatial ecosystem (primarily `sf`). It exposes 100+ functions under the `ddbs_*` naming convention and introduces a `duckspatial_df` class — a lazy spatial data frame backed by temporary DuckDB tables/views with `dbplyr`.
 
-Functions of the DuckDB's spatial extension can be consulted [here](https://duckdb.org/docs/current/core_extensions/spatial/functions).
-
 Key design principle: operations stay in DuckDB until the user explicitly collects results, enabling out-of-memory spatial workflows.
 
 ## Common Commands
@@ -97,6 +95,8 @@ When implementing a new exported function, complete **all four steps** before co
 
 ### 1. Implementation and documentation
 
+Find the official function's documentation [here](https://duckdb.org/docs/current/core_extensions/spatial/functions).
+
 Write the function in the R file that best matches its category (see Key File Map above). Add full `roxygen2` documentation using the template tags already present in the file (`@template x`, `@template conn_null`, etc.) — reuse them rather than duplicating the parameter prose. Run `devtools::document()` afterwards.
 
 ### 2. Unit tests
@@ -120,3 +120,19 @@ Add one bullet under `## NEW FEATURES` of the **topmost** (development) version 
 ### 4. _pkgdown.yml
 
 Read `_pkgdown.yml` to find the most appropriate `reference:` section and add the function name to its `contents:` list. If no existing section fits, create a new one following the same `title` / `desc` / `contents` structure.
+
+### 5. Git commit
+
+Use a conventional commit with this exact format:
+
+```
+feat: New function: ddbs_fun (#issue_number).
+```
+
+For a group of related functions introduced together, use the group name instead of individual names:
+
+```
+feat: New functions: ddbs_group_name (#issue_number).
+```
+
+(e.g. `ddbs_coord_bounds` for `ddbs_xmin`, `ddbs_xmax`, etc.)

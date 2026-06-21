@@ -23,6 +23,9 @@
 #' @param by Character vector specifying one or more column names to
 #' group by when computing unions. Geometries will be unioned within each group.
 #' Default is \code{NULL}
+#' @param mem Logical. If \code{TRUE}, uses \code{ST_MemUnion_Agg()} instead of
+#' \code{ST_Union_Agg()} — slower but more memory efficient. Default is
+#' \code{FALSE}. Only applies to \code{ddbs_union_agg()}.
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
@@ -40,6 +43,7 @@
 #' ## ddbs_union_agg(x, by)
 #' Groups geometries by one or more columns, then unions geometries within each group.
 #' Useful for dissolving boundaries between features that share common attributes.
+#' Set \code{mem = TRUE} to use \code{ST_MemUnion_Agg()} when memory is a constraint.
 #'
 #' ## ddbs_combine(x)
 #' Combines all geometries into a single MULTI-geometry (e.g., MULTIPOLYGON, MULTILINESTRING)
@@ -381,12 +385,13 @@ ddbs_combine <- function(
 ddbs_union_agg <- function(
   x,
   by,
+  mem = FALSE,
   conn = NULL,
   name = NULL,
   mode = NULL,
   overwrite = FALSE,
   quiet = FALSE) {
-  
+
 
   # 0. Validate inputs
   assert_xy(x, "x")
@@ -394,6 +399,7 @@ ddbs_union_agg <- function(
   assert_conn_character(conn, x)
   assert_name(name)
   assert_name(mode, "mode")
+  assert_logic(mem, "mem")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
 
@@ -432,7 +438,8 @@ ddbs_union_agg <- function(
   by_cols <- paste0(by, collapse = ", ")
 
   ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
-  st_function <- glue::glue("ST_Union_Agg({x_geom})")
+  agg_fn      <- if (isTRUE(mem)) "ST_MemUnion_Agg" else "ST_Union_Agg"
+  st_function <- glue::glue("{agg_fn}({x_geom})")
   base.query <- glue::glue("
     SELECT 
       {by_cols},

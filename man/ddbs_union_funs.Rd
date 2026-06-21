@@ -32,6 +32,7 @@ ddbs_combine(
 ddbs_union_agg(
   x,
   by,
+  mem = FALSE,
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -95,6 +96,10 @@ Defaults to \code{FALSE}.}
 \item{by}{Character vector specifying one or more column names to
 group by when computing unions. Geometries will be unioned within each group.
 Default is \code{NULL}}
+
+\item{mem}{Logical. If \code{TRUE}, uses \code{ST_MemUnion_Agg()} instead of
+\code{ST_Union_Agg()} — slower but more memory efficient. Default is
+\code{FALSE}. Only applies to \code{ddbs_union_agg()}.}
 }
 \value{
 Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):
@@ -128,6 +133,7 @@ Performs geometric union operations that dissolve internal boundaries:
 
 Groups geometries by one or more columns, then unions geometries within each group.
 Useful for dissolving boundaries between features that share common attributes.
+Set \code{mem = TRUE} to use \code{ST_MemUnion_Agg()} when memory is a constraint.
 }
 
 \subsection{ddbs_combine(x)}{

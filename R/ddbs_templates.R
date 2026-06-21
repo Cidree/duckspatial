@@ -428,18 +428,39 @@ template_new_column <- function(
   ## 2.2. Compute if by_feature = FALSE (returns always a single value)
   ## - For functions ST_Has*() - if 1 is TRUE, return TRUE
   ## - For functions ST_is_*() - if 1 is FALSE, return FALSE
+  ## - For coordinate bound functions - aggregate in SQL, return global max/min
   if (isFALSE(by_feature)) {
-    ## Create the query
+    fun_lower <- tolower(fun)
+
+    ## For coordinate max functions: return the global maximum across all features
+    if (fun_lower %in% c("st_xmax", "st_ymax", "st_zmax", "st_mmax")) {
+      tmp.query <- glue::glue("
+        SELECT MAX({fun}({x_geom})) as {new_column}
+        FROM {x_list$query_name};
+      ")
+      data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+      return(max(data_tbl[1, ]))
+    }
+
+    ## For coordinate min functions: return the global minimum across all features
+    if (fun_lower %in% c("st_xmin", "st_ymin", "st_zmin", "st_mmin")) {
+      tmp.query <- glue::glue("
+        SELECT MIN({fun}({x_geom})) as {new_column}
+        FROM {x_list$query_name};
+      ")
+      data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+      return(min(data_tbl[1, ]))
+    }
+
+    ## Original behavior for logical functions
     tmp.query <- glue::glue("
       SELECT {fun}({x_geom}) as {new_column}
       FROM {x_list$query_name};
     ")
-
-    ## Retrieve the data
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
 
     ## Return TRUE if any is TRUE
-    if (tolower(fun) %in% c("st_hasz", "st_hasm")) {
+    if (fun_lower %in% c("st_hasz", "st_hasm")) {
       return(any(data_tbl[1, ]))
     } else {
       return(all(data_tbl[1, ]))

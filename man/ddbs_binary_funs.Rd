@@ -6,6 +6,7 @@
 \alias{ddbs_difference}
 \alias{ddbs_sym_difference}
 \alias{ddbs_crop}
+\alias{ddbs_shortest_line}
 \title{Geometry binary operations}
 \usage{
 ddbs_intersection(
@@ -45,6 +46,18 @@ ddbs_sym_difference(
 )
 
 ddbs_crop(
+  x,
+  y,
+  conn = NULL,
+  conn_x = NULL,
+  conn_y = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
+
+ddbs_shortest_line(
   x,
   y,
   conn = NULL,
@@ -126,6 +139,11 @@ does not overlap with the second geometry.}
 \item{\code{ddbs_sym_difference}}{Returns the portions of both geometries
 that do not overlap with each other. Equivalent to
 \verb{(A - B) UNION (B - A)}.}
+\item{\code{ddbs_shortest_line}}{Returns a LINESTRING connecting the closest
+points between each pair of geometries from \code{x} and \code{y}. Performs
+a cross join (all combinations), so the output contains columns from both
+\code{x} and \code{y} (excluding \code{y}'s geometry column). For each pair
+the line has the same length as \code{ST_Distance}.}
 }
 }
 \examples{
@@ -187,4 +205,25 @@ ddbs_sym_difference("poly_x", "poly_y", conn)
 ddbs_difference("poly_x", "poly_y", conn, name = "diff_result")
 }
 
+\dontrun{
+library(duckspatial)
+library(sf)
+
+# Two separate point clouds in a projected CRS
+origins <- st_as_sf(
+  data.frame(id = 1:3, x = c(0, 5, 10), y = c(0, 0, 0)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+targets <- st_as_sf(
+  data.frame(id = 1:3, x = c(0, 5, 10), y = c(3, 4, 5)),
+  coords = c("x", "y"), crs = "EPSG:3857"
+)
+
+# Returns LINESTRING geometries connecting the closest points
+ddbs_shortest_line(origins, targets)
+ddbs_shortest_line(origins, targets, mode = "sf")
+
+# Works with any geometry type
+ddbs_shortest_line(origins, argentina_ddbs)
+}
 }

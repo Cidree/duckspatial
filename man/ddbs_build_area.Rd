@@ -63,8 +63,8 @@ single linestrings, use \code{\link[=ddbs_make_polygon]{ddbs_make_polygon()}}.
 \seealso{
 \code{\link[=ddbs_make_polygon]{ddbs_make_polygon()}}, \code{\link[=ddbs_polygonize]{ddbs_polygonize()}}
 
-Other polygon construction: 
-\code{\link{ddbs_make_polygon}()},
-\code{\link{ddbs_polygonize}()}
+Other polygon construction:
+\code{\link[=ddbs_make_polygon]{ddbs_make_polygon()}},
+\code{\link[=ddbs_polygonize]{ddbs_polygonize()}}
 }
 \concept{polygon construction}

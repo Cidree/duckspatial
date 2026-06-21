@@ -200,6 +200,7 @@ reference:
   desc: Combine or subset geometries based on spatial relationships
   contents:
   - ddbs_binary_funs
+  - ddbs_shortest_line
   - ddbs_filter
   - ddbs_interpolate_aw
   - ddbs_join
@@ -208,6 +209,7 @@ reference:
   desc: Create new geometries from scratch or from existing data
   contents:
   - ddbs_as_points
+  - ddbs_point
   - ddbs_generate_points
   - ddbs_quadkey
 
@@ -221,6 +223,7 @@ reference:
   - ddbs_exterior_ring
   - ddbs_maximum_inscribed_circle
   - ddbs_make_line
+  - ddbs_vertices
   - ddbs_voronoi
 
 - title: Geometry Processing - Linestrings
@@ -228,6 +231,7 @@ reference:
   contents:
   - ddbs_endpoint_startpoint
   - ddbs_line_interpolate
+  - ddbs_line_locate_point
   - ddbs_line_merge
   - ddbs_line_substring
   - ddbs_build_area
@@ -248,6 +252,7 @@ reference:
   - ddbs_set_crs
   - ddbs_flip_coordinates
   - ddbs_xy
+  - ddbs_coord_bounds
   - ddbs_force_dim
 
 - title: Dimension operations
@@ -294,11 +299,13 @@ reference:
   desc: Query structural properties of geometries without modifying them
   contents:
   - ddbs_get_npoints
+  - ddbs_dimension
 
 - title: Measurements
-  desc: Calculate areas, distances, lengths, and perimeters
+  desc: Calculate areas, distances, lengths, perimeters, and bearings
   contents:
   - ddbs_measure_funs
+  - ddbs_azimuth
 
 - title: Database Utilities
   desc: Helper functions for managing DuckDB schemas and metadata
