@@ -2,17 +2,17 @@
 
 ## Test environments
 
-* local Windows 11 Pro 22H2, 64 bit, R 4.6.0
+* Local Ubuntu 26.04 LTS, R 4.6.0
 
 * R Under development (unstable) x86_64-w64-mingw32 R 4.6.0
 
 
 ## R CMD check results
 
-* local Windows 11 Pro 22H2: 
+* Local Ubuntu 26.04 LTS: 
 
 ```
-Duration: 6m 31.1s
+Duration: 5m 16.9s
 
 0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 ```
