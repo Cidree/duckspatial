@@ -1,6 +1,6 @@
 # Changelog
 
-## duckspatial (development version)
+## duckspatial 1.1.2
 
 ### NEW FEATURES
 
