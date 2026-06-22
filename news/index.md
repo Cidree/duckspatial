@@ -2,6 +2,8 @@
 
 ## duckspatial 1.1.2
 
+CRAN release: 2026-06-22
+
 ### NEW FEATURES
 
 - [`ddbs_shortest_line()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md):
