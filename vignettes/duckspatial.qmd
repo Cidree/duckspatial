@@ -19,6 +19,16 @@ knitr:
 
 # Limit threads to avoid a CRAN NOTE
 Sys.setenv(OMP_THREAD_LIMIT = 2)
+
+# Quarto spawns a new R subprocess during R CMD build and may not pick up
+# R_LIBS set by the build process; propagate it manually.
+local({
+  r_libs <- Sys.getenv("R_LIBS")
+  if (nzchar(r_libs)) {
+    paths <- unlist(strsplit(r_libs, .Platform$path.sep))
+    .libPaths(unique(c(paths, .libPaths())))
+  }
+})
 ```
 
 # Getting started
