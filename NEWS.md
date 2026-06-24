@@ -1,3 +1,11 @@
+
+# duckspatial 1.1.3
+
+## BUG FIXES
+
+* `ddbs_install()`: now tries `LOAD` before `INSTALL` for non-upgrade calls. This avoids writing to `~/.duckdb/extensions/` when the extension is already bundled (as `spatial` is in DuckDB >= 1.5), fixing failures in read-only environments such as CRAN's Debian check systems (#issue).
+
+
 # duckspatial 1.1.2
 
 ## NEW FEATURES
@@ -15,10 +23,6 @@
 * `ddbs_dimension()`: returns the topological dimension of each geometry (0 = point, 1 = line, 2 = polygon, -1 = empty).
 
 * `ddbs_line_locate_point()`: returns the fractional position (0–1) of the closest point on a linestring to a reference point. The `y` argument accepts an `sf` object, a `duckspatial_df`, or a character DuckDB table name (each must contain exactly 1 point feature).
-
-## BUG FIXES
-
-* `ddbs_install()`: now tries `LOAD` before `INSTALL` for non-upgrade calls. This avoids writing to `~/.duckdb/extensions/` when the extension is already bundled (as `spatial` is in DuckDB >= 1.5), fixing failures in read-only environments such as CRAN's Debian check systems (#issue).
 
 ## ENHANCEMENTS
 
