@@ -81,7 +81,24 @@ ddbs_install <- function(
         cli::cli_abort("{extension} is already loaded in the connection. Upgrading the version is only allowed in non-loaded connections.")
     }
 
-    # 3. Install/upgrade extension - try core, then community, then error
+    # 3. For non-upgrade installs, try LOAD first — core extensions (like spatial
+    #    in DuckDB >= 1.5) are bundled and loadable without writing to disk.
+    #    This avoids filesystem writes that fail in read-only environments (e.g. CRAN).
+    if (!upgrade) {
+        load_ok <- tryCatch({
+            suppressMessages(DBI::dbExecute(conn, glue::glue("LOAD {extension};")))
+            TRUE
+        }, error = function(e) FALSE)
+
+        if (load_ok) {
+            if (isFALSE(quiet)) {
+                cli::cli_alert_success("{extension} extension installed")
+            }
+            return(invisible(TRUE))
+        }
+    }
+
+    # 4. Install/upgrade extension - try core, then community, then error
     install_sql <- if (upgrade) "FORCE INSTALL {extension};" else "INSTALL {extension};"
     community_sql <- if (upgrade) "FORCE INSTALL {extension} FROM community;" else "INSTALL {extension} FROM community;"
 
@@ -160,9 +177,10 @@ ddbs_load <- function(
     ## 1.2. Check connection
     dbConnCheck(conn)
 
-    ## 1.3. Check if extension is installed
+    ## 1.3. Check if extension is installed or already loaded (bundled extensions
+    ##      may show installed = FALSE but are still loadable/loaded)
     target_ext <- ext[ext$extension_name == extension, ]
-    if (!target_ext$installed)
+    if (!isTRUE(target_ext$installed) && !isTRUE(target_ext$loaded))
         cli::cli_abort("{extension} extension is not installed, please use `ddbs_install(extension = '{extension}')`")
 
     
