@@ -3,6 +3,7 @@
 \name{ddbs_get_npoints}
 \alias{ddbs_get_npoints}
 \alias{ddbs_get_ngeometries}
+\alias{ddbs_get_ninterior_rings}
 \title{Count geometry components}
 \usage{
 ddbs_get_npoints(
@@ -18,6 +19,16 @@ ddbs_get_npoints(
 ddbs_get_ngeometries(
   x,
   new_column = "ngeometries",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
+
+ddbs_get_ninterior_rings(
+  x,
+  new_column = "ninterior_rings",
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -70,7 +81,8 @@ Depends on the \code{mode} argument (or global preference set by \code{\link{ddb
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Functions to count the number of points or sub-geometries in a geometry
+Functions to count the number of points, sub-geometries or interior rings in
+a geometry
 }
 \details{
 These functions query structural properties of geometries:
@@ -81,6 +93,9 @@ includes all vertices of the exterior ring and any interior rings.
 \item \code{ddbs_get_ngeometries()} returns the number of sub-geometries in a
 GEOMETRYCOLLECTION or MULTI* geometry (e.g. MULTIPOLYGON, MULTILINESTRING).
 Returns 1 for simple (non-collection) geometry types.
+\item \code{ddbs_get_ninterior_rings()} returns the number of interior rings (holes)
+in a POLYGON geometry. Returns 0 for polygons without holes and \code{NULL} for
+non-polygon geometry types.
 }
 }
 \examples{
@@ -95,9 +110,10 @@ countries_ddbs <- ddbs_open_dataset(
   package = "duckspatial")
 )
 
-## count points and sub-geometries
+## count points, sub-geometries and interior rings
 ddbs_get_npoints(countries_ddbs)
 ddbs_get_ngeometries(countries_ddbs)
+ddbs_get_ninterior_rings(countries_ddbs)
 }
 
 }
