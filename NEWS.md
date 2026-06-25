@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* `ddbs_geom_from_text()`, `ddbs_geom_from_wkb()`, `ddbs_geom_from_hexwkb()`, `ddbs_geom_from_hexewkb()`, `ddbs_geom_from_geojson()`: parse serialized geometries (WKT, WKB, HEXWKB, HEXEWKB, GeoJSON) into a spatial object. These are the inverses of the `ddbs_as_*()` serializers.
+
 * `ddbs_get_ninterior_rings()`: returns the number of interior rings (holes) in a POLYGON geometry.
 
 * `ddbs_shortest_line()`: returns the LINESTRING connecting the closest points between each pair of geometries from `x` and `y`.

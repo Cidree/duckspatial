@@ -274,6 +274,7 @@ reference:
   desc: Convert geometries to and from standard spatial formats
   contents:
   - ddbs_as_format
+  - ddbs_geom_from
 
 - title: Spatial Extent and Boundaries
   desc: Extract bounding boxes and envelopes

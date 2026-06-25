@@ -159,5 +159,147 @@ describe("ddbs_as_hexwkb()", {
 
 
 
+# 5. ddbs_geom_from_*() --------------------------------------------------
+
+## Build serialized representations of two known points to round-trip back
+## - CHECK 1.x: each parser returns the expected output class/format
+## - CHECK 2.x: CRS is assigned, extra columns kept, named tables written
+## - CHECK 3.x: round-trips reproduce the original coordinates
+## - CHECK 4.x: errors on invalid inputs
+geom_from_ser <- DBI::dbGetQuery(conn_test, "
+  SELECT ST_AsText(geom)    AS wkt,
+         ST_AsHEXWKB(geom)  AS hex,
+         ST_AsGeoJSON(geom) AS gj,
+         ST_AsWKB(geom)     AS wkb
+  FROM (VALUES
+    (ST_Point(10, 20)::GEOMETRY),
+    (ST_Point(-58.38, -34.60)::GEOMETRY)
+  ) t(geom);
+")
+
+describe("ddbs_geom_from_text()", {
+
+  describe("expected behavior", {
+
+    it("returns a duckspatial_df by default", {
+      output <- ddbs_geom_from_text(geom_from_ser$wkt, crs = 4326)
+      expect_s3_class(output, "duckspatial_df")
+    })
+
+    it("returns an sf object with mode = 'sf'", {
+      output <- ddbs_geom_from_text(geom_from_ser$wkt, crs = 4326, mode = "sf")
+      expect_s3_class(output, "sf")
+      expect_equal(nrow(output), 2L)
+    })
+
+    it("assigns the CRS", {
+      output <- ddbs_geom_from_text(geom_from_ser$wkt, crs = 4326, mode = "sf")
+      expect_equal(sf::st_crs(output), sf::st_crs(4326))
+    })
+
+    it("round-trips coordinates correctly", {
+      output <- ddbs_geom_from_text(geom_from_ser$wkt, crs = 4326, mode = "sf")
+      expect_equal(sf::st_coordinates(output)[1, ], c(X = 10, Y = 20))
+    })
+
+    it("keeps extra columns passed via ...", {
+      output <- ddbs_geom_from_text(geom_from_ser$wkt, id = 1:2, crs = 4326, mode = "sf")
+      expect_true("id" %in% names(output))
+      expect_equal(output$id, 1:2)
+    })
+
+    it("respects geom_col", {
+      output <- ddbs_geom_from_text(geom_from_ser$wkt, crs = 4326, geom_col = "the_geom", mode = "sf")
+      expect_equal(attr(output, "sf_column"), "the_geom")
+    })
+
+    it("writes a table when name is provided", {
+      ok <- ddbs_geom_from_text(geom_from_ser$wkt, crs = 4326, conn = conn_test, name = "gft_tbl")
+      expect_true(ok)
+      expect_true(DBI::dbExistsTable(conn_test, "gft_tbl"))
+    })
+  })
+
+  describe("errors work", {
+
+    it("errors on non-character input", {
+      expect_error(ddbs_geom_from_text(123))
+    })
+
+    it("errors when name is given without conn", {
+      expect_error(ddbs_geom_from_text(geom_from_ser$wkt, name = "no_conn"))
+    })
+
+    it("errors on unnamed ... arguments", {
+      expect_error(ddbs_geom_from_text(geom_from_ser$wkt, 1:2))
+    })
+
+    it("errors when extra columns have the wrong length", {
+      expect_error(ddbs_geom_from_text(geom_from_ser$wkt, id = 1:3))
+    })
+  })
+})
+
+describe("ddbs_geom_from_hexwkb()", {
+
+  it("returns a duckspatial_df by default", {
+    expect_s3_class(ddbs_geom_from_hexwkb(geom_from_ser$hex, crs = 4326), "duckspatial_df")
+  })
+
+  it("round-trips coordinates correctly", {
+    output <- ddbs_geom_from_hexwkb(geom_from_ser$hex, crs = 4326, mode = "sf")
+    expect_equal(sf::st_coordinates(output)[1, ], c(X = 10, Y = 20))
+  })
+
+  it("errors on non-character input", {
+    expect_error(ddbs_geom_from_hexwkb(123))
+  })
+})
+
+describe("ddbs_geom_from_hexewkb()", {
+
+  it("returns a duckspatial_df by default", {
+    expect_s3_class(ddbs_geom_from_hexewkb(geom_from_ser$hex, crs = 4326), "duckspatial_df")
+  })
+
+  it("round-trips coordinates correctly", {
+    output <- ddbs_geom_from_hexewkb(geom_from_ser$hex, crs = 4326, mode = "sf")
+    expect_equal(sf::st_coordinates(output)[1, ], c(X = 10, Y = 20))
+  })
+})
+
+describe("ddbs_geom_from_geojson()", {
+
+  it("returns a duckspatial_df by default", {
+    expect_s3_class(ddbs_geom_from_geojson(geom_from_ser$gj, crs = 4326), "duckspatial_df")
+  })
+
+  it("round-trips coordinates correctly", {
+    output <- ddbs_geom_from_geojson(geom_from_ser$gj, crs = 4326, mode = "sf")
+    expect_equal(sf::st_coordinates(output)[1, ], c(X = 10, Y = 20))
+  })
+
+  it("errors on non-character input", {
+    expect_error(ddbs_geom_from_geojson(123))
+  })
+})
+
+describe("ddbs_geom_from_wkb()", {
+
+  it("returns a duckspatial_df by default", {
+    expect_s3_class(ddbs_geom_from_wkb(geom_from_ser$wkb, crs = 4326), "duckspatial_df")
+  })
+
+  it("round-trips coordinates correctly", {
+    output <- ddbs_geom_from_wkb(geom_from_ser$wkb, crs = 4326, mode = "sf")
+    expect_equal(sf::st_coordinates(output)[1, ], c(X = 10, Y = 20))
+  })
+
+  it("errors when input is not a list of raw vectors", {
+    expect_error(ddbs_geom_from_wkb("not raw"))
+  })
+})
+
+
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)
