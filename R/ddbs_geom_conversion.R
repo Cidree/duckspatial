@@ -154,39 +154,37 @@ ddbs_as_geojson <- function(
   desc       <- DBI::dbGetQuery(target_conn, glue::glue("DESCRIBE SELECT * FROM {x_list$query_name};"))
   prop_cols  <- desc$column_name[desc$column_name != x_geom]
 
-  ## Build a JSON object of all non-geometry columns to use as feature properties
+  ## Per-row properties as compact JSON text. to_json() handles type formatting
+  ## and string escaping; '{}' when there are no non-geometry columns.
   if (length(prop_cols)) {
     prop_fields <- paste(sprintf('"%s" := "%s"', prop_cols, prop_cols), collapse = ", ")
-    props_sql   <- glue::glue("to_json(struct_pack({prop_fields}))")
+    props_sql   <- sprintf("to_json(struct_pack(%s))::VARCHAR", prop_fields)
   } else {
-    props_sql <- "'{}'::JSON"
+    props_sql <- "'{}'"
   }
 
-  ## Per-row GeoJSON Feature expression (properties before geometry, matching the
-  ## output of geojsonsf::sf_geojson())
-  feature_sql <- glue::glue(
-    "json_object('type', 'Feature', 'properties', {props_sql}, ",
-    "'geometry', ST_AsGeoJSON(\"{x_geom}\")::JSON)"
+  ## Build each Feature by plain string concatenation. This avoids round-tripping
+  ## the geometry through the JSON type (json_object / json_group_array), which is
+  ## markedly slower and far more memory-hungry on large datasets. Properties
+  ## precede the geometry to match geojsonsf::sf_geojson().
+  feature_sql <- sprintf(
+    "'{\"type\":\"Feature\",\"properties\":' || %s || ',\"geometry\":' || coalesce(ST_AsGeoJSON(\"%s\"), 'null') || '}'",
+    props_sql, x_geom
   )
 
   # 3. Build and retrieve the result
   if (feature_collection) {
     ## Single FeatureCollection. coalesce() keeps `features` as [] (not null) when empty.
-    tmp.query <- glue::glue(
-      "SELECT json_object(
-                'type', 'FeatureCollection',
-                'features', coalesce(json_group_array({feature_sql}), '[]'::JSON)
-              )::VARCHAR AS geojson
-       FROM {x_list$query_name};"
+    tmp.query <- sprintf(
+      "SELECT '{\"type\":\"FeatureCollection\",\"features\":[' || coalesce(string_agg(%s, ','), '') || ']}' AS geojson FROM %s;",
+      feature_sql, x_list$query_name
     )
     out <- DBI::dbGetQuery(target_conn, tmp.query)$geojson
     ## tag like geojsonsf so downstream tools treat it as raw JSON, not a string
     class(out) <- c("geojson", "json")
     out
   } else {
-    tmp.query <- glue::glue(
-      "SELECT {feature_sql}::VARCHAR AS geojson FROM {x_list$query_name};"
-    )
+    tmp.query <- sprintf("SELECT %s AS geojson FROM %s;", feature_sql, x_list$query_name)
     DBI::dbGetQuery(target_conn, tmp.query)$geojson
   }
 

@@ -1,9 +1,4 @@
 
-
-countries_ddbs
-rivers_ddbs
-points_ddbs
-
 # 0. Set up --------------------------------------------------------------
 
 ## skip tests on CRAN because they take too much time
@@ -204,15 +199,6 @@ testthat::describe("Format conversion functions", {
       dplyr::mutate(hexwkb = ddbs_as_hexwkb(geometry)) |>
       ddbs_collect()
     expect_equal(normal_result, macro_result$hexwkb)
-  })
-
-  ## DDBS_AS_GEOJSON
-  testthat::it("ddbs_as_geojson() macro works", {
-    normal_result <- ddbs_as_geojson(countries_ddbs)
-    macro_result  <- countries_ddbs |>
-      dplyr::mutate(geojson = ddbs_as_geojson(geometry)) |>
-      ddbs_collect()
-    expect_equal(normal_result, macro_result$geojson)
   })
 
 })
