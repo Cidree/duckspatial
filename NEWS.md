@@ -2,6 +2,10 @@
 
 ## NEW FEATURES
 
+* `ddbs_write_mbtiles()`: generates a Mapbox Vector Tile pyramid from a spatial dataset and writes it to an MBTiles file, ready to serve or convert to PMTiles for use with web mapping libraries such as `mapgl`.
+
+* `ddbs_as_mvt_geom()`: transforms geometries into Mapbox Vector Tile (MVT) coordinate space, clipping them to a tile's bounding box and mapping the coordinates into the tile's integer pixel space.
+
 * `ddbs_geom_from_text()`, `ddbs_geom_from_wkb()`, `ddbs_geom_from_hexwkb()`, `ddbs_geom_from_hexewkb()`, `ddbs_geom_from_geojson()`: parse serialized geometries (WKT, WKB, HEXWKB, HEXEWKB, GeoJSON) into a spatial object. These are the inverses of the `ddbs_as_*()` serializers.
 
 * `ddbs_get_ninterior_rings()`: returns the number of interior rings (holes) in a POLYGON geometry.

@@ -276,6 +276,12 @@ reference:
   - ddbs_as_format
   - ddbs_geom_from
 
+- title: Vector Tiles (MVT)
+  desc: Encode geometries as Mapbox Vector Tiles for web mapping
+  contents:
+  - ddbs_as_mvt_geom
+  - ddbs_write_mbtiles
+
 - title: Spatial Extent and Boundaries
   desc: Extract bounding boxes and envelopes
   contents:

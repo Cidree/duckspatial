@@ -23,7 +23,8 @@ template_unary_ops <- function(
   quiet = FALSE,
   fun,
   other_args = NULL,
-  additional_clauses = NULL) {
+  additional_clauses = NULL,
+  drop_crs = FALSE) {
 
   # 0. Validate inputs
   assert_xy(x, "x")
@@ -93,16 +94,20 @@ template_unary_ops <- function(
   }
 
   ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  ## When the operation moves geometries out of their CRS (e.g. ST_AsMVTGeom,
+  ## which maps to tile pixel coordinates), the output must not carry the source
+  ## CRS metadata.
+  out_crs <- if (drop_crs) sf::st_crs(NA) else crs_x
   st_function <- glue::glue("{fun}({args})")
   base.query <- glue::glue("
     SELECT *
-    REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+    REPLACE ({build_geom_query(st_function, name, out_crs, mode)} AS {x_geom})
     FROM {x_list$query_name}
     {additional_clauses};
   ")
 
 
-  # 3. Table creation if name is provided, or 
+  # 3. Table creation if name is provided, or
   # create duckspatial_df or sf object if name is NULL
   if (!is.null(name)) {
     create_duckdb_table(
@@ -117,7 +122,7 @@ template_unary_ops <- function(
       query  = base.query,
       conn   = target_conn,
       mode   = mode,
-      crs    = crs_x,
+      crs    = out_crs,
       x_geom = x_geom
     )
   }
