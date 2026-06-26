@@ -1,4 +1,4 @@
-# duckspatial 1.1.2
+# duckspatial (development version)
 
 ## NEW FEATURES
 
@@ -9,6 +9,15 @@
 * `ddbs_geom_from_text()`, `ddbs_geom_from_wkb()`, `ddbs_geom_from_hexwkb()`, `ddbs_geom_from_hexewkb()`, `ddbs_geom_from_geojson()`: parse serialized geometries (WKT, WKB, HEXWKB, HEXEWKB, GeoJSON) into a spatial object. These are the inverses of the `ddbs_as_*()` serializers.
 
 * `ddbs_get_ninterior_rings()`: returns the number of interior rings (holes) in a POLYGON geometry.
+
+## ENHANCEMENTS
+
+* `ddbs_as_geojson()`: now includes all non-geometry columns as feature `properties` instead of serializing only the geometry. By default it returns a single GeoJSON `FeatureCollection` (matching `geojsonsf::sf_geojson()`); pass `feature_collection = FALSE` for a vector with one `Feature` per row (#141).
+
+
+# duckspatial 1.1.2
+
+## NEW FEATURES
 
 * `ddbs_shortest_line()`: returns the LINESTRING connecting the closest points between each pair of geometries from `x` and `y`.
 
@@ -25,8 +34,6 @@
 * `ddbs_line_locate_point()`: returns the fractional position (0–1) of the closest point on a linestring to a reference point. The `y` argument accepts an `sf` object, a `duckspatial_df`, or a character DuckDB table name (each must contain exactly 1 point feature).
 
 ## ENHANCEMENTS
-
-* `ddbs_as_geojson()`: now includes all non-geometry columns as feature `properties` instead of serializing only the geometry. By default it returns a single GeoJSON `FeatureCollection` (matching `geojsonsf::sf_geojson()`); pass `feature_collection = FALSE` for a vector with one `Feature` per row (#141).
 
 * `ddbs_union_agg()`: gains a `mem` argument. Set `mem = TRUE` to use `ST_MemUnion_Agg()` instead of `ST_Union_Agg()` — slower but more memory efficient.
 
