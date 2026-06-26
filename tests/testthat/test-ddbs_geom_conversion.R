@@ -159,6 +159,75 @@ describe("ddbs_as_hexwkb()", {
 
 
 
+# 4. ddbs_as_geojson() ---------------------------------------------------
+
+## - CHECK 1.1: works on all input formats and they agree
+## - CHECK 1.2: one GeoJSON Feature per row
+## - CHECK 1.3: non-geometry columns are included as properties
+## - CHECK 1.4: output is valid, parseable GeoJSON
+## - CHECK 1.5: geometry-only input yields empty properties
+## - CHECK 2.1: errors
+describe("ddbs_as_geojson()", {
+
+  ### EXPECTED BEHAVIOR -------------------------------------------------
+  describe("expected behavior", {
+
+    it("works on all input formats and they agree", {
+      output_sf   <- ddbs_as_geojson(countries_sf)
+      output_ddbs <- ddbs_as_geojson(countries_ddbs)
+      output_conn <- ddbs_as_geojson("countries", conn_test)
+
+      expect_type(output_sf, "character")
+      expect_equal(output_sf, output_ddbs)
+      expect_equal(output_sf, output_conn)
+    })
+
+    it("returns one Feature per row", {
+      output <- ddbs_as_geojson(countries_sf)
+      expect_length(output, nrow(countries_sf))
+      expect_true(all(grepl('"type":"Feature"', output, fixed = TRUE)))
+    })
+
+    it("includes all non-geometry columns as properties", {
+      output <- ddbs_as_geojson(countries_sf)
+      parsed <- jsonlite::fromJSON(output[1])
+
+      expect_named(parsed, c("type", "geometry", "properties"))
+      prop_names <- setdiff(names(countries_sf), attr(countries_sf, "sf_column"))
+      expect_setequal(names(parsed$properties), prop_names)
+    })
+
+    it("produces valid, parseable GeoJSON geometry", {
+      output <- ddbs_as_geojson(countries_sf)
+      parsed <- jsonlite::fromJSON(output[1])
+      expect_equal(parsed$type, "Feature")
+      expect_true(!is.null(parsed$geometry$type))
+    })
+
+    it("yields empty properties when there are no other columns", {
+      geom_only <- countries_sf[, attr(countries_sf, "sf_column")]
+      output    <- ddbs_as_geojson(geom_only)
+      expect_true(all(grepl('"properties":{}', output, fixed = TRUE)))
+    })
+
+    it("doesn't display a message", {
+      expect_no_message(ddbs_as_geojson(countries_sf))
+    })
+  })
+
+  ### ERRORS ------------------------------------------------------------
+  describe("errors work", {
+
+    it("throws errors for invalid inputs", {
+      expect_error(ddbs_as_geojson(x = 999))
+      expect_error(ddbs_as_geojson(countries_ddbs, conn = 999))
+      expect_error(ddbs_as_geojson(x = "999", conn = conn_test))
+    })
+  })
+})
+
+
+
 # 5. ddbs_geom_from_*() --------------------------------------------------
 
 ## Build serialized representations of two known points to round-trip back

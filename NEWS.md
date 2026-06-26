@@ -26,6 +26,8 @@
 
 ## ENHANCEMENTS
 
+* `ddbs_as_geojson()`: now returns a complete GeoJSON `Feature` for each row, with all non-geometry columns included as feature `properties`, instead of serializing only the geometry (#141).
+
 * `ddbs_union_agg()`: gains a `mem` argument. Set `mem = TRUE` to use `ST_MemUnion_Agg()` instead of `ST_Union_Agg()` — slower but more memory efficient.
 
 # duckspatial 1.1.1

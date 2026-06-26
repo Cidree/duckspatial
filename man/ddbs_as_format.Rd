@@ -35,7 +35,8 @@ Depending on the function:
 \item \code{ddbs_as_text()} returns a character vector of WKT geometries
 \item \code{ddbs_as_wkb()} returns a list of raw vectors (binary WKB)
 \item \code{ddbs_as_hexwkb()} returns a character vector of HEXWKB strings
-\item \code{ddbs_as_geojson()} returns a character vector of GeoJSON strings
+\item \code{ddbs_as_geojson()} returns a character vector of GeoJSON \code{Feature}
+strings (one per row), with non-geometry columns as feature properties
 }
 }
 \description{
@@ -45,7 +46,7 @@ serialization functions.
 \item \code{ddbs_as_text()} – Convert geometries to Well-Known Text (WKT)
 \item \code{ddbs_as_wkb()} – Convert geometries to Well-Known Binary (WKB)
 \item \code{ddbs_as_hexwkb()} – Convert geometries to hexadecimal Well-Known Binary (HEXWKB)
-\item \code{ddbs_as_geojson()} – Convert geometries to GeoJSON
+\item \code{ddbs_as_geojson()} – Convert each row to a GeoJSON \code{Feature}
 }
 }
 \details{
@@ -54,6 +55,11 @@ functions (\code{ST_AsText}, \code{ST_AsWKB}, \code{ST_AsHEXWKB}, and \code{ST_A
 
 They are useful for exporting geometries into widely supported formats for
 interoperability with external spatial tools, databases, and web services.
+
+Unlike the other serializers, which only encode the geometry, \code{ddbs_as_geojson()}
+produces a complete GeoJSON \code{Feature} for each row: the geometry is placed in the
+\code{geometry} member and all remaining (non-geometry) columns are included as feature
+\code{properties}.
 }
 \examples{
 \dontrun{

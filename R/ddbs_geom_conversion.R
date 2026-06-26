@@ -7,7 +7,7 @@
 #' * `ddbs_as_text()` – Convert geometries to Well-Known Text (WKT)
 #' * `ddbs_as_wkb()` – Convert geometries to Well-Known Binary (WKB)
 #' * `ddbs_as_hexwkb()` – Convert geometries to hexadecimal Well-Known Binary (HEXWKB)
-#' * `ddbs_as_geojson()` – Convert geometries to GeoJSON
+#' * `ddbs_as_geojson()` – Convert each row to a GeoJSON `Feature`
 #'
 #' @template x
 #' @template conn_null
@@ -19,13 +19,19 @@
 #' They are useful for exporting geometries into widely supported formats for
 #' interoperability with external spatial tools, databases, and web services.
 #'
+#' Unlike the other serializers, which only encode the geometry, `ddbs_as_geojson()`
+#' produces a complete GeoJSON `Feature` for each row: the geometry is placed in the
+#' `geometry` member and all remaining (non-geometry) columns are included as feature
+#' `properties`.
+#'
 #' @return
 #' Depending on the function:
 #' \itemize{
 #'   \item \code{ddbs_as_text()} returns a character vector of WKT geometries
 #'   \item \code{ddbs_as_wkb()} returns a list of raw vectors (binary WKB)
 #'   \item \code{ddbs_as_hexwkb()} returns a character vector of HEXWKB strings
-#'   \item \code{ddbs_as_geojson()} returns a character vector of GeoJSON strings
+#'   \item \code{ddbs_as_geojson()} returns a character vector of GeoJSON \code{Feature}
+#'     strings (one per row), with non-geometry columns as feature properties
 #' }
 #'
 #' @examples
@@ -110,11 +116,49 @@ ddbs_as_geojson <- function(
   x,
   conn = NULL) {
 
-  template_geometry_conversion(
-    x = x,
-    conn = conn,
-    fun = "ST_AsGeoJSON"
-  )
+  # 0. Validate inputs
+  assert_xy(x, "x")
+  assert_conn_character(conn, x)
+
+  # 1. Prepare inputs
+  x <- normalize_spatial_input(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = TRUE)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+  # 2. Resolve the geometry column and the remaining (property) columns
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+  desc       <- DBI::dbGetQuery(target_conn, glue::glue("DESCRIBE SELECT * FROM {x_list$query_name};"))
+  prop_cols  <- desc$column_name[desc$column_name != x_geom]
+
+  ## Build a JSON object of all non-geometry columns to use as feature properties
+  if (length(prop_cols)) {
+    prop_fields <- paste(sprintf('"%s" := "%s"', prop_cols, prop_cols), collapse = ", ")
+    props_sql   <- glue::glue("to_json(struct_pack({prop_fields}))")
+  } else {
+    props_sql <- "'{}'::JSON"
+  }
+
+  # 3. Build each row into a GeoJSON Feature and retrieve the results
+  tmp.query <- glue::glue('
+      SELECT json_object(
+               \'type\', \'Feature\',
+               \'geometry\', ST_AsGeoJSON("{x_geom}")::JSON,
+               \'properties\', {props_sql}
+             )::VARCHAR AS geometry
+      FROM {x_list$query_name};
+  ')
+
+  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+  data_tbl$geometry
 
 }
 
