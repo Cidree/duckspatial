@@ -162,10 +162,13 @@ describe("ddbs_as_hexwkb()", {
 # 4. ddbs_as_geojson() ---------------------------------------------------
 
 ## - CHECK 1.1: works on all input formats and they agree
-## - CHECK 1.2: one GeoJSON Feature per row
-## - CHECK 1.3: non-geometry columns are included as properties
-## - CHECK 1.4: output is valid, parseable GeoJSON
-## - CHECK 1.5: geometry-only input yields empty properties
+## - CHECK 1.2: default returns a single FeatureCollection (class geojson/json)
+## - CHECK 1.3: feature_collection = FALSE returns one Feature per row
+## - CHECK 1.4: non-geometry columns are included as properties
+## - CHECK 1.5: output is valid, parseable GeoJSON
+## - CHECK 1.6: structurally matches geojsonsf::sf_geojson()
+## - CHECK 1.7: geometry-only input yields empty properties
+## - CHECK 1.8: empty input yields an empty FeatureCollection
 ## - CHECK 2.1: errors
 describe("ddbs_as_geojson()", {
 
@@ -182,32 +185,58 @@ describe("ddbs_as_geojson()", {
       expect_equal(output_sf, output_conn)
     })
 
-    it("returns one Feature per row", {
+    it("returns a single FeatureCollection by default", {
       output <- ddbs_as_geojson(countries_sf)
+      expect_length(output, 1L)
+      expect_s3_class(output, "geojson")
+      parsed <- jsonlite::fromJSON(output, simplifyVector = FALSE)
+      expect_equal(parsed$type, "FeatureCollection")
+      expect_length(parsed$features, nrow(countries_sf))
+    })
+
+    it("returns one Feature per row when feature_collection = FALSE", {
+      output <- ddbs_as_geojson(countries_sf, feature_collection = FALSE)
+      expect_type(output, "character")
       expect_length(output, nrow(countries_sf))
       expect_true(all(grepl('"type":"Feature"', output, fixed = TRUE)))
     })
 
     it("includes all non-geometry columns as properties", {
-      output <- ddbs_as_geojson(countries_sf)
+      output <- ddbs_as_geojson(countries_sf, feature_collection = FALSE)
       parsed <- jsonlite::fromJSON(output[1])
 
-      expect_named(parsed, c("type", "geometry", "properties"))
+      expect_named(parsed, c("type", "properties", "geometry"))
       prop_names <- setdiff(names(countries_sf), attr(countries_sf, "sf_column"))
       expect_setequal(names(parsed$properties), prop_names)
     })
 
     it("produces valid, parseable GeoJSON geometry", {
-      output <- ddbs_as_geojson(countries_sf)
-      parsed <- jsonlite::fromJSON(output[1])
-      expect_equal(parsed$type, "Feature")
-      expect_true(!is.null(parsed$geometry$type))
+      parsed <- jsonlite::fromJSON(ddbs_as_geojson(countries_sf), simplifyVector = FALSE)
+      expect_equal(parsed$features[[1]]$type, "Feature")
+      expect_false(is.null(parsed$features[[1]]$geometry$type))
+    })
+
+    it("matches the structure of geojsonsf::sf_geojson()", {
+      skip_if_not_installed("geojsonsf")
+      ours <- jsonlite::fromJSON(ddbs_as_geojson(countries_sf), simplifyVector = FALSE)
+      ref  <- jsonlite::fromJSON(geojsonsf::sf_geojson(countries_sf), simplifyVector = FALSE)
+      expect_equal(ours$type, ref$type)
+      expect_equal(length(ours$features), length(ref$features))
+      expect_equal(ours$features[[1]]$properties, ref$features[[1]]$properties)
     })
 
     it("yields empty properties when there are no other columns", {
       geom_only <- countries_sf[, attr(countries_sf, "sf_column")]
-      output    <- ddbs_as_geojson(geom_only)
+      output    <- ddbs_as_geojson(geom_only, feature_collection = FALSE)
       expect_true(all(grepl('"properties":{}', output, fixed = TRUE)))
+    })
+
+    it("returns an empty FeatureCollection for empty input", {
+      DBI::dbExecute(conn_test, "CREATE OR REPLACE TABLE empty_geo AS SELECT * FROM countries WHERE 1=0;")
+      output <- ddbs_as_geojson("empty_geo", conn_test)
+      parsed <- jsonlite::fromJSON(output, simplifyVector = FALSE)
+      expect_equal(parsed$type, "FeatureCollection")
+      expect_length(parsed$features, 0L)
     })
 
     it("doesn't display a message", {
@@ -222,6 +251,7 @@ describe("ddbs_as_geojson()", {
       expect_error(ddbs_as_geojson(x = 999))
       expect_error(ddbs_as_geojson(countries_ddbs, conn = 999))
       expect_error(ddbs_as_geojson(x = "999", conn = conn_test))
+      expect_error(ddbs_as_geojson(countries_ddbs, feature_collection = "yes"))
     })
   })
 })

@@ -26,7 +26,7 @@
 
 ## ENHANCEMENTS
 
-* `ddbs_as_geojson()`: now returns a complete GeoJSON `Feature` for each row, with all non-geometry columns included as feature `properties`, instead of serializing only the geometry (#141).
+* `ddbs_as_geojson()`: now includes all non-geometry columns as feature `properties` instead of serializing only the geometry. By default it returns a single GeoJSON `FeatureCollection` (matching `geojsonsf::sf_geojson()`); pass `feature_collection = FALSE` for a vector with one `Feature` per row (#141).
 
 * `ddbs_union_agg()`: gains a `mem` argument. Set `mem = TRUE` to use `ST_MemUnion_Agg()` instead of `ST_Union_Agg()` — slower but more memory efficient.
 

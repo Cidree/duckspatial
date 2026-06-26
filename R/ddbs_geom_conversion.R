@@ -7,10 +7,14 @@
 #' * `ddbs_as_text()` – Convert geometries to Well-Known Text (WKT)
 #' * `ddbs_as_wkb()` – Convert geometries to Well-Known Binary (WKB)
 #' * `ddbs_as_hexwkb()` – Convert geometries to hexadecimal Well-Known Binary (HEXWKB)
-#' * `ddbs_as_geojson()` – Convert each row to a GeoJSON `Feature`
+#' * `ddbs_as_geojson()` – Convert to GeoJSON (a `FeatureCollection` or one `Feature` per row)
 #'
 #' @template x
 #' @template conn_null
+#' @param feature_collection Logical, only used by `ddbs_as_geojson()`. If `TRUE`
+#'   (default), all rows are returned as a single GeoJSON `FeatureCollection`
+#'   string. If `FALSE`, a character vector with one `Feature` string per row is
+#'   returned.
 #'
 #' @details
 #' These functions are thin wrappers around DuckDB spatial serialization
@@ -20,9 +24,11 @@
 #' interoperability with external spatial tools, databases, and web services.
 #'
 #' Unlike the other serializers, which only encode the geometry, `ddbs_as_geojson()`
-#' produces a complete GeoJSON `Feature` for each row: the geometry is placed in the
-#' `geometry` member and all remaining (non-geometry) columns are included as feature
-#' `properties`.
+#' produces complete GeoJSON `Feature`s: the geometry is placed in the `geometry`
+#' member and all remaining (non-geometry) columns are included as feature
+#' `properties`. By default the features are wrapped in a single `FeatureCollection`,
+#' the canonical GeoJSON artifact for writing `.geojson` files and feeding web
+#' services and mapping libraries.
 #'
 #' @return
 #' Depending on the function:
@@ -30,8 +36,10 @@
 #'   \item \code{ddbs_as_text()} returns a character vector of WKT geometries
 #'   \item \code{ddbs_as_wkb()} returns a list of raw vectors (binary WKB)
 #'   \item \code{ddbs_as_hexwkb()} returns a character vector of HEXWKB strings
-#'   \item \code{ddbs_as_geojson()} returns a character vector of GeoJSON \code{Feature}
-#'     strings (one per row), with non-geometry columns as feature properties
+#'   \item \code{ddbs_as_geojson()} returns a single GeoJSON \code{FeatureCollection}
+#'     string (class \code{"geojson"}) when \code{feature_collection = TRUE}, or a
+#'     character vector of \code{Feature} strings (one per row) when \code{FALSE};
+#'     non-geometry columns are included as feature properties
 #' }
 #'
 #' @examples
@@ -45,7 +53,12 @@
 #' ddbs_as_text(argentina_ddbs)
 #' ddbs_as_wkb(argentina_ddbs)
 #' ddbs_as_hexwkb(argentina_ddbs)
+#'
+#' ## a single FeatureCollection (default)
 #' ddbs_as_geojson(argentina_ddbs)
+#'
+#' ## one Feature string per row
+#' ddbs_as_geojson(argentina_ddbs, feature_collection = FALSE)
 #' }
 #'
 #' @name ddbs_as_format
@@ -114,11 +127,13 @@ ddbs_as_hexwkb <- function(
 #' @export
 ddbs_as_geojson <- function(
   x,
-  conn = NULL) {
+  conn = NULL,
+  feature_collection = TRUE) {
 
   # 0. Validate inputs
   assert_xy(x, "x")
   assert_conn_character(conn, x)
+  assert_logic(feature_collection, "feature_collection")
 
   # 1. Prepare inputs
   x <- normalize_spatial_input(x, conn)
@@ -147,18 +162,33 @@ ddbs_as_geojson <- function(
     props_sql <- "'{}'::JSON"
   }
 
-  # 3. Build each row into a GeoJSON Feature and retrieve the results
-  tmp.query <- glue::glue('
-      SELECT json_object(
-               \'type\', \'Feature\',
-               \'geometry\', ST_AsGeoJSON("{x_geom}")::JSON,
-               \'properties\', {props_sql}
-             )::VARCHAR AS geometry
-      FROM {x_list$query_name};
-  ')
+  ## Per-row GeoJSON Feature expression (properties before geometry, matching the
+  ## output of geojsonsf::sf_geojson())
+  feature_sql <- glue::glue(
+    "json_object('type', 'Feature', 'properties', {props_sql}, ",
+    "'geometry', ST_AsGeoJSON(\"{x_geom}\")::JSON)"
+  )
 
-  data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-  data_tbl$geometry
+  # 3. Build and retrieve the result
+  if (feature_collection) {
+    ## Single FeatureCollection. coalesce() keeps `features` as [] (not null) when empty.
+    tmp.query <- glue::glue(
+      "SELECT json_object(
+                'type', 'FeatureCollection',
+                'features', coalesce(json_group_array({feature_sql}), '[]'::JSON)
+              )::VARCHAR AS geojson
+       FROM {x_list$query_name};"
+    )
+    out <- DBI::dbGetQuery(target_conn, tmp.query)$geojson
+    ## tag like geojsonsf so downstream tools treat it as raw JSON, not a string
+    class(out) <- c("geojson", "json")
+    out
+  } else {
+    tmp.query <- glue::glue(
+      "SELECT {feature_sql}::VARCHAR AS geojson FROM {x_list$query_name};"
+    )
+    DBI::dbGetQuery(target_conn, tmp.query)$geojson
+  }
 
 }
 

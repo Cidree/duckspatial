@@ -55,6 +55,7 @@ Suggests:
     areal,
     bench,
     duckdbfs,
+    geojsonsf,
     ggplot2 (>= 3.3.1),
     knitr,
     lwgeom,
