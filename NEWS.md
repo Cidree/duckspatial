@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+* `ddbs_extension_info()`: prints a `glimpse()` of a DuckDB extension's row from `duckdb_extensions()` (the spatial extension by default), showing its installed/loaded status, version, and install path.
+
 * `ddbs_reduce_precision()`: snaps geometry coordinates to a regular grid, reducing their precision.
 
 * `ddbs_line_node()`: nodes a set of line geometries, splitting them at every crossing and returning a fully noded `MULTILINESTRING`.

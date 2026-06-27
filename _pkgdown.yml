@@ -176,6 +176,7 @@ reference:
   - ddbs_stop_conn
   - ddbs_install
   - ddbs_load
+  - ddbs_extension_info
   - ddbs_options
   - ddbs_set_resources
   - ddbs_get_resources

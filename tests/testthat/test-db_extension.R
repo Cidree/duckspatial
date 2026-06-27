@@ -136,3 +136,39 @@ testthat::test_that("Community extensions are installed", {
     expect_no_error(ddbs_load(conn, quiet = TRUE, create_macros = FALSE))
   }
 })
+
+
+# 4. ddbs_extension_info() -----------------------------------------------
+
+describe("ddbs_extension_info()", {
+
+  it("returns the extension row as a one-row tibble, invisibly", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+
+    res <- withVisible(ddbs_extension_info(conn))
+    expect_false(res$visible)
+    expect_s3_class(res$value, "tbl_df")
+    expect_equal(nrow(res$value), 1L)
+    expect_equal(res$value$extension_name, "spatial")
+    expect_true("loaded" %in% names(res$value))
+  })
+
+  it("uses the default connection when conn = NULL", {
+    out <- ddbs_extension_info()
+    expect_s3_class(out, "tbl_df")
+    expect_equal(out$extension_name, "spatial")
+  })
+
+  it("errors on an unknown extension", {
+    conn <- duckdb::dbConnect(duckdb::duckdb())
+    on.exit(duckdb::dbDisconnect(conn), add = TRUE)
+    expect_error(ddbs_extension_info(conn, extension = "not_a_real_extension_xyz"))
+  })
+
+  it("validates the extension argument", {
+    conn <- duckdb::dbConnect(duckdb::duckdb())
+    on.exit(duckdb::dbDisconnect(conn), add = TRUE)
+    expect_error(ddbs_extension_info(conn, extension = 1))
+  })
+})

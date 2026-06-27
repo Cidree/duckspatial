@@ -180,3 +180,57 @@ ddbs_load <- function(
     }
 
 }
+
+
+
+#' Glimpse the status of a DuckDB extension
+#'
+#' Retrieves the row from DuckDB's \code{duckdb_extensions()} catalog for a given
+#' extension (the spatial extension by default) and prints a transposed
+#' \code{\link[dplyr]{glimpse}} of it: whether it is installed and loaded, its
+#' version, install path, description, and so on.
+#'
+#' @template conn_null
+#' @param extension name of the extension to inspect, default is "spatial"
+#'
+#' @returns A one-row \code{tibble} with the extension's metadata (invisibly).
+#' Called mainly for the glimpse printed as a side effect.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' # inspect the spatial extension on the default connection
+#' ddbs_extension_info()
+#'
+#' # or pass an explicit connection
+#' conn <- ddbs_create_conn()
+#' ddbs_extension_info(conn)
+#' ddbs_stop_conn(conn)
+#' }
+ddbs_extension_info <- function(conn = NULL, extension = "spatial") {
+
+    # 1. Resolve and validate inputs
+    conn <- conn %||% ddbs_default_conn()
+    dbConnCheck(conn)
+    assert_character_scalar(extension, "extension")
+
+    # 2. Query the extension catalog
+    info <- DBI::dbGetQuery(
+        conn,
+        "SELECT * FROM duckdb_extensions() WHERE extension_name = ?",
+        params = list(extension)
+    )
+
+    if (nrow(info) == 0) {
+        cli::cli_abort(
+            "Extension {.val {extension}} was not found in {.fn duckdb_extensions}."
+        )
+    }
+
+    # 3. Glimpse and return the row invisibly
+    dplyr::glimpse(tibble::as_tibble(info))
+
+}
