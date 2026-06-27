@@ -33,7 +33,7 @@
 
 ## BUG FIXES
 
-* `ddbs_install()`: now tries `LOAD` before `INSTALL` for non-upgrade calls. This avoids writing to `~/.duckdb/extensions/` when the extension is already bundled (as `spatial` is in DuckDB >= 1.5), fixing failures in read-only environments such as CRAN's Debian check systems (#issue).
+* `ddbs_install()`: removed a broken "already on the latest version" check that referenced a `requires_version_upgrade` column which `duckdb_extensions()` does not provide (and compared `install_mode` with the wrong case), so it never took effect (#144).
 
 
 # duckspatial 1.1.2

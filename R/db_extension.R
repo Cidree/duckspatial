@@ -53,38 +53,18 @@ ddbs_install <- function(
     ## 2.1. Check connection
     dbConnCheck(conn)
     if (!is.null(repos)) assert_character_scalar(repos, "repos")
-    ## 2.2. Check if it's installed / needs upgrade
+    ## 2.2. Check if it's installed. When already installed and not upgrading,
+    ## there is nothing to do; with `upgrade = TRUE` we fall through to a
+    ## (FORCE) INSTALL. DuckDB's `duckdb_extensions()` exposes no reliable
+    ## "needs upgrade" flag, so we always re-install on upgrade.
     target_ext <- ext[ext$extension_name == extension, ]
-    if (nrow(target_ext) == 1 && target_ext$installed) {
-        if (!upgrade) {
-            if (isFALSE(quiet)) {
-                cli::cli_alert_info(
-                    "{extension} extension version {.val {target_ext$extension_version}} is already installed. Use {.code upgrade = TRUE} to upgrade."
-                )
-            }
-            return(invisible(TRUE))
+    if (nrow(target_ext) == 1 && target_ext$installed && !upgrade) {
+        if (isFALSE(quiet)) {
+            cli::cli_alert_info(
+                "{extension} extension version {.val {target_ext$extension_version}} is already installed. Use {.code upgrade = TRUE} to upgrade."
+            )
         }
-
-        # upgrade = TRUE: check if already on latest before forcing
-        latest <- tryCatch({
-            result <- DBI::dbGetQuery(conn, glue::glue(
-                "SELECT * FROM duckdb_extensions() WHERE extension_name = '{extension}';"
-            ))
-            # DuckDB >=0.10 exposes `install_mode` and whether it needs update
-            # If extension_version matches across local and remote, skip
-            isTRUE(result$install_mode == "repository" && !result$requires_version_upgrade)
-        }, error = function(e) FALSE)
-
-        # Skip the short-circuit when an explicit repository is requested, so the
-        # forced install from `repos` still runs (e.g. switching core -> core_nightly)
-        if (isTRUE(latest) && is.null(repos)) {
-            if (isFALSE(quiet)) {
-                cli::cli_alert_info(
-                    "{extension} extension version {.val {target_ext$extension_version}} is already the latest version."
-                )
-            }
-            return(invisible(TRUE))
-        }
+        return(invisible(TRUE))
     }
 
     # Extension cannot be upgraded if it's already loaded. It will fail
