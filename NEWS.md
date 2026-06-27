@@ -24,6 +24,8 @@
 
 ## ENHANCEMENTS
 
+* `ddbs_install()`: gains a `repos` argument to install an extension from a specific DuckDB repository (e.g. `"core"`, `"core_nightly"`, `"community"`). When `NULL` (default), the previous behaviour is kept (core, then community) (#144).
+
 * `ddbs_as_geojson()`: now includes all non-geometry columns as feature `properties` instead of serializing only the geometry. By default it returns a single GeoJSON `FeatureCollection` (matching `geojsonsf::sf_geojson()`); pass `feature_collection = FALSE` for a vector with one `Feature` per row (#141).
 
 

@@ -70,6 +70,30 @@ describe("ddbs_install()", {
       )
     })
   })
+
+  describe("repos argument", {
+
+    it("validates the repos type", {
+      conn <- duckdb::dbConnect(duckdb::duckdb())
+      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
+      expect_error(ddbs_install(conn, repos = 123))
+    })
+
+    it("installs from an explicit core repository", {
+      conn <- duckdb::dbConnect(duckdb::duckdb())
+      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
+      ## raw connection: spatial is installed but not loaded, so upgrade can run
+      expect_true(ddbs_install(conn, extension = "spatial", repos = "core", upgrade = TRUE, quiet = TRUE))
+    })
+
+    it("errors clearly on an unknown repository name", {
+      conn <- duckdb::dbConnect(duckdb::duckdb())
+      on.exit(duckdb::dbDisconnect(conn), add = TRUE)
+      expect_error(
+        ddbs_install(conn, extension = "spatial", repos = "not_a_real_repo_xyz", upgrade = TRUE)
+      )
+    })
+  })
 })
 
 

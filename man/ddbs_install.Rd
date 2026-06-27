@@ -4,7 +4,13 @@
 \alias{ddbs_install}
 \title{Checks and installs the Spatial extension}
 \usage{
-ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
+ddbs_install(
+  conn,
+  upgrade = FALSE,
+  quiet = FALSE,
+  extension = "spatial",
+  repos = NULL
+)
 }
 \arguments{
 \item{conn}{A \code{DBIConnection} object to a DuckDB database}
@@ -15,6 +21,14 @@ ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 Defaults to \code{FALSE}.}
 
 \item{extension}{name of the extension to install, default is "spatial"}
+
+\item{repos}{optional character string naming the repository to install the
+extension from (e.g. \code{"core"}, \code{"core_nightly"}, or
+\code{"community"}); a URL or path can also be supplied. If \code{NULL}
+(default), the \code{core} repository is tried first, then \code{community}.
+Switching an already-installed extension to a different repository requires
+\code{upgrade = TRUE}. See
+\url{https://duckdb.org/docs/stable/extensions/installing_extensions}.}
 }
 \value{
 TRUE (invisibly) for successful installation

@@ -7,6 +7,13 @@
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #' @template quiet
 #' @param extension name of the extension to install, default is "spatial"
+#' @param repos optional character string naming the repository to install the
+#' extension from (e.g. \code{"core"}, \code{"core_nightly"}, or
+#' \code{"community"}); a URL or path can also be supplied. If \code{NULL}
+#' (default), the \code{core} repository is tried first, then \code{community}.
+#' Switching an already-installed extension to a different repository requires
+#' \code{upgrade = TRUE}. See
+#' \url{https://duckdb.org/docs/stable/extensions/installing_extensions}.
 #'
 #' @returns TRUE (invisibly) for successful installation
 #' @export
@@ -32,10 +39,11 @@
 #' duckdb::dbDisconnect(conn)
 #' }
 ddbs_install <- function(
-    conn, 
-    upgrade = FALSE, 
-    quiet = FALSE, 
-    extension = "spatial"
+    conn,
+    upgrade = FALSE,
+    quiet = FALSE,
+    extension = "spatial",
+    repos = NULL
 ) {
 
     # 1. Get extensions list
@@ -44,6 +52,7 @@ ddbs_install <- function(
     # 2. Checks
     ## 2.1. Check connection
     dbConnCheck(conn)
+    if (!is.null(repos)) assert_character_scalar(repos, "repos")
     ## 2.2. Check if it's installed / needs upgrade
     target_ext <- ext[ext$extension_name == extension, ]
     if (nrow(target_ext) == 1 && target_ext$installed) {
@@ -66,7 +75,9 @@ ddbs_install <- function(
             isTRUE(result$install_mode == "repository" && !result$requires_version_upgrade)
         }, error = function(e) FALSE)
 
-        if (isTRUE(latest)) {
+        # Skip the short-circuit when an explicit repository is requested, so the
+        # forced install from `repos` still runs (e.g. switching core -> core_nightly)
+        if (isTRUE(latest) && is.null(repos)) {
             if (isFALSE(quiet)) {
                 cli::cli_alert_info(
                     "{extension} extension version {.val {target_ext$extension_version}} is already the latest version."
@@ -81,34 +92,56 @@ ddbs_install <- function(
         cli::cli_abort("{extension} is already loaded in the connection. Upgrading the version is only allowed in non-loaded connections.")
     }
 
-    # 3. Install/upgrade extension - try core, then community, then error
-    install_sql <- if (upgrade) "FORCE INSTALL {extension};" else "INSTALL {extension};"
-    community_sql <- if (upgrade) "FORCE INSTALL {extension} FROM community;" else "INSTALL {extension} FROM community;"
+    # 3. Install/upgrade extension
+    install_kw <- if (upgrade) "FORCE INSTALL" else "INSTALL"
 
-    installed <- tryCatch({
-        suppressMessages(DBI::dbExecute(conn, glue::glue(install_sql)))
-        "core"
-    }, error = function(e) {
-        tryCatch({
-            suppressMessages(DBI::dbExecute(conn, glue::glue(community_sql)))
-            "community"
-        }, error = function(e2) {
-            NULL
+    if (!is.null(repos)) {
+
+        ## 3a. Explicit repository chosen by the user (no fallback). Named repos
+        ## (core, core_nightly, community, ...) are bare identifiers; URLs/paths
+        ## must be single-quoted.
+        repos_sql <- if (grepl("^[A-Za-z0-9_]+$", repos)) repos else ddbs_quote_sql_string(conn, repos)
+
+        installed <- tryCatch({
+            suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension} FROM {repos_sql};")))
+            repos
+        }, error = function(e) {
+            cli::cli_abort(c(
+                "Failed to {if (upgrade) 'upgrade' else 'install'} the {extension} extension from the {.val {repos}} repository.",
+                "x" = conditionMessage(e),
+                "i" = "If {extension} is already installed from a different repository, set {.code upgrade = TRUE} to switch.",
+                "i" = "Check the repository name: {.url https://duckdb.org/docs/stable/extensions/installing_extensions}"
+            ))
         })
-    })
 
-    if (is.null(installed)) {
-        cli::cli_abort(c(
-            "Failed to {if (upgrade) 'upgrade' else 'install'} the {extension} extension.",
-            "i" = "It could not be found in the core or community repositories.",
-            "i" = "It might not be available for this version of DuckDB",
-            "i" = "Check that the extension name is correct: {.url https://duckdb.org/docs/extensions/overview}"
-        ))
+    } else {
+
+        ## 3b. Default: try core, then community, then error
+        installed <- tryCatch({
+            suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension};")))
+            "core"
+        }, error = function(e) {
+            tryCatch({
+                suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension} FROM community;")))
+                "community"
+            }, error = function(e2) {
+                NULL
+            })
+        })
+
+        if (is.null(installed)) {
+            cli::cli_abort(c(
+                "Failed to {if (upgrade) 'upgrade' else 'install'} the {extension} extension.",
+                "i" = "It could not be found in the core or community repositories.",
+                "i" = "It might not be available for this version of DuckDB",
+                "i" = "Check that the extension name is correct: {.url https://duckdb.org/docs/extensions/overview}"
+            ))
+        }
     }
 
     if (isFALSE(quiet)) {
         action <- if (upgrade) "upgraded" else "installed"
-        repo_note <- if (installed == "community") " (from community repository)" else ""
+        repo_note <- if (!identical(installed, "core")) glue::glue(" (from {installed} repository)") else ""
         cli::cli_alert_success("{extension} extension {action}{repo_note}")
     }
 
