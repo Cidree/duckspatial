@@ -193,9 +193,10 @@ ddbs_load <- function(
     ## 1.2. Check connection
     dbConnCheck(conn)
 
-    ## 1.3. Check if extension is installed
+    ## 1.3. Check if extension is installed or already loaded (bundled extensions
+    ##      may show installed = FALSE but are still loadable/loaded)
     target_ext <- ext[ext$extension_name == extension, ]
-    if (!target_ext$installed)
+    if (!isTRUE(target_ext$installed) && !isTRUE(target_ext$loaded))
         cli::cli_abort("{extension} extension is not installed, please use `ddbs_install(extension = '{extension}')`")
 
     

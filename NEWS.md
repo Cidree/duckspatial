@@ -1,3 +1,6 @@
+
+
+
 # duckspatial (development version)
 
 ## NEW FEATURES
@@ -27,6 +30,10 @@
 * `ddbs_install()`: gains a `repos` argument to install an extension from a specific DuckDB repository (e.g. `"core"`, `"core_nightly"`, `"community"`). When `NULL` (default), the previous behaviour is kept (core, then community) (#144).
 
 * `ddbs_as_geojson()`: now includes all non-geometry columns as feature `properties` instead of serializing only the geometry. By default it returns a single GeoJSON `FeatureCollection` (matching `geojsonsf::sf_geojson()`); pass `feature_collection = FALSE` for a vector with one `Feature` per row (#141).
+
+## BUG FIXES
+
+* `ddbs_install()`: now tries `LOAD` before `INSTALL` for non-upgrade calls. This avoids writing to `~/.duckdb/extensions/` when the extension is already bundled (as `spatial` is in DuckDB >= 1.5), fixing failures in read-only environments such as CRAN's Debian check systems (#issue).
 
 
 # duckspatial 1.1.2
