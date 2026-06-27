@@ -172,6 +172,10 @@ describe("ddbs_as_hexwkb()", {
 ## - CHECK 2.1: errors
 describe("ddbs_as_geojson()", {
 
+  ## encoding feature properties needs the DuckDB json extension (to_json);
+  ## skip where it is not available (e.g. offline CI such as r-hub)
+  skip_if(isFALSE(check_installed_extension(conn_test, "json")), "json extension not available")
+
   ### EXPECTED BEHAVIOR -------------------------------------------------
   describe("expected behavior", {
 

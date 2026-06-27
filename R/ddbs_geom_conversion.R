@@ -156,7 +156,15 @@ ddbs_as_geojson <- function(
 
   ## Per-row properties as compact JSON text. to_json() handles type formatting
   ## and string escaping; '{}' when there are no non-geometry columns.
+  ## to_json() comes from the DuckDB `json` extension, which is only needed when
+  ## there are non-geometry columns to encode as feature properties.
   if (length(prop_cols)) {
+    if (isFALSE(check_loaded_extension(target_conn, "json"))) {
+      cli::cli_abort(c(
+        "{.fn ddbs_as_geojson} needs the DuckDB {.pkg json} extension to encode feature properties.",
+        "i" = "Install it with {.code ddbs_install(conn, extension = \"json\")}, or drop the non-geometry columns first."
+      ))
+    }
     prop_fields <- paste(sprintf('"%s" := "%s"', prop_cols, prop_cols), collapse = ", ")
     props_sql   <- sprintf("to_json(struct_pack(%s))::VARCHAR", prop_fields)
   } else {

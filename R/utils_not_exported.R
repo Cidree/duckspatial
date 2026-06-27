@@ -1572,3 +1572,71 @@ create_duckspatial_macros <- function(conn) { # nocov start
   invisible(lapply(macros, DBI::dbExecute, conn = conn))
 
 } # nocov end
+
+
+
+
+#' Checks if a extension is installed
+#'
+#' @keywords internal
+#' @noRd
+check_installed_extension <- function(conn = NULL, extension) {
+
+  ## Resolve connection
+  conn <- conn %||% ddbs_default_conn()
+  dbConnCheck(conn)
+  assert_character_scalar(extension, "extension")
+
+  ## Get connection information
+  ext_info <- DBI::dbGetQuery(
+    conn,
+    "SELECT * FROM duckdb_extensions() WHERE extension_name = ?",
+    params = list(tolower(extension))
+  )
+
+  ## Error if extension is not installed
+  if (isFALSE(ext_info$installed) || nrow(ext_info) == 0) {
+    return(FALSE)
+  } else {
+    return(TRUE)
+  }
+
+}
+
+
+
+#' Ensure a DuckDB extension is loaded
+#'
+#' Checks that an extension is installed (via `check_installed_extension`) and,
+#' if it is not already loaded, loads it. Returns `TRUE` when the extension is
+#' available and loaded, `FALSE` when it is not installed (and therefore cannot
+#' be loaded).
+#'
+#' @keywords internal
+#' @noRd
+check_loaded_extension <- function(conn = NULL, extension) {
+
+  ## Resolve connection
+  conn <- conn %||% ddbs_default_conn()
+  dbConnCheck(conn)
+  assert_character_scalar(extension, "extension")
+
+  ## Must be installed before it can be loaded
+  if (isFALSE(check_installed_extension(conn, extension))) {
+    return(FALSE)
+  }
+
+  ## Load it if it is not already loaded
+  ext_info <- DBI::dbGetQuery(
+    conn,
+    "SELECT * FROM duckdb_extensions() WHERE extension_name = ?",
+    params = list(tolower(extension))
+  )
+
+  if (isFALSE(ext_info$loaded)) {
+    suppressMessages(DBI::dbExecute(conn, glue::glue("LOAD {extension};")))
+  }
+
+  TRUE
+
+}
