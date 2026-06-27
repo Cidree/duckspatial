@@ -223,6 +223,8 @@ reference:
   - ddbs_exterior_ring
   - ddbs_maximum_inscribed_circle
   - ddbs_make_line
+  - ddbs_normalize
+  - ddbs_reverse
   - ddbs_vertices
   - ddbs_voronoi
 
@@ -233,6 +235,7 @@ reference:
   - ddbs_line_interpolate
   - ddbs_line_locate_point
   - ddbs_line_merge
+  - ddbs_line_node
   - ddbs_line_substring
   - ddbs_build_area
   - ddbs_make_polygon
@@ -244,6 +247,7 @@ reference:
   - ddbs_dump
   - ddbs_multi
   - ddbs_union_funs
+  - ddbs_intersection_agg
 
 - title: Coordinate Operations
   desc: Transform and manipulate coordinate systems
@@ -266,6 +270,7 @@ reference:
   contents:
   - ddbs_geometry_type
   - ddbs_make_valid
+  - ddbs_reduce_precision
   - ddbs_remove_repeated_points
   - ddbs_simplify
   - ddbs_geom_validation_funs

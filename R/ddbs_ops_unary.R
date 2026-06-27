@@ -346,6 +346,71 @@ ddbs_simplify <- function(
 
 
 
+#' Reduce the coordinate precision of geometries
+#'
+#' Snaps the coordinates of geometries to a regular grid, reducing their
+#' precision. Coordinates are rounded to the nearest multiple of \code{precision}
+#' (e.g. \code{precision = 0.1} keeps one decimal place, \code{precision = 1}
+#' snaps to integers). The CRS is preserved.
+#'
+#' @template x
+#' @param precision Numeric grid size to snap coordinates to. Smaller values keep
+#' more precision (e.g. \code{0.001}); larger values snap more aggressively
+#' (e.g. \code{1} snaps to integers).
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' countries_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/countries.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## snap coordinates to a 0.01 grid
+#' ddbs_reduce_precision(countries_ddbs, precision = 0.01)
+#' }
+ddbs_reduce_precision <- function(
+    x,
+    precision,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    # 0. Handle function-specific errors
+    assert_positive_numeric(precision, "precision")
+
+    # 1. Pass to template
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_ReducePrecision",
+        other_args = precision
+    )
+
+}
+
+
+
+
+
+
 #' Extract the exterior ring of polygons
 #'
 #' Returns the outer boundary (exterior ring) of polygon geometries. For multi-polygons, 
@@ -578,6 +643,117 @@ ddbs_convex_hull <- function(
         overwrite = overwrite,
         quiet = quiet,
         fun = "ST_ConvexHull",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+
+#' Reverse the vertex order of geometries
+#'
+#' Returns each geometry with the order of its vertices reversed (e.g. a
+#' LINESTRING running A -> B -> C becomes C -> B -> A). The geometry type and
+#' CRS are preserved.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## reverse vertex order
+#' ddbs_reverse(argentina_ddbs)
+#' }
+ddbs_reverse <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_Reverse",
+        other_args = NULL
+    )
+
+}
+
+
+
+
+
+#' Normalize geometries to a canonical form
+#'
+#' Returns each geometry in its normalized (canonical) form, ordering and
+#' orienting its components in a deterministic way. This is useful when comparing
+#' geometries that are topologically equal but differ in vertex order or
+#' component ordering. The geometry type and CRS are preserved.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## normalize geometries
+#' ddbs_normalize(argentina_ddbs)
+#' }
+ddbs_normalize <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_Normalize",
         other_args = NULL
     )
 

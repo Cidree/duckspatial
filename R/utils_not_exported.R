@@ -1518,6 +1518,7 @@ create_duckspatial_macros <- function(conn) { # nocov start
     # --- aggregation functions
     "CREATE OR REPLACE MACRO ddbs_union_agg(geom) AS ST_Union_Agg(geom);",
     "CREATE OR REPLACE MACRO ddbs_union(geom) AS ST_Union_Agg(geom);",
+    "CREATE OR REPLACE MACRO ddbs_intersection_agg(geom) AS ST_Intersection_Agg(geom);",
 
     # --- coordinate operations
     "CREATE OR REPLACE MACRO ddbs_x(geom) AS ST_X(geom);",
@@ -1559,7 +1560,11 @@ create_duckspatial_macros <- function(conn) { # nocov start
     "CREATE OR REPLACE MACRO ddbs_convex_hull(geom) AS ST_ConvexHull(geom);",
     "CREATE OR REPLACE MACRO ddbs_exterior_ring(geom) AS ST_ExteriorRing(geom);",
     "CREATE OR REPLACE MACRO ddbs_voronoi(geom) AS ST_VoronoiDiagram(geom);",
-    "CREATE OR REPLACE MACRO ddbs_build_area(geom) AS ST_BuildArea(geom);"
+    "CREATE OR REPLACE MACRO ddbs_build_area(geom) AS ST_BuildArea(geom);",
+    "CREATE OR REPLACE MACRO ddbs_line_node(geom) AS ST_Node(geom);",
+    "CREATE OR REPLACE MACRO ddbs_reduce_precision(geom, grid_size) AS ST_ReducePrecision(geom, grid_size::DOUBLE);",
+    "CREATE OR REPLACE MACRO ddbs_reverse(geom) AS ST_Reverse(geom);",
+    "CREATE OR REPLACE MACRO ddbs_normalize(geom) AS ST_Normalize(geom);"
 
 
   )

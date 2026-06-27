@@ -2,7 +2,17 @@
 
 ## NEW FEATURES
 
-* `ddbs_write_mbtiles()`: generates a Mapbox Vector Tile pyramid from a spatial dataset and writes it to an MBTiles file, ready to serve or convert to PMTiles for use with web mapping libraries such as `mapgl`.
+* `ddbs_reduce_precision()`: snaps geometry coordinates to a regular grid, reducing their precision.
+
+* `ddbs_line_node()`: nodes a set of line geometries, splitting them at every crossing and returning a fully noded `MULTILINESTRING`.
+
+* `ddbs_intersection_agg()`: computes the geometric intersection (common area) of a set of geometries, optionally grouped by one or more columns. The intersection counterpart to `ddbs_union_agg()`.
+
+* `ddbs_reverse()`: returns each geometry with the order of its vertices reversed.
+
+* `ddbs_normalize()`: returns each geometry in its normalized (canonical) form.
+
+* `ddbs_write_mbtiles()`: generates a Mapbox Vector Tile pyramid from a spatial dataset and writes it to an MBTiles file, ready to serve or convert to PMTiles.
 
 * `ddbs_as_mvt_geom()`: transforms geometries into Mapbox Vector Tile (MVT) coordinate space, clipping them to a tile's bounding box and mapping the coordinates into the tile's integer pixel space.
 
