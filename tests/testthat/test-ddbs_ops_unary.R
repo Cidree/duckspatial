@@ -1567,5 +1567,231 @@ describe("ddbs_vertices()", {
 })
 
 
+# 15. ddbs_reverse() ---------------------------------------------------------
+
+## A linestring with a known vertex order to check the reversal
+line_sf <- sf::st_sf(
+  id = 1L,
+  geometry = sf::st_sfc(
+    sf::st_linestring(matrix(c(0,0, 1,1, 2,2), ncol = 2, byrow = TRUE)),
+    crs = 4326
+  )
+)
+line_ddbs <- as_duckspatial_df(line_sf)
+
+describe("ddbs_reverse()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_reverse(argentina_ddbs)
+      output_sf   <- ddbs_reverse(argentina_sf)
+      output_conn <- ddbs_reverse("argentina", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns an sf object with mode = 'sf'", {
+      expect_s3_class(ddbs_reverse(argentina_ddbs, mode = "sf"), "sf")
+    })
+
+    it("reverses the vertex order", {
+      output <- ddbs_reverse(line_ddbs, mode = "sf")
+      coords <- sf::st_coordinates(output)[, c("X", "Y")]
+      expect_equal(unname(coords), matrix(c(2,2, 1,1, 0,0), ncol = 2, byrow = TRUE))
+    })
+
+    it("preserves the CRS", {
+      output <- ddbs_reverse(line_ddbs, mode = "sf")
+      expect_equal(sf::st_crs(output), sf::st_crs(4326))
+    })
+
+    it("is its own inverse (reverse twice = identity)", {
+      twice <- ddbs_reverse(ddbs_reverse(line_ddbs), mode = "sf")
+      expect_equal(sf::st_coordinates(twice), sf::st_coordinates(line_sf))
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_reverse(argentina_ddbs))
+      expect_message(ddbs_reverse("argentina", conn = conn_test, name = "reversed"))
+      expect_no_message(ddbs_reverse("argentina", conn = conn_test, name = "reversed", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes a table when name is provided", {
+      expect_true(ddbs_reverse("argentina", conn = conn_test, name = "reversed2"))
+      expect_true(DBI::dbExistsTable(conn_test, "reversed2"))
+    })
+  })
+
+  describe("errors", {
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_reverse("argentina", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_reverse(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_reverse(argentina_ddbs, conn = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_reverse(x = "999", conn = conn_test))
+    })
+  })
+})
+
+
+# 16. ddbs_normalize() -------------------------------------------------------
+
+describe("ddbs_normalize()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_normalize(argentina_ddbs)
+      output_sf   <- ddbs_normalize(argentina_sf)
+      output_conn <- ddbs_normalize("argentina", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns an sf object with mode = 'sf'", {
+      expect_s3_class(ddbs_normalize(argentina_ddbs, mode = "sf"), "sf")
+    })
+
+    it("preserves geometry type and CRS", {
+      output <- ddbs_normalize(argentina_ddbs, mode = "sf")
+      expect_equal(sf::st_crs(output), sf::st_crs(argentina_sf))
+      expect_setequal(
+        as.character(sf::st_geometry_type(output)),
+        as.character(sf::st_geometry_type(argentina_sf))
+      )
+    })
+
+    it("is idempotent (normalize twice = normalize once)", {
+      once  <- ddbs_normalize(argentina_ddbs, mode = "sf")
+      twice <- ddbs_normalize(ddbs_normalize(argentina_ddbs), mode = "sf")
+      expect_equal(sf::st_coordinates(twice), sf::st_coordinates(once))
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_normalize(argentina_ddbs))
+      expect_message(ddbs_normalize("argentina", conn = conn_test, name = "normalized"))
+      expect_no_message(ddbs_normalize("argentina", conn = conn_test, name = "normalized", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes a table when name is provided", {
+      expect_true(ddbs_normalize("argentina", conn = conn_test, name = "normalized2"))
+      expect_true(DBI::dbExistsTable(conn_test, "normalized2"))
+    })
+  })
+
+  describe("errors", {
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_normalize("argentina", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_normalize(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_normalize(argentina_ddbs, conn = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_normalize(x = "999", conn = conn_test))
+    })
+  })
+})
+
+
+# 17. ddbs_reduce_precision() ------------------------------------------------
+
+## A point with imprecise coordinates to snap to a grid
+prec_sf <- sf::st_sf(
+  id = 1L,
+  geometry = sf::st_sfc(sf::st_point(c(1.23456, 2.98765)), crs = 4326)
+)
+prec_ddbs <- as_duckspatial_df(prec_sf)
+ddbs_write_table(conn_test, prec_sf, "prec")
+
+describe("ddbs_reduce_precision()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_reduce_precision(prec_ddbs, precision = 0.1)
+      output_sf   <- ddbs_reduce_precision(prec_sf, precision = 0.1)
+      output_conn <- ddbs_reduce_precision("prec", precision = 0.1, conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns an sf object with mode = 'sf'", {
+      expect_s3_class(ddbs_reduce_precision(prec_ddbs, precision = 0.1, mode = "sf"), "sf")
+    })
+
+    it("snaps coordinates to the grid", {
+      out01 <- ddbs_reduce_precision(prec_ddbs, precision = 0.1, mode = "sf")
+      expect_equal(unname(sf::st_coordinates(out01)[1, c("X", "Y")]), c(1.2, 3.0))
+
+      out1 <- ddbs_reduce_precision(prec_ddbs, precision = 1, mode = "sf")
+      expect_equal(unname(sf::st_coordinates(out1)[1, c("X", "Y")]), c(1, 3))
+    })
+
+    it("preserves the CRS", {
+      expect_equal(sf::st_crs(ddbs_reduce_precision(prec_ddbs, precision = 0.1, mode = "sf")), sf::st_crs(4326))
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_reduce_precision(prec_ddbs, precision = 0.1))
+      expect_message(ddbs_reduce_precision("prec", precision = 0.1, conn = conn_test, name = "prec_out"))
+      expect_no_message(
+        ddbs_reduce_precision("prec", precision = 0.1, conn = conn_test, name = "prec_out", overwrite = TRUE, quiet = TRUE)
+      )
+    })
+
+    it("writes a table when name is provided", {
+      expect_true(ddbs_reduce_precision("prec", precision = 0.1, conn = conn_test, name = "prec_out2"))
+      expect_true(DBI::dbExistsTable(conn_test, "prec_out2"))
+    })
+  })
+
+  describe("errors", {
+
+    it("requires the precision argument", {
+      expect_error(ddbs_reduce_precision(prec_ddbs))
+    })
+
+    it("validates precision is numeric", {
+      expect_error(ddbs_reduce_precision(prec_ddbs, precision = "a"))
+    })
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_reduce_precision("prec", precision = 0.1, conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_reduce_precision(999, precision = 0.1))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_reduce_precision("999", precision = 0.1, conn = conn_test))
+    })
+  })
+})
+
+
 ## stop connection
 ddbs_stop_conn(conn_test)

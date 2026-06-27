@@ -437,6 +437,61 @@ ddbs_line_merge <- function(
 
 
 
+#' Node a set of linestrings
+#'
+#' Fully nodes a collection of line geometries, splitting them at every point
+#' where they cross or touch and adding a node at each intersection. The result
+#' is always a \code{MULTILINESTRING}. A polygon input is noded into its
+#' boundary linework.
+#'
+#' @template x
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## read data
+#' rivers_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/rivers.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## node the river network (split lines at every crossing)
+#' rivers_noded <- ddbs_line_node(rivers_ddbs)
+#' }
+ddbs_line_node <- function(
+    x,
+    conn = NULL,
+    name = NULL,
+    mode = NULL,
+    overwrite = FALSE,
+    quiet = FALSE) {
+
+    template_unary_ops(
+        x = x,
+        conn = conn,
+        name = name,
+        mode = mode,
+        overwrite = overwrite,
+        quiet = quiet,
+        fun = "ST_Node",
+        other_args = NULL
+    )
+
+}
+
+
+
+
 #' Create a polygon from a single closed linestring
 #'
 #' Converts a single closed linestring geometry into a polygon. The linestring 

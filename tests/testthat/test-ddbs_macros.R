@@ -1,9 +1,4 @@
 
-
-countries_ddbs
-rivers_ddbs
-points_ddbs
-
 # 0. Set up --------------------------------------------------------------
 
 ## skip tests on CRAN because they take too much time
@@ -206,15 +201,6 @@ testthat::describe("Format conversion functions", {
     expect_equal(normal_result, macro_result$hexwkb)
   })
 
-  ## DDBS_AS_GEOJSON
-  testthat::it("ddbs_as_geojson() macro works", {
-    normal_result <- ddbs_as_geojson(countries_ddbs)
-    macro_result  <- countries_ddbs |>
-      dplyr::mutate(geojson = ddbs_as_geojson(geometry)) |>
-      ddbs_collect()
-    expect_equal(normal_result, macro_result$geojson)
-  })
-
 })
 
 
@@ -262,6 +248,26 @@ testthat::describe("Extent functions", {
       dplyr::arrange(RIVER_NAME)
 
     expect_equal(normal_result$length, macro_result$length)
+  })
+
+  ## DDBS_INTERSECTION_AGG
+  testthat::it("ddbs_intersection_agg() macro works", {
+    sq <- function(xmin, ymin, side) sf::st_polygon(list(matrix(
+      c(xmin, ymin, xmin + side, ymin, xmin + side, ymin + side, xmin, ymin + side, xmin, ymin),
+      ncol = 2, byrow = TRUE
+    )))
+    inter_ddbs <- as_duckspatial_df(sf::st_sf(
+      grp = c("a", "a", "a"),
+      geometry = sf::st_sfc(sq(0, 0, 3), sq(1, 1, 3), sq(2, 2, 3), crs = 4326)
+    ))
+
+    normal_result <- ddbs_intersection_agg(inter_ddbs, by = "grp") |>
+      ddbs_collect()
+    macro_result  <- inter_ddbs |>
+      dplyr::summarise(geometry = ddbs_intersection_agg(geometry), .by = grp) |>
+      ddbs_collect()
+
+    expect_equal(as.numeric(sf::st_area(normal_result)), as.numeric(sf::st_area(macro_result)))
   })
 
 })
@@ -374,6 +380,42 @@ testthat::describe("Geometry processing functions", {
       dplyr::mutate(geom = ddbs_build_area(geom)) |>
       ddbs_collect()
     expect_equal(normal_result$geom, macro_result$geom)
+  })
+
+  ## DDBS_REVERSE
+  testthat::it("ddbs_reverse() macro works", {
+    normal_result <- ddbs_reverse(countries_ddbs) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_reverse(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_NORMALIZE
+  testthat::it("ddbs_normalize() macro works", {
+    normal_result <- ddbs_normalize(countries_ddbs) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_normalize(geometry)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
+  })
+
+  ## DDBS_LINE_NODE
+  testthat::it("ddbs_line_node() macro works on lines", {
+    normal_result <- ddbs_line_node(rivers_ddbs) |> ddbs_collect()
+    macro_result  <- rivers_ddbs |>
+      dplyr::mutate(geom = ddbs_line_node(geom)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geom, macro_result$geom)
+  })
+
+  ## DDBS_REDUCE_PRECISION
+  testthat::it("ddbs_reduce_precision() macro works", {
+    normal_result <- ddbs_reduce_precision(countries_ddbs, precision = 0.01) |> ddbs_collect()
+    macro_result  <- countries_ddbs |>
+      dplyr::mutate(geometry = ddbs_reduce_precision(geometry, 0.01)) |>
+      ddbs_collect()
+    expect_equal(normal_result$geometry, macro_result$geometry)
   })
 
 })

@@ -1,5 +1,35 @@
 
-# duckspatial 1.1.3
+
+
+# duckspatial (development version)
+
+## NEW FEATURES
+
+* `ddbs_extension_info()`: prints a `glimpse()` of a DuckDB extension's row from `duckdb_extensions()` (the spatial extension by default), showing its installed/loaded status, version, and install path.
+
+* `ddbs_reduce_precision()`: snaps geometry coordinates to a regular grid, reducing their precision.
+
+* `ddbs_line_node()`: nodes a set of line geometries, splitting them at every crossing and returning a fully noded `MULTILINESTRING`.
+
+* `ddbs_intersection_agg()`: computes the geometric intersection (common area) of a set of geometries, optionally grouped by one or more columns. The intersection counterpart to `ddbs_union_agg()`.
+
+* `ddbs_reverse()`: returns each geometry with the order of its vertices reversed.
+
+* `ddbs_normalize()`: returns each geometry in its normalized (canonical) form.
+
+* `ddbs_write_mbtiles()`: generates a Mapbox Vector Tile pyramid from a spatial dataset and writes it to an MBTiles file, ready to serve or convert to PMTiles.
+
+* `ddbs_as_mvt_geom()`: transforms geometries into Mapbox Vector Tile (MVT) coordinate space, clipping them to a tile's bounding box and mapping the coordinates into the tile's integer pixel space.
+
+* `ddbs_geom_from_text()`, `ddbs_geom_from_wkb()`, `ddbs_geom_from_hexwkb()`, `ddbs_geom_from_hexewkb()`, `ddbs_geom_from_geojson()`: parse serialized geometries (WKT, WKB, HEXWKB, HEXEWKB, GeoJSON) into a spatial object. These are the inverses of the `ddbs_as_*()` serializers.
+
+* `ddbs_get_ninterior_rings()`: returns the number of interior rings (holes) in a POLYGON geometry.
+
+## ENHANCEMENTS
+
+* `ddbs_install()`: gains a `repos` argument to install an extension from a specific DuckDB repository (e.g. `"core"`, `"core_nightly"`, `"community"`). When `NULL` (default), the previous behaviour is kept (core, then community) (#144).
+
+* `ddbs_as_geojson()`: now includes all non-geometry columns as feature `properties` instead of serializing only the geometry. By default it returns a single GeoJSON `FeatureCollection` (matching `geojsonsf::sf_geojson()`); pass `feature_collection = FALSE` for a vector with one `Feature` per row (#141).
 
 ## BUG FIXES
 
