@@ -14,7 +14,7 @@ ddbs_as_wkb(x, conn = NULL)
 
 ddbs_as_hexwkb(x, conn = NULL)
 
-ddbs_as_geojson(x, conn = NULL)
+ddbs_as_geojson(x, conn = NULL, feature_collection = TRUE)
 }
 \arguments{
 \item{x}{Input spatial data. Can be:
@@ -28,6 +28,11 @@ Data is returned from this object.}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
+
+\item{feature_collection}{Logical, only used by \code{ddbs_as_geojson()}. If \code{TRUE}
+(default), all rows are returned as a single GeoJSON \code{FeatureCollection}
+string. If \code{FALSE}, a character vector with one \code{Feature} string per row is
+returned.}
 }
 \value{
 Depending on the function:
@@ -35,7 +40,10 @@ Depending on the function:
 \item \code{ddbs_as_text()} returns a character vector of WKT geometries
 \item \code{ddbs_as_wkb()} returns a list of raw vectors (binary WKB)
 \item \code{ddbs_as_hexwkb()} returns a character vector of HEXWKB strings
-\item \code{ddbs_as_geojson()} returns a character vector of GeoJSON strings
+\item \code{ddbs_as_geojson()} returns a single GeoJSON \code{FeatureCollection}
+string (class \code{"geojson"}) when \code{feature_collection = TRUE}, or a
+character vector of \code{Feature} strings (one per row) when \code{FALSE};
+non-geometry columns are included as feature properties
 }
 }
 \description{
@@ -45,7 +53,7 @@ serialization functions.
 \item \code{ddbs_as_text()} – Convert geometries to Well-Known Text (WKT)
 \item \code{ddbs_as_wkb()} – Convert geometries to Well-Known Binary (WKB)
 \item \code{ddbs_as_hexwkb()} – Convert geometries to hexadecimal Well-Known Binary (HEXWKB)
-\item \code{ddbs_as_geojson()} – Convert geometries to GeoJSON
+\item \code{ddbs_as_geojson()} – Convert to GeoJSON (a \code{FeatureCollection} or one \code{Feature} per row)
 }
 }
 \details{
@@ -54,6 +62,13 @@ functions (\code{ST_AsText}, \code{ST_AsWKB}, \code{ST_AsHEXWKB}, and \code{ST_A
 
 They are useful for exporting geometries into widely supported formats for
 interoperability with external spatial tools, databases, and web services.
+
+Unlike the other serializers, which only encode the geometry, \code{ddbs_as_geojson()}
+produces complete GeoJSON \code{Feature}s: the geometry is placed in the \code{geometry}
+member and all remaining (non-geometry) columns are included as feature
+\code{properties}. By default the features are wrapped in a single \code{FeatureCollection},
+the canonical GeoJSON artifact for writing \code{.geojson} files and feeding web
+services and mapping libraries.
 }
 \examples{
 \dontrun{
@@ -66,7 +81,12 @@ argentina_ddbs <- ddbs_open_dataset(
 ddbs_as_text(argentina_ddbs)
 ddbs_as_wkb(argentina_ddbs)
 ddbs_as_hexwkb(argentina_ddbs)
+
+## a single FeatureCollection (default)
 ddbs_as_geojson(argentina_ddbs)
+
+## one Feature string per row
+ddbs_as_geojson(argentina_ddbs, feature_collection = FALSE)
 }
 
 }

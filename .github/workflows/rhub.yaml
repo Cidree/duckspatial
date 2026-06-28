@@ -60,6 +60,19 @@ jobs:
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
+      - name: Install Quarto dependencies (sudo, jq, wget)
+        run: |
+          if command -v apt-get >/dev/null; then
+            apt-get update -q && apt-get install -y -q sudo jq wget
+          elif command -v dnf >/dev/null; then
+            dnf install -y sudo jq wget
+          elif command -v yum >/dev/null; then
+            yum install -y sudo jq wget
+          else
+            echo "No supported package manager found (apt-get/dnf/yum)" >&2
+            exit 1
+          fi
+      - uses: quarto-dev/quarto-actions/setup@v2
       - uses: r-hub/actions/run-check@v1
         with:
           token: ${{ secrets.RHUB_TOKEN }}
@@ -89,6 +102,7 @@ jobs:
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
+      - uses: quarto-dev/quarto-actions/setup@v2
       - uses: r-hub/actions/run-check@v1
         with:
           job-config: ${{ matrix.config.job-config }}

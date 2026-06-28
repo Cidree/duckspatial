@@ -91,7 +91,18 @@ Tests use **testthat edition 3**. `tests/testthat/setup.R` loads shared spatial 
 
 ## Adding a New Function
 
-When implementing a new exported function, complete **all four steps** before considering the task done.
+When implementing a new exported function, first write a plan (step 0), get it approved, then complete the remaining steps before considering the task done.
+
+### 0. Plan first (before writing any code)
+
+Present a short, written plan and wait for approval before implementing. The plan should cover:
+
+- **Name**: the proposed `ddbs_*` name, and whether it should follow an existing family convention (e.g. `ddbs_line_*` for linestring ops, `ddbs_get_n*` for counts) rather than a bare mirror of the `ST_*` name.
+- **R file**: which `R/` script it goes in (see Key File Map).
+- **pkgdown**: which `reference:` section in `_pkgdown.yml` it belongs to.
+- **Macro**: whether to also register a DuckDB macro (in `R/utils_not_exported.R`) so it works inside `dplyr::mutate()`/`summarise()`.
+
+Before presenting the plan, verify the DuckDB function empirically (signature, return type, CRS behaviour, edge cases) with a quick query rather than assuming.
 
 ### 1. Implementation and documentation
 

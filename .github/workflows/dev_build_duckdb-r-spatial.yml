@@ -40,7 +40,7 @@ jobs:
     
     steps:
       - name: Checkout DuckDB
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: duckdb/duckdb
           ref: ${{ inputs.duckdb_ref || 'main' }}
@@ -59,7 +59,7 @@ jobs:
           echo "DuckDB Version: $DUCKDB_VERSION"
 
       - name: Checkout DuckDB R Package
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ inputs.duckdb_r_repo || 'duckdb/duckdb-r' }}
           ref: ${{ inputs.duckdb_r_ref || 'main' }}
@@ -198,7 +198,7 @@ jobs:
 
       # Checkout DuckDB for spatial extension build
       - name: Checkout DuckDB
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: duckdb/duckdb
           ref: ${{ needs.vendor.outputs.duckdb_sha }}
@@ -207,7 +207,7 @@ jobs:
 
       # Checkout duckdb-spatial
       - name: Checkout DuckDB Spatial
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ inputs.spatial_repo || 'duckdb/duckdb-spatial' }}
           ref: ${{ inputs.spatial_ref || 'main' }}

@@ -23,7 +23,8 @@ template_unary_ops <- function(
   quiet = FALSE,
   fun,
   other_args = NULL,
-  additional_clauses = NULL) {
+  additional_clauses = NULL,
+  drop_crs = FALSE) {
 
   # 0. Validate inputs
   assert_xy(x, "x")
@@ -93,16 +94,20 @@ template_unary_ops <- function(
   }
 
   ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  ## When the operation moves geometries out of their CRS (e.g. ST_AsMVTGeom,
+  ## which maps to tile pixel coordinates), the output must not carry the source
+  ## CRS metadata.
+  out_crs <- if (drop_crs) sf::st_crs(NA) else crs_x
   st_function <- glue::glue("{fun}({args})")
   base.query <- glue::glue("
     SELECT *
-    REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+    REPLACE ({build_geom_query(st_function, name, out_crs, mode)} AS {x_geom})
     FROM {x_list$query_name}
     {additional_clauses};
   ")
 
 
-  # 3. Table creation if name is provided, or 
+  # 3. Table creation if name is provided, or
   # create duckspatial_df or sf object if name is NULL
   if (!is.null(name)) {
     create_duckdb_table(
@@ -117,7 +122,7 @@ template_unary_ops <- function(
       query  = base.query,
       conn   = target_conn,
       mode   = mode,
-      crs    = crs_x,
+      crs    = out_crs,
       x_geom = x_geom
     )
   }
@@ -191,6 +196,143 @@ template_geometry_conversion <- function(
   data_vec <- data_tbl$geometry
 
   return(data_vec)
+
+}
+
+
+
+
+
+#' Template for parsing serialized geometries into a spatial object
+#'
+#' Inverse of \code{template_geometry_conversion()}: takes an R vector of
+#' serialized geometries (WKT, HEXWKB, GeoJSON or a list of raw WKB vectors)
+#' and builds a geometry column via a DuckDB \code{ST_GeomFrom*} function.
+#'
+#' @param x Character vector (or list of raw vectors for WKB) of serialized
+#'   geometries.
+#' @param crs CRS to assign to the resulting geometries.
+#' @param ... Named vectors of additional attribute columns.
+#' @param geom_col Name of the output geometry column.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#' @param fun The DuckDB \code{ST_GeomFrom*} function to use.
+#' @param input Either \code{"character"} (text input) or \code{"blob"} (raw WKB).
+#'
+#' @keywords internal
+#' @noRd
+template_geom_from <- function(
+  x,
+  crs = NULL,
+  ...,
+  geom_col = "geometry",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE,
+  fun,
+  input = c("character", "blob")) {
+
+  input <- match.arg(input)
+
+  # 0. Validate inputs
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+  assert_character_scalar(geom_col, "geom_col")
+
+  if (input == "character") {
+    if (!is.character(x)) {
+      cli::cli_abort("{.arg x} must be a character vector of serialized geometries.")
+    }
+  } else {
+    if (!is.list(x) || !all(vapply(x, is.raw, logical(1)))) {
+      cli::cli_abort("{.arg x} must be a list of raw vectors (WKB).")
+    }
+  }
+
+  n <- length(x)
+
+  dots <- list(...)
+  if (length(dots) > 0) {
+    if (is.null(names(dots)) || any(names(dots) == "")) {
+      cli::cli_abort("All arguments passed via {.arg ...} must be named.")
+    }
+    conflict <- intersect(names(dots), geom_col)
+    if (length(conflict) > 0) {
+      cli::cli_abort(
+        "Column name{?s} {.val {conflict}} in {.arg ...} conflict with the geometry column name."
+      )
+    }
+    bad_len <- names(dots)[vapply(dots, length, integer(1)) != n]
+    if (length(bad_len) > 0) {
+      cli::cli_abort(
+        "Extra column{?s} {.val {bad_len}} must have the same length as {.arg x} ({n})."
+      )
+    }
+  }
+
+  if (!is.null(name) && is.null(conn)) {
+    cli::cli_abort(
+      "If {.arg name} is provided, {.arg conn} must be a valid DuckDB connection."
+    )
+  }
+
+  # 1. Resolve connection and mode
+  target_conn <- conn %||% ddbs_default_conn()
+  mode        <- get_mode(mode, name)
+
+  # 2. Build a data frame with the serialized column (+ extras) and write a temp
+  #    table. Use an index column to guarantee the right number of rows when the
+  #    serialized column is a list of raw vectors.
+  scol <- ".ddbs_serialized"
+  df   <- data.frame(.ddbs_idx = seq_len(n))
+  df[[scol]] <- x
+  for (nm in names(dots)) df[[nm]] <- dots[[nm]]
+  df[[".ddbs_idx"]] <- NULL
+
+  tmp_name <- ddbs_temp_table_name()
+  DBI::dbWriteTable(target_conn, tmp_name, df, temporary = TRUE)
+  on.exit(DBI::dbRemoveTable(target_conn, tmp_name), add = TRUE)
+
+  # 3. Build the ST_GeomFrom* expression (cast to GEOMETRY so build_geom_query
+  #    can further annotate it with the CRS)
+  st_fun    <- glue::glue('({fun}("{scol}")::GEOMETRY)')
+  geom_expr <- build_geom_query(st_fun, name, crs, mode)
+
+  # 4. Build the SELECT clause, dropping the serialized column and keeping extras
+  select_clause <- if (length(dots) > 0) {
+    glue::glue('SELECT * EXCLUDE ("{scol}"),')
+  } else {
+    "SELECT"
+  }
+  base_query <- glue::glue(
+    '{select_clause} {geom_expr} AS "{geom_col}" FROM "{tmp_name}";'
+  )
+
+  # 5. Handle output
+  if (!is.null(name)) {
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base_query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
+      query  = base_query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs,
+      x_geom = geom_col
+    )
+  }
 
 }
 

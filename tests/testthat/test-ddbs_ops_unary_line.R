@@ -1063,5 +1063,86 @@ describe("ddbs_line_locate_point()", {
 
 
 
+# 10. ddbs_line_node() ---------------------------------------------------
+
+## Two crossing lines in a single MULTILINESTRING feature -> noding splits them
+## at the crossing point (1,1), yielding a MULTILINESTRING of 4 parts.
+cross_sf <- sf::st_sf(
+  id = 1L,
+  geometry = sf::st_sfc(
+    sf::st_multilinestring(list(
+      matrix(c(0,0, 2,2), ncol = 2, byrow = TRUE),
+      matrix(c(0,2, 2,0), ncol = 2, byrow = TRUE)
+    )),
+    crs = 4326
+  )
+)
+cross_ddbs <- as_duckspatial_df(cross_sf)
+
+describe("ddbs_line_node()", {
+
+  describe("expected behavior", {
+
+    it("works on all formats", {
+      output_ddbs <- ddbs_line_node(rivers_ddbs)
+      output_sf   <- ddbs_line_node(rivers_sf)
+      output_conn <- ddbs_line_node("rivers", conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_s3_class(output_sf,   "duckspatial_df")
+      expect_s3_class(output_conn, "duckspatial_df")
+    })
+
+    it("returns an sf object with mode = 'sf'", {
+      expect_s3_class(ddbs_line_node(rivers_ddbs, mode = "sf"), "sf")
+    })
+
+    it("splits crossing lines and returns a MULTILINESTRING", {
+      out <- ddbs_line_node(cross_ddbs, mode = "sf")
+      expect_equal(as.character(sf::st_geometry_type(out)), "MULTILINESTRING")
+      ## two crossing lines -> 4 segments after noding at (1,1)
+      expect_equal(length(sf::st_geometry(out)[[1]]), 4L)
+    })
+
+    it("preserves the CRS", {
+      expect_equal(sf::st_crs(ddbs_line_node(cross_ddbs, mode = "sf")), sf::st_crs(4326))
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_line_node(rivers_ddbs))
+      expect_message(ddbs_line_node("rivers", conn = conn_test, name = "noded"))
+      expect_no_message(
+        ddbs_line_node("rivers", conn = conn_test, name = "noded", overwrite = TRUE, quiet = TRUE)
+      )
+    })
+
+    it("writes a table when name is provided", {
+      expect_true(ddbs_line_node("rivers", conn = conn_test, name = "noded2"))
+      expect_true(DBI::dbExistsTable(conn_test, "noded2"))
+    })
+  })
+
+  describe("errors", {
+
+    it("requires connection when using table names", {
+      expect_error(ddbs_line_node("rivers", conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_line_node(x = 999))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_line_node(rivers_ddbs, conn = 999))
+    })
+
+    it("validates table name exists", {
+      expect_error(ddbs_line_node(x = "999", conn = conn_test))
+    })
+  })
+})
+
+
+
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)

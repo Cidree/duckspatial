@@ -1,6 +1,7 @@
 #' Count geometry components
 #'
-#' Functions to count the number of points or sub-geometries in a geometry
+#' Functions to count the number of points, sub-geometries or interior rings in
+#' a geometry
 #'
 #' @template x
 #' @template new_column
@@ -21,6 +22,10 @@
 #'   GEOMETRYCOLLECTION or MULTI* geometry (e.g. MULTIPOLYGON, MULTILINESTRING).
 #'   Returns 1 for simple (non-collection) geometry types.
 #'
+#' - `ddbs_get_ninterior_rings()` returns the number of interior rings (holes)
+#'   in a POLYGON geometry. Returns 0 for polygons without holes and `NULL` for
+#'   non-polygon geometry types.
+#'
 #' @template returns_mode
 #'
 #' @examples
@@ -35,9 +40,10 @@
 #'   package = "duckspatial")
 #' )
 #'
-#' ## count points and sub-geometries
+#' ## count points, sub-geometries and interior rings
 #' ddbs_get_npoints(countries_ddbs)
 #' ddbs_get_ngeometries(countries_ddbs)
+#' ddbs_get_ninterior_rings(countries_ddbs)
 #' }
 #'
 #' @name ddbs_get_npoints
@@ -92,6 +98,32 @@ ddbs_get_ngeometries <- function(
     overwrite = overwrite,
     quiet = quiet,
     fun = "ST_NumGeometries"
+  )
+
+}
+
+
+
+#' @rdname ddbs_get_npoints
+#' @export
+ddbs_get_ninterior_rings <- function(
+  x,
+  new_column = "ninterior_rings",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+
+  template_new_column(
+    x = x,
+    new_column = new_column,
+    conn = conn,
+    name = name,
+    mode = mode,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_NumInteriorRings"
   )
 
 }

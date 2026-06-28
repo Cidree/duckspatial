@@ -476,6 +476,158 @@ ddbs_union_agg <- function(
 
 
 
+#' Aggregate the intersection of geometries
+#'
+#' Computes the geometric intersection of a set of geometries — the area common
+#' to all of them — using DuckDB's `ST_Intersection_Agg()` aggregate. This is the
+#' intersection counterpart to [ddbs_union_agg()].
+#'
+#' @template x
+#' @param by Character vector of one or more column names to group by. The
+#'   intersection is computed within each group. When \code{NULL} (default), all
+#'   geometries are intersected into a single geometry.
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## create a connection and three overlapping polygons
+#' conn <- ddbs_create_conn()
+#' polys <- sf::st_as_sf(
+#'   data.frame(grp = c("a", "a", "a")),
+#'   geometry = sf::st_sfc(
+#'     sf::st_polygon(list(matrix(c(0,0, 3,0, 3,3, 0,3, 0,0), ncol = 2, byrow = TRUE))),
+#'     sf::st_polygon(list(matrix(c(1,1, 4,1, 4,4, 1,4, 1,1), ncol = 2, byrow = TRUE))),
+#'     sf::st_polygon(list(matrix(c(2,2, 5,2, 5,5, 2,5, 2,2), ncol = 2, byrow = TRUE))),
+#'     sf::st_polygon(list(matrix(c(3,3, 6,3, 6,6, 3,6, 3,3), ncol = 2, byrow = TRUE)))
+#'   ),
+#'   crs = 4326
+#' )
+#'
+#' ## intersect all geometries into their common area
+#' polys_inters <- ddbs_intersection_agg(polys, mode = "sf")
+#' 
+#' ## intersect within groups
+#' polys_inters_grp <- ddbs_intersection_agg(polys, by = "grp", mode = "sf")
+#' 
+#' ## plot them
+#' plot(polys["grp"], key.pos = NULL, reset = FALSE)
+#' plot(polys_inters_grp["grp"], pal = c("red", "blue"), add = TRUE)
+#' plot(sf::st_geometry(polys_inters), col = "black", pch = 19, cex = 2, add = TRUE)
+#' }
+ddbs_intersection_agg <- function(
+  x,
+  by = NULL,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+
+
+  # 0. Validate inputs
+  assert_xy(x, "x")
+  assert_conn_x_name(conn, x, name)
+  assert_conn_character(conn, x)
+  assert_name(name)
+  assert_name(mode, "mode")
+  assert_logic(overwrite, "overwrite")
+  assert_logic(quiet, "quiet")
+  if (!is.null(by) && !is.character(by)) {
+    cli::cli_abort("{.arg by} must be a character vector of column names or {.code NULL}.")
+  }
+
+
+  # 1. Prepare inputs
+
+  ## 1.1. Normalize inputs (coerce tbl_duckdb_connection to duckspatial_df,
+  ## validate character table names)
+  x <- normalize_spatial_input(x, conn)
+
+  ## 1.2. Pre-extract attributes
+  crs_x    <- ddbs_crs(x, conn)
+  sf_col_x <- attr(x, "sf_column")
+  mode     <- get_mode(mode, name)
+
+  ## 1.3. Resolve spatial connections and handle imports
+  resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
+  target_conn  <- resolve_conn$conn
+  x            <- resolve_conn$x
+  ## register cleanup of the connection
+  on.exit(resolve_conn$cleanup(), add = TRUE)
+
+  ## 1.4. Get list with query names for the input data
+  x_list <- get_query_list(x, target_conn)
+  on.exit(x_list$cleanup(), add = TRUE)
+
+
+  # 2. Prepare the query
+
+  ## 2.1. Get the geometry column name (try to extract from attributes, if not
+  ## available get it from the database)
+  x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
+  assert_geometry_column(x_geom, x_list)
+
+  ## 2.2. Build the base query. With `by` we group; without it we aggregate the
+  ## whole dataset into a single geometry.
+  st_function <- glue::glue("ST_Intersection_Agg({x_geom})")
+  geom_expr   <- build_geom_query(st_function, name, crs_x, mode)
+
+  if (is.null(by)) {
+    base.query <- glue::glue("
+      SELECT
+        {geom_expr} AS {x_geom}
+      FROM
+        {x_list$query_name};
+    ")
+  } else {
+    by_cols <- paste0(by, collapse = ", ")
+    base.query <- glue::glue("
+      SELECT
+        {by_cols},
+        {geom_expr} AS {x_geom}
+      FROM
+        {x_list$query_name}
+      GROUP BY
+        {by_cols};
+    ")
+  }
+
+
+  # 3. Table creation if name is provided, or
+  # create duckspatial_df or sf object if name is NULL
+  if (!is.null(name)) {
+    create_duckdb_table(
+      conn      = target_conn,
+      name      = name,
+      query     = base.query,
+      overwrite = overwrite,
+      quiet     = quiet
+    )
+  } else {
+    ddbs_handle_query(
+      query  = base.query,
+      conn   = target_conn,
+      mode   = mode,
+      crs    = crs_x,
+      x_geom = x_geom
+    )
+  }
+}
+
+
+
+
+
 #' Dumps geometries into their component parts
 #'
 #' Decomposes multi-part or complex geometries into individual simple geometry

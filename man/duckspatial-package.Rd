@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Fast & memory-efficient functions to analyze and manipulate large spatial data data sets. It leverages the fast analytical capabilities of 'DuckDB' and its spatial extension (see \url{https://duckdb.org/docs/stable/core_extensions/spatial/overview}) while maintaining compatibility with R’s spatial data ecosystem to work with spatial vector data.
+Fast and memory-efficient functions to analyze and manipulate large spatial datasets. It leverages the fast analytical capabilities of ‘DuckDB’ and its spatial extension (see \url{https://duckdb.org/docs/stable/core_extensions/spatial/overview}) while maintaining compatibility with R’s spatial data ecosystem to work with spatial vector data.
 }
 \seealso{
 Useful links:
