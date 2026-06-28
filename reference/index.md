@@ -12,6 +12,8 @@ Install the spatial extension and manage DuckDB connections
   : Checks and installs the Spatial extension
 - [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)
   : Loads the Spatial extension
+- [`ddbs_extension_info()`](https://cidree.github.io/duckspatial/reference/ddbs_extension_info.md)
+  : Glimpse the status of a DuckDB extension
 - [`ddbs_options()`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)
   : Get or set global duckspatial options
 - [`ddbs_set_resources()`](https://cidree.github.io/duckspatial/reference/ddbs_set_resources.md)
@@ -106,6 +108,10 @@ Modify, simplify, and transform individual geometries
   : Computes the maximum inscribed circle of a geometry
 - [`ddbs_make_line()`](https://cidree.github.io/duckspatial/reference/ddbs_make_line.md)
   : Create lines from point geometries
+- [`ddbs_normalize()`](https://cidree.github.io/duckspatial/reference/ddbs_normalize.md)
+  : Normalize geometries to a canonical form
+- [`ddbs_reverse()`](https://cidree.github.io/duckspatial/reference/ddbs_reverse.md)
+  : Reverse the vertex order of geometries
 - [`ddbs_vertices()`](https://cidree.github.io/duckspatial/reference/ddbs_vertices.md)
   : Collect all vertices of a geometry into a MULTIPOINT
 - [`ddbs_voronoi()`](https://cidree.github.io/duckspatial/reference/ddbs_voronoi.md)
@@ -124,6 +130,8 @@ Specialized functions for working with linestring geometries
   : Locate a point along a linestring
 - [`ddbs_line_merge()`](https://cidree.github.io/duckspatial/reference/ddbs_line_merge.md)
   : Merge line geometries into a single line
+- [`ddbs_line_node()`](https://cidree.github.io/duckspatial/reference/ddbs_line_node.md)
+  : Node a set of linestrings
 - [`ddbs_line_substring()`](https://cidree.github.io/duckspatial/reference/ddbs_line_substring.md)
   : Extract a substring of a line geometry
 - [`ddbs_build_area()`](https://cidree.github.io/duckspatial/reference/ddbs_build_area.md)
@@ -145,6 +153,8 @@ Change geometry types or decompose multi-part geometries
   [`ddbs_combine()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
   [`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
   : Union and combine geometries
+- [`ddbs_intersection_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_intersection_agg.md)
+  : Aggregate the intersection of geometries
 
 ## Coordinate Operations
 
@@ -194,6 +204,8 @@ Check and repair geometry validity and dimensionality
   : Get the geometry type of features
 - [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md)
   : Make invalid geometries valid
+- [`ddbs_reduce_precision()`](https://cidree.github.io/duckspatial/reference/ddbs_reduce_precision.md)
+  : Reduce the coordinate precision of geometries
 - [`ddbs_remove_repeated_points()`](https://cidree.github.io/duckspatial/reference/ddbs_remove_repeated_points.md)
   : Remove repeated points from a geometry
 - [`ddbs_simplify()`](https://cidree.github.io/duckspatial/reference/ddbs_simplify.md)
@@ -214,6 +226,21 @@ Convert geometries to and from standard spatial formats
   [`ddbs_as_hexwkb()`](https://cidree.github.io/duckspatial/reference/ddbs_as_format.md)
   [`ddbs_as_geojson()`](https://cidree.github.io/duckspatial/reference/ddbs_as_format.md)
   : Convert geometries to standard interchange formats
+- [`ddbs_geom_from_text()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md)
+  [`ddbs_geom_from_wkb()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md)
+  [`ddbs_geom_from_hexwkb()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md)
+  [`ddbs_geom_from_hexewkb()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md)
+  [`ddbs_geom_from_geojson()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md)
+  : Create geometries from standard interchange formats
+
+## Vector Tiles (MVT)
+
+Encode geometries as Mapbox Vector Tiles for web mapping
+
+- [`ddbs_as_mvt_geom()`](https://cidree.github.io/duckspatial/reference/ddbs_as_mvt_geom.md)
+  : Transform geometries into Mapbox Vector Tile coordinate space
+- [`ddbs_write_mbtiles()`](https://cidree.github.io/duckspatial/reference/ddbs_write_mbtiles.md)
+  : Write a Mapbox Vector Tile pyramid to an MBTiles file
 
 ## Spatial Extent and Boundaries
 
@@ -255,6 +282,7 @@ Query structural properties of geometries without modifying them
 
 - [`ddbs_get_npoints()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md)
   [`ddbs_get_ngeometries()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md)
+  [`ddbs_get_ninterior_rings()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md)
   : Count geometry components
 - [`ddbs_dimension()`](https://cidree.github.io/duckspatial/reference/ddbs_dimension.md)
   : Get the topological dimension of a geometry

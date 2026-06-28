@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.2.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,9 +152,35 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.1.2/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/Cidree/duckspatial/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="duckspatial-development-version">duckspatial (development version)<a class="anchor" aria-label="anchor" href="#duckspatial-development-version"></a></h2>
+<div class="section level3">
+<h3 id="new-features-development-version">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li><p><code><a href="../reference/ddbs_extension_info.html">ddbs_extension_info()</a></code>: prints a <code><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse()</a></code> of a DuckDB extension’s row from <code>duckdb_extensions()</code> (the spatial extension by default), showing its installed/loaded status, version, and install path.</p></li>
+<li><p><code><a href="../reference/ddbs_reduce_precision.html">ddbs_reduce_precision()</a></code>: snaps geometry coordinates to a regular grid, reducing their precision.</p></li>
+<li><p><code><a href="../reference/ddbs_line_node.html">ddbs_line_node()</a></code>: nodes a set of line geometries, splitting them at every crossing and returning a fully noded <code>MULTILINESTRING</code>.</p></li>
+<li><p><code><a href="../reference/ddbs_intersection_agg.html">ddbs_intersection_agg()</a></code>: computes the geometric intersection (common area) of a set of geometries, optionally grouped by one or more columns. The intersection counterpart to <code><a href="../reference/ddbs_union_funs.html">ddbs_union_agg()</a></code>.</p></li>
+<li><p><code><a href="../reference/ddbs_reverse.html">ddbs_reverse()</a></code>: returns each geometry with the order of its vertices reversed.</p></li>
+<li><p><code><a href="../reference/ddbs_normalize.html">ddbs_normalize()</a></code>: returns each geometry in its normalized (canonical) form.</p></li>
+<li><p><code><a href="../reference/ddbs_write_mbtiles.html">ddbs_write_mbtiles()</a></code>: generates a Mapbox Vector Tile pyramid from a spatial dataset and writes it to an MBTiles file, ready to serve or convert to PMTiles.</p></li>
+<li><p><code><a href="../reference/ddbs_as_mvt_geom.html">ddbs_as_mvt_geom()</a></code>: transforms geometries into Mapbox Vector Tile (MVT) coordinate space, clipping them to a tile’s bounding box and mapping the coordinates into the tile’s integer pixel space.</p></li>
+<li><p><code><a href="../reference/ddbs_geom_from.html">ddbs_geom_from_text()</a></code>, <code><a href="../reference/ddbs_geom_from.html">ddbs_geom_from_wkb()</a></code>, <code><a href="../reference/ddbs_geom_from.html">ddbs_geom_from_hexwkb()</a></code>, <code><a href="../reference/ddbs_geom_from.html">ddbs_geom_from_hexewkb()</a></code>, <code><a href="../reference/ddbs_geom_from.html">ddbs_geom_from_geojson()</a></code>: parse serialized geometries (WKT, WKB, HEXWKB, HEXEWKB, GeoJSON) into a spatial object. These are the inverses of the <code>ddbs_as_*()</code> serializers.</p></li>
+<li><p><code><a href="../reference/ddbs_get_npoints.html">ddbs_get_ninterior_rings()</a></code>: returns the number of interior rings (holes) in a POLYGON geometry.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="enhancements-development-version">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-development-version"></a></h3>
+<ul><li><p><code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>: gains a <code>repos</code> argument to install an extension from a specific DuckDB repository (e.g. <code>"core"</code>, <code>"core_nightly"</code>, <code>"community"</code>). When <code>NULL</code> (default), the previous behaviour is kept (core, then community) (<a href="https://github.com/Cidree/duckspatial/issues/144" class="external-link">#144</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_as_format.html">ddbs_as_geojson()</a></code>: now includes all non-geometry columns as feature <code>properties</code> instead of serializing only the geometry. By default it returns a single GeoJSON <code>FeatureCollection</code> (matching <code><a href="https://rdrr.io/pkg/geojsonsf/man/sf_geojson.html" class="external-link">geojsonsf::sf_geojson()</a></code>); pass <code>feature_collection = FALSE</code> for a vector with one <code>Feature</code> per row (<a href="https://github.com/Cidree/duckspatial/issues/141" class="external-link">#141</a>).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>: removed a broken “already on the latest version” check that referenced a <code>requires_version_upgrade</code> column which <code>duckdb_extensions()</code> does not provide (and compared <code>install_mode</code> with the wrong case), so it never took effect (<a href="https://github.com/Cidree/duckspatial/issues/144" class="external-link">#144</a>).</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.2" id="duckspatial-112">duckspatial 1.1.2<a class="anchor" aria-label="anchor" href="#duckspatial-112"></a></h2><p class="text-muted">CRAN release: 2026-06-22</p>
 <div class="section level3">

@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.2.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -191,6 +191,13 @@
 
         </dt>
         <dd>Loads the Spatial extension</dd>
+
+        <dt>
+
+          <code><a href="ddbs_extension_info.html">ddbs_extension_info()</a></code>
+
+        </dt>
+        <dd>Glimpse the status of a DuckDB extension</dd>
 
         <dt>
 
@@ -414,6 +421,20 @@
 
         <dt>
 
+          <code><a href="ddbs_normalize.html">ddbs_normalize()</a></code>
+
+        </dt>
+        <dd>Normalize geometries to a canonical form</dd>
+
+        <dt>
+
+          <code><a href="ddbs_reverse.html">ddbs_reverse()</a></code>
+
+        </dt>
+        <dd>Reverse the vertex order of geometries</dd>
+
+        <dt>
+
           <code><a href="ddbs_vertices.html">ddbs_vertices()</a></code>
 
         </dt>
@@ -462,6 +483,13 @@
 
         </dt>
         <dd>Merge line geometries into a single line</dd>
+
+        <dt>
+
+          <code><a href="ddbs_line_node.html">ddbs_line_node()</a></code>
+
+        </dt>
+        <dd>Node a set of linestrings</dd>
 
         <dt>
 
@@ -520,6 +548,13 @@
 
         </dt>
         <dd>Union and combine geometries</dd>
+
+        <dt>
+
+          <code><a href="ddbs_intersection_agg.html">ddbs_intersection_agg()</a></code>
+
+        </dt>
+        <dd>Aggregate the intersection of geometries</dd>
       </dl></div><div class="section level2">
       <h2 id="coordinate-operations">Coordinate Operations<a class="anchor" aria-label="anchor" href="#coordinate-operations"></a></h2>
 
@@ -620,6 +655,13 @@
 
         <dt>
 
+          <code><a href="ddbs_reduce_precision.html">ddbs_reduce_precision()</a></code>
+
+        </dt>
+        <dd>Reduce the coordinate precision of geometries</dd>
+
+        <dt>
+
           <code><a href="ddbs_remove_repeated_points.html">ddbs_remove_repeated_points()</a></code>
 
         </dt>
@@ -654,6 +696,36 @@
 
         </dt>
         <dd>Convert geometries to standard interchange formats</dd>
+
+        <dt>
+
+          <code><a href="ddbs_geom_from.html">ddbs_geom_from_text()</a></code> <code><a href="ddbs_geom_from.html">ddbs_geom_from_wkb()</a></code> <code><a href="ddbs_geom_from.html">ddbs_geom_from_hexwkb()</a></code> <code><a href="ddbs_geom_from.html">ddbs_geom_from_hexewkb()</a></code> <code><a href="ddbs_geom_from.html">ddbs_geom_from_geojson()</a></code>
+
+        </dt>
+        <dd>Create geometries from standard interchange formats</dd>
+      </dl></div><div class="section level2">
+      <h2 id="vector-tiles-mvt-">Vector Tiles (MVT)<a class="anchor" aria-label="anchor" href="#vector-tiles-mvt-"></a></h2>
+
+      <div class="section-desc"><p>Encode geometries as Mapbox Vector Tiles for web mapping</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ddbs_as_mvt_geom.html">ddbs_as_mvt_geom()</a></code>
+
+        </dt>
+        <dd>Transform geometries into Mapbox Vector Tile coordinate space</dd>
+
+        <dt>
+
+          <code><a href="ddbs_write_mbtiles.html">ddbs_write_mbtiles()</a></code>
+
+        </dt>
+        <dd>Write a Mapbox Vector Tile pyramid to an MBTiles file</dd>
       </dl></div><div class="section level2">
       <h2 id="spatial-extent-and-boundaries">Spatial Extent and Boundaries<a class="anchor" aria-label="anchor" href="#spatial-extent-and-boundaries"></a></h2>
 
@@ -768,7 +840,7 @@
 
       <dl><dt>
 
-          <code><a href="ddbs_get_npoints.html">ddbs_get_npoints()</a></code> <code><a href="ddbs_get_npoints.html">ddbs_get_ngeometries()</a></code>
+          <code><a href="ddbs_get_npoints.html">ddbs_get_npoints()</a></code> <code><a href="ddbs_get_npoints.html">ddbs_get_ngeometries()</a></code> <code><a href="ddbs_get_npoints.html">ddbs_get_ninterior_rings()</a></code>
 
         </dt>
         <dd>Count geometry components</dd>

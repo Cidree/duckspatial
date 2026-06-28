@@ -1,6 +1,7 @@
 # Count geometry components
 
-Functions to count the number of points or sub-geometries in a geometry
+Functions to count the number of points, sub-geometries or interior
+rings in a geometry
 
 ## Usage
 
@@ -18,6 +19,16 @@ ddbs_get_npoints(
 ddbs_get_ngeometries(
   x,
   new_column = "ngeometries",
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+)
+
+ddbs_get_ninterior_rings(
+  x,
+  new_column = "ninterior_rings",
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -111,6 +122,10 @@ These functions query structural properties of geometries:
   MULTILINESTRING). Returns 1 for simple (non-collection) geometry
   types.
 
+- `ddbs_get_ninterior_rings()` returns the number of interior rings
+  (holes) in a POLYGON geometry. Returns 0 for polygons without holes
+  and `NULL` for non-polygon geometry types.
+
 ## Examples
 
 ``` r
@@ -125,8 +140,9 @@ countries_ddbs <- ddbs_open_dataset(
   package = "duckspatial")
 )
 
-## count points and sub-geometries
+## count points, sub-geometries and interior rings
 ddbs_get_npoints(countries_ddbs)
 ddbs_get_ngeometries(countries_ddbs)
+ddbs_get_ninterior_rings(countries_ddbs)
 } # }
 ```

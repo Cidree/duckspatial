@@ -1,5 +1,83 @@
 # Changelog
 
+## duckspatial (development version)
+
+### NEW FEATURES
+
+- [`ddbs_extension_info()`](https://cidree.github.io/duckspatial/reference/ddbs_extension_info.md):
+  prints a
+  [`glimpse()`](https://pillar.r-lib.org/reference/glimpse.html) of a
+  DuckDB extension’s row from `duckdb_extensions()` (the spatial
+  extension by default), showing its installed/loaded status, version,
+  and install path.
+
+- [`ddbs_reduce_precision()`](https://cidree.github.io/duckspatial/reference/ddbs_reduce_precision.md):
+  snaps geometry coordinates to a regular grid, reducing their
+  precision.
+
+- [`ddbs_line_node()`](https://cidree.github.io/duckspatial/reference/ddbs_line_node.md):
+  nodes a set of line geometries, splitting them at every crossing and
+  returning a fully noded `MULTILINESTRING`.
+
+- [`ddbs_intersection_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_intersection_agg.md):
+  computes the geometric intersection (common area) of a set of
+  geometries, optionally grouped by one or more columns. The
+  intersection counterpart to
+  [`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md).
+
+- [`ddbs_reverse()`](https://cidree.github.io/duckspatial/reference/ddbs_reverse.md):
+  returns each geometry with the order of its vertices reversed.
+
+- [`ddbs_normalize()`](https://cidree.github.io/duckspatial/reference/ddbs_normalize.md):
+  returns each geometry in its normalized (canonical) form.
+
+- [`ddbs_write_mbtiles()`](https://cidree.github.io/duckspatial/reference/ddbs_write_mbtiles.md):
+  generates a Mapbox Vector Tile pyramid from a spatial dataset and
+  writes it to an MBTiles file, ready to serve or convert to PMTiles.
+
+- [`ddbs_as_mvt_geom()`](https://cidree.github.io/duckspatial/reference/ddbs_as_mvt_geom.md):
+  transforms geometries into Mapbox Vector Tile (MVT) coordinate space,
+  clipping them to a tile’s bounding box and mapping the coordinates
+  into the tile’s integer pixel space.
+
+- [`ddbs_geom_from_text()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md),
+  [`ddbs_geom_from_wkb()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md),
+  [`ddbs_geom_from_hexwkb()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md),
+  [`ddbs_geom_from_hexewkb()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md),
+  [`ddbs_geom_from_geojson()`](https://cidree.github.io/duckspatial/reference/ddbs_geom_from.md):
+  parse serialized geometries (WKT, WKB, HEXWKB, HEXEWKB, GeoJSON) into
+  a spatial object. These are the inverses of the `ddbs_as_*()`
+  serializers.
+
+- [`ddbs_get_ninterior_rings()`](https://cidree.github.io/duckspatial/reference/ddbs_get_npoints.md):
+  returns the number of interior rings (holes) in a POLYGON geometry.
+
+### ENHANCEMENTS
+
+- [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md):
+  gains a `repos` argument to install an extension from a specific
+  DuckDB repository (e.g. `"core"`, `"core_nightly"`, `"community"`).
+  When `NULL` (default), the previous behaviour is kept (core, then
+  community)
+  ([\#144](https://github.com/Cidree/duckspatial/issues/144)).
+
+- [`ddbs_as_geojson()`](https://cidree.github.io/duckspatial/reference/ddbs_as_format.md):
+  now includes all non-geometry columns as feature `properties` instead
+  of serializing only the geometry. By default it returns a single
+  GeoJSON `FeatureCollection` (matching
+  [`geojsonsf::sf_geojson()`](https://rdrr.io/pkg/geojsonsf/man/sf_geojson.html));
+  pass `feature_collection = FALSE` for a vector with one `Feature` per
+  row ([\#141](https://github.com/Cidree/duckspatial/issues/141)).
+
+### BUG FIXES
+
+- [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md):
+  removed a broken “already on the latest version” check that referenced
+  a `requires_version_upgrade` column which `duckdb_extensions()` does
+  not provide (and compared `install_mode` with the wrong case), so it
+  never took effect
+  ([\#144](https://github.com/Cidree/duckspatial/issues/144)).
+
 ## duckspatial 1.1.2
 
 CRAN release: 2026-06-22

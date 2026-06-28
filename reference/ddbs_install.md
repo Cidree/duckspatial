@@ -6,7 +6,13 @@ database
 ## Usage
 
 ``` r
-ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
+ddbs_install(
+  conn,
+  upgrade = FALSE,
+  quiet = FALSE,
+  extension = "spatial",
+  repos = NULL
+)
 ```
 
 ## Arguments
@@ -27,6 +33,16 @@ ddbs_install(conn, upgrade = FALSE, quiet = FALSE, extension = "spatial")
 - extension:
 
   name of the extension to install, default is "spatial"
+
+- repos:
+
+  optional character string naming the repository to install the
+  extension from (e.g. `"core"`, `"core_nightly"`, or `"community"`); a
+  URL or path can also be supplied. If `NULL` (default), the `core`
+  repository is tried first, then `community`. Switching an
+  already-installed extension to a different repository requires
+  `upgrade = TRUE`. See
+  <https://duckdb.org/docs/stable/extensions/installing_extensions>.
 
 ## Value
 
