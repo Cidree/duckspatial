@@ -27,7 +27,7 @@
       "\n  duckspatial now returns lazy `duckspatial_df` (dbplyr) objects",
       "\n  instead of `sf` objects.",
       "\n\nTo restore the previous behaviour:",
-      "\n  ddbs_options(duckspatial.mode = 'sf')"
+      "\n  ddbs_options(mode = 'sf')"
     )
 }
 
