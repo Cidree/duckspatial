@@ -51,26 +51,21 @@ TRUE (invisibly) for successful installation
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 ## load packages
 library(duckspatial)
 library(duckdb)
-#> Loading required package: DBI
 
 # connect to in memory database
 conn <- duckdb::dbConnect(duckdb::duckdb())
-#> duckdb: caching downloaded extensions in the package library:
-#> ℹ /home/runner/work/_temp/Library/duckdb/extensions
-#> ℹ This is removed when the package is re-installed; see `?duckdb_storage` to choose a different location.
 
 # install the spatial extension
 ddbs_install(conn)
-#> ✔ spatial extension installed
 
 # disconnect from db
 duckdb::dbDisconnect(conn)
 
-if (FALSE) { # \dontrun{
-# install the h3 community extension (requires network access)
+# install the h3 community extension
 conn <- duckdb::dbConnect(duckdb::duckdb())
 ddbs_install(conn, extension = "h3")
 duckdb::dbDisconnect(conn)

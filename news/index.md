@@ -71,6 +71,9 @@
 
 ### BUG FIXES
 
+- Fix a mistake in the startup message
+  ([\#146](https://github.com/Cidree/duckspatial/issues/146)).
+
 - [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md):
   removed a broken “already on the latest version” check that referenced
   a `requires_version_upgrade` column which `duckdb_extensions()` does

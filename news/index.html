@@ -177,8 +177,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>
-<code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>: removed a broken “already on the latest version” check that referenced a <code>requires_version_upgrade</code> column which <code>duckdb_extensions()</code> does not provide (and compared <code>install_mode</code> with the wrong case), so it never took effect (<a href="https://github.com/Cidree/duckspatial/issues/144" class="external-link">#144</a>).</li>
+<ul><li><p>Fix a mistake in the startup message (<a href="https://github.com/Cidree/duckspatial/issues/146" class="external-link">#146</a>).</p></li>
+<li><p><code><a href="../reference/ddbs_install.html">ddbs_install()</a></code>: removed a broken “already on the latest version” check that referenced a <code>requires_version_upgrade</code> column which <code>duckdb_extensions()</code> does not provide (and compared <code>install_mode</code> with the wrong case), so it never took effect (<a href="https://github.com/Cidree/duckspatial/issues/144" class="external-link">#144</a>).</p></li>
 </ul></div>
 </div>
     <div class="section level2">
