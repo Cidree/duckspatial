@@ -19,6 +19,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## load packages
 #' library(duckspatial)
 #' library(duckdb)
@@ -32,8 +33,7 @@
 #' # disconnect from db
 #' duckdb::dbDisconnect(conn)
 #'
-#' \dontrun{
-#' # install the h3 community extension (requires network access)
+#' # install the h3 community extension
 #' conn <- duckdb::dbConnect(duckdb::duckdb())
 #' ddbs_install(conn, extension = "h3")
 #' duckdb::dbDisconnect(conn)

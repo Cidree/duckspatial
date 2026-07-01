@@ -37,6 +37,7 @@ TRUE (invisibly) for successful installation
 Checks if a spatial extension is available, and installs it in a DuckDB database
 }
 \examples{
+\dontrun{
 ## load packages
 library(duckspatial)
 library(duckdb)
@@ -50,8 +51,7 @@ ddbs_install(conn)
 # disconnect from db
 duckdb::dbDisconnect(conn)
 
-\dontrun{
-# install the h3 community extension (requires network access)
+# install the h3 community extension
 conn <- duckdb::dbConnect(duckdb::duckdb())
 ddbs_install(conn, extension = "h3")
 duckdb::dbDisconnect(conn)
