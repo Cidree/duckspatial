@@ -33,6 +33,8 @@
 
 ## BUG FIXES
 
+* Fix a mistake in the startup message (#146).
+
 * `ddbs_install()`: removed a broken "already on the latest version" check that referenced a `requires_version_upgrade` column which `duckdb_extensions()` does not provide (and compared `install_mode` with the wrong case), so it never took effect (#144).
 
 
