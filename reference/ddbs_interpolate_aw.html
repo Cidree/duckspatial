@@ -120,7 +120,7 @@ loading all geometries into R memory."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.2.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -343,6 +343,9 @@ Available at: <a href="https://doi.org/10.21105/joss.01221" class="external-link
 <span class="r-in"><span>  weight <span class="op">=</span> <span class="st">"total"</span>,</span></span>
 <span class="r-in"><span>  mode <span class="op">=</span> <span class="st">"sf"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> duckdb: caching downloaded extensions in the package library:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> /home/runner/work/_temp/Library/duckdb/extensions</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> This is removed when the package is re-installed; see `?duckdb_storage` to choose a different location.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check mass preservation</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">res_ext</span><span class="op">$</span><span class="va">BIR74</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">nc</span><span class="op">$</span><span class="va">BIR74</span><span class="op">)</span> <span class="co"># Should be ~1</span></span></span>
