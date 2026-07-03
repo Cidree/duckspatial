@@ -97,14 +97,18 @@ ddbs_install <- function(
     } else {
 
         ## 3b. Default: try core, then community, then error
+        err_core <- err_community <- NULL
+
         installed <- tryCatch({
             suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension};")))
             "core"
         }, error = function(e) {
+            err_core <<- e
             tryCatch({
                 suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension} FROM community;")))
                 "community"
             }, error = function(e2) {
+                err_community <<- e2
                 NULL
             })
         })
@@ -112,8 +116,9 @@ ddbs_install <- function(
         if (is.null(installed)) {
             cli::cli_abort(c(
                 "Failed to {if (upgrade) 'upgrade' else 'install'} the {extension} extension.",
-                "i" = "It could not be found in the core or community repositories.",
-                "i" = "It might not be available for this version of DuckDB",
+                "x" = "core: {conditionMessage(err_core)}",
+                "x" = "community: {conditionMessage(err_community)}",
+                "i" = "It might not be available for this version of DuckDB, or the install location may not be writable.",
                 "i" = "Check that the extension name is correct: {.url https://duckdb.org/docs/extensions/overview}"
             ))
         }
@@ -183,7 +188,18 @@ ddbs_load <- function(
     # 2. Setup extension
 
     ## 2.1. Load the extension
-    if (isFALSE(target_ext$loaded)) suppressMessages(DBI::dbExecute(conn, glue::glue("LOAD {extension};")))
+    if (isFALSE(target_ext$loaded)) {
+        tryCatch({
+            suppressMessages(DBI::dbExecute(conn, glue::glue("LOAD {extension};")))
+        }, error = function(e) {
+            cli::cli_abort(c(
+                "Failed to load the {extension} extension.",
+                "x" = conditionMessage(e),
+                "i" = "The binary may be corrupt or incompatible with this platform/DuckDB version.",
+                "i" = "Try reinstalling with {.code ddbs_install(extension = '{extension}', upgrade = TRUE)}"
+            ))
+        })
+    }
 
     ## 2.2. Activate macros
     if (isTRUE(create_macros)) create_duckspatial_macros(conn)
