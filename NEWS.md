@@ -1,7 +1,13 @@
 
 
 
-# duckspatial (development version)
+# duckspatial 1.2.1
+
+## ENHANCEMENTS
+
+* Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
+
+# duckspatial 1.2.0
 
 ## NEW FEATURES
 
