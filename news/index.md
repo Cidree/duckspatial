@@ -1,6 +1,17 @@
 # Changelog
 
-## duckspatial (development version)
+## duckspatial 1.2.1
+
+### ENHANCEMENTS
+
+- Capture output message of
+  [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md)
+  and
+  [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)([\#147](https://github.com/Cidree/duckspatial/issues/147)).
+
+## duckspatial 1.2.0
+
+CRAN release: 2026-07-02
 
 ### NEW FEATURES
 
