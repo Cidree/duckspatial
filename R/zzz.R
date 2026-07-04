@@ -18,7 +18,7 @@
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
     paste("duckspatial", utils::packageVersion("duckspatial"), "attached"),
-    "\n* Compatible with DuckDB >= v1.5.1"
+    "\n* Compatible with DuckDB >= v1.5.4.2"
   )
 
   # Notify about default output change
