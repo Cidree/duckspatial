@@ -503,7 +503,7 @@ ddbs_union_agg <- function(
 #' ## create a connection and three overlapping polygons
 #' conn <- ddbs_create_conn()
 #' polys <- sf::st_as_sf(
-#'   data.frame(grp = c("a", "a", "a")),
+#'   data.frame(grp = c("a", "a", "b", "b")),
 #'   geometry = sf::st_sfc(
 #'     sf::st_polygon(list(matrix(c(0,0, 3,0, 3,3, 0,3, 0,0), ncol = 2, byrow = TRUE))),
 #'     sf::st_polygon(list(matrix(c(1,1, 4,1, 4,4, 1,4, 1,1), ncol = 2, byrow = TRUE))),
