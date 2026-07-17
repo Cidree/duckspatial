@@ -1,12 +1,12 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   aw_interpolation: aw_interpolation.html
   benchmark: benchmark.html
   duckspatial: duckspatial.html
   spatial_joins: spatial_joins.html
-last_built: 2026-07-04T06:55Z
+last_built: 2026-07-17T12:40Z
 urls:
   reference: https://cidree.github.io/duckspatial/reference
   article: https://cidree.github.io/duckspatial/articles

@@ -158,7 +158,7 @@ loading all geometries into R memory."><meta property="og:image" content="https:
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Areal-Weighted Interpolation using DuckDB</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/R/ddbs_interpolate_aw.R" class="external-link"><code>R/ddbs_interpolate_aw.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.2.1/R/ddbs_interpolate_aw.R" class="external-link"><code>R/ddbs_interpolate_aw.R</code></a></small>
       <div class="d-none name"><code>ddbs_interpolate_aw.Rd</code></div>
     </div>
 
@@ -343,6 +343,10 @@ Available at: <a href="https://doi.org/10.21105/joss.01221" class="external-link
 <span class="r-in"><span>  weight <span class="op">=</span> <span class="st">"total"</span>,</span></span>
 <span class="r-in"><span>  mode <span class="op">=</span> <span class="st">"sf"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> duckdb is keeping downloaded extensions in a temporary directory:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> /tmp/RtmpLKmdv3/duckdb/extensions</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> This is removed when the R session ends, so extensions are re-downloaded each session.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check mass preservation</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">res_ext</span><span class="op">$</span><span class="va">BIR74</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">nc</span><span class="op">$</span><span class="va">BIR74</span><span class="op">)</span> <span class="co"># Should be ~1</span></span></span>
@@ -376,7 +380,7 @@ Available at: <a href="https://doi.org/10.21105/joss.01221" class="external-link
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -2,6 +2,8 @@
 
 ## duckspatial 1.2.1
 
+CRAN release: 2026-07-04
+
 ### ENHANCEMENTS
 
 - Capture output message of
