@@ -4,7 +4,13 @@
 \alias{as_nanoarrow_array_stream.duckspatial_df}
 \title{Convert a duckspatial_df to a nanoarrow_array_stream}
 \usage{
-as_nanoarrow_array_stream.duckspatial_df(x, ..., schema = NULL, native = FALSE)
+as_nanoarrow_array_stream.duckspatial_df(
+  x,
+  ...,
+  schema = NULL,
+  native = FALSE,
+  chunk_size = 1e+06
+)
 }
 \arguments{
 \item{x}{A \code{duckspatial_df} object}
@@ -16,6 +22,8 @@ as_nanoarrow_array_stream.duckspatial_df(x, ..., schema = NULL, native = FALSE)
 \item{native}{If TRUE, transforms WKB to a "Native" GeoArrow layout (e.g.,
 Point, Polygon) using optimized Arrow-to-Arrow kernels. This layout is
 optimized for high-performance rendering in tools like Deck.GL.}
+
+\item{chunk_size}{Maximum number of rows in each Arrow record batch.}
 }
 \value{
 A \code{nanoarrow_array_stream}

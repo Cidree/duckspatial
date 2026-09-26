@@ -7,6 +7,14 @@
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
 
+## BUG FIXES
+
+* Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
+  geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
+  the method was introduced, it had incorrectly returned `geoarrow.wkb`
+  unchanged because its target schema was inferred from the existing WKB Arrow
+  column ([#121](https://github.com/Cidree/duckspatial/pull/121)).
+
 # duckspatial 1.2.0
 
 ## NEW FEATURES
