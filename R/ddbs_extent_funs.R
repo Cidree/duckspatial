@@ -531,3 +531,80 @@ ddbs_make_envelope <- function(
   }
 
 }
+
+
+
+
+#' Expand the bounding box of geometries
+#'
+#' Returns a rectangular polygon representing the bounding box of each geometry,
+#' expanded by a fixed distance in all directions (x and y axes). Unlike
+#' \code{\link{ddbs_buffer}}, which produces a rounded offset around the geometry
+#' itself, \code{ddbs_expand()} operates on the geometry's bounding box and always
+#' returns an axis-aligned rectangle.
+#'
+#' @template x
+#' @param distance a numeric value specifying the distance to expand the bounding
+#' box in each direction. Units correspond to the coordinate system of the
+#' geometry (e.g. degrees or meters)
+#' @template conn_null
+#' @template name
+#' @template mode
+#' @template overwrite
+#' @template quiet
+#'
+#' @template returns_mode
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' ## create a duckdb database in memory (with spatial extension)
+#' conn <- ddbs_create_conn(dbdir = "memory")
+#'
+#' ## read data
+#' argentina_ddbs <- ddbs_open_dataset(
+#'   system.file("spatial/argentina.geojson",
+#'   package = "duckspatial")
+#' )
+#'
+#' ## store in duckdb
+#' ddbs_write_vector(conn, argentina_ddbs, "argentina")
+#'
+#' ## expand bounding box by 1 unit
+#' ddbs_expand(conn = conn, "argentina", distance = 1)
+#'
+#' ## expand without using a connection
+#' ddbs_expand(argentina_ddbs, distance = 1)
+#' }
+ddbs_expand <- function(
+  x,
+  distance,
+  conn = NULL,
+  name = NULL,
+  mode = NULL,
+  overwrite = FALSE,
+  quiet = FALSE) {
+
+  
+  # 0. Handle function-specific errors
+  assert_numeric(distance, "distance")
+  # 1. Build ST_Buffer parameters string
+  extra_args <- glue::glue("{distance}")
+  
+
+  # 2. Pass to template
+  template_unary_ops(
+    x = x,
+    conn = conn,
+    name = name,
+    mode = mode,
+    overwrite = overwrite,
+    quiet = quiet,
+    fun = "ST_Expand",
+    other_args = extra_args
+  )
+
+}
