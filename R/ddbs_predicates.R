@@ -263,8 +263,9 @@ ddbs_predicate <- function(
     ## materialize full predicate matrix and reframe as sf/sparse when required
     tmp.query <- glue::glue("
       SELECT {predicate_expr} AS predicate
-      FROM {x_list$query_name} x
-      CROSS JOIN {y_list$query_name} y
+      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
+      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
     ")
     
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
