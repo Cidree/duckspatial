@@ -1220,3 +1220,59 @@ describe("ddbs_azimuth()", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+
+# 6. CRS units handling (#161) -------------------------------------------
+
+describe("CRS units handling (#161)", {
+
+  nc_ft  <- sf::st_transform(nc_sf[1:3, ], 2264)   # NC State Plane, US survey feet
+  pts_ft <- suppressWarnings(sf::st_centroid(nc_ft))
+  no_crs <- sf::st_set_crs(nc_sf[1:3, ], NA)
+
+  it("measures projected non-metre CRSs planar, in native units, as sf", {
+    expect_no_warning(area <- ddbs_area(nc_ft, mode = "sf"))
+    expect_equal(area, sf::st_area(nc_ft))
+    expect_equal(ddbs_perimeter(nc_ft, mode = "sf"), sf::st_perimeter(nc_ft))
+    expect_equal(
+      ddbs_length(sf::st_cast(nc_ft, "MULTILINESTRING"), mode = "sf"),
+      sf::st_length(sf::st_cast(nc_ft, "MULTILINESTRING"))
+    )
+  })
+
+  it("labels distances with the CRS units", {
+    expect_equal(
+      ddbs_distance(pts_ft, pts_ft, mode = "sf", quiet = TRUE),
+      sf::st_distance(pts_ft),
+      ignore_attr = "dimnames"
+    )
+    expect_error(ddbs_distance(pts_ft, pts_ft, dist_type = "haversine", mode = "sf"))
+  })
+
+  it("returns no units when the CRS unit is unknown to sf, as sf does", {
+    wkt <- 'PROJCS["custom",GEOGCS["GCS",DATUM["D",SPHEROID["GRS80",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-79],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Foot_US",0.304800609601219]]'
+    nc_custom <- sf::st_transform(nc_sf[1:2, ], sf::st_crs(wkt))
+    expect_equal(ddbs_area(nc_custom, mode = "sf"), sf::st_area(nc_custom))
+  })
+
+  it("aborts with an informative error when the input has no CRS", {
+    expect_error(ddbs_area(no_crs), "ddbs_set_crs")
+    expect_error(ddbs_length(no_crs), "ddbs_set_crs")
+    expect_error(ddbs_perimeter(no_crs), "ddbs_set_crs")
+    expect_error(ddbs_distance(no_crs, no_crs), "ddbs_set_crs")
+  })
+
+  it("does not warn for WGS84 written as OGC:CRS84", {
+    nc_crs84 <- sf::st_transform(nc_sf[1:3, ], "OGC:CRS84")
+    expect_no_warning(ddbs_area(nc_crs84, mode = "sf"))
+  })
+
+  it("still warns for geographic CRSs that are not WGS84", {
+    expect_warning(ddbs_area(nc_sf[1:3, ], mode = "sf"), "less accurate")
+  })
+
+  it("errors up front for non-POINT distances in a geographic CRS", {
+    nc_4326 <- sf::st_transform(nc_sf[1:3, ], 4326)
+    expect_error(ddbs_distance(nc_4326, nc_4326, mode = "sf"), "projected CRS")
+  })
+})

@@ -10,8 +10,9 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @param distance a numeric value specifying the distance for ST_DWithin. The units
-#' should be specified in meters
+#' @param distance a numeric value specifying the distance for ST_DWithin. Units are
+#' metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
+#' (e.g. US survey feet for EPSG:2264)
 #' @template mode
 #' @template overwrite
 #' @template quiet
