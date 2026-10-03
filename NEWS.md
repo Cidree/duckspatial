@@ -7,6 +7,10 @@
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
 
+## BUG FIXES
+
+* `ddbs_*` functions and `print()` now respect dplyr verbs that have no `duckspatial_df` method (e.g. `distinct()`, `semi_join()`, `anti_join()`, `union_all()`). Previously they silently used the original, unmodified table (#159).
+
 # duckspatial 1.2.0
 
 ## NEW FEATURES

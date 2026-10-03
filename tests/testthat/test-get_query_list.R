@@ -122,3 +122,38 @@ test_that("get_query_list handles character inputs", {
   res$cleanup()
   expect_true(DBI::dbExistsTable(conn, "plain_table"))
 })
+
+test_that("get_query_list uses source_table directly for unmodified duckspatial_df", {
+  ds <- as_duckspatial_df(nc_sf)
+
+  res <- get_query_list(ds, dbplyr::remote_con(ds))
+  on.exit(res$cleanup(), add = TRUE)
+
+  expect_equal(res$query_name, attr(ds, "source_table"))
+})
+
+test_that("ddbs_* functions respect dplyr verbs without a duckspatial_df method (#159)", {
+  ## 6 rows, 3 distinct
+  ds <- as_duckspatial_df(rbind(nc_sf[1:3, ], nc_sf[1:3, ]))
+  conn <- dbplyr::remote_con(ds)
+
+  verbs <- list(
+    distinct  = dplyr::distinct(ds),
+    semi_join = dplyr::semi_join(ds, data.frame(NAME = "Ashe"), by = "NAME", copy = TRUE),
+    anti_join = dplyr::anti_join(ds, data.frame(NAME = "Ashe"), by = "NAME", copy = TRUE),
+    union_all = dplyr::union_all(ds, ds)
+  )
+
+  for (verb in names(verbs)) {
+    v <- verbs[[verb]]
+    expected <- nrow(dplyr::collect(v))
+
+    res <- get_query_list(v, conn)
+    n_query <- DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) AS n FROM {res$query_name}"))$n
+    res$cleanup()
+
+    expect_equal(n_query, expected, info = verb)
+    expect_equal(nrow(dplyr::collect(ddbs_area(v))), expected, info = verb)
+    expect_equal(nrow(ddbs_centroid(v, mode = "sf")), expected, info = verb)
+  }
+})
