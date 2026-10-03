@@ -58,6 +58,31 @@ describe("ddbs_predicate()", {
       expect_warning(ddbs_predicate(points_ddbs, "argentina", conn = conn_test))
     })
     
+    it("returns cells in x-by-y order with mode sf for asymmetric inputs (#155)", {
+      x <- sf::st_as_sf(data.frame(X = c(0, 10, 20), Y = 0), coords = c("X", "Y"), crs = 3857)
+      b <- sf::st_buffer(x[2:3, ], 1)
+
+      expect_equal(
+        ddbs_intersects(x, b, mode = "sf", sparse = FALSE),
+        sf::st_intersects(x, b, sparse = FALSE),
+        ignore_attr = TRUE
+      )
+
+      ## larger input, so DuckDB processes the cross join in parallel
+      withr::with_seed(42, {
+        x_big <- sf::st_as_sf(data.frame(X = runif(500, 0, 1e5), Y = runif(500, 0, 1e5)), coords = c("X", "Y"), crs = 3857)
+        y_big <- sf::st_buffer(sf::st_as_sf(data.frame(X = runif(50, 0, 1e5), Y = runif(50, 0, 1e5)), coords = c("X", "Y"), crs = 3857), 5000)
+      })
+      expect_equal(
+        lapply(ddbs_intersects(x_big, y_big, mode = "sf"), as.integer),
+        lapply(sf::st_intersects(x_big, y_big), as.integer)
+      )
+      expect_equal(
+        lapply(ddbs_within(x_big, y_big, mode = "sf"), as.integer),
+        lapply(sf::st_within(x_big, y_big), as.integer)
+      )
+    })
+
     it("works with intersects predicate", {
       output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "intersects") |> collect()
       output_function  <- ddbs_intersects(countries_sf, argentina_sf) |> collect()
