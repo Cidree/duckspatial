@@ -242,9 +242,10 @@ print.duckspatial_df <- function(x, ..., n = 10) {
   
   ## print preview
   tryCatch({
-    remote_name <- attr(x, "source_table")
-    remote_conn <- attr(x, "source_conn") %||% dbplyr::remote_con(x)
-    head_data <- dplyr::tbl(remote_conn, remote_name)
+    ## preview the object's own lazy query, so verbs without a duckspatial_df
+    ## method (e.g. distinct()) are reflected (#159)
+    head_data <- x
+    class(head_data) <- setdiff(class(x), "duckspatial_df")
     print(head_data, n = n)
   }, error = function(e) {
     cat(cli::col_yellow("\u26a0 Preview unavailable\n"))

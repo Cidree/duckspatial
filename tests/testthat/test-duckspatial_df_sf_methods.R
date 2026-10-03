@@ -75,3 +75,11 @@ test_that("ddbs_geom_col returns correct geometry column name", {
   expect_equal(ddbs_geom_col(nc_lazy), "geometry")
   expect_equal(ddbs_geom_col(nc_sf), attr(nc_sf, "sf_column"))
 })
+
+test_that("print.duckspatial_df previews the modified query, not the source table (#159)", {
+  ds <- as_duckspatial_df(rbind(nc_sf[1:3, "NAME"], nc_sf[1:3, "NAME"]))
+
+  output <- capture.output(print(dplyr::distinct(ds)))
+
+  expect_equal(sum(grepl("Ashe", output)), 1L)
+})
