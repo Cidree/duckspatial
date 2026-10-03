@@ -38,25 +38,109 @@ describe("as_nanoarrow_array_stream.duckspatial_df()", {
     stream$release()
   })
 
-  it("works with native = TRUE (materialized path)", {
-    # Skip if sf can't be loaded (unlikely here but safe)
-    testthat::skip_if_not_installed("sf")
-    
-    stream <- nanoarrow::as_nanoarrow_array_stream(nc_ddbs, native = TRUE)
-    expect_s3_class(stream, "nanoarrow_array_stream")
-    
+  native_extension <- function(x) {
+    stream <- nanoarrow::as_nanoarrow_array_stream(x, native = TRUE)
+    on.exit(stream$release())
+
     schema <- stream$get_schema()
     child_names <- vapply(schema$children, function(x) x$name, character(1))
-    geom_idx <- which(child_names == attr(nc_ddbs, "sf_column"))
-    
+    geom_idx <- which(child_names == attr(x, "sf_column"))
+
     geom_schema <- schema$children[[geom_idx]]
-    
-    # native = TRUE should produce native geoarrow types (e.g. geoarrow.polygon)
-    # depending on the geometry type of the input
-    ext_name <- geom_schema$metadata[["ARROW:extension:name"]]
-    expect_true(grepl("^geoarrow\\.", ext_name))
-    
-    stream$release()
+    geom_schema$metadata[["ARROW:extension:name"]]
+  }
+
+  it("produces native geometry layouts when native = TRUE", {
+    expect_equal(native_extension(points_ddbs), "geoarrow.point")
+    expect_equal(native_extension(rivers_ddbs), "geoarrow.linestring")
+    expect_equal(native_extension(nc_ddbs), "geoarrow.multipolygon")
+  })
+
+  it("uses chunk_size for streamed record batches", {
+    stream <- nanoarrow::as_nanoarrow_array_stream(
+      points_ddbs,
+      native = TRUE,
+      chunk_size = 200
+    )
+    on.exit(stream$release())
+
+    table <- arrow::as_arrow_table(stream)
+    expect_equal(table$num_rows, 1000)
+    expect_equal(table[["id"]]$num_chunks, 5)
+    expect_equal(table[[attr(points_ddbs, "sf_column")]]$num_chunks, 5)
+  })
+
+  it("writes Arrow IPC for results larger than one Arrow chunk", {
+    # Arrow chunks the fetched table at 1e6 rows. Converting the geometry
+    # column into a single array leaves every batch after the first holding a
+    # sliced geometry child with a nonzero offset, which the IPC writer
+    # rejects, so anything over one chunk could not be serialised at all.
+    skip_on_cran()
+    conn <- DBI::dbConnect(duckdb::duckdb())
+    on.exit(DBI::dbDisconnect(conn, shutdown = TRUE), add = TRUE)
+    duckspatial::ddbs_load(conn)
+
+    DBI::dbExecute(conn, paste(
+      "CREATE TABLE wide AS SELECT i AS id,",
+      "ST_Point(i * 0.000001, i * 0.000001) AS geom",
+      "FROM range(2000000) s(i)"
+    ))
+
+    x <- duckspatial::as_duckspatial_df(
+      dplyr::tbl(conn, "wide"),
+      crs = sf::st_crs(4326)
+    )
+    stream <- nanoarrow::as_nanoarrow_array_stream(x, native = TRUE)
+
+    connection <- rawConnection(raw(0), "w")
+    on.exit(close(connection), add = TRUE)
+    expect_no_error(nanoarrow::write_nanoarrow(stream, connection))
+    expect_gt(length(rawConnectionValue(connection)), 0)
+  })
+
+  it("preserves non-geometry column types when native = TRUE", {
+    # The native path must replace only the geometry column. Rebuilding the
+    # table from R vectors re-infers every other column's type, which silently
+    # narrows int64 to int32 whenever the values happen to fit.
+    conn <- DBI::dbConnect(duckdb::duckdb())
+    on.exit(DBI::dbDisconnect(conn, shutdown = TRUE), add = TRUE)
+    duckspatial::ddbs_load(conn)
+
+    DBI::dbExecute(conn, paste(
+      "CREATE TABLE typed AS SELECT",
+      "i AS small_id,",
+      "3000000000 + i AS large_id,",
+      "i::VARCHAR AS label,",
+      "ST_Point(i * 0.01, i * 0.01) AS geom",
+      "FROM range(10) s(i)"
+    ))
+
+    typed <- function() {
+      duckspatial::as_duckspatial_df(
+        dplyr::tbl(conn, "typed"),
+        crs = sf::st_crs(4326)
+      )
+    }
+
+    stream <- nanoarrow::as_nanoarrow_array_stream(typed(), native = TRUE)
+    on.exit(stream$release(), add = TRUE)
+    schema <- stream$get_schema()
+
+    # "l" is int64, "i" is int32, "u" is utf8
+    expect_equal(schema$children$small_id$format, "l")
+    expect_equal(schema$children$large_id$format, "l")
+    expect_equal(schema$children$label$format, "u")
+    expect_equal(
+      schema$children$geom$metadata[["ARROW:extension:name"]],
+      "geoarrow.point"
+    )
+
+    values <- as.data.frame(
+      nanoarrow::as_nanoarrow_array_stream(typed(), native = TRUE)
+    )
+    expect_equal(nrow(values), 10)
+    expect_equal(as.numeric(values$small_id), 0:9)
+    expect_equal(as.numeric(values$large_id), 3000000000 + 0:9)
   })
 
   it("works with geometry_schema (Native layout)", {
