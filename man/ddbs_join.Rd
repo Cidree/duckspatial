@@ -53,8 +53,9 @@ or a character string of length two specifying the schema and table
 names. If \code{NULL} (the default), the function returns the result as an
 \code{sf} object}
 
-\item{distance}{a numeric value specifying the distance for ST_DWithin. The units
-should be specified in meters}
+\item{distance}{a numeric value specifying the distance for ST_DWithin. Units are
+metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
+(e.g. US survey feet for EPSG:2264)}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

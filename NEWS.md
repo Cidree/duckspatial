@@ -7,6 +7,10 @@
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
 
+## BUG FIXES
+
+* `ddbs_area()`, `ddbs_length()`, `ddbs_perimeter()`, `ddbs_distance()` and the `dwithin` predicate (`ddbs_is_within_distance()`, `ddbs_join()`, `ddbs_filter()`) now compute planar results in the CRS's own units for projected CRSs not in metres (e.g. US survey feet), labelled as in `sf`; previously they returned `NaN`, mislabelled feet as metres, or found no `dwithin` matches. These functions and `ddbs_buffer()` now give an informative error when the input has no CRS, and WGS84 written as `"OGC:CRS84"` or `"WGS 84"` no longer triggers an accuracy warning (#161).
+
 # duckspatial 1.2.0
 
 ## NEW FEATURES
