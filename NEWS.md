@@ -7,6 +7,10 @@
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
 
+## BUG FIXES
+
+* `ddbs_filter()` no longer drops rows of `x` that are exact duplicates of another row, and now returns the matching rows in their original order (#156).
+
 # duckspatial 1.2.0
 
 ## NEW FEATURES
