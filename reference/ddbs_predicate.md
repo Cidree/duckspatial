@@ -126,9 +126,9 @@ ddbs_within_properly(x, y, ...)
 
 - distance:
 
-  a numeric value specifying the distance for ST_DWithin. Units
-  correspond to the coordinate system of the geometry (e.g. degrees or
-  meters)
+  a numeric value specifying the distance for ST_DWithin. Units are
+  metres for geographic (lon/lat) CRSs, and the CRS units for projected
+  CRSs (e.g. US survey feet for EPSG:2264)
 
 - mode:
 

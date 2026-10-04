@@ -162,8 +162,13 @@ For `ddbs_area`, `ddbs_length`, and `ddbs_perimeter`:
 - When `name` is provided: writes the table in the DuckDB connection and
   returns `TRUE` (invisibly).
 
-For `ddbs_distance`: A `units` matrix in meters with dimensions nrow(x),
-nrow(y).
+For `ddbs_distance`: A `units` matrix with dimensions nrow(x), nrow(y).
+
+Results are in metres (square metres for area) for geographic (lon/lat)
+CRSs, and in the CRS units for projected CRSs (e.g. `[US_survey_foot^2]`
+for EPSG:2264), as in `sf`. Inputs without a CRS raise an error; set one
+with
+[`ddbs_set_crs`](https://cidree.github.io/duckspatial/reference/ddbs_set_crs.md).
 
 For `ddbs_azimuth`: A numeric matrix of azimuth values (in the specified
 `unit`) with dimensions nrow(x) by nrow(y) when `mode = "sf"`, or a lazy
@@ -175,27 +180,37 @@ otherwise. Both inputs must contain only POINT geometries.
 These functions automatically select the appropriate calculation method
 based on the input CRS:
 
-**For EPSG:4326 (geographic coordinates):**
+**For geographic (lon/lat) CRSs, e.g. EPSG:4326:**
 
 - Uses `ST_*_Spheroid` functions (e.g., `ST_Area_Spheroid`,
   `ST_Length_Spheroid`)
 
 - Leverages GeographicLib library for ellipsoidal earth model
-  calculations
+  calculations on the WGS84 ellipsoid (a warning is raised for other
+  datums)
 
 - Highly accurate but slower than planar calculations
 
-- For `ddbs_distance` with POINT geometries: defaults to `"haversine"`
+- For `ddbs_distance`: defaults to `"haversine"` for EPSG:4326 and to
+  `"spheroid"` otherwise. Only POINT geometries are supported; transform
+  other geometries to a projected CRS first
 
-- For `ddbs_distance` with other geometries: defaults to `"spheroid"`
-
-**For projected CRS (e.g., UTM, Web Mercator):**
+**For projected CRS (e.g., UTM, Web Mercator, State Plane):**
 
 - Uses planar `ST_*` functions (e.g., `ST_Area`, `ST_Length`)
 
-- Faster performance with accurate results in meters
+- Faster performance, with results in the CRS units (e.g. metres, or US
+  survey feet for EPSG:2264)
 
 - For `ddbs_distance`: defaults to `"planar"`
+
+**Inside
+[`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html):**
+`ddbs_area()`, `ddbs_length()` and `ddbs_perimeter()` run as DuckDB
+macros, which use the spheroid only when the geometry's CRS is
+`EPSG:4326`. Other geographic CRSs (e.g. EPSG:4267, or WGS84 stored as
+OGC:CRS84) return planar results in degrees; transform them to
+`EPSG:4326` or a projected CRS first.
 
 **Distance calculation methods** (`dist_type` argument):
 
