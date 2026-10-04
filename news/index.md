@@ -11,18 +11,6 @@ CRAN release: 2026-07-04
   and
   [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)([\#147](https://github.com/Cidree/duckspatial/issues/147)).
 
-### BUG FIXES
-
-- [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
-  [`ddbs_azimuth()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
-  and the predicate functions
-  ([`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
-  [`ddbs_intersects()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
-  etc.) with `mode = "sf"` could return matrices with values in the
-  wrong cells, because the cross join results were reshaped without an
-  explicit row order
-  ([\#155](https://github.com/Cidree/duckspatial/issues/155)).
-
 ## duckspatial 1.2.0
 
 CRAN release: 2026-07-02
