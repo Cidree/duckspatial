@@ -462,8 +462,9 @@ ddbs_distance <- function(
     ## Create the query
     tmp.query <- glue::glue("
       SELECT {st_distance_fun} as distance
-      FROM {x_list$query_name} x
-      CROSS JOIN {y_list$query_name} y
+      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
+      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
     ")
 
     ## Retrieve results
@@ -660,8 +661,9 @@ ddbs_azimuth <- function(
 
     tmp.query <- glue::glue("
       SELECT {st_azimuth_expr} AS azimuth
-      FROM {x_list$query_name} x
-      CROSS JOIN {y_list$query_name} y
+      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
+      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
     ")
 
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)

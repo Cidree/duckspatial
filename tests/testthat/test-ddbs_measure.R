@@ -679,8 +679,29 @@ describe("ddbs_distance()", {
       output <- ddbs_distance(points_sample_sf, points_sample_ddbs, mode = "sf")
       expect_s3_class(output, "units")
       expect_equal(
-        class(units::drop_units(output)), 
+        class(units::drop_units(output)),
         c("matrix", "array")
+      )
+    })
+
+    it("returns cells in x-by-y order with mode sf for asymmetric inputs (#155)", {
+      x <- sf::st_as_sf(data.frame(X = c(0, 10, 20), Y = 0), coords = c("X", "Y"), crs = 3857)
+      y <- sf::st_as_sf(data.frame(X = c(0, 100), Y = 0), coords = c("X", "Y"), crs = 3857)
+      expect_equal(
+        units::drop_units(ddbs_distance(x, y, mode = "sf", quiet = TRUE)),
+        units::drop_units(sf::st_distance(x, y)),
+        ignore_attr = TRUE
+      )
+
+      ## larger input, so DuckDB processes the cross join in parallel
+      withr::with_seed(42, {
+        x_big <- sf::st_as_sf(data.frame(X = runif(500, 0, 1e5), Y = runif(500, 0, 1e5)), coords = c("X", "Y"), crs = 3857)
+        y_big <- sf::st_as_sf(data.frame(X = runif(50, 0, 1e5), Y = runif(50, 0, 1e5)), coords = c("X", "Y"), crs = 3857)
+      })
+      expect_equal(
+        units::drop_units(ddbs_distance(x_big, y_big, mode = "sf", quiet = TRUE)),
+        units::drop_units(sf::st_distance(x_big, y_big)),
+        ignore_attr = TRUE
       )
     })
     
@@ -1110,6 +1131,20 @@ describe("ddbs_azimuth()", {
       expect_equal(output[1, 2], pi / 2,    tolerance = 1e-6)  # due east
       expect_equal(output[1, 3], pi,        tolerance = 1e-6)  # due south
       expect_equal(output[1, 4], 3 * pi / 2, tolerance = 1e-6) # due west
+    })
+
+    it("returns cells in x-by-y order for asymmetric inputs (#155)", {
+      xy_x <- data.frame(x = c(0, 10, 20), y = c(0, 5, -5))
+      xy_y <- data.frame(x = c(3, -7), y = c(8, 1))
+      x <- sf::st_as_sf(xy_x, coords = c("x", "y"), crs = "EPSG:3857", remove = FALSE)
+      y <- sf::st_as_sf(xy_y, coords = c("x", "y"), crs = "EPSG:3857", remove = FALSE)
+
+      ## azimuth = clockwise angle from north: atan2(dx, dy), in [0, 2*pi)
+      expected <- outer(
+        seq_len(nrow(xy_x)), seq_len(nrow(xy_y)),
+        function(i, j) atan2(xy_y$x[j] - xy_x$x[i], xy_y$y[j] - xy_x$y[i]) %% (2 * pi)
+      )
+      expect_equal(ddbs_azimuth(x, y, mode = "sf"), expected, tolerance = 1e-6)
     })
 
     it("calculates azimuth correctly in degrees", {

@@ -1,15 +1,26 @@
 
+# development version
 
+## BUG FIXES
+
+* Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
+  geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
+  the method was introduced, it had incorrectly returned `geoarrow.wkb`
+  unchanged because its target schema was inferred from the existing WKB Arrow
+  column ([#121](https://github.com/Cidree/duckspatial/pull/121)).
+  
+* `ddbs_filter()` no longer drops rows of `x` that are exact duplicates of another row, and now returns the matching rows in their original order (#156).
+* `ddbs_distance()`, `ddbs_azimuth()` and the predicate functions (`ddbs_predicate()`, `ddbs_intersects()`, etc.) with `mode = "sf"` could return matrices with values in the wrong cells, because the cross join results were reshaped without an explicit row order (#155).
+
+## NEW FEATURES
+
+* `ddbs_expand()`: expand the bounding box of geometries.
 
 # duckspatial 1.2.1
 
 ## ENHANCEMENTS
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
-
-## BUG FIXES
-
-* `ddbs_filter()` no longer drops rows of `x` that are exact duplicates of another row, and now returns the matching rows in their original order (#156).
 
 # duckspatial 1.2.0
 

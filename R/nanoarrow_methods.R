@@ -6,12 +6,14 @@
 #' @param native If TRUE, transforms WKB to a "Native" GeoArrow layout (e.g., 
 #'   Point, Polygon) using optimized Arrow-to-Arrow kernels. This layout is 
 #'   optimized for high-performance rendering in tools like Deck.GL.
+#' @param chunk_size Maximum number of rows in each Arrow record batch.
 #'
 #' @return A \code{nanoarrow_array_stream}
 #' @exportS3Method nanoarrow::as_nanoarrow_array_stream duckspatial_df
 as_nanoarrow_array_stream.duckspatial_df <- function(x, ..., 
                                                      schema = NULL, 
-                                                     native = FALSE) {
+                                                     native = FALSE,
+                                                     chunk_size = 1e6) {
   
   geom_col <- attr(x, "sf_column") %||% "geom"
   conn <- dbplyr::remote_con(x)
@@ -33,28 +35,66 @@ as_nanoarrow_array_stream.duckspatial_df <- function(x, ...,
 
   # 2. Execute and get Arrow data
   res <- DBI::dbSendQuery(conn, query_sql, arrow = TRUE)
-  arrow_obj <- duckdb::duckdb_fetch_arrow(res)
+  arrow_obj <- duckdb::duckdb_fetch_arrow(res, chunk_size = chunk_size)
   
   # 3. Native Path: Transform WKB to Native GeoArrow entirely in Arrow memory
   if (isTRUE(native)) {
     tab <- arrow::as_arrow_table(arrow_obj)
+
+    geometry_types <- unique(as.character(ddbs_geometry_type(
+      x,
+      by_feature = FALSE
+    )))
+    geometry_type <- if (all(geometry_types %in% c("POINT", "MULTIPOINT"))) {
+      if ("MULTIPOINT" %in% geometry_types) "MULTIPOINT" else "POINT"
+    } else if (all(geometry_types %in% c("LINESTRING", "MULTILINESTRING"))) {
+      if ("MULTILINESTRING" %in% geometry_types) {
+        "MULTILINESTRING"
+      } else {
+        "LINESTRING"
+      }
+    } else if (all(geometry_types %in% c("POLYGON", "MULTIPOLYGON"))) {
+      if ("MULTIPOLYGON" %in% geometry_types) "MULTIPOLYGON" else "POLYGON"
+    }
+
+    if (is.null(geometry_type)) {
+      cli::cli_abort("Cannot infer one native GeoArrow geometry type.")
+    }
+
+    target_geom_schema <- geoarrow::geoarrow_native(
+      geometry_type,
+      coord_type = "SEPARATE",
+      crs = ddbs_crs(x)
+    )
     
-    # Infer native schema from WKB column
-    wkb_col <- nanoarrow::as_nanoarrow_array(arrow::as_arrow_array(tab[[geom_col]]))
-    
-    # Try to infer native schema
-    target_geom_schema <- tryCatch({
-      geoarrow::infer_geoarrow_schema(wkb_col, coord_type = "SEPARATE")
-    }, error = function(e) {
-      geoarrow::geoarrow_wkb(crs = ddbs_crs(x))
-    })
-    
-    # Cast WKB to Native layout using geoarrow kernels
-    tab_list <- as.list(tab)
+    # Cast WKB to Native layout using geoarrow kernels, replacing only the
+    # geometry column. Every other column stays an Arrow array throughout:
+    # `as.list()` on an Arrow table converts columns to R vectors, and
+    # rebuilding from those re-infers their types, silently narrowing int64 to
+    # int32 whenever the values happen to fit.
+    tab_list <- stats::setNames(
+      lapply(names(tab), function(column) tab[[column]]),
+      names(tab)
+    )
+
+    # Convert one chunk at a time so the geometry column keeps the same chunk
+    # layout as the rest of the table. Combining it into a single array instead
+    # makes every record batch after the first hold a sliced geometry child
+    # with a nonzero offset, which the Arrow IPC writer rejects
+    # ("Cannot encode arrays with nonzero offset").
     # geoarrow::as_geoarrow_array needs a nanoarrow_array or wk object
-    tab_list[[geom_col]] <- geoarrow::as_geoarrow_array(wkb_col, schema = target_geom_schema)
-    
-    new_tab <- arrow::as_arrow_table(arrow::record_batch(!!!tab_list))
+    tab_list[[geom_col]] <- arrow::ChunkedArray$create(
+      !!!lapply(tab[[geom_col]]$chunks, function(chunk) {
+        arrow::as_arrow_array(
+          geoarrow::as_geoarrow_array(
+            nanoarrow::as_nanoarrow_array(chunk),
+            schema = target_geom_schema
+          )
+        )
+      })
+    )
+
+    new_tab <- arrow::arrow_table(!!!tab_list)
     return(nanoarrow::as_nanoarrow_array_stream(new_tab, schema = schema))
   }
 
