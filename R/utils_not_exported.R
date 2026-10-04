@@ -440,13 +440,6 @@ get_query_list <- function(x, conn) {
         return(result)
       }
     }
-    ## Test duckdb 1.5
-    x_list <- get_query_name(source_table)
-    if (!is.null(x_list$table_name)) {
-      x_list$cleanup <- function() NULL
-      x_list$owned <- TRUE
-      return(x_list)
-    }
     ## Modified by dplyr verbs: render to a new temp view
     temp_view_name <- ddbs_temp_view_name()
     query_sql <- dbplyr::sql_render(x, con = conn)
