@@ -20,6 +20,9 @@
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
 
+## BUG FIXES
+
+* `ddbs_distance()`, `ddbs_azimuth()` and the predicate functions (`ddbs_predicate()`, `ddbs_intersects()`, etc.) with `mode = "sf"` could return matrices with values in the wrong cells, because the cross join results were reshaped without an explicit row order (#155).
 
 # duckspatial 1.2.0
 
