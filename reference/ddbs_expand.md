@@ -1,16 +1,19 @@
-# Aggregate the intersection of geometries
+# Expand the bounding box of geometries
 
-Computes the geometric intersection of a set of geometries — the area
-common to all of them — using DuckDB's `ST_Intersection_Agg()`
-aggregate. This is the intersection counterpart to
-[`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md).
+Returns a rectangular polygon representing the bounding box of each
+geometry, expanded by a fixed distance in all directions (x and y axes).
+Unlike
+[`ddbs_buffer`](https://cidree.github.io/duckspatial/reference/ddbs_buffer.md),
+which produces a rounded offset around the geometry itself,
+`ddbs_expand()` operates on the geometry's bounding box and always
+returns an axis-aligned rectangle.
 
 ## Usage
 
 ``` r
-ddbs_intersection_agg(
+ddbs_expand(
   x,
-  by = NULL,
+  distance,
   conn = NULL,
   name = NULL,
   mode = NULL,
@@ -35,11 +38,11 @@ ddbs_intersection_agg(
 
   Data is returned from this object.
 
-- by:
+- distance:
 
-  Character vector of one or more column names to group by. The
-  intersection is computed within each group. When `NULL` (default), all
-  geometries are intersected into a single geometry.
+  a numeric value specifying the distance to expand the bounding box in
+  each direction. Units correspond to the coordinate system of the
+  geometry (e.g. degrees or meters)
 
 - conn:
 
@@ -98,28 +101,22 @@ if (FALSE) { # \dontrun{
 ## load package
 library(duckspatial)
 
-## create a connection and three overlapping polygons
-conn <- ddbs_create_conn()
-polys <- sf::st_as_sf(
-  data.frame(grp = c("a", "a", "b", "b")),
-  geometry = sf::st_sfc(
-    sf::st_polygon(list(matrix(c(0,0, 3,0, 3,3, 0,3, 0,0), ncol = 2, byrow = TRUE))),
-    sf::st_polygon(list(matrix(c(1,1, 4,1, 4,4, 1,4, 1,1), ncol = 2, byrow = TRUE))),
-    sf::st_polygon(list(matrix(c(2,2, 5,2, 5,5, 2,5, 2,2), ncol = 2, byrow = TRUE))),
-    sf::st_polygon(list(matrix(c(3,3, 6,3, 6,6, 3,6, 3,3), ncol = 2, byrow = TRUE)))
-  ),
-  crs = 4326
+## create a duckdb database in memory (with spatial extension)
+conn <- ddbs_create_conn(dbdir = "memory")
+
+## read data
+argentina_ddbs <- ddbs_open_dataset(
+  system.file("spatial/argentina.geojson",
+  package = "duckspatial")
 )
 
-## intersect all geometries into their common area
-polys_inters <- ddbs_intersection_agg(polys, mode = "sf")
+## store in duckdb
+ddbs_write_vector(conn, argentina_ddbs, "argentina")
 
-## intersect within groups
-polys_inters_grp <- ddbs_intersection_agg(polys, by = "grp", mode = "sf")
+## expand bounding box by 1 unit
+ddbs_expand(conn = conn, "argentina", distance = 1)
 
-## plot them
-plot(polys["grp"], key.pos = NULL, reset = FALSE)
-plot(polys_inters_grp["grp"], pal = c("red", "blue"), add = TRUE)
-plot(sf::st_geometry(polys_inters), col = "black", pch = 19, cex = 2, add = TRUE)
+## expand without using a connection
+ddbs_expand(argentina_ddbs, distance = 1)
 } # }
 ```

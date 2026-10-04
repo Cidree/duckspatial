@@ -352,6 +352,8 @@ Extract bounding boxes and envelopes
   : Get the boundary of geometries
 - [`ddbs_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_envelope.md)
   : Get the envelope (bounding box) of geometries
+- [`ddbs_expand()`](https://cidree.github.io/duckspatial/reference/ddbs_expand.md)
+  : Expand the bounding box of geometries
 - [`ddbs_make_envelope()`](https://cidree.github.io/duckspatial/reference/ddbs_make_envelope.md)
   : Create a rectangular polygon from bounding coordinates
 - [`ddbs_minimum_rotated_rectangle()`](https://cidree.github.io/duckspatial/reference/ddbs_minimum_rotated_rectangle.md)

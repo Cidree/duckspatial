@@ -138,7 +138,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,9 +187,9 @@
       <img src="../logo.png" class="logo" alt=""><h1>Areal Interpolation</h1>
 
 
-      <p class="date">2026-07-17</p>
+      <p class="date">2026-10-04</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.2.1/vignettes/aw_interpolation.qmd" class="external-link"><code>vignettes/aw_interpolation.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/aw_interpolation.qmd" class="external-link"><code>vignettes/aw_interpolation.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -249,10 +249,14 @@
 <span>  weight <span class="op">=</span> <span class="st">"total"</span>,</span>
 <span>  mode <span class="op">=</span> <span class="st">"sf"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb is keeping downloaded extensions in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmpn4bd4D/duckdb/extensions</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends, so extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.</span></span></code></pre></div>
+<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
+<span><span class="co">#&gt; ℹ /tmp/RtmpWvqpAW/duckdb</span></span>
+<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
+<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
+<span><span class="co">#&gt; • Secrets are lost.</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
+<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span></code></pre></div>
 </div>
 <p><strong>Verification:</strong> The total sum of births in the result should match the original data (mass preservation).</p>
 <div class="cell">
@@ -334,6 +338,14 @@
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create connection</span></span>
 <span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
+<span><span class="co">#&gt; ℹ /tmp/RtmpWvqpAW/duckdb</span></span>
+<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
+<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
+<span><span class="co">#&gt; • Secrets are lost.</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
+<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="co"># Write layers to DuckDB</span></span>
 <span><span class="fu"><a href="../reference/ddbs_write_vector.html">ddbs_write_vector</a></span><span class="op">(</span><span class="va">conn</span>, <span class="va">nc</span>, <span class="st">"nc_table"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -421,7 +433,7 @@
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # A query:  ?? x 3</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]</span></span>
 <span><span class="co">#&gt;    target_id x                                                             BIR74</span></span>
 <span><span class="co">#&gt;        &lt;int&gt; &lt;wk_wkb&gt;                                                      &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt;  1         1 &lt;POLYGON ((1054293 1348021, 1132214 1348021, 1132214 141626…  1168.</span></span>

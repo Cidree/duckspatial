@@ -138,7 +138,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,9 +187,9 @@
       <img src="../logo.png" class="logo" alt=""><h1>Getting started</h1>
 
 
-      <p class="date">2026-07-17</p>
+      <p class="date">2026-10-04</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.2.1/vignettes/duckspatial.qmd" class="external-link"><code>vignettes/duckspatial.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/duckspatial.qmd" class="external-link"><code>vignettes/duckspatial.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -233,10 +233,14 @@
 <span>    package <span class="op">=</span> <span class="st">"duckspatial"</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb is keeping downloaded extensions in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpJIaMcd/duckdb/extensions</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends, so extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.</span></span>
+<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
+<span><span class="co">#&gt; ℹ /tmp/RtmpEbV3lP/duckdb</span></span>
+<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
+<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
+<span><span class="co">#&gt; • Secrets are lost.</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
+<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">countries_ddbs</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A duckspatial lazy spatial table</span></span>
@@ -248,7 +252,7 @@
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # A query:  ?? x 8</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]</span></span>
 <span><span class="co">#&gt;    OGC_FID CNTR_ID NAME_ENGL          ISO3_CODE CNTR_NAME FID   date       geom </span></span>
 <span><span class="co">#&gt;      &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;              &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt; &lt;date&gt;     &lt;wk_&gt;</span></span>
 <span><span class="co">#&gt;  1       0 AR      Argentina          ARG       Argentina AR    2021-01-01 &lt;POL…</span></span>
@@ -344,7 +348,7 @@
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # A query:  ?? x 8</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]</span></span>
 <span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    </span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;lgl&gt;    &lt;wk_wkb&gt;    </span></span>
 <span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    &lt;POLYGON ((…</span></span></code></pre></div>
@@ -366,7 +370,7 @@
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # A query:  ?? x 1</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]</span></span>
 <span><span class="co">#&gt;   geometry                                                                      </span></span>
 <span><span class="co">#&gt;   &lt;wk_wkb&gt;                                                                      </span></span>
 <span><span class="co">#&gt; 1 &lt;MULTIPOLYGON (((-148.8727 -85.21352, -150.1968 -85.49222, -151.2143 -85.4843…</span></span></code></pre></div>
@@ -422,7 +426,15 @@
 <p>{duckspatial} provides a convenience wrapper, <code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code>, that creates a DuckDB connection, installs the Spatial extension, and loads it, all in one call:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
+<span><span class="co">#&gt; ℹ /tmp/RtmpEbV3lP/duckdb</span></span>
+<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
+<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
+<span><span class="co">#&gt; • Secrets are lost.</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
+<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span></code></pre></div>
 </div>
 <p>You can also limit the resources DuckDB is allowed to use:</p>
 <div class="cell">
@@ -430,7 +442,15 @@
 <code class="sourceCode R"><span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span></span>
 <span>  threads         <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  memory_limit_gb <span class="op">=</span> <span class="fl">8</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
+<span><span class="co">#&gt; ℹ /tmp/RtmpEbV3lP/duckdb</span></span>
+<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
+<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
+<span><span class="co">#&gt; • Secrets are lost.</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
+<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
+<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span></code></pre></div>
 </div>
 <p>Under the hood, <code><a href="../reference/ddbs_create_conn.html">ddbs_create_conn()</a></code> is equivalent to:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -466,7 +486,7 @@
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # A query:  ?? x 8</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]</span></span>
 <span><span class="co">#&gt;   CNTR_ID NAME_ENGL  ISO3_CODE CNTR_NAME  FID   date       is_valid geometry    </span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt; &lt;date&gt;     &lt;lgl&gt;    &lt;wk_wkb&gt;    </span></span>
 <span><span class="co">#&gt; 1 AQ      Antarctica ATA       Antarctica AQ    2021-01-01 FALSE    &lt;POLYGON ((…</span></span></code></pre></div>

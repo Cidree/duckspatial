@@ -78,10 +78,14 @@ res_extensive <- ddbs_interpolate_aw(
   weight = "total",
   mode = "sf"
 )
-#> duckdb is keeping downloaded extensions in a temporary directory:
-#> ℹ /tmp/Rtmpn4bd4D/duckdb/extensions
-#> This is removed when the R session ends, so extensions are re-downloaded each session.
-#> ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpWvqpAW/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 ```
 
 **Verification:** The total sum of births in the result should match the
@@ -183,6 +187,14 @@ tables.
 
 # Create connection
 conn <- ddbs_create_conn()
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpWvqpAW/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 # Write layers to DuckDB
 ddbs_write_vector(conn, nc, "nc_table", overwrite = TRUE)
@@ -280,7 +292,7 @@ as_duckspatial_df("nc_grid_births", conn)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
 #> # A query:  ?? x 3
-#> # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]
+#> # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]
 #>    target_id x                                                             BIR74
 #>        <int> <wk_wkb>                                                      <dbl>
 #>  1         1 <POLYGON ((1054293 1348021, 1132214 1348021, 1132214 141626…  1168.
