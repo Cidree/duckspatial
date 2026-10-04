@@ -228,3 +228,18 @@ testthat::test_that("ddbs_join throws error on CRS mismatch", {
   )
 })
 
+
+
+# CRS units handling (#161) ------------------------------------------------
+
+testthat::test_that("dwithin join uses CRS units for projected non-metre CRSs (#161)", {
+  pts_ft <- suppressWarnings(sf::st_centroid(sf::st_transform(nc_sf[1:10, ], 2264)))
+  expected <- sum(lengths(sf::st_is_within_distance(pts_ft, pts_ft, dist = 100000)))
+
+  res <- ddbs_join(pts_ft, pts_ft, join = "dwithin", distance = 100000, mode = "sf")
+  expect_equal(nrow(res), expected)
+
+  no_crs <- sf::st_set_crs(pts_ft, NA)
+  expect_error(ddbs_join(no_crs, no_crs, join = "dwithin", distance = 1), "ddbs_set_crs")
+  expect_no_error(ddbs_join(no_crs, no_crs, join = "intersects", mode = "sf"))
+})

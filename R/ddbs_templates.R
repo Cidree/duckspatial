@@ -89,8 +89,9 @@ template_unary_ops <- function(
   ## 2.3. Other function-specific handling
   ## - ST_Buffer, check the units and warn if they aren't in meters
   if (tolower(fun) == "st_buffer") {
+    crs_measure_info(crs_x, call = rlang::caller_env()) # aborts if there is no CRS
     crs_units <- crs_x$units_gdal
-    if (crs_units != "metre") cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
+    if (!identical(crs_units, "metre")) cli::cli_warn("The input CRS is in {crs_units}s. This function calculates the buffer in those units.")
   }
 
   ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
@@ -398,7 +399,7 @@ template_measure <- function(
   crs_x     <- ddbs_crs(x, conn)
   sf_col_x  <- attr(x, "sf_column")
   mode      <- get_mode(mode, name)
-  crs_units <- crs_x$units_gdal
+  crs_info  <- crs_measure_info(crs_x, call = rlang::caller_env())
 
   ## 1.3. Resolve spatial connections and handle imports
   resolve_conn <- resolve_spatial_connections(x, y = NULL, conn = conn, quiet = quiet)
@@ -419,10 +420,9 @@ template_measure <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 3.2. Warn if the units aren't meters or EPSG:4326
-  ## for EPSG:4326, we can use ST_*_Spheroid to get the measurement in meters
-  ## so that will be an exception
-  if (crs_units != "metre" && !crs_x$input %in% c("EPSG:4326", "WGS 84")) {
+  ## 3.2. Geographic CRS: ST_*_Spheroid uses the WGS84 ellipsoid and returns
+  ## metres. Warn when the CRS is geographic but not WGS84
+  if (crs_info$geographic && !crs_equal(crs_x, 4326)) {
       cli::cli_warn(
         "Input is in {.val {crs_x$input}}, not {.val EPSG:4326}. {fun} calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
       )
@@ -430,20 +430,17 @@ template_measure <- function(
 
   ## 3.3. Build the appropriate ST function based on fun and CRS
   ## Use spheroid version for geographic coordinates
-  if (crs_units == "metre") {
+  if (!crs_info$geographic) {
     st_function <- glue::glue("{fun}({x_geom})")
   } else {
     # st_function <- glue::glue("{fun}_Spheroid({x_geom})") # when the issue #109 is solved
     st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({x_geom}))")
   }
   
-  ## 3.4. Determine units for output
-  output_units <- switch(
-    fun,
-    "ST_Area"      = "m^2",
-    "ST_Length"    = "metre",
-    "ST_Perimeter" = "metre"
-  )
+  ## 3.4. Determine units for output: metres for geographic CRSs, the CRS
+  ## units otherwise (NULL, i.e. no units, when sf cannot identify them)
+  output_units <- crs_info$units
+  if (!is.null(output_units) && fun == "ST_Area") output_units <- paste0(output_units, "^2")
 
   ## 3.5. Build the base query. For sf we will return an units vector
   if (mode == "sf") {

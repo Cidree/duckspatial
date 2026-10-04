@@ -1795,3 +1795,17 @@ describe("ddbs_reduce_precision()", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+# CRS units handling (#161) ------------------------------------------------
+
+describe("ddbs_buffer() CRS handling (#161)", {
+  it("aborts with an informative error when the input has no CRS", {
+    no_crs <- sf::st_set_crs(nc_sf[1:3, ], NA)
+    expect_error(ddbs_buffer(no_crs, 1), "ddbs_set_crs")
+  })
+
+  it("warns about non-metre units and does not warn for metre CRSs", {
+    expect_warning(ddbs_buffer(sf::st_transform(nc_sf[1:3, ], 2264), 100), "US survey foot")
+    expect_no_warning(ddbs_buffer(sf::st_transform(nc_sf[1:3, ], 3857), 100))
+  })
+})

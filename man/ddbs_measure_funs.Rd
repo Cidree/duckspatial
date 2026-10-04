@@ -124,7 +124,12 @@ For \code{ddbs_area}, \code{ddbs_length}, and \code{ddbs_perimeter}:
 \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
 }
 
-For \code{ddbs_distance}: A \code{units} matrix in meters with dimensions nrow(x), nrow(y).
+For \code{ddbs_distance}: A \code{units} matrix with dimensions nrow(x), nrow(y).
+
+Results are in metres (square metres for area) for geographic (lon/lat) CRSs,
+and in the CRS units for projected CRSs (e.g. \code{[US_survey_foot^2]} for
+EPSG:2264), as in \code{sf}. Inputs without a CRS raise an error; set one
+with \code{\link{ddbs_set_crs}}.
 
 For \code{ddbs_azimuth}: A numeric matrix of azimuth values (in the specified \code{unit})
 with dimensions nrow(x) by nrow(y) when \code{mode = "sf"}, or a lazy
@@ -138,21 +143,30 @@ method selection based on the coordinate reference system (CRS).
 \details{
 These functions automatically select the appropriate calculation method based on the input CRS:
 
-\strong{For EPSG:4326 (geographic coordinates):}
+\strong{For geographic (lon/lat) CRSs, e.g. EPSG:4326:}
 \itemize{
 \item Uses \code{ST_*_Spheroid} functions (e.g., \code{ST_Area_Spheroid}, \code{ST_Length_Spheroid})
 \item Leverages GeographicLib library for ellipsoidal earth model calculations
+on the WGS84 ellipsoid (a warning is raised for other datums)
 \item Highly accurate but slower than planar calculations
-\item For \code{ddbs_distance} with POINT geometries: defaults to \code{"haversine"}
-\item For \code{ddbs_distance} with other geometries: defaults to \code{"spheroid"}
+\item For \code{ddbs_distance}: defaults to \code{"haversine"} for EPSG:4326 and
+to \code{"spheroid"} otherwise. Only POINT geometries are supported;
+transform other geometries to a projected CRS first
 }
 
-\strong{For projected CRS (e.g., UTM, Web Mercator):}
+\strong{For projected CRS (e.g., UTM, Web Mercator, State Plane):}
 \itemize{
 \item Uses planar \code{ST_*} functions (e.g., \code{ST_Area}, \code{ST_Length})
-\item Faster performance with accurate results in meters
+\item Faster performance, with results in the CRS units (e.g. metres, or US
+survey feet for EPSG:2264)
 \item For \code{ddbs_distance}: defaults to \code{"planar"}
 }
+
+\strong{Inside \code{dplyr::mutate()}:} \code{ddbs_area()}, \code{ddbs_length()}
+and \code{ddbs_perimeter()} run as DuckDB macros, which use the spheroid only
+when the geometry's CRS is \code{EPSG:4326}. Other geographic CRSs (e.g.
+EPSG:4267, or WGS84 stored as OGC:CRS84) return planar results in degrees;
+transform them to \code{EPSG:4326} or a projected CRS first.
 
 \strong{Distance calculation methods} (\code{dist_type} argument):
 \itemize{

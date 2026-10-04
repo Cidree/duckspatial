@@ -107,8 +107,9 @@ replace the integer indices returned in each element of the list.}
 \item{sparse}{A logical value. If \code{TRUE}, it returns a sparse table/list. If \code{FALSE},
 it returns a wide table/matrix.}
 
-\item{distance}{a numeric value specifying the distance for ST_DWithin. Units correspond to
-the coordinate system of the geometry (e.g. degrees or meters)}
+\item{distance}{a numeric value specifying the distance for ST_DWithin. Units are
+metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
+(e.g. US survey feet for EPSG:2264)}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{
