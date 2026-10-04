@@ -65,7 +65,7 @@ countries_ddbs <- ddbs_open_dataset(
   )
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpC8VDEC/duckdb
+#> ℹ /tmp/RtmpGfjxoa/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -280,7 +280,7 @@ loads it, all in one call:
 
 conn <- ddbs_create_conn()
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpC8VDEC/duckdb
+#> ℹ /tmp/RtmpGfjxoa/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -298,7 +298,7 @@ conn <- ddbs_create_conn(
   memory_limit_gb = 8
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpC8VDEC/duckdb
+#> ℹ /tmp/RtmpGfjxoa/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
