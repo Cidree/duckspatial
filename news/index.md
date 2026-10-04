@@ -11,25 +11,6 @@ CRAN release: 2026-07-04
   and
   [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)([\#147](https://github.com/Cidree/duckspatial/issues/147)).
 
-### BUG FIXES
-
-- [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
-  [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
-  [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
-  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
-  and the `dwithin` predicate
-  ([`ddbs_is_within_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
-  [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md),
-  [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md))
-  now compute planar results in the CRS’s own units for projected CRSs
-  not in metres (e.g. US survey feet), labelled as in `sf`; previously
-  they returned `NaN`, mislabelled feet as metres, or found no `dwithin`
-  matches. These functions and
-  [`ddbs_buffer()`](https://cidree.github.io/duckspatial/reference/ddbs_buffer.md)
-  now give an informative error when the input has no CRS, and WGS84
-  written as `"OGC:CRS84"` or `"WGS 84"` no longer triggers an accuracy
-  warning ([\#161](https://github.com/Cidree/duckspatial/issues/161)).
-
 ## duckspatial 1.2.0
 
 CRAN release: 2026-07-02

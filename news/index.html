@@ -161,11 +161,6 @@
 <h3 id="enhancements-1-2-1">ENHANCEMENTS<a class="anchor" aria-label="anchor" href="#enhancements-1-2-1"></a></h3>
 <ul><li>Capture output message of <code><a href="../reference/ddbs_install.html">ddbs_install()</a></code> and <code><a href="../reference/ddbs_load.html">ddbs_load()</a></code>(<a href="https://github.com/Cidree/duckspatial/issues/147" class="external-link">#147</a>).</li>
 </ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-1-2-1">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-1-2-1"></a></h3>
-<ul><li>
-<code><a href="../reference/ddbs_measure_funs.html">ddbs_area()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_length()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_perimeter()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code> and the <code>dwithin</code> predicate (<code><a href="../reference/ddbs_predicate.html">ddbs_is_within_distance()</a></code>, <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>, <code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>) now compute planar results in the CRS’s own units for projected CRSs not in metres (e.g. US survey feet), labelled as in <code>sf</code>; previously they returned <code>NaN</code>, mislabelled feet as metres, or found no <code>dwithin</code> matches. These functions and <code><a href="../reference/ddbs_buffer.html">ddbs_buffer()</a></code> now give an informative error when the input has no CRS, and WGS84 written as <code>"OGC:CRS84"</code> or <code>"WGS 84"</code> no longer triggers an accuracy warning (<a href="https://github.com/Cidree/duckspatial/issues/161" class="external-link">#161</a>).</li>
-</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.0" id="duckspatial-120">duckspatial 1.2.0<a class="anchor" aria-label="anchor" href="#duckspatial-120"></a></h2><p class="text-muted">CRAN release: 2026-07-02</p>
