@@ -8,7 +8,9 @@
   the method was introduced, it had incorrectly returned `geoarrow.wkb`
   unchanged because its target schema was inferred from the existing WKB Arrow
   column ([#121](https://github.com/Cidree/duckspatial/pull/121)).
-
+  
+* `ddbs_filter()` no longer drops rows of `x` that are exact duplicates of another row, and now returns the matching rows in their original order (#156).
+* `ddbs_distance()`, `ddbs_azimuth()` and the predicate functions (`ddbs_predicate()`, `ddbs_intersects()`, etc.) with `mode = "sf"` could return matrices with values in the wrong cells, because the cross join results were reshaped without an explicit row order (#155).
 
 ## NEW FEATURES
 
@@ -19,10 +21,6 @@
 ## ENHANCEMENTS
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
-
-## BUG FIXES
-
-* `ddbs_distance()`, `ddbs_azimuth()` and the predicate functions (`ddbs_predicate()`, `ddbs_intersects()`, etc.) with `mode = "sf"` could return matrices with values in the wrong cells, because the cross join results were reshaped without an explicit row order (#155).
 
 # duckspatial 1.2.0
 
