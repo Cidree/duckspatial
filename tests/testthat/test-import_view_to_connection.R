@@ -44,7 +44,8 @@ test_that("Strategy 2: SQL render works for same DB (lazy query)", {
     dplyr::mutate(val = val * 2)
   
   # Second connection to same file
-  conn2 <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = TRUE)
+  # As for DuckDB 1.5.6, read_only has to be FALSE (#2641 in duckdb package)
+  conn2 <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_file, read_only = FALSE)
   withr::defer(DBI::dbDisconnect(conn2, shutdown = TRUE), envir = parent.frame())
   
   expect_message(

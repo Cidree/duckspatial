@@ -38,7 +38,7 @@ Imports:
     DBI,
     dbplyr (>= 2.0.0),
     dplyr,
-    duckdb (>= 1.5.4.2),
+    duckdb (>= 1.5.6),
     geoarrow,
     glue,
     jsonlite,
