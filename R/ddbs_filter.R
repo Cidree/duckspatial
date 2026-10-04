@@ -13,8 +13,9 @@
 #' @template conn_null
 #' @template conn_x_conn_y
 #' @template name
-#' @param distance a numeric value specifying the distance for ST_DWithin. The units
-#' should be specified in meters
+#' @param distance a numeric value specifying the distance for ST_DWithin. Units are
+#' metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
+#' (e.g. US survey feet for EPSG:2264)
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -158,16 +159,18 @@ ddbs_filter <- function(
         crs_x     = crs_x
     )
 
-    ## 2.3. Build the base query (SELECT DISTINCT to avoid duplicates from 
-    ## one-to-many relationships)
+    ## 2.3. Build the base query: semi-join keeps each row of x at most once
+    ## (one-to-many matches), keeps genuine duplicates of x, and preserves the
+    ## original row order (#156)
     base.query <- glue::glue("
-        SELECT DISTINCT 
-            v1.* REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
-        FROM 
-            {x_list$query_name} v1, 
-            {y_list$query_name} v2
-        WHERE 
-            {st_predicate}
+        SELECT
+            v1.* EXCLUDE (ddbs_rid_x) REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+        FROM
+            (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) v1
+        WHERE EXISTS (
+            SELECT 1 FROM {y_list$query_name} v2 WHERE {st_predicate}
+        )
+        ORDER BY v1.ddbs_rid_x
     ")
 
 

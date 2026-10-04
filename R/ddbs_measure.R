@@ -34,7 +34,12 @@
 #'   \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
 #' }
 #' 
-#' For \code{ddbs_distance}: A \code{units} matrix in meters with dimensions nrow(x), nrow(y).
+#' For \code{ddbs_distance}: A \code{units} matrix with dimensions nrow(x), nrow(y).
+#'
+#' Results are in metres (square metres for area) for geographic (lon/lat) CRSs,
+#' and in the CRS units for projected CRSs (e.g. \code{[US_survey_foot^2]} for
+#' EPSG:2264), as in \code{sf}. Inputs without a CRS raise an error; set one
+#' with \code{\link{ddbs_set_crs}}.
 #'
 #' For \code{ddbs_azimuth}: A numeric matrix of azimuth values (in the specified \code{unit})
 #' with dimensions nrow(x) by nrow(y) when \code{mode = "sf"}, or a lazy
@@ -44,21 +49,30 @@
 #' @details
 #' These functions automatically select the appropriate calculation method based on the input CRS:
 #'
-#' \strong{For EPSG:4326 (geographic coordinates):}
+#' \strong{For geographic (lon/lat) CRSs, e.g. EPSG:4326:}
 #' \itemize{
 #'   \item Uses \code{ST_*_Spheroid} functions (e.g., \code{ST_Area_Spheroid}, \code{ST_Length_Spheroid})
 #'   \item Leverages GeographicLib library for ellipsoidal earth model calculations
+#'     on the WGS84 ellipsoid (a warning is raised for other datums)
 #'   \item Highly accurate but slower than planar calculations
-#'   \item For \code{ddbs_distance} with POINT geometries: defaults to \code{"haversine"}
-#'   \item For \code{ddbs_distance} with other geometries: defaults to \code{"spheroid"}
+#'   \item For \code{ddbs_distance}: defaults to \code{"haversine"} for EPSG:4326 and
+#'     to \code{"spheroid"} otherwise. Only POINT geometries are supported;
+#'     transform other geometries to a projected CRS first
 #' }
 #'
-#' \strong{For projected CRS (e.g., UTM, Web Mercator):}
+#' \strong{For projected CRS (e.g., UTM, Web Mercator, State Plane):}
 #' \itemize{
 #'   \item Uses planar \code{ST_*} functions (e.g., \code{ST_Area}, \code{ST_Length})
-#'   \item Faster performance with accurate results in meters
+#'   \item Faster performance, with results in the CRS units (e.g. metres, or US
+#'     survey feet for EPSG:2264)
 #'   \item For \code{ddbs_distance}: defaults to \code{"planar"}
 #' }
+#'
+#' \strong{Inside \code{dplyr::mutate()}:} \code{ddbs_area()}, \code{ddbs_length()}
+#' and \code{ddbs_perimeter()} run as DuckDB macros, which use the spheroid only
+#' when the geometry's CRS is \code{EPSG:4326}. Other geographic CRSs (e.g.
+#' EPSG:4267, or WGS84 stored as OGC:CRS84) return planar results in degrees;
+#' transform them to \code{EPSG:4326} or a projected CRS first.
 #'
 #' \strong{Distance calculation methods} (\code{dist_type} argument):
 #' \itemize{
@@ -367,21 +381,23 @@ ddbs_distance <- function(
     assert_crs(target_conn, x_list$query_name, y_list$query_name)
   }
 
-  ## 2.4. Get crs units and geom type for next checks
-  crs_units <- crs_x$units_gdal
+  ## 2.4. Get crs info and geom type for next checks
+  crs_info <- crs_measure_info(crs_x)
   geom_type_x <- as.character(ddbs_geometry_type(x, conn = target_conn, by_feature = FALSE))
   geom_type_y <- as.character(ddbs_geometry_type(y, conn = target_conn, by_feature = FALSE))
 
   ## 2.4. Get the right distance type if user uses the default
   if (is.null(dist_type)) {
-    if (crs_units == "degree") {
-      ## Default to haversine if it's point and EPSG:4326
-      if (crs_x$input == "EPSG:4326" && all(c(geom_type_x, geom_type_y) == "POINT")) {
-        dist_type <- "haversine"
-      } else {
-        ## Default to spheroid if it's not POINT or if it's not EPSG:4326
-        dist_type <- "spheroid"
+    if (crs_info$geographic) {
+      ## Geographic CRS only supports haversine/spheroid, which need POINTs
+      if (!all(c(geom_type_x, geom_type_y) == "POINT")) {
+        cli::cli_abort(c(
+          "Distances between non-POINT geometries are not supported in a geographic (lon/lat) CRS.",
+          "i" = "Transform the inputs to a projected CRS with {.fn ddbs_transform}."
+        ))
       }
+      ## Default to haversine if it's EPSG:4326, spheroid otherwise
+      dist_type <- if (crs_x$input == "EPSG:4326") "haversine" else "spheroid"
     } else {
       ## Otherwise, default to planar
       dist_type <- "planar"
@@ -397,7 +413,7 @@ ddbs_distance <- function(
   }
 
   ## Error: Using planar/geos on geographic coordinates
-  if (crs_units == "degree" && dist_type %in% c("planar", "geos")) {
+  if (crs_info$geographic && dist_type %in% c("planar", "geos")) {
       cli::cli_abort(
           "When using {.arg dist_type = {.val {dist_type}}}, inputs must be in projected coordinates (e.g., UTM), not geographic (degrees)."
       )
@@ -411,14 +427,14 @@ ddbs_distance <- function(
   }
 
   ## Error: Using haversine/spheroid on projected coordinates
-  if (crs_units == "metre" && dist_type %in% c("haversine", "spheroid")) {
+  if (!crs_info$geographic && dist_type %in% c("haversine", "spheroid")) {
       cli::cli_abort(
           "When using {.arg dist_type = {.val {dist_type}}}, inputs must be in {.val EPSG:4326} coordinates, not projected coordinates."
       )
   }
 
   ## Warning: Geographic CRS but not WGS84 (spheroid/haversine might be less accurate)
-  if (crs_units == "degree" && dist_type %in% c("haversine", "spheroid") && crs_x$input != "EPSG:4326") {
+  if (crs_info$geographic && dist_type %in% c("haversine", "spheroid") && !crs_equal(crs_x, 4326)) {
       cli::cli_warn(
           "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
       )
@@ -462,8 +478,9 @@ ddbs_distance <- function(
     ## Create the query
     tmp.query <- glue::glue("
       SELECT {st_distance_fun} as distance
-      FROM {x_list$query_name} x
-      CROSS JOIN {y_list$query_name} y
+      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
+      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
     ")
 
     ## Retrieve results
@@ -484,7 +501,9 @@ ddbs_distance <- function(
     )
 
     ## Set units and return the resulting matrix
-    dist_mat <- units::set_units(dist_mat, "metre")
+    if (!is.null(crs_info$units)) {
+      dist_mat <- units::set_units(dist_mat, crs_info$units, mode = "standard")
+    }
     return(dist_mat)
 
   } else {
@@ -660,8 +679,9 @@ ddbs_azimuth <- function(
 
     tmp.query <- glue::glue("
       SELECT {st_azimuth_expr} AS azimuth
-      FROM {x_list$query_name} x
-      CROSS JOIN {y_list$query_name} y
+      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
+      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
     ")
 
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)

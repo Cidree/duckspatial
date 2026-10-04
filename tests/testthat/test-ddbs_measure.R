@@ -679,8 +679,29 @@ describe("ddbs_distance()", {
       output <- ddbs_distance(points_sample_sf, points_sample_ddbs, mode = "sf")
       expect_s3_class(output, "units")
       expect_equal(
-        class(units::drop_units(output)), 
+        class(units::drop_units(output)),
         c("matrix", "array")
+      )
+    })
+
+    it("returns cells in x-by-y order with mode sf for asymmetric inputs (#155)", {
+      x <- sf::st_as_sf(data.frame(X = c(0, 10, 20), Y = 0), coords = c("X", "Y"), crs = 3857)
+      y <- sf::st_as_sf(data.frame(X = c(0, 100), Y = 0), coords = c("X", "Y"), crs = 3857)
+      expect_equal(
+        units::drop_units(ddbs_distance(x, y, mode = "sf", quiet = TRUE)),
+        units::drop_units(sf::st_distance(x, y)),
+        ignore_attr = TRUE
+      )
+
+      ## larger input, so DuckDB processes the cross join in parallel
+      withr::with_seed(42, {
+        x_big <- sf::st_as_sf(data.frame(X = runif(500, 0, 1e5), Y = runif(500, 0, 1e5)), coords = c("X", "Y"), crs = 3857)
+        y_big <- sf::st_as_sf(data.frame(X = runif(50, 0, 1e5), Y = runif(50, 0, 1e5)), coords = c("X", "Y"), crs = 3857)
+      })
+      expect_equal(
+        units::drop_units(ddbs_distance(x_big, y_big, mode = "sf", quiet = TRUE)),
+        units::drop_units(sf::st_distance(x_big, y_big)),
+        ignore_attr = TRUE
       )
     })
     
@@ -1112,6 +1133,20 @@ describe("ddbs_azimuth()", {
       expect_equal(output[1, 4], 3 * pi / 2, tolerance = 1e-6) # due west
     })
 
+    it("returns cells in x-by-y order for asymmetric inputs (#155)", {
+      xy_x <- data.frame(x = c(0, 10, 20), y = c(0, 5, -5))
+      xy_y <- data.frame(x = c(3, -7), y = c(8, 1))
+      x <- sf::st_as_sf(xy_x, coords = c("x", "y"), crs = "EPSG:3857", remove = FALSE)
+      y <- sf::st_as_sf(xy_y, coords = c("x", "y"), crs = "EPSG:3857", remove = FALSE)
+
+      ## azimuth = clockwise angle from north: atan2(dx, dy), in [0, 2*pi)
+      expected <- outer(
+        seq_len(nrow(xy_x)), seq_len(nrow(xy_y)),
+        function(i, j) atan2(xy_y$x[j] - xy_x$x[i], xy_y$y[j] - xy_x$y[i]) %% (2 * pi)
+      )
+      expect_equal(ddbs_azimuth(x, y, mode = "sf"), expected, tolerance = 1e-6)
+    })
+
     it("calculates azimuth correctly in degrees", {
       output <- ddbs_azimuth(origin_sf, dirs_sf, unit = "degrees", mode = "sf")
       expect_equal(output[1, 1],   0, tolerance = 1e-6)
@@ -1220,3 +1255,59 @@ describe("ddbs_azimuth()", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+
+# 6. CRS units handling (#161) -------------------------------------------
+
+describe("CRS units handling (#161)", {
+
+  nc_ft  <- sf::st_transform(nc_sf[1:3, ], 2264)   # NC State Plane, US survey feet
+  pts_ft <- suppressWarnings(sf::st_centroid(nc_ft))
+  no_crs <- sf::st_set_crs(nc_sf[1:3, ], NA)
+
+  it("measures projected non-metre CRSs planar, in native units, as sf", {
+    expect_no_warning(area <- ddbs_area(nc_ft, mode = "sf"))
+    expect_equal(area, sf::st_area(nc_ft))
+    expect_equal(ddbs_perimeter(nc_ft, mode = "sf"), sf::st_perimeter(nc_ft))
+    expect_equal(
+      ddbs_length(sf::st_cast(nc_ft, "MULTILINESTRING"), mode = "sf"),
+      sf::st_length(sf::st_cast(nc_ft, "MULTILINESTRING"))
+    )
+  })
+
+  it("labels distances with the CRS units", {
+    expect_equal(
+      ddbs_distance(pts_ft, pts_ft, mode = "sf", quiet = TRUE),
+      sf::st_distance(pts_ft),
+      ignore_attr = "dimnames"
+    )
+    expect_error(ddbs_distance(pts_ft, pts_ft, dist_type = "haversine", mode = "sf"))
+  })
+
+  it("returns no units when the CRS unit is unknown to sf, as sf does", {
+    wkt <- 'PROJCS["custom",GEOGCS["GCS",DATUM["D",SPHEROID["GRS80",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-79],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Foot_US",0.304800609601219]]'
+    nc_custom <- sf::st_transform(nc_sf[1:2, ], sf::st_crs(wkt))
+    expect_equal(ddbs_area(nc_custom, mode = "sf"), sf::st_area(nc_custom))
+  })
+
+  it("aborts with an informative error when the input has no CRS", {
+    expect_error(ddbs_area(no_crs), "ddbs_set_crs")
+    expect_error(ddbs_length(no_crs), "ddbs_set_crs")
+    expect_error(ddbs_perimeter(no_crs), "ddbs_set_crs")
+    expect_error(ddbs_distance(no_crs, no_crs), "ddbs_set_crs")
+  })
+
+  it("does not warn for WGS84 written as OGC:CRS84", {
+    nc_crs84 <- sf::st_transform(nc_sf[1:3, ], "OGC:CRS84")
+    expect_no_warning(ddbs_area(nc_crs84, mode = "sf"))
+  })
+
+  it("still warns for geographic CRSs that are not WGS84", {
+    expect_warning(ddbs_area(nc_sf[1:3, ], mode = "sf"), "less accurate")
+  })
+
+  it("errors up front for non-POINT distances in a geographic CRS", {
+    nc_4326 <- sf::st_transform(nc_sf[1:3, ], 4326)
+    expect_error(ddbs_distance(nc_4326, nc_4326, mode = "sf"), "projected CRS")
+  })
+})

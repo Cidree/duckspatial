@@ -14,8 +14,9 @@
 #' @template conn_x_conn_y
 #' @template name
 #' @template predicate_args
-#' @param distance a numeric value specifying the distance for ST_DWithin. Units correspond to
-#' the coordinate system of the geometry (e.g. degrees or meters)
+#' @param distance a numeric value specifying the distance for ST_DWithin. Units are
+#' metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
+#' (e.g. US survey feet for EPSG:2264)
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -228,9 +229,9 @@ ddbs_predicate <- function(
       distance <- 0
     }
     
-    ## check the CRS units to use the right function
-    crs_units <- crs_x$units_gdal
-    if (crs_units != "metre") {
+    ## geographic CRS: spheroid (distance in metres);
+    ## projected CRS: planar (distance in CRS units)
+    if (crs_measure_info(crs_x)$geographic) {
       # predicate_expr <- glue::glue("ST_DWithin_Spheroid(x.{x_geom}, y.{y_geom}, {distance})")
       # predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
         predicate_expr <- glue::glue(
@@ -240,7 +241,7 @@ ddbs_predicate <- function(
           {distance}
         )"
       )
-      if (crs_x$input != "EPSG:4326") {
+      if (!crs_equal(crs_x, 4326)) {
         cli::cli_warn(
           "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}. Distance calculations may be less accurate. Consider transforming to {.val EPSG:4326} or a projected CRS."
         )
@@ -263,8 +264,9 @@ ddbs_predicate <- function(
     ## materialize full predicate matrix and reframe as sf/sparse when required
     tmp.query <- glue::glue("
       SELECT {predicate_expr} AS predicate
-      FROM {x_list$query_name} x
-      CROSS JOIN {y_list$query_name} y
+      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
+      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
     ")
     
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)

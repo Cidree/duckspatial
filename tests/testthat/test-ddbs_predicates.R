@@ -58,6 +58,31 @@ describe("ddbs_predicate()", {
       expect_warning(ddbs_predicate(points_ddbs, "argentina", conn = conn_test))
     })
     
+    it("returns cells in x-by-y order with mode sf for asymmetric inputs (#155)", {
+      x <- sf::st_as_sf(data.frame(X = c(0, 10, 20), Y = 0), coords = c("X", "Y"), crs = 3857)
+      b <- sf::st_buffer(x[2:3, ], 1)
+
+      expect_equal(
+        ddbs_intersects(x, b, mode = "sf", sparse = FALSE),
+        sf::st_intersects(x, b, sparse = FALSE),
+        ignore_attr = TRUE
+      )
+
+      ## larger input, so DuckDB processes the cross join in parallel
+      withr::with_seed(42, {
+        x_big <- sf::st_as_sf(data.frame(X = runif(500, 0, 1e5), Y = runif(500, 0, 1e5)), coords = c("X", "Y"), crs = 3857)
+        y_big <- sf::st_buffer(sf::st_as_sf(data.frame(X = runif(50, 0, 1e5), Y = runif(50, 0, 1e5)), coords = c("X", "Y"), crs = 3857), 5000)
+      })
+      expect_equal(
+        lapply(ddbs_intersects(x_big, y_big, mode = "sf"), as.integer),
+        lapply(sf::st_intersects(x_big, y_big), as.integer)
+      )
+      expect_equal(
+        lapply(ddbs_within(x_big, y_big, mode = "sf"), as.integer),
+        lapply(sf::st_within(x_big, y_big), as.integer)
+      )
+    })
+
     it("works with intersects predicate", {
       output_predicate <- ddbs_predicate(countries_sf, argentina_sf, predicate = "intersects") |> collect()
       output_function  <- ddbs_intersects(countries_sf, argentina_sf) |> collect()
@@ -358,3 +383,27 @@ describe("ddbs_predicate()", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+
+# CRS units handling (#161) ------------------------------------------------
+
+describe("dwithin CRS units handling (#161)", {
+
+  pts_ft <- suppressWarnings(sf::st_centroid(sf::st_transform(nc_sf[1:10, ], 2264)))
+
+  it("uses CRS units for projected non-metre CRSs, as sf", {
+    expect_no_warning(
+      res <- ddbs_is_within_distance(pts_ft, pts_ft, distance = 100000, mode = "sf")
+    )
+    expect_equal(
+      lapply(res, as.integer),
+      lapply(sf::st_is_within_distance(pts_ft, pts_ft, dist = 100000), as.integer)
+    )
+  })
+
+  it("aborts for dwithin without CRS, but other predicates still work", {
+    no_crs <- sf::st_set_crs(pts_ft, NA)
+    expect_error(ddbs_is_within_distance(no_crs, no_crs, distance = 1), "ddbs_set_crs")
+    expect_no_error(ddbs_intersects(no_crs, no_crs, mode = "sf"))
+  })
+})

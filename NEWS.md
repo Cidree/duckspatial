@@ -1,15 +1,29 @@
 
+# development version
 
+## BUG FIXES
+
+* Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
+  geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
+  the method was introduced, it had incorrectly returned `geoarrow.wkb`
+  unchanged because its target schema was inferred from the existing WKB Arrow
+  column ([#121](https://github.com/Cidree/duckspatial/pull/121)).
+  
+* `ddbs_filter()` no longer drops rows of `x` that are exact duplicates of another row, and now returns the matching rows in their original order (#156).
+* `ddbs_distance()`, `ddbs_azimuth()` and the predicate functions (`ddbs_predicate()`, `ddbs_intersects()`, etc.) with `mode = "sf"` could return matrices with values in the wrong cells, because the cross join results were reshaped without an explicit row order (#155).
+* `ddbs_*` functions and `print()` now respect dplyr verbs that have no `duckspatial_df` method (e.g. `distinct()`, `semi_join()`, `anti_join()`, `union_all()`). Previously they silently used the original, unmodified table (#159).
+* `ddbs_area()`, `ddbs_length()`, `ddbs_perimeter()`, `ddbs_distance()` and the `dwithin` predicate (`ddbs_is_within_distance()`, `ddbs_join()`, `ddbs_filter()`) now compute planar results in the CRS's own units for projected CRSs not in metres (e.g. US survey feet), labelled as in `sf`; previously they returned `NaN`, mislabelled feet as metres, or found no `dwithin` matches. These functions and `ddbs_buffer()` now give an informative error when the input has no CRS, and WGS84 written as `"OGC:CRS84"` or `"WGS 84"` no longer triggers an accuracy warning (#161).
+
+
+## NEW FEATURES
+
+* `ddbs_expand()`: expand the bounding box of geometries.
 
 # duckspatial 1.2.1
 
 ## ENHANCEMENTS
 
 * Capture output message of `ddbs_install()` and `ddbs_load()`(#147).
-
-## BUG FIXES
-
-* `ddbs_*` functions and `print()` now respect dplyr verbs that have no `duckspatial_df` method (e.g. `distinct()`, `semi_join()`, `anti_join()`, `union_all()`). Previously they silently used the original, unmodified table (#159).
 
 # duckspatial 1.2.0
 

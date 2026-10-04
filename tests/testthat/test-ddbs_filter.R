@@ -219,3 +219,45 @@ testthat::test_that("ddbs_filter throws error on CRS mismatch", {
 testthat::test_that("dwithin fails in non-point geometries", {
   expect_error(ddbs_filter(pts_sf, poly_sf, predicate = "dwithin", distance = 100))
 })
+
+# row preservation (#156) ------------------------------------------------------
+
+testthat::test_that("ddbs_filter keeps genuine duplicate rows of x (#156)", {
+  pts <- sf::st_as_sf(
+    data.frame(id = c(1, 1, 3, 4), X = c(-79, -79, -80, -78), Y = c(35.5, 35.5, 36, 35)),
+    coords = c("X", "Y"), crs = sf::st_crs(nc_sf)
+  )
+  expected <- sf::st_filter(pts, nc_sf)$id
+
+  expect_equal(ddbs_filter(pts, nc_sf, mode = "sf", quiet = TRUE)$id, expected)
+  expect_equal(dplyr::collect(ddbs_filter(pts, nc_sf, quiet = TRUE))$id, expected)
+
+  ddbs_filter(pts, nc_sf, conn = conn_test, name = "filter_dups", overwrite = TRUE, quiet = TRUE)
+  expect_equal(ddbs_read_table(conn_test, "filter_dups", quiet = TRUE)$id, expected)
+})
+
+testthat::test_that("ddbs_filter preserves the row order of x (#156)", {
+  nc_3857 <- sf::st_transform(nc_sf, 3857)
+  bb <- sf::st_bbox(nc_3857)
+  withr::with_seed(42, {
+    pts <- sf::st_as_sf(
+      data.frame(id = 1:500, X = runif(500, bb[1], bb[3]), Y = runif(500, bb[2], bb[4])),
+      coords = c("X", "Y"), crs = 3857
+    )
+  })
+
+  expect_equal(
+    ddbs_filter(pts, nc_3857, mode = "sf", quiet = TRUE)$id,
+    sf::st_filter(pts, nc_3857)$id
+  )
+})
+
+testthat::test_that("ddbs_filter returns a row once when it matches several y features (#156)", {
+  pt <- sf::st_as_sf(data.frame(id = 1, X = 0, Y = 0), coords = c("X", "Y"), crs = 3857)
+  polys <- sf::st_as_sf(
+    data.frame(pid = 1:2),
+    geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(0, 0)), sf::st_point(c(1, 0)), crs = 3857), 5)
+  )
+
+  expect_equal(nrow(ddbs_filter(pt, polys, mode = "sf", quiet = TRUE)), 1L)
+})

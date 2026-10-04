@@ -112,6 +112,40 @@ crs_equal <- function(crs1, crs2) {  # nocov start
   isTRUE(sf::st_crs(crs1) == sf::st_crs(crs2))
 }  # nocov end
 
+#' Classify a CRS for measurement purposes
+#'
+#' Single source of truth for "is this CRS geographic, and in which units are
+#' measurements returned?". Used by buffer, area/length/perimeter, distance and
+#' the dwithin predicate (#161).
+#'
+#' @param crs crs object (or anything accepted by sf::st_crs())
+#' @param call calling environment, for the error message
+#'
+#' @keywords internal
+#' @noRd
+#' @returns list with `geographic` (lgl) and `units` (character or NULL): "m"
+#'   for geographic CRSs, since the spheroid functions return metres; otherwise
+#'   the CRS linear unit (e.g. "US_survey_foot"), or NULL when sf cannot map it
+#'   to a known unit, in which case results are returned without units, as in sf
+crs_measure_info <- function(crs, call = rlang::caller_env()) {  # nocov start
+  crs <- sf::st_crs(crs)
+  if (is.na(crs)) {
+    cli::cli_abort(c(
+      "The input has no CRS, so distances and measurements have no units.",
+      "i" = "Set one with {.fn ddbs_set_crs}."
+    ), call = call)
+  }
+  geographic <- isTRUE(sf::st_is_longlat(crs))
+  units <- if (geographic) {
+    "m"
+  } else if (inherits(crs$ud_unit, "units")) {
+    units::deparse_unit(crs$ud_unit)
+  } else {
+    NULL
+  }
+  list(geographic = geographic, units = units)
+}  # nocov end
+
 #' Import a view/table from one connection to another
 #'
 #' Enables cross-connection operations by importing views using one of three strategies.
@@ -1405,9 +1439,9 @@ generate_predicate_clause <- function(
           distance <- 0
       }
 
-      ## check the CRS units to use the right function
-      crs_units <- crs_x$units_gdal
-      if (crs_units != "metre") {
+      ## geographic CRS: spheroid (distance in metres);
+      ## projected CRS: planar (distance in CRS units)
+      if (crs_measure_info(crs_x, call = rlang::caller_env())$geographic) {
 
           ## When using Spheroid version, only point geometry is allowed
           geom_type_x <- ddbs_geometry_type(x_list$query_name, FALSE, conn)
@@ -1426,7 +1460,7 @@ generate_predicate_clause <- function(
                   ST_Point(ST_Y(v2.{y_geom}), ST_X(v2.{y_geom})), 
                   {distance})
               ")
-          if (crs_x$input != "EPSG:4326") {
+          if (!crs_equal(crs_x, 4326)) {
               cli::cli_warn(c(
                 "Inputs are in {.val {crs_x$input}}, not {.val EPSG:4326}.",
                 "i" = "Distance calculations may be less accurate.",
