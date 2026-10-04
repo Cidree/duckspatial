@@ -294,6 +294,7 @@ reference:
   - ddbs_bbox
   - ddbs_boundary
   - ddbs_envelope
+  - ddbs_expand
   - ddbs_make_envelope
   - ddbs_minimum_rotated_rectangle
 
