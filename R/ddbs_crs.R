@@ -153,7 +153,7 @@ ddbs_crs.character <- function(x, conn, ...) {
     name <- x
     
     ## convenient names of table and/or schema.table
-    x_list <- get_query_list(x, conn)
+    x_list <- get_query_name(x)
 
     ## Check if table name exists in Tables OR Arrow Views
     # Use SQL check to catch temporary views which might not show up in dbListTables
@@ -406,15 +406,13 @@ ddbs_transform <- function(
     ## 2.2. Get query list of table names
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
-    y_list <- get_query_list(y, target_conn)
-    on.exit(y_list$cleanup(), add = TRUE)
 
     ## if CRS wasn't guessed earlier
     if (is.null(crs_x)) crs_x <- ddbs_crs(x_list$query_name, target_conn)
     if (is.null(crs_y)) {
         ## try to get from `y`. if it fails, it's not sf, nor duckspatial_df
         ## therefore, it might be a CRS or character string with CRS
-        try(crs_y <- ddbs_crs(y_list$query_name, target_conn), silent = TRUE)
+        try(crs_y <- ddbs_crs(y, target_conn), silent = TRUE)
 
         if (is.null(crs_y)) crs_y <- sf::st_crs(y)
     }
@@ -449,7 +447,7 @@ ddbs_transform <- function(
 
         ## create query (no st_as_text)
         tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
+            CREATE TABLE {name_list$sql_name} AS
             {base.query};
         ")
         ## execute intersection query

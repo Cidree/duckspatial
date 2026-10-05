@@ -101,7 +101,7 @@ ddbs_write_table <- function(
                 
                 # Create permanent table from the imported view
                 DBI::dbExecute(conn, glue::glue(
-                    "CREATE TABLE {name_list$query_name} AS SELECT * FROM {import_result$name}"
+                    "CREATE TABLE {name_list$sql_name} AS SELECT * FROM {import_result$name}"
                 ))
                 
                 # Cleanup temp view
@@ -183,7 +183,7 @@ ddbs_write_table <- function(
  
         ## Convert to spatial with CRS
         DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {name_list$query_name}
+            ALTER TABLE {name_list$sql_name}
             ALTER COLUMN {sql_ident(geom_name)} SET DATA TYPE {geom_field} USING ST_GeomFromWKB({sql_ident(geom_name)});
         "))
         ddbs_write_legacy_crs_comment_if_needed(
@@ -225,7 +225,7 @@ ddbs_write_table <- function(
             ## insert files (in duckdb v1.5, ST_Read() already manages CRS)
             DBI::dbExecute(
                 conn,
-                glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM ST_Read('{data}')")
+                glue::glue("CREATE TABLE {name_list$sql_name} AS SELECT * FROM ST_Read('{data}')")
             )
             ddbs_write_legacy_crs_comment_if_needed(
                 conn,

@@ -415,7 +415,7 @@ ddbs_interpolate_aw <- function(
 
     # CREATE TABLE must precede WITH for standard CTE usage in DuckDB statements like this
     full_sql <- glue::glue("
-      CREATE TABLE {name_list$query_name} AS
+      CREATE TABLE {name_list$sql_name} AS
       WITH {full_ctes}
       {table_select}
     ")

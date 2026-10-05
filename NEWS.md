@@ -23,7 +23,7 @@
 * `ddbs_quadkey()` no longer overwrites the input table when `x` is not in EPSG:4326, and now returns the correct quadkeys for such input. Previously, a table passed by name was replaced with lat/lon-swapped coordinates and no CRS, and all inputs returned wrong tiles (#164).
 * `ddbs_contains()` and `ddbs_crosses()` are now exported. They were documented but missing from the package namespace.
 * `group_by()` groups on a `duckspatial_df` are no longer lost after `mutate()`, `filter()`, `arrange()`, `select()` and other verbs. Previously a following `summarise()` silently collapsed all groups into a single row (#170).
-* Column names that contain spaces or are SQL reserved words (e.g. a geometry column `"my geom"`, `by = "group"`) and schema names in `ddbs_create_schema()` are now quoted in the generated SQL. Previously they failed with a parser error (#168).
+* Column, table and schema names that contain spaces or are SQL reserved words (e.g. a geometry column `"my geom"`, `by = "group"`, `name = "my table"`, or a table named `"order"` passed as `x`) are now quoted in the generated SQL. Previously they failed with a parser error (#168).
 
 
 

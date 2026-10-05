@@ -161,7 +161,7 @@ ddbs_quadkey <- function(
       ## create query with optional aggregation
       if (!is.null(field)) {
         tmp.query <- glue::glue("
-          CREATE TABLE {name_list$query_name} AS
+          CREATE TABLE {name_list$sql_name} AS
           SELECT 
             ST_QuadKey({geom_4326}, {level}) as quadkey,
             {fun}({sql_ident(field)}) as {sql_ident(field)}
@@ -170,7 +170,7 @@ ddbs_quadkey <- function(
         ")
       } else {
         tmp.query <- glue::glue("
-          CREATE TABLE {name_list$query_name} AS
+          CREATE TABLE {name_list$sql_name} AS
           SELECT * EXCLUDE ({sql_ident(x_geom)}),
           ST_QuadKey({geom_4326}, {level}) as quadkey 
           FROM {x_list$query_name};

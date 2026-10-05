@@ -146,7 +146,7 @@ ddbs_read_table <- function(
             "SELECT
             {no_geom_cols}
             {select_geom_sql}
-            FROM {name_list$query_name}"
+            FROM {name_list$sql_name}"
     )
     tmp.query <- paste(tmp.query, clauses)
     data_tbl <- DBI::dbGetQuery(conn, tmp.query)

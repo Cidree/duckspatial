@@ -161,7 +161,7 @@ ddbs_glimpse <- function(
     SELECT
     {no_geom_cols}
     ST_AsWKB({sql_ident(x_geom)}) AS {sql_ident(x_geom)}
-    FROM {name}
+    FROM {name_list$sql_name}
     LIMIT 10;
   "))
 

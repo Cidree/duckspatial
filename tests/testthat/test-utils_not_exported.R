@@ -86,10 +86,73 @@ describe("column names with spaces or reserved words (#168)", {
     expect_true("my schema" %in% schemas$schema_name)
   })
 
+  it("quotes table names in sql_table()", {
+    expect_equal(sql_table("my table"), '"my table"')
+    expect_equal(sql_table("s1.out"), '"s1"."out"')
+    expect_equal(sql_table(c("my schema", "my table")), '"my schema"."my table"')
+    expect_equal(sql_table('"already quoted"'), '"already quoted"')
+  })
+
   it("keep dotted schema.table output names working", {
     ddbs_create_schema(conn_test, "s1", quiet = TRUE)
     ddbs_area(squares_sf, conn = conn_test, name = "s1.out", quiet = TRUE)
     expect_equal(DBI::dbGetQuery(conn_test, "SELECT count(*) AS n FROM s1.out")$n, 4)
+  })
+
+})
+
+
+# 3. Table names with spaces or reserved words (#168) ----------------------
+
+describe("table names with spaces or reserved words (#168)", {
+
+  ddbs_write_table(conn_test, squares_sf, "squares", overwrite = TRUE, quiet = TRUE)
+
+  it("work as output names", {
+    ddbs_write_table(conn_test, squares_sf, "my table", quiet = TRUE)
+    ddbs_write_table(conn_test, squares_sf, "my table", overwrite = TRUE, quiet = TRUE)
+    ddbs_write_table(conn_test, squares_sf, "order", quiet = TRUE)
+    ddbs_area(squares_sf, conn = conn_test, name = "my area", quiet = TRUE)
+    ddbs_union_agg(squares_sf, by = "group", conn = conn_test, name = "my union", quiet = TRUE)
+    ddbs_rotate(squares_sf, 10, conn = conn_test, name = "my rot", quiet = TRUE)
+    ddbs_transform(squares_sf, 4326, conn = conn_test, name = "my tr", quiet = TRUE)
+    n <- function(t) DBI::dbGetQuery(conn_test, paste0("SELECT count(*) AS n FROM ", t))$n
+    expect_equal(n('"my table"'), 4)
+    expect_equal(n('"order"'), 4)
+    expect_equal(n('"my area"'), 4)
+    expect_equal(n('"my union"'), 2)
+    expect_equal(n('"my rot"'), 4)
+    expect_equal(n('"my tr"'), 4)
+    expect_true("my table" %in% ddbs_list_tables(conn_test)$table_name)
+  })
+
+  it("work as output names in a quoted schema", {
+    DBI::dbExecute(conn_test, 'CREATE SCHEMA IF NOT EXISTS "my schema"')
+    for (i in 1:2) ddbs_area(squares_sf, conn = conn_test, name = "my schema.my area", overwrite = TRUE, quiet = TRUE)
+    expect_equal(DBI::dbGetQuery(conn_test, 'SELECT count(*) AS n FROM "my schema"."my area"')$n, 4)
+  })
+
+  it("work as registered view names", {
+    for (i in 1:2) ddbs_register_table(conn_test, squares_sf, "my view", overwrite = TRUE, quiet = TRUE)
+    expect_equal(nrow(ddbs_read_table(conn_test, "my view")), 4)
+  })
+
+  it("work as input names", {
+    DBI::dbExecute(conn_test, 'CREATE OR REPLACE TABLE "group" AS SELECT * FROM squares')
+    expect_equal(nrow(ddbs_read_table(conn_test, "group")), 4)
+    expect_no_error(utils::capture.output(ddbs_glimpse(conn_test, "group")))
+    expect_equal(ddbs_crs(conn_test, "group"), sf::st_crs(3857))
+    expect_equal(as.numeric(ddbs_area("group", conn = conn_test, mode = "sf")), rep(100, 4))
+    expect_equal(nrow(ddbs_collect(ddbs_join("group", "squares", conn = conn_test))), nrow(sf::st_join(squares_sf, squares_sf)))
+    expect_equal(nrow(ddbs_collect(as_duckspatial_df("group", conn = conn_test))), 4)
+  })
+
+  it("do not leave temporary views behind for character input", {
+    views <- function() DBI::dbGetQuery(conn_test, "SELECT count(*) AS n FROM duckdb_views() WHERE NOT internal")$n
+    before <- views()
+    ddbs_area("group", conn = conn_test, mode = "sf")
+    ddbs_collect(ddbs_buffer("group", 1, conn = conn_test))
+    expect_equal(views(), before)
   })
 
 })

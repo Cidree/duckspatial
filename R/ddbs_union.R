@@ -187,7 +187,7 @@ ddbs_union <- function(
         mode       = "duckspatial",
         name       = name,
         crs        = crs_x,
-        name_query = name_list$query_name,
+        name_query = name_list$sql_name,
         x_geom     = x_geom,
         y_geom     = y_geom,
         x_query    = x_list$query_name,
@@ -259,7 +259,7 @@ ddbs_union <- function(
       name       = name,
       crs        = crs_x,
       mode       = "duckspatial",
-      name_query = name_list$query_name,
+      name_query = name_list$sql_name,
       x_geom     = x_geom,
       x_query    = x_list$query_name
     )

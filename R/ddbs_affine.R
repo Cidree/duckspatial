@@ -195,7 +195,7 @@ ddbs_rotate <- function(
 
         ## create query
         tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
+            CREATE TABLE {name_list$sql_name} AS
             {base.query}
         ")
         ## execute rotation query
@@ -576,7 +576,7 @@ ddbs_flip <- function(
 
         ## create query 
         tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
+            CREATE TABLE {name_list$sql_name} AS
             {base.query}
         ")
         ## execute flip query
@@ -760,7 +760,7 @@ ddbs_scale <- function(
 
         ## create query 
         tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
+            CREATE TABLE {name_list$sql_name} AS
             {base.query}
         ")
         ## execute scale query
@@ -941,7 +941,7 @@ ddbs_shear <- function(
 
         ## create query 
         tmp.query <- glue::glue("
-            CREATE TABLE {name_list$query_name} AS
+            CREATE TABLE {name_list$sql_name} AS
             {base.query}
         ")
         ## execute shear query

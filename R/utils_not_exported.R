@@ -343,7 +343,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
 get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NULL) {  # nocov start
 
     # check if the table exists (via DESCRIBE which works for temp views too)
-    info_tbl <- try(DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};")), silent = TRUE)
+    info_tbl <- try(DBI::dbGetQuery(conn, glue::glue("DESCRIBE {sql_table(x)};")), silent = TRUE)
     
     if (inherits(info_tbl, "try-error")) {
         cli::cli_abort("The table <{x}> does not exist.")
@@ -388,7 +388,8 @@ get_query_name <- function(name) {  # nocov start
     list(
         table_name = table_name,
         schema_name = schema_name,
-        query_name = query_name
+        query_name = query_name,
+        sql_name = sql_table(name)
     )
 } # nocov end
 
@@ -478,8 +479,22 @@ get_query_list <- function(x, conn) {
     x_list$owned <- TRUE
     return(x_list)
 
+  } else if (is.character(x) && length(x) == 1) {
+    ## Character table name: pre-existing, never modified. Wrap it in a temp
+    ## view so downstream SQL can use a plain identifier, whatever the name
+    temp_view_name <- ddbs_temp_view_name()
+    DBI::dbExecute(conn, glue::glue(
+      "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS SELECT * FROM {sql_table(x)}"
+    ))
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
+    return(x_list)
+
   } else {
-    ## Character table name: pre-existing, never clean up
+    ## Anything else (e.g. a CRS passed as `y`): names only, nothing to clean up
     x_list <- get_query_name(x)
     x_list$cleanup <- function() NULL
     x_list$owned <- TRUE
@@ -612,7 +627,7 @@ convert_to_sf_wkb <- function(data, crs, x_geom) { # nocov start
 #' @returns cli message
 overwrite_table <- function(x, conn, quiet, overwrite) { # nocov start
   if (overwrite) {
-    DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {x};"))
+    DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {sql_table(x)};"))
     if (isFALSE(quiet)) cli::cli_alert_info("Table <{x}> dropped")
   }
 } # nocov end
@@ -641,7 +656,7 @@ feedback_query <- function(quiet) { # nocov start
 #' @keywords internal
 #' @returns number of rows in the table
 get_nrow <- function(conn, table) { # nocov start
-  DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) as n FROM {table}"))$n
+  DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) as n FROM {sql_table(table)}"))$n
 } # nocov end
 
 
@@ -1360,7 +1375,7 @@ get_table_crs <- function(conn, geom_name, table_name) { # nocov start
         SELECT 
             ST_CRS({sql_ident(geom_name)}) AS crs 
         FROM 
-            {table_name}
+            {sql_table(table_name)}
         LIMIT 1;")
     )$crs
 
@@ -1403,7 +1418,7 @@ create_duckdb_table <- function(
 
   ## Create and execute the query
   tmp.query <- glue::glue("
-      CREATE TABLE {name_list$query_name} AS
+      CREATE TABLE {name_list$sql_name} AS
       {query}
   ")
   DBI::dbExecute(conn, tmp.query)
@@ -1677,4 +1692,19 @@ check_loaded_extension <- function(conn = NULL, extension) {
 #' @noRd
 sql_ident <- function(x) { # nocov start
   paste0('"', gsub('"', '""', x, fixed = TRUE), '"')
+} # nocov end
+
+#' Quote a (possibly schema-qualified) table name for SQL
+#'
+#' A dotted name ("schema.table") or a length-2 vector c(schema, table) is
+#' split and each part quoted. Names that are already quoted are returned as is.
+#'
+#' @param x table name
+#' @keywords internal
+#' @noRd
+sql_table <- function(x) { # nocov start
+  x <- as.character(x)
+  if (length(x) == 1 && startsWith(x, '"')) return(x)
+  parts <- if (length(x) == 2) x else strsplit(x, ".", fixed = TRUE)[[1]]
+  paste(sql_ident(parts), collapse = ".")
 } # nocov end
