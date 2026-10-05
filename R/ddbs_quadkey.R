@@ -140,18 +140,12 @@ ddbs_quadkey <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 2.2. check CRS (we need EPSG:4326 for quadkeys)
+  ## 2.2. check CRS (we need EPSG:4326 for quadkeys). Transform inline, so the
+  ## input table is never modified, keeping lon/lat axis order
+  geom_4326 <- x_geom
   if (!crs_x$input %in% c("EPSG:4326", "WGS 84")) {
     if (!quiet) cli::cli_alert_info("Transforming {.arg x} crs to {.val EPSG:4326}")
-    ## query
-    tmp.query <- glue::glue("
-      CREATE OR REPLACE TABLE {x_list$query_name} AS
-      SELECT *
-      REPLACE (ST_Transform({sql_ident(x_geom)}, '{crs_x$input}', 'EPSG:4326') AS {sql_ident(x_geom)}) 
-      FROM {x_list$query_name};
-    ")
-    ## execute
-    DBI::dbExecute(target_conn, tmp.query)
+    geom_4326 <- glue::glue("ST_Transform({x_geom}, '{crs_x$input}', 'EPSG:4326', always_xy := true)")
   }
 
 

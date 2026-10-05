@@ -862,6 +862,8 @@ get_file_crs <- function(path, conn) {
         FROM st_read_meta('{path}')
       ")
       meta <- DBI::dbGetQuery(conn, meta_query)
+      ## ST_Read_Meta returns 0 rows for files GDAL can't open (e.g. GeoParquet)
+      if (nrow(meta) == 0) return(NULL)
       
       if (!is.na(meta$auth_code) && !is.na(meta$auth_name)) {
         crs_string <- paste0(meta$auth_name, ":", meta$auth_code)

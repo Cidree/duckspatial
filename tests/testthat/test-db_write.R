@@ -218,3 +218,14 @@ test_that("ddbs_write_table with temp_view=TRUE works for duckspatial_df", {
   result <- ddbs_read_table(conn_new, view_name)
   expect_equal(nrow(result), nrow(points_sf))
 })
+
+test_that("ddbs_write_table on a parquet path errors without a CRS warning (#166)", {
+  conn_new <- ddbs_temp_conn()
+  parquet_path <- tempfile(fileext = ".parquet")
+  ddbs_write_dataset(points_sf, parquet_path, quiet = TRUE)
+  on.exit(unlink(parquet_path), add = TRUE)
+
+  expect_no_warning(
+    expect_error(ddbs_write_table(conn_new, parquet_path, "pq", quiet = TRUE), "parquet")
+  )
+})
