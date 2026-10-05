@@ -407,3 +407,124 @@ describe("dwithin CRS units handling (#161)", {
     expect_no_error(ddbs_intersects(no_crs, no_crs, mode = "sf"))
   })
 })
+
+
+# Spatial join (performance audit #4, #5) -----------------------------------
+
+describe("predicates use a spatial join and match sf", {
+
+  ## asymmetric fixtures in a projected CRS: overlapping subsets of nc
+  ## (touching neighbours, equal rows, covers/within), random points, and
+  ## lines across the counties (crosses)
+  nc_3857 <- sf::st_transform(nc_sf, 3857)
+  polys_x <- nc_3857[1:60, ]
+  polys_y <- nc_3857[30:100, ]
+  bb <- sf::st_bbox(nc_3857)
+  withr::with_seed(42, {
+    pts <- sf::st_as_sf(
+      data.frame(id = 1:500, X = runif(500, bb[1], bb[3]), Y = runif(500, bb[2], bb[4])),
+      coords = c("X", "Y"), crs = 3857
+    )
+    lines <- sf::st_sf(
+      lid = 1:20,
+      geometry = sf::st_sfc(lapply(1:20, function(i) {
+        sf::st_linestring(cbind(runif(2, bb[1], bb[3]), runif(2, bb[2], bb[4])))
+      }), crs = 3857)
+    )
+  })
+  bufs <- sf::st_buffer(pts[1:50, ], 20000)
+
+  expect_same_as_sf <- function(ddbs_fun, sf_fun, x, y) {
+    expect_equal(
+      lapply(ddbs_fun(x, y, mode = "sf"), as.integer),
+      lapply(sf_fun(x, y), as.integer)
+    )
+    expect_equal(
+      ddbs_fun(x, y, mode = "sf", sparse = FALSE),
+      sf_fun(x, y, sparse = FALSE),
+      ignore_attr = TRUE
+    )
+  }
+
+  it("matches sf for every predicate, sparse and dense", {
+    expect_same_as_sf(ddbs_intersects, sf::st_intersects, pts, bufs)
+    expect_same_as_sf(ddbs_within,     sf::st_within,     pts, bufs)
+    expect_same_as_sf(ddbs_disjoint,   sf::st_disjoint,   pts, bufs)
+    expect_same_as_sf(ddbs_contains,   sf::st_contains,   bufs, pts)
+    expect_same_as_sf(ddbs_covers,     sf::st_covers,     polys_x, polys_y)
+    expect_same_as_sf(ddbs_covered_by, sf::st_covered_by, polys_x, polys_y)
+    expect_same_as_sf(ddbs_equals,     sf::st_equals,     polys_x, polys_y)
+    expect_same_as_sf(ddbs_touches,    sf::st_touches,    polys_x, polys_y)
+    expect_same_as_sf(ddbs_overlaps,   sf::st_overlaps,   polys_x, bufs)
+    expect_same_as_sf(ddbs_crosses,    sf::st_crosses,    lines, polys_y)
+  })
+
+  it("matches sf for is_within_distance in a projected CRS", {
+    expect_equal(
+      lapply(ddbs_is_within_distance(pts, bufs, distance = 5000, mode = "sf"), as.integer),
+      lapply(sf::st_is_within_distance(pts, bufs, dist = 5000), as.integer)
+    )
+    expect_equal(
+      ddbs_is_within_distance(pts, bufs, distance = 5000, mode = "sf", sparse = FALSE),
+      sf::st_is_within_distance(pts, bufs, dist = 5000, sparse = FALSE),
+      ignore_attr = TRUE
+    )
+  })
+
+  it("matches sf with duckspatial_df inputs", {
+    expect_equal(
+      lapply(ddbs_intersects(as_duckspatial_df(pts), as_duckspatial_df(bufs), mode = "sf"), as.integer),
+      lapply(sf::st_intersects(pts, bufs), as.integer)
+    )
+  })
+
+  it("returns empty vectors and an all-FALSE matrix when nothing matches", {
+    far <- sf::st_as_sf(data.frame(id = 1:3, X = 0, Y = 0), coords = c("X", "Y"), crs = 3857)
+
+    res_sparse <- ddbs_intersects(far, bufs, mode = "sf")
+    expect_length(res_sparse, 3)
+    expect_true(all(lengths(res_sparse) == 0))
+
+    res_dense <- ddbs_intersects(far, bufs, mode = "sf", sparse = FALSE)
+    expect_equal(dim(res_dense), c(3, 50))
+    expect_false(any(res_dense))
+  })
+
+  it("keeps id_x and id_y aligned with the rows", {
+    withr::with_seed(1, {
+      pts$xid  <- sample(sprintf("x %03d", 1:500))
+      bufs$yid <- sample(sprintf("y %03d", 1:50))
+    })
+    res <- ddbs_intersects(pts, bufs, mode = "sf", id_x = "xid", id_y = "yid")
+    ref <- sf::st_intersects(pts, bufs)
+
+    expect_equal(names(res), pts$xid)
+    expect_equal(unname(lengths(res)), lengths(ref))
+    ## rows with no match keep integer(0); matched rows carry the y ids
+    has_match <- lengths(ref) > 0
+    expect_equal(unname(res)[has_match], lapply(ref, function(ind) bufs$yid[ind])[has_match])
+  })
+
+  it("returns a dense table in duckspatial mode that equals the sf dense matrix", {
+    res <- ddbs_intersects(pts, bufs, sparse = FALSE) |> dplyr::collect()
+    ref <- sf::st_intersects(pts, bufs, sparse = FALSE)
+
+    expect_equal(res$id_x, seq_len(500))
+    expect_equal(names(res)[-1], as.character(seq_len(50)))
+    expect_equal(unname(as.matrix(res[, -1])), ref, ignore_attr = TRUE)
+    ## rows of x with no match are present and all FALSE
+    expect_true(any(rowSums(ref) == 0))
+    expect_equal(rowSums(as.matrix(res[, -1])), unname(rowSums(ref)))
+  })
+
+  it("gives FALSE (not NA) for SQL NULL geometries in the dense sf matrix", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn))
+    DBI::dbExecute(conn, "CREATE TABLE null_x AS SELECT 1 AS i, ST_Point(0, 0) AS geometry UNION ALL SELECT 2, NULL")
+    DBI::dbExecute(conn, "CREATE TABLE null_y AS SELECT 1 AS j, ST_Point(0, 0) AS geometry")
+
+    res <- ddbs_intersects("null_x", "null_y", conn = conn, mode = "sf", sparse = FALSE)
+    expect_equal(res, matrix(c(TRUE, FALSE), nrow = 2), ignore_attr = TRUE)
+    expect_equal(lapply(ddbs_intersects("null_x", "null_y", conn = conn, mode = "sf"), as.integer), list(1L, integer(0)))
+  })
+})

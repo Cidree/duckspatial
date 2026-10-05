@@ -261,12 +261,16 @@ ddbs_predicate <- function(
   ## - mode duckspatial: it will return a lazy-tbl object
   if (mode == "sf") {
     
-    ## materialize full predicate matrix and reframe as sf/sparse when required
+    ## get only the matching (i, j) row pairs, with the predicate as a join
+    ## condition so DuckDB can use a spatial join (a predicate computed as an
+    ## output column over a cross join returns all n x m rows);
+    ## reframe_predicate_data() builds the sparse list or dense matrix
     tmp.query <- glue::glue("
-      SELECT {predicate_expr} AS predicate
+      SELECT x.ddbs_rid_x AS i, y.ddbs_rid_y AS j
       FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
       CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
-      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
+      WHERE {predicate_expr}
+      ORDER BY i, j
     ")
     
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
@@ -306,7 +310,10 @@ ddbs_predicate <- function(
     } else {
       
       ## Wide format - all pairs with TRUE/FALSE
-      ## need to fetch y_ids eagerly to build pivot columns
+      ## need to fetch y_ids eagerly to build pivot columns.
+      ## The predicate is a LEFT JOIN condition so DuckDB can use a spatial
+      ## join; an x row with no match gets a NULL id_y, which matches no
+      ## pivot column and so gives FALSE everywhere
       y_ids <- DBI::dbGetQuery(
         target_conn,
         glue::glue("SELECT {y_id_expr} FROM {y_list$query_name}")
@@ -321,12 +328,13 @@ ddbs_predicate <- function(
       tmp.query <- glue::glue("
         CREATE TEMP TABLE {view_name} AS
         WITH long AS (
-          SELECT 
+          SELECT
             x.id_x,
             y.id_y,
-            {predicate_expr} AS predicate
+            TRUE AS predicate
           FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
-          CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+          LEFT JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+            ON {predicate_expr}
         )
         SELECT 
           id_x,

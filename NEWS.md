@@ -7,6 +7,10 @@
 
 * `ddbs_expand()`: expand the bounding box of geometries.
 
+## PERFORMANCE
+
+* `ddbs_filter()`, the predicate functions with `mode = "sf"` (`ddbs_intersects()`, `ddbs_within()`, …) and the dense (`sparse = FALSE`) predicates in duckspatial mode now put the spatial predicate in a join condition, so DuckDB uses its spatial join instead of a cross product over every pair of features. On 100,000 points and the 100 `nc` counties, `ddbs_filter()` goes from about 14 s to about 1 s, `ddbs_intersects(mode = "sf")` from about 15 s to about 1 s and the dense duckspatial predicate from about 29 s to about 2 s. The sparse `mode = "sf"` result is built from the matching pairs only, so it no longer allocates an n × m matrix in R. Two consequences: `ddbs_disjoint()` cannot use the spatial join (nearly every pair matches) and is somewhat slower on large inputs; and in the dense `mode = "sf"` matrix, rows whose geometry is SQL `NULL` are now `FALSE` instead of `NA`.
+
 ## BUG FIXES
 
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB

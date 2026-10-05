@@ -159,16 +159,19 @@ ddbs_filter <- function(
         crs_x     = crs_x
     )
 
-    ## 2.3. Build the base query: semi-join keeps each row of x at most once
-    ## (one-to-many matches), keeps genuine duplicates of x, and preserves the
-    ## original row order (#156)
+    ## 2.3. Build the base query. The predicate is a JOIN condition so DuckDB
+    ## can use its spatial join (a WHERE EXISTS subquery is planned as a cross
+    ## product). The IN list keeps each row of x at most once (one-to-many
+    ## matches), keeps genuine duplicates of x, and preserves the original row
+    ## order (#156). The row ids are materialized once, so both references to
+    ## v1 share the same numbering.
     base.query <- glue::glue("
+        WITH v1 AS MATERIALIZED (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name})
         SELECT
             v1.* EXCLUDE (ddbs_rid_x) REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
-        FROM
-            (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) v1
-        WHERE EXISTS (
-            SELECT 1 FROM {y_list$query_name} v2 WHERE {st_predicate}
+        FROM v1
+        WHERE v1.ddbs_rid_x IN (
+            SELECT v1.ddbs_rid_x FROM v1 JOIN {y_list$query_name} v2 ON {st_predicate}
         )
         ORDER BY v1.ddbs_rid_x
     ")
