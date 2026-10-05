@@ -14,6 +14,7 @@
 ## BUG FIXES
 
 * `as_duckspatial_df()`, `ddbs_register_table()` and other functions that take an sf object no longer fail with "subscript out of bounds" on a 0-row sf. The result keeps the columns and the CRS.
+* sf data larger than ~500 MB (registered in several Arrow chunks) could only be read once: a second query or `collect()` on the same object returned 0 rows. It can now be read any number of times.
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
   geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
   the method was introduced, it had incorrectly returned `geoarrow.wkb`

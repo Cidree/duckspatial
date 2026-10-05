@@ -242,3 +242,28 @@ test_that("a 0-row sf can be registered and keeps columns and CRS", {
     expect_equal(names(result), names(nc_sf))
     expect_equal(sf::st_crs(result), sf::st_crs(nc_sf))
 })
+
+test_that("data split over several Arrow chunks gives the same result as one chunk", {
+
+    set.seed(1)
+    pts <- data.frame(id = 1:2500, x = runif(2500), y = runif(2500)) |>
+        sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+
+    one_chunk <- as_duckspatial_df(pts) |> ddbs_collect()
+
+    # force chunk_size to its 1000-row minimum -> 3 chunks
+    local_mocked_bindings(register_chunk_target_bytes = function() 1)
+    ddbs_register_table(conn_test, pts, "chunked_view", overwrite = TRUE, quiet = TRUE)
+
+    # the view can be scanned more than once (a RecordBatchReader is single-use)
+    count_sql <- "SELECT COUNT(*) AS n FROM chunked_view"
+    expect_equal(DBI::dbGetQuery(conn_test, count_sql)$n, 2500)
+    expect_equal(DBI::dbGetQuery(conn_test, count_sql)$n, 2500)
+
+    result <- ddbs_read_table(conn_test, "chunked_view")
+
+    expect_equal(nrow(result), 2500L)
+    expect_equal(result$id, pts$id)
+    expect_equal(sf::st_crs(result), sf::st_crs(pts))
+    expect_equal(sf::st_coordinates(result), sf::st_coordinates(one_chunk))
+})

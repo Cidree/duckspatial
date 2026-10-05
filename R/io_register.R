@@ -185,7 +185,7 @@ ddbs_register_table <- function(
         arrow_table <- arrow::RecordBatchReader$create(
             batches = batches, 
             schema = schema
-        )
+        )$read_table()  # a Table can be scanned many times, a reader only once
     }
 
     ## Register the raw Arrow table under a hidden name
