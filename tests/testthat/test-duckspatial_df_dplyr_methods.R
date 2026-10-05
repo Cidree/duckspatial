@@ -439,3 +439,73 @@ test_that("summarize before spatial op fails correctly (missing geom)", {
   )
 })
 
+
+# Groups are kept through dplyr verbs (#170) ----
+
+test_that("group_by survives dplyr verbs (#170)", {
+  nc_lazy <- as_duckspatial_df(nc_sf)
+
+  # grouping by a computed expression is kept too
+  mutated <- nc_lazy |> dplyr::group_by(SID74 > 5) |> dplyr::mutate(k = dplyr::n())
+  expect_equal(dplyr::group_vars(mutated), "SID74 > 5")
+
+  for (res in list(
+    nc_lazy |> dplyr::group_by(SID74) |> dplyr::mutate(k = 1),
+    nc_lazy |> dplyr::group_by(SID74) |> dplyr::filter(AREA > 0),
+    nc_lazy |> dplyr::group_by(SID74) |> dplyr::arrange(NAME),
+    nc_lazy |> dplyr::group_by(SID74) |> dplyr::select(NAME),
+    nc_lazy |> dplyr::group_by(SID74) |> head(100)
+  )) {
+    expect_s3_class(res, "duckspatial_df")
+    expect_equal(dplyr::group_vars(res), "SID74")
+    n <- suppressWarnings(dplyr::summarise(res, n = dplyr::n())) |> dplyr::collect()
+    expect_equal(nrow(n), dplyr::n_distinct(nc_sf$SID74))
+  }
+})
+
+test_that("grouped filter/mutate match dplyr semantics (#170)", {
+  nc_lazy <- as_duckspatial_df(nc_sf)
+  nc_tbl  <- sf::st_drop_geometry(nc_sf)
+
+  got <- nc_lazy |>
+    dplyr::group_by(SID74) |>
+    dplyr::filter(AREA == max(AREA)) |>
+    dplyr::mutate(k = dplyr::n()) |>
+    ddbs_collect() |> sf::st_drop_geometry()
+  ref <- nc_tbl |>
+    dplyr::group_by(SID74) |>
+    dplyr::filter(AREA == max(AREA)) |>
+    dplyr::mutate(k = dplyr::n())
+  expect_equal(sort(got$NAME), sort(ref$NAME))
+  expect_equal(sum(got$k), sum(ref$k))
+})
+
+test_that("renamed/dropped group columns and summarise .groups behave (#170)", {
+  nc_lazy <- as_duckspatial_df(nc_sf)
+
+  renamed <- nc_lazy |> dplyr::group_by(SID74) |> dplyr::rename(sid = SID74)
+  expect_equal(dplyr::group_vars(renamed), "sid")
+
+  # geometry-preserving summarise with 2 groups peels the last one
+  s <- nc_lazy |>
+    dplyr::group_by(SID74, SID79) |>
+    dplyr::filter(AREA > 0) |>
+    dplyr::summarise(geometry = ddbs_union_agg(geometry))
+  expect_s3_class(s, "duckspatial_df")
+  expect_equal(dplyr::group_vars(s), "SID74")
+
+  ungrouped <- nc_lazy |> dplyr::group_by(SID74) |> dplyr::mutate(k = 1) |> dplyr::ungroup()
+  expect_equal(dplyr::group_vars(ungrouped), character())
+})
+
+test_that("join that suffixes the group column does not error (#170)", {
+  conn <- ddbs_default_conn()
+  lk <- data.frame(FIPS = sf::st_drop_geometry(nc_sf)$FIPS, NAME = "x")
+  DBI::dbWriteTable(conn, "lk_170", lk, overwrite = TRUE)
+  on.exit(DBI::dbRemoveTable(conn, "lk_170"), add = TRUE)
+  nc_lazy <- as_duckspatial_df(nc_sf)
+  expect_no_error(
+    res <- nc_lazy |> dplyr::group_by(NAME) |> dplyr::left_join(dplyr::tbl(conn, "lk_170"), by = "FIPS")
+  )
+  expect_s3_class(res, "duckspatial_df")
+})

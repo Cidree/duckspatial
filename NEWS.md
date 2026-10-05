@@ -20,6 +20,7 @@
 * `ddbs_*` functions and `print()` now respect dplyr verbs that have no `duckspatial_df` method (e.g. `distinct()`, `semi_join()`, `anti_join()`, `union_all()`). Previously they silently used the original, unmodified table (#159).
 * `ddbs_area()`, `ddbs_length()`, `ddbs_perimeter()`, `ddbs_distance()` and the `dwithin` predicate (`ddbs_is_within_distance()`, `ddbs_join()`, `ddbs_filter()`) now compute planar results in the CRS's own units for projected CRSs not in metres (e.g. US survey feet), labelled as in `sf`; previously they returned `NaN`, mislabelled feet as metres, or found no `dwithin` matches. These functions and `ddbs_buffer()` now give an informative error when the input has no CRS, and WGS84 written as `"OGC:CRS84"` or `"WGS 84"` no longer triggers an accuracy warning (#161).
 * `ddbs_contains()` and `ddbs_crosses()` are now exported. They were documented but missing from the package namespace.
+* `group_by()` groups on a `duckspatial_df` are no longer lost after `mutate()`, `filter()`, `arrange()`, `select()` and other verbs. Previously a following `summarise()` silently collapsed all groups into a single row (#170).
 
 
 
