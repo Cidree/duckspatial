@@ -7,8 +7,13 @@
 
 * `ddbs_expand()`: expand the bounding box of geometries.
 
+## PERFORMANCE
+
+* Less fixed overhead on every call with sf input: `ddbs_register_table()` no longer runs a call to `register_geoarrow_extensions()`, which does not exist in duckdb >= 1.5 and always failed (~45 ms per sf input), and building the DuckDB CRS literal skips a slow `sf::st_crs(parameters = TRUE)` lookup when the CRS has an EPSG code (~10 ms -> ~4 ms per call).
+
 ## BUG FIXES
 
+* Functions called with sf or data.frame input no longer leak the registered data: each call left one Arrow registration (or a registered data.frame) and its memory in the connection until the session ended.
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
   geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
   the method was introduced, it had incorrectly returned `geoarrow.wkb`

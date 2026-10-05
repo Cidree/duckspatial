@@ -108,12 +108,6 @@ ddbs_register_table <- function(
         }
     }
 
-    # Try to register geoarrow extensions when available
-    try(
-        DBI::dbExecute(conn, "CALL register_geoarrow_extensions();"),
-        silent = TRUE
-    )
-
     # 2. Register table
   
     ## First, split data and geometry

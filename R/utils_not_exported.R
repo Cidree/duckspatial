@@ -422,7 +422,7 @@ get_query_list <- function(x, conn) {
     x_list <- get_query_name(temp_view_name)
     x_list$cleanup <- function() {
       tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
-      tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
+      tryCatch(duckdb::duckdb_unregister_arrow(conn, paste0("__raw_", temp_view_name)), error = function(e) NULL)
     }
     x_list$owned <- FALSE   # created here, caller should not clean up
     return(x_list)
@@ -473,7 +473,7 @@ get_query_list <- function(x, conn) {
     x_list <- get_query_name(temp_view_name)
     x_list$cleanup <- function() {
       tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
-      tryCatch(duckdb::duckdb_unregister_arrow(conn, temp_view_name), error = function(e) NULL)
+      tryCatch(duckdb::duckdb_unregister(conn, temp_view_name), error = function(e) NULL)
     }
     x_list$owned <- TRUE
     return(x_list)

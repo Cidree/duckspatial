@@ -206,3 +206,44 @@ test_that("custom proj4 CRS round-trips through native and comment metadata", {
     fixed = TRUE
   )
 })
+
+
+test_that("crs_to_duckdb_literal returns EPSG authority literals for EPSG-backed CRSs", {
+  epsg_inputs <- list(
+    4326, 3857, 32617, 4267, 2264, "EPSG:4326", "WGS84",
+    sf::st_crs(4326)$wkt, sf::st_crs(2264)$wkt,
+    sf::st_crs(sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE))
+  )
+  for (x in epsg_inputs) {
+    expect_equal(
+      duckspatial:::crs_to_duckdb_literal(x),
+      list(literal = paste0("EPSG:", sf::st_crs(x)$epsg), kind = "authority")
+    )
+  }
+})
+
+test_that("crs_to_duckdb_literal keeps non-EPSG authorities, WKT and NA unchanged", {
+  expect_equal(
+    duckspatial:::crs_to_duckdb_literal("OGC:CRS84"),
+    list(literal = "OGC:CRS84", kind = "authority")
+  )
+  expect_equal(
+    duckspatial:::crs_to_duckdb_literal("ESRI:54009"),
+    list(literal = "ESRI:54009", kind = "authority")
+  )
+
+  custom <- "+proj=lcc +lat_1=33 +lat_2=45 +lat_0=39 +lon_0=-96 +datum=NAD83 +units=m +no_defs"
+  expect_equal(
+    duckspatial:::crs_to_duckdb_literal(custom),
+    list(literal = sf::st_crs(custom)$wkt, kind = "wkt")
+  )
+
+  expect_equal(
+    duckspatial:::crs_to_duckdb_literal(NA),
+    list(literal = NA_character_, kind = "none")
+  )
+  expect_equal(
+    duckspatial:::crs_to_duckdb_literal(NULL),
+    list(literal = NA_character_, kind = "none")
+  )
+})
