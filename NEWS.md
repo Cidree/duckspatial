@@ -22,6 +22,7 @@
 * `ddbs_read_meta()` now gives an informative error for files GDAL can't open (e.g. GeoParquet) or that don't exist, instead of silently returning an empty tibble. `ddbs_write_table()` on a `.parquet` path no longer emits a spurious "Could not auto-detect CRS from file" warning before its error (#166).
 * `ddbs_quadkey()` no longer overwrites the input table when `x` is not in EPSG:4326, and now returns the correct quadkeys for such input. Previously, a table passed by name was replaced with lat/lon-swapped coordinates and no CRS, and all inputs returned wrong tiles (#164).
 * `ddbs_contains()` and `ddbs_crosses()` are now exported. They were documented but missing from the package namespace.
+* `group_by()` groups on a `duckspatial_df` are no longer lost after `mutate()`, `filter()`, `arrange()`, `select()` and other verbs. Previously a following `summarise()` silently collapsed all groups into a single row (#170).
 
 
 
