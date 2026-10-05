@@ -257,9 +257,17 @@ ddbs_read_meta <- function(path, conn = NULL) {
     target_conn <- conn
   }
 
-  DBI::dbGetQuery(target_conn, glue::glue(
+  meta <- DBI::dbGetQuery(target_conn, glue::glue(
     "SELECT * FROM ST_Read_Meta('{path}')"
-  )) |> 
-    tibble::as_tibble()
+  ))
+
+  if (nrow(meta) == 0) {
+    cli::cli_abort(c(
+      "Could not read metadata from {.file {path}}.",
+      "i" = "The file does not exist or is not in a format GDAL can read (GeoParquet is not supported)."
+    ))
+  }
+
+  tibble::as_tibble(meta)
 
 }
