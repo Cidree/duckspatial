@@ -37,6 +37,8 @@ new_duckspatial_df <- function(
 
     # Use sql_render to extract the query
     inner_query <- dbplyr::sql_render(x)
+    ## groups are not part of the rendered SQL, so keep them to re-apply later
+    groups <- intersect(dplyr::group_vars(x), colnames(x))
 
     # Create the table that will be returned as source_table
     # This executes the dplyr verb
@@ -50,6 +52,7 @@ new_duckspatial_df <- function(
     
     # Handle as a lazy duckdb table in the next step
     x <- dplyr::tbl(source_conn, source_table)
+    if (length(groups) > 0) x <- dplyr::group_by(x, !!!rlang::syms(groups))
   }
   
   if (!inherits(x, "tbl_sql")) {

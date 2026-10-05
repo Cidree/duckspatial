@@ -92,5 +92,18 @@ test_that("ddbs_read_table throws an error for non-existent tables/views", {
   )
 })
 
+test_that("ddbs_read_meta errors on files GDAL cannot open (#166)", {
+  parquet_path <- tempfile(fileext = ".parquet")
+  ddbs_write_dataset(points_sf, parquet_path, quiet = TRUE)
+  on.exit(unlink(parquet_path), add = TRUE)
+
+  expect_error(ddbs_read_meta(parquet_path, conn = conn_test), "Could not read metadata")
+  expect_error(ddbs_read_meta("does/not/exist.gpkg", conn = conn_test), "Could not read metadata")
+
+  ## GDAL formats still work
+  meta <- ddbs_read_meta(system.file("spatial/rivers.geojson", package = "duckspatial"), conn = conn_test)
+  expect_equal(meta$driver_short_name, "GeoJSON")
+})
+
 # Disconnect
 duckdb::dbDisconnect(conn_test, shutdown = TRUE)
