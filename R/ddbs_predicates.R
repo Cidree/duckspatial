@@ -388,6 +388,7 @@ ddbs_within <- function(x, y, ...) {
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_contains <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "contains", ...)
 }
@@ -399,6 +400,7 @@ ddbs_overlaps <- function(x, y, ...) {
 }
 
 #' @rdname ddbs_predicate
+#' @export
 ddbs_crosses <- function(x, y, ...) {
   ddbs_predicate(x = x, y = y, predicate = "crosses", ...)
 }

@@ -63,6 +63,7 @@ export(ddbs_collect)
 export(ddbs_combine)
 export(ddbs_compute)
 export(ddbs_concave_hull)
+export(ddbs_contains)
 export(ddbs_contains_properly)
 export(ddbs_convex_hull)
 export(ddbs_covered_by)
@@ -70,6 +71,7 @@ export(ddbs_covers)
 export(ddbs_create_conn)
 export(ddbs_create_schema)
 export(ddbs_crop)
+export(ddbs_crosses)
 export(ddbs_crs)
 export(ddbs_difference)
 export(ddbs_dimension)
@@ -192,30 +194,36 @@ export(ddbs_z)
 export(ddbs_zmax)
 export(ddbs_zmin)
 export(is_duckspatial_df)
-importFrom(dplyr,arrange)
-importFrom(dplyr,collect)
-importFrom(dplyr,compute)
-importFrom(dplyr,count)
-importFrom(dplyr,distinct)
-importFrom(dplyr,dplyr_reconstruct)
-importFrom(dplyr,filter)
-importFrom(dplyr,full_join)
-importFrom(dplyr,glimpse)
-importFrom(dplyr,group_by)
-importFrom(dplyr,inner_join)
-importFrom(dplyr,left_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,rename)
-importFrom(dplyr,right_join)
-importFrom(dplyr,select)
-importFrom(dplyr,slice)
-importFrom(dplyr,summarise)
-importFrom(dplyr,ungroup)
+importFrom(dplyr,
+  arrange,
+  collect,
+  compute,
+  count,
+  distinct,
+  dplyr_reconstruct,
+  filter,
+  full_join,
+  glimpse,
+  group_by,
+  inner_join,
+  left_join,
+  mutate,
+  rename,
+  right_join,
+  select,
+  slice,
+  summarise,
+  ungroup
+)
 importFrom(lifecycle,deprecated)
-importFrom(rlang,"%||%")
-importFrom(rlang,":=")
-importFrom(sf,st_as_sf)
-importFrom(sf,st_bbox)
-importFrom(sf,st_crs)
-importFrom(sf,st_geometry)
+importFrom(rlang,
+  "%||%",
+  ":="
+)
+importFrom(sf,
+  st_as_sf,
+  st_bbox,
+  st_crs,
+  st_geometry
+)
 importFrom(utils,head)
