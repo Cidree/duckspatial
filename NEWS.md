@@ -7,8 +7,14 @@
 
 * `ddbs_expand()`: expand the bounding box of geometries.
 
+## PERFORMANCE
+
+* `ddbs_write_table()` is much faster: for sf input about 5x (1 million points: 6.3 s → 1.4 s, half the memory), and for a `duckspatial_df` or lazy table from the same connection about 100x (1 million rows: 5.4 s → 0.05 s), because the data no longer makes a round trip through R. `ddbs_write_dataset()` with sf input is about 2x faster.
+
 ## BUG FIXES
 
+* `ddbs_write_table()` and `ddbs_write_dataset()` can now write sf objects that mix XYZ, XY and EMPTY geometries (previously "Skipping beyond end of binary data").
+* `ddbs_write_table()` now accepts a schema-qualified name as a single string (e.g. `"s1.t"`), and a failed write no longer leaves a partial table behind.
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
   geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
   the method was introduced, it had incorrectly returned `geoarrow.wkb`
