@@ -673,13 +673,13 @@ reframe_predicate_data <- function(
 
   ## rename list if id is provided
   if (!is.null(id_x)) {
-    idx_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {id_x} as id FROM {x_list$query_name}"))$id
+    idx_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {sql_ident(id_x)} as id FROM {x_list$query_name}"))$id
     names(pred_list) <- idx_names
   }
 
   ## rename list if id is provided
   if (!is.null(id_y)) {
-    idy_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {id_y} as id FROM {y_list$query_name}"))$id
+    idy_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {sql_ident(id_y)} as id FROM {y_list$query_name}"))$id
     pred_list <- lapply(pred_list, function(ind) {
       if (length(ind) == 0) return(ind)
       idy_names[ind]
@@ -1270,7 +1270,7 @@ build_union_sql <- function(
   if (!is.null(y_query)) {
     if (by_feature) {
       list(
-        geom_call = glue::glue("ST_Union(v1.{x_geom}, v2.{y_geom})"),
+        geom_call = glue::glue("ST_Union(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)})"),
         geom_alias = x_geom,
         from      = glue::glue(
           "(SELECT ROW_NUMBER() OVER () as rn, * FROM {x_query}) v1
@@ -1283,15 +1283,15 @@ build_union_sql <- function(
         geom_call  = glue::glue("ST_Union_Agg(geom)"),
         geom_alias = x_geom,
         from       = glue::glue(
-          "(SELECT {x_geom} as geom FROM {x_query}
+          "(SELECT {sql_ident(x_geom)} as geom FROM {x_query}
             UNION ALL
-            SELECT {y_geom} as geom FROM {y_query}) v1"
+            SELECT {sql_ident(y_geom)} as geom FROM {y_query}) v1"
         )
       )
     }
   } else {
     list(
-      geom_call  = glue::glue("ST_Union_Agg({x_geom})"),
+      geom_call  = glue::glue("ST_Union_Agg({sql_ident(x_geom)})"),
       geom_alias = x_geom,
       from       = x_query
     )
@@ -1318,7 +1318,7 @@ build_union_query <- function(
   y_query = NULL) { # nocov start
 
   parts     <- build_union_sql(by_feature, x_geom, y_geom, x_query, y_query)
-  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs, mode)} as {parts$geom_alias}")
+  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs, mode)} as {sql_ident(parts$geom_alias)}")
 
   if (!is.null(y_query)) {
     row_id  <- if (by_feature) "ROW_NUMBER() OVER () as row_id," else "1 as row_id,"
@@ -1356,7 +1356,7 @@ get_table_crs <- function(conn, geom_name, table_name) { # nocov start
     conn,
     glue::glue("
         SELECT 
-            ST_CRS({geom_name}) AS crs 
+            ST_CRS({sql_ident(geom_name)}) AS crs 
         FROM 
             {table_name}
         LIMIT 1;")
@@ -1453,11 +1453,11 @@ generate_predicate_clause <- function(
               ))
           }
 
-          # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{x_geom}, v2.{y_geom}, {distance})")
+          # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)}, {distance})")
           st_predicate <- glue::glue("
               ST_DWithin_Spheroid(
-                  ST_Point(ST_Y(v1.{x_geom}), ST_X(v1.{x_geom})), 
-                  ST_Point(ST_Y(v2.{y_geom}), ST_X(v2.{y_geom})), 
+                  ST_Point(ST_Y(v1.{sql_ident(x_geom)}), ST_X(v1.{sql_ident(x_geom)})), 
+                  ST_Point(ST_Y(v2.{sql_ident(y_geom)}), ST_X(v2.{sql_ident(y_geom)})), 
                   {distance})
               ")
           if (!crs_equal(crs_x, 4326)) {
@@ -1468,12 +1468,12 @@ generate_predicate_clause <- function(
               ))
           }
       } else {
-          st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
+          st_predicate <- glue::glue("ST_DWithin(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)}, {distance})")
       }
 
   } else {
       ## In every other case, it's a simple binary predicate with no extra arguments
-      st_predicate <- glue::glue("{predicate}(v1.{x_geom}, v2.{y_geom})")
+      st_predicate <- glue::glue("{predicate}(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)})")
   }
 
   return(st_predicate)
@@ -1667,3 +1667,12 @@ check_loaded_extension <- function(conn = NULL, extension) {
   TRUE
 
 }
+
+#' Quote SQL identifiers (column, table or schema names) for DuckDB
+#'
+#' @param x character vector of identifiers (unquoted)
+#' @keywords internal
+#' @noRd
+sql_ident <- function(x) { # nocov start
+  paste0('"', gsub('"', '""', x, fixed = TRUE), '"')
+} # nocov end

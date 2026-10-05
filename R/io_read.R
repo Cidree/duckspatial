@@ -129,7 +129,7 @@ ddbs_read_table <- function(
 
         # For Arrow views: Try ST_AsWKB directly first (geoarrow may already be recognized as GEOMETRY)
         # If that fails, ST_GeomFromWKB will be needed, but geoarrow registration makes it GEOMETRY type
-        select_geom_sql <- glue::glue("ST_AsWKB({geom_name}) AS {geom_name}")
+        select_geom_sql <- glue::glue("ST_AsWKB({sql_ident(geom_name)}) AS {sql_ident(geom_name)}")
     } else {
         # For regular tables and views, use get_geom_name
         geom_name    <- get_geom_name(conn, name_list$query_name)
@@ -137,7 +137,7 @@ ddbs_read_table <- function(
         if (length(geom_name) == 0) cli::cli_abort("Geometry column wasn't found in table <{name_list$query_name}>.")
 
         # For regular tables: already GEOMETRY type
-        select_geom_sql <- glue::glue("ST_AsWKB({geom_name}) AS {geom_name}")
+        select_geom_sql <- glue::glue("ST_AsWKB({sql_ident(geom_name)}) AS {sql_ident(geom_name)}")
     }
 
     # 2. Retrieve data

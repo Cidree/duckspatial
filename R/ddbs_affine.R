@@ -147,16 +147,16 @@ ddbs_rotate <- function(
             # Rotate around each geometry's centroid
             rotation_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom}, -ST_X(ST_Centroid({x_geom})), -ST_Y(ST_Centroid({x_geom}))),
+                    ST_Translate({sql_ident(x_geom)}, -ST_X(ST_Centroid({sql_ident(x_geom)})), -ST_Y(ST_Centroid({sql_ident(x_geom)}))),
                     {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle},
-                    ST_X(ST_Centroid({x_geom})), ST_Y(ST_Centroid({x_geom}))
+                    ST_X(ST_Centroid({sql_ident(x_geom)})), ST_Y(ST_Centroid({sql_ident(x_geom)}))
                 )"
             )
         } else {
             # Rotate around specified center point
             rotation_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom}, {-center_x}, {-center_y}),
+                    ST_Translate({sql_ident(x_geom)}, {-center_x}, {-center_y}),
                     {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle},
                     {center_x}, {center_y}
                 )"
@@ -166,12 +166,12 @@ ddbs_rotate <- function(
         # Rotate all features together around the dataset's overall centroid
         rotation_expr <- glue::glue(
             "ST_Affine(
-                ST_Translate({x_geom},
-                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
-                    -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
+                ST_Translate({sql_ident(x_geom)},
+                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
+                    -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})),
                 {cos_angle}, {-sin_angle}, {sin_angle}, {cos_angle},
-                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
-                (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
+                (SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
+                (SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})
             )"
         )
     }
@@ -179,7 +179,7 @@ ddbs_rotate <- function(
     ## 3.4. Build base query
     base.query <- glue::glue("
       SELECT *
-      REPLACE ({build_geom_query(rotation_expr, name, crs_x, mode)} AS {x_geom})
+      REPLACE ({build_geom_query(rotation_expr, name, crs_x, mode)} AS {sql_ident(x_geom)})
       FROM {x_list$query_name};
     ")
 
@@ -512,18 +512,18 @@ ddbs_flip <- function(
             # Flip left-right around each feature's centroid X
             flip_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom}, -ST_X(ST_Centroid({x_geom})), 0),
+                    ST_Translate({sql_ident(x_geom)}, -ST_X(ST_Centroid({sql_ident(x_geom)})), 0),
                     -1, 0, 0, 1,
-                    ST_X(ST_Centroid({x_geom})), 0
+                    ST_X(ST_Centroid({sql_ident(x_geom)})), 0
                 )"
             )
         } else {
             # Flip top-bottom around each feature's centroid Y
             flip_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom}, 0, -ST_Y(ST_Centroid({x_geom}))),
+                    ST_Translate({sql_ident(x_geom)}, 0, -ST_Y(ST_Centroid({sql_ident(x_geom)}))),
                     1, 0, 0, -1,
-                    0, ST_Y(ST_Centroid({x_geom}))
+                    0, ST_Y(ST_Centroid({sql_ident(x_geom)}))
                 )"
             )
         }
@@ -534,11 +534,11 @@ ddbs_flip <- function(
             # Flip left-right around overall centroid X
             flip_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom},
-                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
+                    ST_Translate({sql_ident(x_geom)},
+                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
                         0),
                     -1, 0, 0, 1,
-                    (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
+                    (SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
                     0
                 )"
             )
@@ -546,12 +546,12 @@ ddbs_flip <- function(
             # Flip top-bottom around overall centroid Y
             flip_expr <- glue::glue(
                 "ST_Affine(
-                    ST_Translate({x_geom},
+                    ST_Translate({sql_ident(x_geom)},
                         0,
-                        -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
+                        -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})),
                     1, 0, 0, -1,
                     0,
-                    (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
+                    (SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})
                 )"
             )
         }
@@ -560,7 +560,7 @@ ddbs_flip <- function(
     ## 3.3. Build base query
     base.query <- glue::glue("
       SELECT *
-      REPLACE ({build_geom_query(flip_expr, name, crs_x, mode)} AS {x_geom})
+      REPLACE ({build_geom_query(flip_expr, name, crs_x, mode)} AS {sql_ident(x_geom)})
       FROM {x_list$query_name};
     ")
   
@@ -719,10 +719,10 @@ ddbs_scale <- function(
         scale_expr <- glue::glue(
             "ST_Translate(
                 ST_Scale(
-                    ST_Translate({x_geom}, -ST_X(ST_Centroid({x_geom})), -ST_Y(ST_Centroid({x_geom}))),
+                    ST_Translate({sql_ident(x_geom)}, -ST_X(ST_Centroid({sql_ident(x_geom)})), -ST_Y(ST_Centroid({sql_ident(x_geom)}))),
                     {x_scale}, {y_scale}
                 ),
-                ST_X(ST_Centroid({x_geom})), ST_Y(ST_Centroid({x_geom}))
+                ST_X(ST_Centroid({sql_ident(x_geom)})), ST_Y(ST_Centroid({sql_ident(x_geom)}))
             )"
         )
     } else {
@@ -730,13 +730,13 @@ ddbs_scale <- function(
         scale_expr <- glue::glue(
             "ST_Translate(
                 ST_Scale(
-                    ST_Translate({x_geom},
-                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
-                        -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
+                    ST_Translate({sql_ident(x_geom)},
+                        -(SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
+                        -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})),
                     {x_scale}, {y_scale}
                 ),
-                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
-                (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
+                (SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
+                (SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})
             )"
         )
     }
@@ -744,7 +744,7 @@ ddbs_scale <- function(
     ## 3.3. Build base query
     base.query <- glue::glue("
       SELECT *
-      REPLACE ({build_geom_query(scale_expr, name, crs_x, mode)} AS {x_geom})
+      REPLACE ({build_geom_query(scale_expr, name, crs_x, mode)} AS {sql_ident(x_geom)})
       FROM {x_list$query_name};
     ")
 
@@ -903,21 +903,21 @@ ddbs_shear <- function(
         # Shear each feature around its own centroid
         shear_expr <- glue::glue(
             "ST_Affine(
-                ST_Translate({x_geom}, -ST_X(ST_Centroid({x_geom})), -ST_Y(ST_Centroid({x_geom}))),
+                ST_Translate({sql_ident(x_geom)}, -ST_X(ST_Centroid({sql_ident(x_geom)})), -ST_Y(ST_Centroid({sql_ident(x_geom)}))),
                 1, {x_shear}, {y_shear}, 1,
-                ST_X(ST_Centroid({x_geom})), ST_Y(ST_Centroid({x_geom}))
+                ST_X(ST_Centroid({sql_ident(x_geom)})), ST_Y(ST_Centroid({sql_ident(x_geom)}))
             )"
         )
     } else {
         # Shear all features together around the dataset's overall centroid
         shear_expr <- glue::glue(
             "ST_Affine(
-                ST_Translate({x_geom},
-                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
-                    -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})),
+                ST_Translate({sql_ident(x_geom)},
+                    -(SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
+                    -(SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})),
                 1, {x_shear}, {y_shear}, 1,
-                (SELECT ST_X(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name}),
-                (SELECT ST_Y(ST_Centroid(ST_Union_Agg({x_geom}))) FROM {x_list$query_name})
+                (SELECT ST_X(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name}),
+                (SELECT ST_Y(ST_Centroid(ST_Union_Agg({sql_ident(x_geom)}))) FROM {x_list$query_name})
             )"
         )
     }
@@ -925,7 +925,7 @@ ddbs_shear <- function(
     ## 3.3. Build base query
     base.query <- glue::glue("
       SELECT *
-      REPLACE ({build_geom_query(shear_expr, name, crs_x, mode)} AS {x_geom})
+      REPLACE ({build_geom_query(shear_expr, name, crs_x, mode)} AS {sql_ident(x_geom)})
       FROM {x_list$query_name};
     ")
 

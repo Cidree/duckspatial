@@ -147,7 +147,7 @@ ddbs_quadkey <- function(
     tmp.query <- glue::glue("
       CREATE OR REPLACE TABLE {x_list$query_name} AS
       SELECT *
-      REPLACE (ST_Transform({x_geom}, '{crs_x$input}', 'EPSG:4326') AS {x_geom}) 
+      REPLACE (ST_Transform({sql_ident(x_geom)}, '{crs_x$input}', 'EPSG:4326') AS {sql_ident(x_geom)}) 
       FROM {x_list$query_name};
     ")
     ## execute
@@ -169,16 +169,16 @@ ddbs_quadkey <- function(
         tmp.query <- glue::glue("
           CREATE TABLE {name_list$query_name} AS
           SELECT 
-            ST_QuadKey({x_geom}, {level}) as quadkey,
-            {fun}({field}) as {field}
+            ST_QuadKey({sql_ident(x_geom)}, {level}) as quadkey,
+            {fun}({sql_ident(field)}) as {sql_ident(field)}
           FROM {x_list$query_name}
           GROUP BY quadkey;
         ")
       } else {
         tmp.query <- glue::glue("
           CREATE TABLE {name_list$query_name} AS
-          SELECT * EXCLUDE ({x_geom}),
-          ST_QuadKey({x_geom}, {level}) as quadkey 
+          SELECT * EXCLUDE ({sql_ident(x_geom)}),
+          ST_QuadKey({sql_ident(x_geom)}, {level}) as quadkey 
           FROM {x_list$query_name};
         ")
       }
@@ -195,15 +195,15 @@ ddbs_quadkey <- function(
   if (!is.null(field)) {
     tmp.query <- glue::glue("
       SELECT 
-        ST_QuadKey({x_geom}, {level}) as quadkey,
-        {fun}({field}) as {field}
+        ST_QuadKey({sql_ident(x_geom)}, {level}) as quadkey,
+        {fun}({sql_ident(field)}) as {sql_ident(field)}
       FROM {x_list$query_name}
       GROUP BY quadkey;
     ")
   } else {
     tmp.query <- glue::glue("
-      SELECT * EXCLUDE ({x_geom}),
-      ST_QuadKey({x_geom}, {level}) as quadkey 
+      SELECT * EXCLUDE ({sql_ident(x_geom)}),
+      ST_QuadKey({sql_ident(x_geom)}, {level}) as quadkey 
       FROM {x_list$query_name};
     ")
   }

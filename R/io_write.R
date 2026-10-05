@@ -184,7 +184,7 @@ ddbs_write_table <- function(
         ## Convert to spatial with CRS
         DBI::dbExecute(conn, glue::glue("
             ALTER TABLE {name_list$query_name}
-            ALTER COLUMN {geom_name} SET DATA TYPE {geom_field} USING ST_GeomFromWKB({geom_name});
+            ALTER COLUMN {sql_ident(geom_name)} SET DATA TYPE {geom_field} USING ST_GeomFromWKB({sql_ident(geom_name)});
         "))
         ddbs_write_legacy_crs_comment_if_needed(
             conn,
@@ -218,7 +218,7 @@ ddbs_write_table <- function(
             # geom_name <- metadata_df$column_name[grepl("STRUCT", metadata_df$column_type)]
             # DBI::dbExecute(conn, glue::glue("
             #     ALTER TABLE {name_list$query_name}
-            #     ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
+            #     ALTER COLUMN {sql_ident(geom_name)} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({sql_ident(geom_name)});
             # "))
         
         } else {

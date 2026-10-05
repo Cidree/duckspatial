@@ -436,7 +436,7 @@ handle_heterogeneous_ingestion <- function(x, conn, crs, geom_col, ...) {
     
     query <- glue::glue("
       {select_clause}
-      {build_geom_query(st_function, name = NULL, crs = crs, mode = 'duckspatial')} as {target_geom}
+      {build_geom_query(st_function, name = NULL, crs = crs, mode = 'duckspatial')} as {sql_ident(target_geom)}
       FROM {x_list$query_name}
     ")
     
@@ -481,7 +481,7 @@ handle_heterogeneous_ingestion <- function(x, conn, crs, geom_col, ...) {
     
     query <- glue::glue("
       {select_clause}
-      {build_geom_query(st_function, name = NULL, crs = crs, mode = 'duckspatial')} as {target_geom}
+      {build_geom_query(st_function, name = NULL, crs = crs, mode = 'duckspatial')} as {sql_ident(target_geom)}
       FROM {x_list$query_name}
     ")
     

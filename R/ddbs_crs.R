@@ -430,10 +430,10 @@ ddbs_transform <- function(
 
     ## 3.2. Build the base query
     ## always_xy assumes [northing, easting]
-    st_function <- glue::glue("ST_Transform({x_geom}, '{crs_x$input}', '{crs_y$input}', always_xy := true)")
+    st_function <- glue::glue("ST_Transform({sql_ident(x_geom)}, '{crs_x$input}', '{crs_y$input}', always_xy := true)")
     base.query <- glue::glue("
         SELECT *
-        REPLACE ({build_geom_query(st_function, name, crs_y, mode)} AS {x_geom})
+        REPLACE ({build_geom_query(st_function, name, crs_y, mode)} AS {sql_ident(x_geom)})
         FROM 
             {x_list$query_name};
     ")
@@ -567,7 +567,7 @@ ddbs_set_crs <- function(
 
 
     ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
-    st_function <- glue::glue("ST_SetCRS({x_geom}, '{y}')")
+    st_function <- glue::glue("ST_SetCRS({sql_ident(x_geom)}, '{y}')")
   
     if (is.null(name) && mode == "sf") {
         ## If not creating a table, fallback to BLOB
@@ -576,7 +576,7 @@ ddbs_set_crs <- function(
   
     base.query <- glue::glue("
         SELECT *
-        REPLACE ({st_function} AS {x_geom})
+        REPLACE ({st_function} AS {sql_ident(x_geom)})
         FROM {x_list$query_name};
     ")
 

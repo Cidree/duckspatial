@@ -70,18 +70,18 @@ template_unary_ops <- function(
   ## if other_args is NULL, use only the geometry column name
   ## if is not NULL, append the rest of the function arguments
   if (is.null(other_args)) {
-    args <- x_geom
+    args <- sql_ident(x_geom)
   } else {
     args <- sprintf(
       "%s, %s",
-      x_geom,
+      sql_ident(x_geom),
       other_args
     )
   }
 
   ## Additional clauses for some functions
   additional_clauses <- if (is.function(additional_clauses)) {
-    additional_clauses(x_geom)
+    additional_clauses(sql_ident(x_geom))
   } else {
     additional_clauses %||% ""
   }
@@ -102,7 +102,7 @@ template_unary_ops <- function(
   st_function <- glue::glue("{fun}({args})")
   base.query <- glue::glue("
     SELECT *
-    REPLACE ({build_geom_query(st_function, name, out_crs, mode)} AS {x_geom})
+    REPLACE ({build_geom_query(st_function, name, out_crs, mode)} AS {sql_ident(x_geom)})
     FROM {x_list$query_name}
     {additional_clauses};
   ")
@@ -188,7 +188,7 @@ template_geometry_conversion <- function(
 
   ## 3.1. create query
   tmp.query <- glue::glue("
-      SELECT {fun}({x_geom}) as geometry
+      SELECT {fun}({sql_ident(x_geom)}) as geometry
       FROM {x_list$query_name};
   ")
 
@@ -431,10 +431,10 @@ template_measure <- function(
   ## 3.3. Build the appropriate ST function based on fun and CRS
   ## Use spheroid version for geographic coordinates
   if (!crs_info$geographic) {
-    st_function <- glue::glue("{fun}({x_geom})")
+    st_function <- glue::glue("{fun}({sql_ident(x_geom)})")
   } else {
-    # st_function <- glue::glue("{fun}_Spheroid({x_geom})") # when the issue #109 is solved
-    st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({x_geom}))")
+    # st_function <- glue::glue("{fun}_Spheroid({sql_ident(x_geom)})") # when the issue #109 is solved
+    st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({sql_ident(x_geom)}))")
   }
   
   ## 3.4. Determine units for output: metres for geographic CRSs, the CRS
@@ -445,15 +445,15 @@ template_measure <- function(
   ## 3.5. Build the base query. For sf we will return an units vector
   if (mode == "sf") {
     base.query <- glue::glue("
-      SELECT {st_function} AS {new_column}
+      SELECT {st_function} AS {sql_ident(new_column)}
       FROM {x_list$query_name};
     ")
   } else {
     base.query <- glue::glue("
       SELECT 
-        * EXCLUDE {x_geom},
-        {st_function} AS {new_column},
-        {build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}
+        * EXCLUDE {sql_ident(x_geom)},
+        {st_function} AS {sql_ident(new_column)},
+        {build_geom_query(sql_ident(x_geom), name, crs_x, mode)} AS {sql_ident(x_geom)}
       FROM 
         {x_list$query_name};
     ")
@@ -574,7 +574,7 @@ template_new_column <- function(
     ## For coordinate max functions: return the global maximum across all features
     if (fun_lower %in% c("st_xmax", "st_ymax", "st_zmax", "st_mmax")) {
       tmp.query <- glue::glue("
-        SELECT MAX({fun}({x_geom})) as {new_column}
+        SELECT MAX({fun}({sql_ident(x_geom)})) as {sql_ident(new_column)}
         FROM {x_list$query_name};
       ")
       data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
@@ -584,7 +584,7 @@ template_new_column <- function(
     ## For coordinate min functions: return the global minimum across all features
     if (fun_lower %in% c("st_xmin", "st_ymin", "st_zmin", "st_mmin")) {
       tmp.query <- glue::glue("
-        SELECT MIN({fun}({x_geom})) as {new_column}
+        SELECT MIN({fun}({sql_ident(x_geom)})) as {sql_ident(new_column)}
         FROM {x_list$query_name};
       ")
       data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
@@ -593,7 +593,7 @@ template_new_column <- function(
 
     ## Original behavior for logical functions
     tmp.query <- glue::glue("
-      SELECT {fun}({x_geom}) as {new_column}
+      SELECT {fun}({sql_ident(x_geom)}) as {sql_ident(new_column)}
       FROM {x_list$query_name};
     ")
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
@@ -607,19 +607,19 @@ template_new_column <- function(
   }
 
   ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
-  st_function <- glue::glue("{x_geom}")
+  st_function <- glue::glue("{sql_ident(x_geom)}")
 
   if (mode == "sf") {
     base.query <- glue::glue("
-      SELECT {fun}({x_geom}) as {new_column},
+      SELECT {fun}({sql_ident(x_geom)}) as {sql_ident(new_column)},
       FROM {x_list$query_name};
     ")
   } else {
     base.query <- glue::glue("
       SELECT 
-        * EXCLUDE {x_geom},
-        {fun}({x_geom}) AS {new_column},
-        {build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}
+        * EXCLUDE {sql_ident(x_geom)},
+        {fun}({sql_ident(x_geom)}) AS {sql_ident(new_column)},
+        {build_geom_query(sql_ident(x_geom), name, crs_x, mode)} AS {sql_ident(x_geom)}
       FROM 
         {x_list$query_name};
     ")

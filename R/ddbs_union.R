@@ -348,10 +348,10 @@ ddbs_combine <- function(
     assert_geometry_column(x_geom, x_list)
   
     ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
-    st_function <- glue::glue("ST_Collect(LIST({x_geom}))")
+    st_function <- glue::glue("ST_Collect(LIST({sql_ident(x_geom)}))")
     base.query <- glue::glue("
       SELECT
-        {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+        {build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}
       FROM
         {x_list$query_name};
     ")
@@ -435,15 +435,15 @@ ddbs_union_agg <- function(
   assert_geometry_column(x_geom, x_list)
 
   ## 2.2. Get names of the rest of the groupping columns
-  by_cols <- paste0(by, collapse = ", ")
+  by_cols <- paste0(sql_ident(by), collapse = ", ")
 
   ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
   agg_fn      <- if (isTRUE(mem)) "ST_MemUnion_Agg" else "ST_Union_Agg"
-  st_function <- glue::glue("{agg_fn}({x_geom})")
+  st_function <- glue::glue("{agg_fn}({sql_ident(x_geom)})")
   base.query <- glue::glue("
     SELECT 
       {by_cols},
-      {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+      {build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}
     FROM 
       {x_list$query_name}
     GROUP BY 
@@ -579,22 +579,22 @@ ddbs_intersection_agg <- function(
 
   ## 2.2. Build the base query. With `by` we group; without it we aggregate the
   ## whole dataset into a single geometry.
-  st_function <- glue::glue("ST_Intersection_Agg({x_geom})")
+  st_function <- glue::glue("ST_Intersection_Agg({sql_ident(x_geom)})")
   geom_expr   <- build_geom_query(st_function, name, crs_x, mode)
 
   if (is.null(by)) {
     base.query <- glue::glue("
       SELECT
-        {geom_expr} AS {x_geom}
+        {geom_expr} AS {sql_ident(x_geom)}
       FROM
         {x_list$query_name};
     ")
   } else {
-    by_cols <- paste0(by, collapse = ", ")
+    by_cols <- paste0(sql_ident(by), collapse = ", ")
     base.query <- glue::glue("
       SELECT
         {by_cols},
-        {geom_expr} AS {x_geom}
+        {geom_expr} AS {sql_ident(x_geom)}
       FROM
         {x_list$query_name}
       GROUP BY
@@ -722,13 +722,13 @@ ddbs_dump <- function(
   st_function <- "dump.geom"
   base.query <- glue::glue("
     WITH dumped AS (
-    SELECT * EXCLUDE {x_geom},
-          UNNEST(ST_Dump({x_geom})) AS dump
+    SELECT * EXCLUDE {sql_ident(x_geom)},
+          UNNEST(ST_Dump({sql_ident(x_geom)})) AS dump
     FROM {x_list$query_name}
     )
     SELECT * EXCLUDE dump,
           /* dump.path AS path, */
-          {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+          {build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}
     FROM dumped;
   ")
 
