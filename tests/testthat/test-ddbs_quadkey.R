@@ -177,5 +177,46 @@ describe("ddbs_quadkey()", {
   })
 })
 
+## 1.3. Non-EPSG:4326 input (#164) ---------
+
+describe("ddbs_quadkey() with non-EPSG:4326 input", {
+  pts_4326 <- sf::st_as_sf(
+    data.frame(id = 1:2, lon = c(-58.38, -58.50), lat = c(-34.60, -34.70)),
+    coords = c("lon", "lat"), crs = 4326
+  )
+  pts_utm <- sf::st_transform(pts_4326, 32721)
+  duckspatial::ddbs_write_table(conn_test, pts_utm, "pts_utm", overwrite = TRUE, quiet = TRUE)
+  expected <- ddbs_quadkey(pts_4326, level = 6, output = "tilexy", quiet = TRUE)
+
+  it("matches the EPSG:4326 result for all input types", {
+    expect_equal(expected$tileX, c(21, 21))
+    expect_equal(expected$tileY, c(38, 38))
+    expect_equal(ddbs_quadkey(pts_utm, level = 6, output = "tilexy", quiet = TRUE), expected)
+    expect_equal(ddbs_quadkey(as_duckspatial_df(pts_utm), level = 6, output = "tilexy", quiet = TRUE), expected)
+    expect_equal(ddbs_quadkey("pts_utm", conn = conn_test, level = 6, output = "tilexy", quiet = TRUE), expected)
+    ## lat/lon-ordered source CRS (catches a missing always_xy)
+    pts_nad27 <- sf::st_transform(pts_4326, 4267)
+    expect_equal(
+      ddbs_quadkey(pts_nad27, level = 6, output = "tilexy", quiet = TRUE)[c("tileX", "tileY")],
+      expected[c("tileX", "tileY")]
+    )
+  })
+
+  it("does not modify the input table", {
+    before <- DBI::dbGetQuery(conn_test, "SELECT ST_AsText(geometry) AS wkt FROM pts_utm")
+    ddbs_quadkey("pts_utm", conn = conn_test, level = 6, output = "tilexy", quiet = TRUE)
+    ddbs_quadkey("pts_utm", conn = conn_test, level = 6, name = "qk_utm", quiet = TRUE)
+    after <- DBI::dbGetQuery(conn_test, "SELECT ST_AsText(geometry) AS wkt FROM pts_utm")
+    expect_identical(after, before)
+    expect_equal(ddbs_crs(conn_test, "pts_utm"), sf::st_crs(32721))
+  })
+
+  it("informs about the transformation unless quiet", {
+    expect_message(ddbs_quadkey(pts_utm, level = 6, output = "tilexy"), "EPSG:4326")
+    expect_no_message(ddbs_quadkey(pts_4326, level = 6, output = "tilexy"))
+  })
+})
+
+
 ## stop connection
 ddbs_stop_conn(conn_test)
