@@ -7,8 +7,13 @@
 
 * `ddbs_expand()`: expand the bounding box of geometries.
 
+## PERFORMANCE
+
+* Registering sf data in DuckDB is 3–4x faster and uses ~4x less memory (e.g. `as_duckspatial_df()` on 1 million points: 3.4 s → 0.8 s, 67 MB → 17 MB). This speeds up every `ddbs_*()` call with sf input. `ddbs_register_table()` no longer builds a chunk index for data that fits in a single Arrow chunk.
+
 ## BUG FIXES
 
+* `as_duckspatial_df()`, `ddbs_register_table()` and other functions that take an sf object no longer fail with "subscript out of bounds" on a 0-row sf. The result keeps the columns and the CRS.
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
   geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
   the method was introduced, it had incorrectly returned `geoarrow.wkb`

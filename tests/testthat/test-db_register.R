@@ -218,3 +218,27 @@ test_that("error for unsupported data types", {
         "must be an"
     )
 })
+
+
+# edge cases: chunking ------------------------------------------------------
+
+test_that("a 0-row sf can be registered and keeps columns and CRS", {
+
+    nc_empty <- nc_sf[0, ]
+
+    expect_true(ddbs_register_table(conn_test, nc_empty, "empty_view", overwrite = TRUE, quiet = TRUE))
+
+    cols <- DBI::dbGetQuery(conn_test, "DESCRIBE empty_view")
+    expect_equal(cols$column_name, c(setdiff(names(nc_sf), "geometry"), "geometry"))
+    expect_equal(cols$column_type[cols$column_name == "geometry"], "GEOMETRY('EPSG:4267')")
+    expect_equal(DBI::dbGetQuery(conn_test, "SELECT COUNT(*) AS n FROM empty_view")$n, 0)
+
+    # as_duckspatial_df() goes through the same code
+    empty_ddbs <- as_duckspatial_df(nc_empty)
+    expect_s3_class(empty_ddbs, "duckspatial_df")
+    result <- ddbs_collect(empty_ddbs)
+    expect_s3_class(result, "sf")
+    expect_equal(nrow(result), 0L)
+    expect_equal(names(result), names(nc_sf))
+    expect_equal(sf::st_crs(result), sf::st_crs(nc_sf))
+})
