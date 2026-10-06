@@ -142,10 +142,10 @@ ddbs_quadkey <- function(
 
   ## 2.2. check CRS (we need EPSG:4326 for quadkeys). Transform inline, so the
   ## input table is never modified, keeping lon/lat axis order
-  geom_4326 <- x_geom
+  geom_4326 <- sql_ident(x_geom)
   if (!crs_x$input %in% c("EPSG:4326", "WGS 84")) {
     if (!quiet) cli::cli_alert_info("Transforming {.arg x} crs to {.val EPSG:4326}")
-    geom_4326 <- glue::glue("ST_Transform({x_geom}, '{crs_x$input}', 'EPSG:4326', always_xy := true)")
+    geom_4326 <- glue::glue("ST_Transform({sql_ident(x_geom)}, '{crs_x$input}', 'EPSG:4326', always_xy := true)")
   }
 
 
@@ -161,17 +161,17 @@ ddbs_quadkey <- function(
       ## create query with optional aggregation
       if (!is.null(field)) {
         tmp.query <- glue::glue("
-          CREATE TABLE {name_list$query_name} AS
+          CREATE TABLE {name_list$sql_name} AS
           SELECT 
             ST_QuadKey({geom_4326}, {level}) as quadkey,
-            {fun}({field}) as {field}
+            {fun}({sql_ident(field)}) as {sql_ident(field)}
           FROM {x_list$query_name}
           GROUP BY quadkey;
         ")
       } else {
         tmp.query <- glue::glue("
-          CREATE TABLE {name_list$query_name} AS
-          SELECT * EXCLUDE ({x_geom}),
+          CREATE TABLE {name_list$sql_name} AS
+          SELECT * EXCLUDE ({sql_ident(x_geom)}),
           ST_QuadKey({geom_4326}, {level}) as quadkey 
           FROM {x_list$query_name};
         ")
@@ -190,13 +190,13 @@ ddbs_quadkey <- function(
     tmp.query <- glue::glue("
       SELECT 
         ST_QuadKey({geom_4326}, {level}) as quadkey,
-        {fun}({field}) as {field}
+        {fun}({sql_ident(field)}) as {sql_ident(field)}
       FROM {x_list$query_name}
       GROUP BY quadkey;
     ")
   } else {
     tmp.query <- glue::glue("
-      SELECT * EXCLUDE ({x_geom}),
+      SELECT * EXCLUDE ({sql_ident(x_geom)}),
       ST_QuadKey({geom_4326}, {level}) as quadkey 
       FROM {x_list$query_name};
     ")

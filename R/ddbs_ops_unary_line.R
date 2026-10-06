@@ -629,10 +629,10 @@ ddbs_polygonize <- function(
     assert_geometry_column(x_geom, x_list)
   
     ## 2.2.  Build the base query (depends on the output type - sf, duckspatial_df, table)
-    st_function <- glue::glue("ST_Polygonize(LIST({x_geom}))")
+    st_function <- glue::glue("ST_Polygonize(LIST({sql_ident(x_geom)}))")
     base.query <- glue::glue("
       SELECT 
-        {build_geom_query(st_function, name, crs_x, mode)} as {x_geom}
+        {build_geom_query(st_function, name, crs_x, mode)} as {sql_ident(x_geom)}
       FROM 
         {x_list$query_name};
     ")
@@ -857,22 +857,22 @@ ddbs_line_locate_point <- function(
             )
         }
 
-        y_sql <- glue::glue("(SELECT {y_geom}::GEOMETRY FROM {y_list$query_name})")
+        y_sql <- glue::glue("(SELECT {sql_ident(y_geom)}::GEOMETRY FROM {y_list$query_name})")
     }
 
 
     # 3. Build the base query
     if (mode == "sf") {
         base.query <- glue::glue("
-            SELECT ST_LineLocatePoint({x_geom}, {y_sql}) AS {new_column},
+            SELECT ST_LineLocatePoint({sql_ident(x_geom)}, {y_sql}) AS {sql_ident(new_column)},
             FROM {x_list$query_name};
         ")
     } else {
         base.query <- glue::glue("
             SELECT
-                * EXCLUDE {x_geom},
-                ST_LineLocatePoint({x_geom}, {y_sql}) AS {new_column},
-                {build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom}
+                * EXCLUDE {sql_ident(x_geom)},
+                ST_LineLocatePoint({sql_ident(x_geom)}, {y_sql}) AS {sql_ident(new_column)},
+                {build_geom_query(sql_ident(x_geom), name, crs_x, mode)} AS {sql_ident(x_geom)}
             FROM
                 {x_list$query_name};
         ")

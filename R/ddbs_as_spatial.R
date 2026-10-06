@@ -337,7 +337,7 @@ ddbs_as_points <- function(
 
     base.query <- glue::glue("
       {select_clause}
-      {build_geom_query(st_function, name, crs, mode)} as {query_geom}
+      {build_geom_query(st_function, name, crs, mode)} as {sql_ident(query_geom)}
       FROM {x_list$query_name};
     ")    
 

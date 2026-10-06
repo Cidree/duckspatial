@@ -227,8 +227,8 @@ ddbs_interpolate_aw <- function(
     if (t_crs_sql == "NULL") cli::cli_abort("Target CRS value is NULL. Cannot transform to {.arg join_crs}.")
     if (s_crs_sql == "NULL") cli::cli_abort("Source CRS value is NULL. Cannot transform to {.arg join_crs}.")
 
-    t_geom_expr <- glue::glue("ST_Transform({t_geom}, {t_crs_sql}, {join_crs_sql})")
-    s_geom_expr <- glue::glue("ST_Transform({s_geom}, {s_crs_sql}, {join_crs_sql})")
+    t_geom_expr <- glue::glue("ST_Transform({sql_ident(t_geom)}, {t_crs_sql}, {join_crs_sql})")
+    s_geom_expr <- glue::glue("ST_Transform({sql_ident(s_geom)}, {s_crs_sql}, {join_crs_sql})")
   } else {
     # If NO join_crs provided, inputs MUST match.
     if (!is.null(t_crs) && !is.null(s_crs)) {
@@ -277,7 +277,7 @@ ddbs_interpolate_aw <- function(
   s_source_sql <- s_list$query_name
   if (isTRUE(na.rm)) {
     vars_to_check <- c(extensive, intensive)
-    where_clause <- paste(paste0(vars_to_check, " IS NOT NULL"), collapse = " AND ")
+    where_clause <- paste(paste0(sql_ident(vars_to_check), " IS NOT NULL"), collapse = " AND ")
     s_source_sql <- glue::glue("(SELECT * FROM {s_list$query_name} WHERE {where_clause})")
   }
 
@@ -285,8 +285,8 @@ ddbs_interpolate_aw <- function(
   overlap_cte <- glue::glue("
     overlap_calc AS (
       SELECT
-        s.{sid} AS sid,
-        t.{tid} AS tid,
+        s.{sql_ident(sid)} AS sid,
+        t.{sql_ident(tid)} AS tid,
         COALESCE(ST_Area(ST_Intersection({s_alias}, {t_alias})), 0) AS overlap_area
       FROM
         (SELECT *, {s_geom_expr} AS {s_alias} FROM {s_source_sql}) s
@@ -313,7 +313,7 @@ ddbs_interpolate_aw <- function(
       # Matches sf::st_interpolate_aw(extensive=TRUE)
       denom_ctes <- c(denom_ctes, glue::glue("
         denom_extensive AS (
-          SELECT {sid} as sid, ST_Area({s_geom_expr}) as total_area_sid
+          SELECT {sql_ident(sid)} as sid, ST_Area({s_geom_expr}) as total_area_sid
           FROM {s_source_sql}
         )
       "))
@@ -337,14 +337,14 @@ ddbs_interpolate_aw <- function(
     for (v in extensive) {
       # NULLIF protects against division by zero (empty geometry or zero area)
       select_exprs <- c(select_exprs, glue::glue(
-        "SUM( (src.{v} * o.overlap_area) / NULLIF(dens.total_area_sid, 0) ) AS {v}"
+        "SUM( (src.{sql_ident(v)} * o.overlap_area) / NULLIF(dens.total_area_sid, 0) ) AS {sql_ident(v)}"
       ))
     }
   }
   if (!is.null(intensive)) {
     for (v in intensive) {
       select_exprs <- c(select_exprs, glue::glue(
-        "SUM( (src.{v} * o.overlap_area) / NULLIF(deni.total_area_tid, 0) ) AS {v}"
+        "SUM( (src.{sql_ident(v)} * o.overlap_area) / NULLIF(deni.total_area_tid, 0) ) AS {sql_ident(v)}"
       ))
     }
   }
@@ -357,7 +357,7 @@ ddbs_interpolate_aw <- function(
 
   joins_sql <- glue::glue("
     FROM overlap_calc o
-    JOIN {src_join_sql} src ON o.sid = src.{sid}
+    JOIN {src_join_sql} src ON o.sid = src.{sql_ident(sid)}
   ")
 
   if (!is.null(extensive)) {
@@ -379,7 +379,7 @@ ddbs_interpolate_aw <- function(
 
   # 6. Final Execution
   # Explicitly select target columns to keep attributes
-  t_cols_select <- if(length(t_rest) > 0) paste0("tgt.", t_rest, collapse = ", ") else ""
+  t_cols_select <- if(length(t_rest) > 0) paste0("tgt.", sql_ident(t_rest), collapse = ", ") else ""
   if (t_cols_select != "") t_cols_select <- paste0(t_cols_select, ", ")
 
   # Apply keep_NA logic
@@ -389,22 +389,22 @@ ddbs_interpolate_aw <- function(
   full_ctes <- paste(c(overlap_cte, denom_ctes, agg_cte), collapse = ",\n")
 
   # 6.1 Handle Output Type: SF vs Tibble (no geometry)
-  st_function <- glue::glue("tgt.{t_geom}")
+  st_function <- glue::glue("tgt.{sql_ident(t_geom)}")
   final_select <- glue::glue("
     SELECT
       {t_cols_select}
-      {build_geom_query(st_function, name, t_crs, mode)} as {t_geom},
+      {build_geom_query(st_function, name, t_crs, mode)} as {sql_ident(t_geom)},
       av.* EXCLUDE (tid)
     FROM {t_list$query_name} tgt
-    {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
+    {final_join_type} aggregated_values av ON tgt.{sql_ident(tid)} = av.tid
   ")
   table_select <- glue::glue("
     SELECT
       {t_cols_select}
-      {build_geom_query(st_function, name, t_crs, mode)} as {t_geom},
+      {build_geom_query(st_function, name, t_crs, mode)} as {sql_ident(t_geom)},
       av.* EXCLUDE (tid)
     FROM {t_list$query_name} tgt
-    {final_join_type} aggregated_values av ON tgt.{tid} = av.tid
+    {final_join_type} aggregated_values av ON tgt.{sql_ident(tid)} = av.tid
   ")
 
   # 6.2 Execute
@@ -415,7 +415,7 @@ ddbs_interpolate_aw <- function(
 
     # CREATE TABLE must precede WITH for standard CTE usage in DuckDB statements like this
     full_sql <- glue::glue("
-      CREATE TABLE {name_list$query_name} AS
+      CREATE TABLE {name_list$sql_name} AS
       WITH {full_ctes}
       {table_select}
     ")
