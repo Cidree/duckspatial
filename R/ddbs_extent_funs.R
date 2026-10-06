@@ -171,16 +171,16 @@ ddbs_envelope <- function(
 
     ## 2.3. Build envelope clause based on by_feature
     if (isTRUE(by_feature)) {
-        st_envelope_clause <- glue::glue("ST_Envelope({x_geom})")
+        st_envelope_clause <- glue::glue("ST_Envelope({sql_ident(x_geom)})")
     } else {
-        st_envelope_clause <- glue::glue("ST_Envelope_Agg({x_geom})")
+        st_envelope_clause <- glue::glue("ST_Envelope_Agg({sql_ident(x_geom)})")
     }
 
     ## 2.4. Build the base query (depends on the output type - sf, duckspatial_df, table)
     base.query <- glue::glue("
         SELECT 
             {x_rest}
-            {build_geom_query(st_envelope_clause, name, crs_x, mode)} as {x_geom}
+            {build_geom_query(st_envelope_clause, name, crs_x, mode)} as {sql_ident(x_geom)}
         FROM 
             {x_list$query_name};
     ")
@@ -311,9 +311,9 @@ ddbs_bbox <- function(
 
     ## 2.3 Build base query - set the extent_clause
     if (isTRUE(by_feature)) {
-        st_extent_clause <- glue::glue("ST_Extent({x_geom})")
+        st_extent_clause <- glue::glue("ST_Extent({sql_ident(x_geom)})")
     } else {
-        st_extent_clause <- glue::glue("ST_Extent_Agg({x_geom})")
+        st_extent_clause <- glue::glue("ST_Extent_Agg({sql_ident(x_geom)})")
     }
 
     base.query <- glue::glue("
@@ -506,7 +506,7 @@ ddbs_make_envelope <- function(
   ## 1.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
   st_function <- glue::glue("ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax})")
   base.query <- glue::glue("
-    SELECT {build_geom_query(st_function, name, crs, mode)} AS {x_geom};
+    SELECT {build_geom_query(st_function, name, crs, mode)} AS {sql_ident(x_geom)};
   ")
 
 

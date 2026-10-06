@@ -43,7 +43,7 @@
 #'
 #' For \code{ddbs_azimuth}: A numeric matrix of azimuth values (in the specified \code{unit})
 #' with dimensions nrow(x) by nrow(y) when \code{mode = "sf"}, or a lazy
-#' \code{tbl_duckdb_connection} with columns \code{id_x}, \code{id_y}, and \code{azimuth} otherwise.
+#' \code{tbl_duckdb_connection} with columns \code{sql_ident(id_x)}, \code{sql_ident(id_y)}, and \code{azimuth} otherwise.
 #' Both inputs must contain only POINT geometries.
 #'
 #' @details
@@ -459,17 +459,17 @@ ddbs_distance <- function(
   )
 
   ## 3.3. Select the right coordinates order
-  # st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+  # st_distance_fun <- glue::glue("{st_distance_fun}(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)})")
   if (dist_type %in% c("haversine", "spheroid")) {
     # Here we flip the coordinates, but this will have to changed when spatial updates
     st_distance_fun <- glue::glue(
       "{st_distance_fun}(
-        ST_Point(ST_Y(x.{x_geom}), ST_X(x.{x_geom})),
-        ST_Point(ST_Y(y.{y_geom}), ST_X(y.{y_geom}))
+        ST_Point(ST_Y(x.{sql_ident(x_geom)}), ST_X(x.{sql_ident(x_geom)})),
+        ST_Point(ST_Y(y.{sql_ident(y_geom)}), ST_X(y.{sql_ident(y_geom)}))
       )"
     )
   } else {
-    st_distance_fun <- glue::glue("{st_distance_fun}(x.{x_geom}, y.{y_geom})")
+    st_distance_fun <- glue::glue("{st_distance_fun}(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)})")
   }
   
   ## 3.2. Create query and get results based on mode
@@ -509,8 +509,8 @@ ddbs_distance <- function(
   } else {
 
     ## Subqueries for generating row ids
-    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{id_x} AS id_x")
-    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
+    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{sql_ident(id_x)} AS id_x")
+    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{sql_ident(id_y)} AS id_y")
 
     ## Generate the query
     view_name <- ddbs_temp_table_name()
@@ -667,9 +667,9 @@ ddbs_azimuth <- function(
 
   ## 3.2. Build the ST_Azimuth expression, with optional degree conversion
   st_azimuth_expr <- if (unit == "degrees") {
-    glue::glue("ST_Azimuth(x.{x_geom}, y.{y_geom}) * 180.0 / pi()")
+    glue::glue("ST_Azimuth(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)}) * 180.0 / pi()")
   } else {
-    glue::glue("ST_Azimuth(x.{x_geom}, y.{y_geom})")
+    glue::glue("ST_Azimuth(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)})")
   }
 
 
@@ -699,8 +699,8 @@ ddbs_azimuth <- function(
 
   } else {
 
-    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{id_x} AS id_x")
-    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
+    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{sql_ident(id_x)} AS id_x")
+    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{sql_ident(id_y)} AS id_y")
 
     view_name <- ddbs_temp_table_name()
     tmp.query <- glue::glue("

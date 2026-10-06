@@ -85,9 +85,9 @@ ddbs_register_table <- function(
             drop_stmt <- if (
                 !is.na(table_type) && identical(table_type, "VIEW")
             ) {
-                glue::glue("DROP VIEW IF EXISTS {view_name};")
+                glue::glue("DROP VIEW IF EXISTS {name_list$sql_name};")
             } else {
-                glue::glue("DROP TABLE IF EXISTS {view_name};")
+                glue::glue("DROP TABLE IF EXISTS {name_list$sql_name};")
             }
             DBI::dbExecute(conn, drop_stmt)
             if (isFALSE(quiet)) {
@@ -203,18 +203,18 @@ ddbs_register_table <- function(
             # Escape single quotes in WKT for SQL safety
             safe_crs <- gsub("'", "''", crs_input)
             DBI::dbExecute(conn, glue::glue(
-                "CREATE OR REPLACE {view_type} {view_name} AS ",
+                "CREATE OR REPLACE {view_type} {name_list$sql_name} AS ",
                 "SELECT * EXCLUDE {q_geom}, ",
                 "({q_geom}::GEOMETRY('{safe_crs}')) AS {q_geom} ",
-                "FROM {raw_view_name}"
+                "FROM {sql_ident(raw_view_name)}"
             ))
         } else {
             # No CRS, just create a direct view casting to generic GEOMETRY
             DBI::dbExecute(conn, glue::glue(
-                "CREATE OR REPLACE {view_type} {view_name} AS ",
+                "CREATE OR REPLACE {view_type} {name_list$sql_name} AS ",
                 "SELECT * EXCLUDE {q_geom}, ",
                 "({q_geom}::GEOMETRY) AS {q_geom} ",
-                "FROM {raw_view_name}"
+                "FROM {sql_ident(raw_view_name)}"
             ))
         }
     }, error = function(e) {

@@ -10,6 +10,7 @@
 ## PERFORMANCE
 
 * Registering sf data in DuckDB is 3–4x faster and uses ~4x less memory (e.g. `as_duckspatial_df()` on 1 million points: 3.4 s → 0.8 s, 67 MB → 17 MB). This speeds up every `ddbs_*()` call with sf input. `ddbs_register_table()` no longer builds a chunk index for data that fits in a single Arrow chunk.
+* Every `ddbs_*()` call that uses the default connection is faster by about 50–100 ms: `ddbs_default_conn()` no longer re-creates the package's 35 SQL macros on each call. The macros are created once, when the connection is created. If you set the internal `duckspatial_conn` option to your own connection, run `ddbs_load(conn)` to create the macros on it.
 
 ## BUG FIXES
 
@@ -29,6 +30,7 @@
 * `ddbs_quadkey()` no longer overwrites the input table when `x` is not in EPSG:4326, and now returns the correct quadkeys for such input. Previously, a table passed by name was replaced with lat/lon-swapped coordinates and no CRS, and all inputs returned wrong tiles (#164).
 * `ddbs_contains()` and `ddbs_crosses()` are now exported. They were documented but missing from the package namespace.
 * `group_by()` groups on a `duckspatial_df` are no longer lost after `mutate()`, `filter()`, `arrange()`, `select()` and other verbs. Previously a following `summarise()` silently collapsed all groups into a single row (#170).
+* Column, table and schema names that contain spaces or are SQL reserved words (e.g. a geometry column `"my geom"`, `by = "group"`, `name = "my table"`, or a table named `"order"` passed as `x`) are now quoted in the generated SQL. Previously they failed with a parser error (#168).
 
 
 
