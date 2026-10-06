@@ -923,11 +923,6 @@ ddbs_default_conn <- function(create = TRUE, ...) {
     options(duckspatial_conn = conn)
   }
 
-  # Activate macros
-  if (!is.null(conn)) {
-    create_duckspatial_macros(conn)
-  }
-
   conn
 }
 

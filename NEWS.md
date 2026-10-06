@@ -7,6 +7,10 @@
 
 * `ddbs_expand()`: expand the bounding box of geometries.
 
+## PERFORMANCE
+
+* Every `ddbs_*()` call that uses the default connection is faster by about 50–100 ms: `ddbs_default_conn()` no longer re-creates the package's 35 SQL macros on each call. The macros are created once, when the connection is created. If you set the internal `duckspatial_conn` option to your own connection, run `ddbs_load(conn)` to create the macros on it.
+
 ## BUG FIXES
 
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
