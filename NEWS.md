@@ -9,10 +9,13 @@
 
 ## PERFORMANCE
 
+* Registering sf data in DuckDB is 3–4x faster and uses ~4x less memory (e.g. `as_duckspatial_df()` on 1 million points: 3.4 s → 0.8 s, 67 MB → 17 MB). This speeds up every `ddbs_*()` call with sf input. `ddbs_register_table()` no longer builds a chunk index for data that fits in a single Arrow chunk.
 * Every `ddbs_*()` call that uses the default connection is faster by about 50–100 ms: `ddbs_default_conn()` no longer re-creates the package's 35 SQL macros on each call. The macros are created once, when the connection is created. If you set the internal `duckspatial_conn` option to your own connection, run `ddbs_load(conn)` to create the macros on it.
 
 ## BUG FIXES
 
+* `as_duckspatial_df()`, `ddbs_register_table()` and other functions that take an sf object no longer fail with "subscript out of bounds" on a 0-row sf. The result keeps the columns and the CRS.
+* sf data larger than ~500 MB (registered in several Arrow chunks) could only be read once: a second query or `collect()` on the same object returned 0 rows. It can now be read any number of times.
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
   geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
   the method was introduced, it had incorrectly returned `geoarrow.wkb`
