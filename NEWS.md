@@ -9,6 +9,7 @@
 
 ## PERFORMANCE
 
+* `ddbs_filter()`, the predicate functions with `mode = "sf"` (`ddbs_intersects()`, `ddbs_within()`, …) and the dense (`sparse = FALSE`) predicates in duckspatial mode now put the spatial predicate in a join condition, so DuckDB uses its spatial join instead of a cross product over every pair of features. On 100,000 points and the 100 `nc` counties, `ddbs_filter()` goes from about 14 s to about 1 s, `ddbs_intersects(mode = "sf")` from about 15 s to about 1 s and the dense duckspatial predicate from about 29 s to about 2 s. The sparse `mode = "sf"` result is built from the matching pairs only, so it no longer allocates an n × m matrix in R. Two consequences: `ddbs_disjoint()` cannot use the spatial join (nearly every pair matches) and is somewhat slower on large inputs; and in the dense `mode = "sf"` matrix, rows whose geometry is SQL `NULL` are now `FALSE` instead of `NA`.
 * Registering sf data in DuckDB is 3–4x faster and uses ~4x less memory (e.g. `as_duckspatial_df()` on 1 million points: 3.4 s → 0.8 s, 67 MB → 17 MB). This speeds up every `ddbs_*()` call with sf input. `ddbs_register_table()` no longer builds a chunk index for data that fits in a single Arrow chunk.
 * Every `ddbs_*()` call that uses the default connection is faster by about 50–100 ms: `ddbs_default_conn()` no longer re-creates the package's 35 SQL macros on each call. The macros are created once, when the connection is created. If you set the internal `duckspatial_conn` option to your own connection, run `ddbs_load(conn)` to create the macros on it.
 

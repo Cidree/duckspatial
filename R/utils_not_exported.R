@@ -676,12 +676,22 @@ reframe_predicate_data <- function(
   nrowx <- get_nrow(conn, x_list$query_name)
   nrowy <- get_nrow(conn, y_list$query_name)
 
-  ## convert results to matrix -> to list
-  ## return matrix if sparse = FALSE
-  pred_mat  <- matrix(data$predicate, nrow = nrowx, ncol = nrowy, byrow = TRUE)
-  if (isFALSE(sparse)) return(pred_mat)
+  ## `data` holds the (i, j) row indices of the matching pairs only, sorted
+  ## by i, j. row_number() is BIGINT (a double in R): convert to integer
+  ## first, otherwise factor() labels 100000 as "1e+05" and silently drops
+  ## those pairs
+  i <- as.integer(data$i)
+  j <- as.integer(data$j)
 
-  pred_list <- apply(pred_mat, 1, function(row) which(row), simplify = FALSE)
+  ## return matrix if sparse = FALSE
+  if (isFALSE(sparse)) {
+    pred_mat <- matrix(FALSE, nrow = nrowx, ncol = nrowy)
+    pred_mat[cbind(i, j)] <- TRUE
+    return(pred_mat)
+  }
+
+  ## sparse: one integer vector per row of x (empty when no match)
+  pred_list <- unname(split(j, factor(i, levels = seq_len(nrowx))))
 
   ## return if no matches have been found
   if (length(pred_list) == 0) return(NULL)
