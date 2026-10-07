@@ -85,9 +85,9 @@ ddbs_register_table <- function(
             drop_stmt <- if (
                 !is.na(table_type) && identical(table_type, "VIEW")
             ) {
-                glue::glue("DROP VIEW IF EXISTS {view_name};")
+                glue::glue("DROP VIEW IF EXISTS {name_list$sql_name};")
             } else {
-                glue::glue("DROP TABLE IF EXISTS {view_name};")
+                glue::glue("DROP TABLE IF EXISTS {name_list$sql_name};")
             }
             DBI::dbExecute(conn, drop_stmt)
             if (isFALSE(quiet)) {
@@ -150,25 +150,28 @@ ddbs_register_table <- function(
     avg_bytes_per_feature <- sample_bytes / sample_n
 
     ## Target ~500MB per chunk (safely under ~2GB limit)
-    target_bytes <- 500L * 1024L^2
+    target_bytes <- register_chunk_target_bytes()
     chunk_size   <- max(1000L, floor(target_bytes / avg_bytes_per_feature))
-    idx          <- split(seq_len(n), ceiling(seq_len(n) / chunk_size))
 
     ## Create:
     ## - Arrow table: when the dataset is small (<500MB)
     ## - Arrow Batch: when the dataset is large (>500MB)
-    if (length(idx) == 1L) {
+    ## (n == 0 makes chunk_size NaN; an empty input also takes the single path)
+    if (n == 0L || n <= chunk_size) {
         ## Create a single Arrow table
         arrow_table <- {
-            df[[geom_name]] <- geoarrow::as_geoarrow_vctr(
+            df <- as.data.frame(df)  # a tibble's `[[<-` rejects Arrow arrays
+            df[[geom_name]] <- arrow::as_arrow_array(geoarrow::as_geoarrow_array(
                 wkb,
                 schema = geoarrow::geoarrow_wkb(crs = geoarrow_crs)
-            )
+            ))
             arrow::Table$create(df)
         }
     } else {
         ## Create an Arrow RecordBatchReader for chunked processing
-        batches <- lapply(idx, function(i) {
+        starts <- seq.int(1, n, by = chunk_size)
+        batches <- lapply(starts, function(s) {
+            i <- s:min(s + chunk_size - 1, n)
             chunk <- df[i, , drop = FALSE]
             chunk[[geom_name]] <- geoarrow::as_geoarrow_vctr(
                 wkb[i],
@@ -182,7 +185,7 @@ ddbs_register_table <- function(
         arrow_table <- arrow::RecordBatchReader$create(
             batches = batches, 
             schema = schema
-        )
+        )$read_table()  # a Table can be scanned many times, a reader only once
     }
 
     ## Register the raw Arrow table under a hidden name
@@ -200,18 +203,18 @@ ddbs_register_table <- function(
             # Escape single quotes in WKT for SQL safety
             safe_crs <- gsub("'", "''", crs_input)
             DBI::dbExecute(conn, glue::glue(
-                "CREATE OR REPLACE {view_type} {view_name} AS ",
+                "CREATE OR REPLACE {view_type} {name_list$sql_name} AS ",
                 "SELECT * EXCLUDE {q_geom}, ",
                 "({q_geom}::GEOMETRY('{safe_crs}')) AS {q_geom} ",
-                "FROM {raw_view_name}"
+                "FROM {sql_ident(raw_view_name)}"
             ))
         } else {
             # No CRS, just create a direct view casting to generic GEOMETRY
             DBI::dbExecute(conn, glue::glue(
-                "CREATE OR REPLACE {view_type} {view_name} AS ",
+                "CREATE OR REPLACE {view_type} {name_list$sql_name} AS ",
                 "SELECT * EXCLUDE {q_geom}, ",
                 "({q_geom}::GEOMETRY) AS {q_geom} ",
-                "FROM {raw_view_name}"
+                "FROM {sql_ident(raw_view_name)}"
             ))
         }
     }, error = function(e) {
@@ -389,3 +392,8 @@ ddbs_register_vector <- function(
         quiet = quiet
     )
 }
+
+
+## Target bytes per Arrow chunk in ddbs_register_table(). A function so that
+## tests can lower it with testthat::local_mocked_bindings().
+register_chunk_target_bytes <- function() 500 * 1024^2

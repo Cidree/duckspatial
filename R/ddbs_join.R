@@ -159,7 +159,7 @@ ddbs_join <- function(
     assert_geometry_column(y_geom, y_list)
 
     ## 2.2. Build predicate clause
-    st_function <- glue::glue("v1.{x_geom}")
+    st_function <- glue::glue("v1.{sql_ident(x_geom)}")
     
     st_predicate <- generate_predicate_clause(
         predicate = sel_pred,
@@ -175,8 +175,8 @@ ddbs_join <- function(
     ## 2.3 Build the base query
     base.query <- glue::glue("
         SELECT 
-            v1.* REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}),
-            v2.* EXCLUDE ({y_geom})
+            v1.* REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}),
+            v2.* EXCLUDE ({sql_ident(y_geom)})
         FROM 
             {x_list$query_name} v1
         JOIN 

@@ -218,3 +218,52 @@ test_that("error for unsupported data types", {
         "must be an"
     )
 })
+
+
+# edge cases: chunking ------------------------------------------------------
+
+test_that("a 0-row sf can be registered and keeps columns and CRS", {
+
+    nc_empty <- nc_sf[0, ]
+
+    expect_true(ddbs_register_table(conn_test, nc_empty, "empty_view", overwrite = TRUE, quiet = TRUE))
+
+    cols <- DBI::dbGetQuery(conn_test, "DESCRIBE empty_view")
+    expect_equal(cols$column_name, c(setdiff(names(nc_sf), "geometry"), "geometry"))
+    expect_equal(cols$column_type[cols$column_name == "geometry"], "GEOMETRY('EPSG:4267')")
+    expect_equal(DBI::dbGetQuery(conn_test, "SELECT COUNT(*) AS n FROM empty_view")$n, 0)
+
+    # as_duckspatial_df() goes through the same code
+    empty_ddbs <- as_duckspatial_df(nc_empty)
+    expect_s3_class(empty_ddbs, "duckspatial_df")
+    result <- ddbs_collect(empty_ddbs)
+    expect_s3_class(result, "sf")
+    expect_equal(nrow(result), 0L)
+    expect_equal(names(result), names(nc_sf))
+    expect_equal(sf::st_crs(result), sf::st_crs(nc_sf))
+})
+
+test_that("data split over several Arrow chunks gives the same result as one chunk", {
+
+    set.seed(1)
+    pts <- data.frame(id = 1:2500, x = runif(2500), y = runif(2500)) |>
+        sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+
+    one_chunk <- as_duckspatial_df(pts) |> ddbs_collect()
+
+    # force chunk_size to its 1000-row minimum -> 3 chunks
+    local_mocked_bindings(register_chunk_target_bytes = function() 1)
+    ddbs_register_table(conn_test, pts, "chunked_view", overwrite = TRUE, quiet = TRUE)
+
+    # the view can be scanned more than once (a RecordBatchReader is single-use)
+    count_sql <- "SELECT COUNT(*) AS n FROM chunked_view"
+    expect_equal(DBI::dbGetQuery(conn_test, count_sql)$n, 2500)
+    expect_equal(DBI::dbGetQuery(conn_test, count_sql)$n, 2500)
+
+    result <- ddbs_read_table(conn_test, "chunked_view")
+
+    expect_equal(nrow(result), 2500L)
+    expect_equal(result$id, pts$id)
+    expect_equal(sf::st_crs(result), sf::st_crs(pts))
+    expect_equal(sf::st_coordinates(result), sf::st_coordinates(one_chunk))
+})

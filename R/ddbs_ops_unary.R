@@ -837,12 +837,12 @@ ddbs_geometry_type <- function(
   ## 2.3. Create the query
   if (isTRUE(by_feature)) {
     tmp.query <- glue::glue("
-          SELECT ST_GeometryType({x_geom}) as geometry
+          SELECT ST_GeometryType({sql_ident(x_geom)}) as geometry
           FROM {x_list$query_name};
       ")
   } else {
     tmp.query <- glue::glue("
-          SELECT DISTINCT ST_GeometryType({x_geom}) as geometry
+          SELECT DISTINCT ST_GeometryType({sql_ident(x_geom)}) as geometry
           FROM {x_list$query_name};
       ")
   }
@@ -1186,26 +1186,26 @@ ddbs_maximum_inscribed_circle <- function(
   ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
   ### Add tolerance parameter if provided
   if (is.null(tolerance)) {
-    st_function <- glue::glue("ST_MaximumInscribedCircle({x_geom})")
+    st_function <- glue::glue("ST_MaximumInscribedCircle({sql_ident(x_geom)})")
   } else {
-    st_function <- glue::glue("ST_MaximumInscribedCircle({x_geom}, {tolerance})")
+    st_function <- glue::glue("ST_MaximumInscribedCircle({sql_ident(x_geom)}, {tolerance})")
   }
   ### This function returns a data frame column. We select the radius, and the one of 
   ### the two geometry columns (nearest or center)
   if (geom == "nearest") {
     nearest_function <- glue::glue("{st_function}.nearest")
     geom_function <- glue::glue("
-      {build_geom_query(nearest_function, name, crs_x, mode)} AS {x_geom}
+      {build_geom_query(nearest_function, name, crs_x, mode)} AS {sql_ident(x_geom)}
     ")
   } else if (geom == "center") {
     center_function <- glue::glue("{st_function}.center")
     geom_function <- glue::glue("
-      {build_geom_query(center_function, name, crs_x, mode)}  AS {x_geom}
+      {build_geom_query(center_function, name, crs_x, mode)}  AS {sql_ident(x_geom)}
     ")
   }
   ### Finally, build the query
   base.query <- glue::glue("
-    SELECT * EXCLUDE ({x_geom}),
+    SELECT * EXCLUDE ({sql_ident(x_geom)}),
     {st_function}.radius  AS geom_radius,
     {geom_function}
     FROM {x_list$query_name};
@@ -1409,21 +1409,21 @@ ddbs_make_line <- function(
   assert_geometry_column(x_geom, x_list)
 
   ## 2.2. Build the base query (depends on the output type - sf, duckspatial_df, table)
-  st_function <- glue::glue("ST_MakeLine(LIST({x_geom}))")
+  st_function <- glue::glue("ST_MakeLine(LIST({sql_ident(x_geom)}))")
 
   ## Add groups if specified
   if (!is.null(by)) {
-    grps <- paste0(by, collapse = ", ")
+    grps <- paste0(sql_ident(by), collapse = ", ")
     base.query <- glue::glue("
       SELECT 
         {grps},
-        {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+        {build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}
       FROM {x_list$query_name}
       GROUP BY {grps};
     ")
   } else {
     base.query <- glue::glue("
-      SELECT {build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}
+      SELECT {build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}
       FROM {x_list$query_name};
     ")
   }

@@ -146,7 +146,7 @@ ddbs_filter <- function(
     assert_geometry_column(y_geom, y_list)
 
     ## 2.2. Build predicate clause
-    st_function <- glue::glue("v1.{x_geom}")
+    st_function <- glue::glue("v1.{sql_ident(x_geom)}")
 
     st_predicate <- generate_predicate_clause(
         predicate = sel_pred,
@@ -168,7 +168,7 @@ ddbs_filter <- function(
     base.query <- glue::glue("
         WITH v1 AS MATERIALIZED (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name})
         SELECT
-            v1.* EXCLUDE (ddbs_rid_x) REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+            v1.* EXCLUDE (ddbs_rid_x) REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)})
         FROM v1
         WHERE v1.ddbs_rid_x IN (
             SELECT v1.ddbs_rid_x FROM v1 JOIN {y_list$query_name} v2 ON {st_predicate}
