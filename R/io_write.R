@@ -204,7 +204,7 @@ ddbs_write_table <- function(
         on.exit(try(duckdb::duckdb_unregister(conn, reg_name), silent = TRUE), add = TRUE)
         q_geom <- DBI::dbQuoteIdentifier(conn, geom_name)
         DBI::dbExecute(conn, glue::glue(
-            "CREATE TABLE {name_list$query_name} AS ",
+            "CREATE TABLE {name_list$sql_name} AS ",
             "SELECT * REPLACE (ST_GeomFromWKB({sql_ident(q_geom)})::{geom_field} AS {sql_ident(q_geom)}) FROM {reg_name}"
         ))
         ddbs_write_legacy_crs_comment_if_needed(
