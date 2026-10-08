@@ -148,6 +148,13 @@ crs_to_duckdb_literal <- function(x) {
     return(list(literal = NA_character_, kind = "none"))
   }
 
+  # Fast path: an EPSG code gives the same "EPSG:<code>" literal as the
+  # (slow) srid lookup below
+  epsg <- crs$epsg
+  if (!is.null(epsg) && length(epsg) == 1 && !is.na(epsg)) {
+    return(list(literal = paste0("EPSG:", epsg), kind = "authority"))
+  }
+
   parsed <- sf::st_crs(crs, parameters = TRUE)
   srid <- parsed$srid
   if (!is.null(srid) && length(srid) > 0 && !is.na(srid)) {

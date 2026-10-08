@@ -158,3 +158,65 @@ test_that("ddbs_* functions respect dplyr verbs without a duckspatial_df method 
     expect_equal(nrow(ddbs_centroid(v, mode = "sf")), expected, info = verb)
   }
 })
+
+
+test_that("get_query_list cleanup unregisters the Arrow data for sf input", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+
+  conn <- ddbs_temp_conn()
+  nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  before <- duckdb::duckdb_list_arrow(conn)
+
+  res <- get_query_list(nc_sf, conn)
+  expect_in(paste0("__raw_", res$query_name), duckdb::duckdb_list_arrow(conn))
+
+  res$cleanup()
+  expect_setequal(duckdb::duckdb_list_arrow(conn), before)
+})
+
+test_that("ddbs_* calls on sf input do not leak Arrow registrations", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("duckdb")
+
+  conn <- ddbs_default_conn()
+  nc_sf <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  before <- length(duckdb::duckdb_list_arrow(conn))
+
+  for (i in 1:3) {
+    suppressWarnings(ddbs_area(nc_sf, mode = "sf"))
+    ddbs_intersects(nc_sf[1:5, ], nc_sf, mode = "sf")
+  }
+  out <- suppressWarnings(ddbs_area(nc_sf))
+  expect_equal(length(duckdb::duckdb_list_arrow(conn)), before)
+
+  # the lazy result must not depend on the unregistered Arrow data
+  expect_equal(nrow(ddbs_collect(out)), nrow(nc_sf))
+})
+
+test_that("get_query_list cleanup unregisters a plain data.frame", {
+  skip_if_not_installed("duckdb")
+
+  conn <- ddbs_temp_conn()
+  df <- data.frame(a = 1:3)
+
+  res <- get_query_list(df, conn)
+  expect_equal(nrow(DBI::dbGetQuery(conn, paste("SELECT * FROM", res$query_name))), 3L)
+
+  # duckdb_register() keeps the R data.frame alive until duckdb_unregister();
+  # DROP VIEW alone does not release it. Verify cleanup calls duckdb_unregister.
+  called <- FALSE
+  local_mocked_bindings(
+    duckdb_unregister = function(conn, name) {
+      called <<- TRUE
+      DBI::dbExecute(conn, paste("DROP VIEW IF EXISTS", name))
+      invisible(TRUE)
+    },
+    .package = "duckdb"
+  )
+  res$cleanup()
+  expect_true(called)
+  expect_error(DBI::dbGetQuery(conn, paste("SELECT * FROM", res$query_name)))
+})
+
+
