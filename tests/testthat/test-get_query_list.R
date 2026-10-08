@@ -114,12 +114,13 @@ test_that("get_query_list handles character inputs", {
   # Action
   res <- get_query_list("plain_table", conn)
   
-  # Verify
-  expect_equal(res$query_name, "plain_table")
-  expect_equal(res$table_name, "plain_table")
+  # Verify: wrapped in a temp view, so any table name is safe to use in SQL (#168)
+  expect_match(res$query_name, "^temp_view_")
+  expect_equal(DBI::dbGetQuery(conn, glue::glue("SELECT id FROM {res$query_name}"))$id, 1)
   
-  # Cleanup is no-op
+  # Cleanup drops the view, never the table
   res$cleanup()
+  expect_false(DBI::dbExistsTable(conn, res$query_name))
   expect_true(DBI::dbExistsTable(conn, "plain_table"))
 })
 

@@ -229,3 +229,138 @@ test_that("ddbs_write_table on a parquet path errors without a CRS warning (#166
     expect_error(ddbs_write_table(conn_new, parquet_path, "pq", quiet = TRUE), "parquet")
   )
 })
+
+
+# 5. Fast write paths (sf register + CTAS, same-connection CTAS) ----
+describe("ddbs_write_table() sf fast path", {
+
+  it("keeps column types, row order, CRS and geometry", {
+    conn <- ddbs_temp_conn()
+    x <- points_sf[1:50, ]
+    x$chr <- rep(c("a", NA), 25)
+    x$fac <- factor(rep(c("lo", "hi"), 25))
+    x$dt  <- as.Date("2020-01-01") + 0:49
+    x$ts  <- as.POSIXct("2021-05-01 12:00:00", tz = "UTC") + 0:49
+    x$lg  <- rep(c(TRUE, FALSE), 25)
+    x$ord <- 50:1
+
+    ddbs_write_table(conn, x, "types_t", quiet = TRUE)
+
+    cols <- DBI::dbGetQuery(conn, "DESCRIBE types_t")
+    types <- stats::setNames(cols$column_type, cols$column_name)
+    expect_equal(unname(types[c("chr", "fac", "dt", "ts", "lg", "ord")]),
+                 c("VARCHAR", "ENUM('hi', 'lo')", "DATE", "TIMESTAMP", "BOOLEAN", "INTEGER"))
+    expect_equal(unname(types["geometry"]), "GEOMETRY('EPSG:4326')")
+
+    res <- DBI::dbGetQuery(conn, "SELECT ord, chr, ST_AsWKB(geometry) AS wkb FROM types_t")
+    expect_equal(res$ord, x$ord)
+    expect_equal(res$chr, x$chr)
+    expect_equal(lapply(res$wkb, as.raw),
+                 lapply(sf::st_as_binary(sf::st_geometry(x)), as.raw))
+  })
+
+  it("writes mixed XYZ / XY / EMPTY geometries", {
+    conn <- ddbs_temp_conn()
+    mixed <- sf::st_sf(
+      id = 1:4,
+      geometry = sf::st_sfc(
+        sf::st_point(c(1, 2, 3)), sf::st_point(c(1, 2)), sf::st_point(),
+        sf::st_linestring(matrix(c(0.5, 1.5, 0.5, 1.5), 2)),
+        crs = 4326
+      )
+    )
+    expect_true(ddbs_write_table(conn, mixed, "mixed", quiet = TRUE))
+    wkt <- DBI::dbGetQuery(conn, "SELECT ST_AsText(geometry) AS t FROM mixed ORDER BY id")$t
+    expect_equal(wkt, c("POINT Z (1 2 3)", "POINT (1 2)", "POINT EMPTY",
+                        "LINESTRING (0.5 0.5, 1.5 1.5)"))
+  })
+
+  it("handles integer coordinates, missing CRS and zero rows", {
+    conn <- ddbs_temp_conn()
+    int_sf <- sf::st_sf(id = 1:2, geometry = sf::st_sfc(sf::st_point(1:2), sf::st_point(3:4), crs = 4326))
+    ddbs_write_table(conn, int_sf, "int_t", quiet = TRUE)
+    expect_equal(DBI::dbGetQuery(conn, "SELECT ST_AsText(geometry) t FROM int_t ORDER BY id")$t,
+                 c("POINT (1 2)", "POINT (3 4)"))
+
+    no_crs <- sf::st_set_crs(points_sf[1:5, ], NA)
+    expect_message(ddbs_write_table(conn, no_crs, "no_crs_t"), "No CRS")
+    expect_true(is.na(sf::st_crs(ddbs_read_table(conn, "no_crs_t", quiet = TRUE))))
+
+    ddbs_write_table(conn, points_sf[0, ], "zero_t", quiet = TRUE)
+    expect_equal(DBI::dbGetQuery(conn, "SELECT count(*) n FROM zero_t")$n, 0)
+    cols <- DBI::dbGetQuery(conn, "DESCRIBE zero_t")
+    expect_equal(cols$column_type[cols$column_name == "geometry"], "GEOMETRY('EPSG:4326')")
+  })
+
+  it("writes to a schema-qualified name given as 'schema.table'", {
+    conn <- ddbs_temp_conn()
+    DBI::dbExecute(conn, "CREATE SCHEMA s1")
+    expect_true(ddbs_write_table(conn, nc_sf, "s1.nc", quiet = TRUE))
+    expect_equal(DBI::dbGetQuery(conn, "SELECT count(*) n FROM s1.nc")$n, nrow(nc_sf))
+    expect_equal(DBI::dbGetQuery(conn, "SELECT ST_CRS(geometry) c FROM s1.nc LIMIT 1")$c, "EPSG:4267")
+  })
+
+  it("does not leave a partial table behind when the geometry cannot be written", {
+    conn <- ddbs_temp_conn()
+    curve <- sf::st_sf(id = 1, geometry = sf::st_as_sfc("CIRCULARSTRING(0 0, 1 1, 2 0)", crs = 4326))
+    expect_error(ddbs_write_table(conn, curve, "curve_t", quiet = TRUE))
+    expect_false("curve_t" %in% DBI::dbListTables(conn))
+  })
+})
+
+describe("ddbs_write_table() same-connection lazy input", {
+
+  it("materializes a filtered/mutated pipeline in-database with types and CRS", {
+    conn <- ddbs_temp_conn()
+    ddbs_write_table(conn, nc_sf, "nc_src", quiet = TRUE)
+    lazy <- as_duckspatial_df("nc_src", conn = conn) |>
+      dplyr::filter(AREA > 0.1) |>
+      dplyr::mutate(area2 = AREA * 2)
+
+    expect_message(ddbs_write_table(conn, lazy, "nc_out"), "successfully imported")
+
+    out <- ddbs_read_table(conn, "nc_out", quiet = TRUE)
+    expect_equal(nrow(out), sum(nc_sf$AREA > 0.1))
+    expect_equal(out$area2, out$AREA * 2)
+    expect_equal(sf::st_crs(out)$epsg, 4267L)
+    cols <- DBI::dbGetQuery(conn, "DESCRIBE nc_out")
+    expect_equal(cols$column_type[cols$column_name == "CRESS_ID"], "INTEGER")
+
+    expect_error(ddbs_write_table(conn, lazy, "nc_out", quiet = TRUE), "already present")
+  })
+
+  it("can overwrite the table it reads from", {
+    conn <- ddbs_temp_conn()
+    ddbs_write_table(conn, nc_sf, "nc_self", quiet = TRUE)
+    lazy <- as_duckspatial_df("nc_self", conn = conn) |> dplyr::filter(AREA > 0.1)
+
+    expect_message(
+      ddbs_write_table(conn, lazy, "nc_self", overwrite = TRUE),
+      "dropped"
+    )
+    expect_equal(DBI::dbGetQuery(conn, "SELECT count(*) n FROM nc_self")$n, sum(nc_sf$AREA > 0.1))
+    expect_equal(DBI::dbGetQuery(conn, "SELECT ST_CRS(geometry) c FROM nc_self LIMIT 1")$c, "EPSG:4267")
+  })
+
+  it("keeps a CRS that is only known from the R metadata", {
+    conn <- ddbs_temp_conn()
+    ddbs_write_table(conn, sf::st_set_crs(nc_sf, NA), "nc_nocrs", quiet = TRUE)
+    lazy <- as_duckspatial_df(dplyr::tbl(conn, "nc_nocrs"), crs = sf::st_crs(nc_sf))
+
+    ddbs_write_table(conn, lazy, "nc_crs", quiet = TRUE)
+    expect_equal(DBI::dbGetQuery(conn, "SELECT ST_CRS(geometry) c FROM nc_crs LIMIT 1")$c, "EPSG:4267")
+  })
+
+  it("writes the legacy CRS comment on legacy-storage connections", {
+    path <- tempfile(fileext = ".duckdb")
+    conn <- suppressWarnings(ddbs_create_conn(path, duckdb_storage_version = "v1.0.0"))
+    on.exit({ ddbs_stop_conn(conn); unlink(path) }, add = TRUE)
+    ddbs_write_table(conn, nc_sf, "nc_legacy", quiet = TRUE)
+    lazy <- as_duckspatial_df("nc_legacy", conn = conn) |> dplyr::filter(AREA > 0.1)
+
+    ddbs_write_table(conn, lazy, "nc_legacy_out", quiet = TRUE)
+    cmt <- DBI::dbGetQuery(conn, "SELECT comment FROM duckdb_columns() WHERE table_name = 'nc_legacy_out' AND column_name = 'geometry'")$comment
+    expect_match(cmt, "duckspatial")
+    expect_equal(sf::st_crs(ddbs_read_table(conn, "nc_legacy_out", quiet = TRUE))$epsg, 4267L)
+  })
+})

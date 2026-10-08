@@ -333,7 +333,7 @@ ddbs_write_dataset <- function(
 
            # Explicitly convert to WKB to ensure consistent DuckDB typing (BLOB)
            wkb_col <- attr(data, "sf_column")
-           data[[wkb_col]] <- sf::st_as_binary(data[[wkb_col]])
+           data[[wkb_col]] <- ddbs_sfc_to_wkb(data[[wkb_col]])
            
            # Register the WKB-fied data frame
            duckdb::duckdb_register(conn, view_name, data)

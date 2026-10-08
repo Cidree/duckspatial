@@ -261,3 +261,49 @@ testthat::test_that("ddbs_filter returns a row once when it matches several y fe
 
   expect_equal(nrow(ddbs_filter(pt, polys, mode = "sf", quiet = TRUE)), 1L)
 })
+
+testthat::test_that("ddbs_filter matches sf::st_filter for several predicates and input types (spatial join)", {
+  nc_3857 <- sf::st_transform(nc_sf, 3857)
+  bb <- sf::st_bbox(nc_3857)
+  withr::with_seed(42, {
+    pts <- sf::st_as_sf(
+      data.frame(id = 1:500, X = runif(500, bb[1], bb[3]), Y = runif(500, bb[2], bb[4])),
+      coords = c("X", "Y"), crs = 3857
+    )
+  })
+  bufs <- sf::st_buffer(pts[1:50, ], 20000)
+  pts_d <- as_duckspatial_df(pts)
+  bufs_d <- as_duckspatial_df(bufs)
+
+  ## intersects and within, sf and duckspatial_df inputs
+  expected <- sf::st_filter(pts, bufs)$id
+  expect_equal(ddbs_filter(pts, bufs, mode = "sf", quiet = TRUE)$id, expected)
+  expect_equal(ddbs_filter(pts_d, bufs_d, mode = "sf", quiet = TRUE)$id, expected)
+  expect_equal(dplyr::collect(ddbs_filter(pts_d, bufs_d, quiet = TRUE))$id, expected)
+  expect_equal(
+    ddbs_filter(pts, bufs, predicate = "within", mode = "sf", quiet = TRUE)$id,
+    sf::st_filter(pts, bufs, .predicate = sf::st_within)$id
+  )
+
+  ## polygons filtered by polygons (touches), and lazy dplyr input
+  expect_equal(
+    ddbs_filter(nc_3857[1:60, ], nc_3857[30:100, ], predicate = "touches", mode = "sf", quiet = TRUE)$NAME,
+    sf::st_filter(nc_3857[1:60, ], nc_3857[30:100, ], .predicate = sf::st_touches)$NAME
+  )
+  lazy_pts <- dplyr::filter(pts_d, id > 250)
+  expect_equal(
+    dplyr::collect(ddbs_filter(lazy_pts, bufs_d, quiet = TRUE))$id,
+    sf::st_filter(pts[pts$id > 250, ], bufs)$id
+  )
+
+  ## dwithin in a projected CRS
+  expect_equal(
+    ddbs_filter(pts, bufs, predicate = "dwithin", distance = 5000, mode = "sf", quiet = TRUE)$id,
+    sf::st_filter(pts, bufs, .predicate = sf::st_is_within_distance, dist = 5000)$id
+  )
+
+  ## no matches
+  far <- sf::st_as_sf(data.frame(id = 1:3, X = 0, Y = 0), coords = c("X", "Y"), crs = 3857)
+  expect_equal(nrow(ddbs_filter(far, bufs, mode = "sf", quiet = TRUE)), 0L)
+  expect_equal(nrow(dplyr::collect(ddbs_filter(far, bufs, quiet = TRUE))), 0L)
+})

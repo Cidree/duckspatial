@@ -232,12 +232,12 @@ ddbs_predicate <- function(
     ## geographic CRS: spheroid (distance in metres);
     ## projected CRS: planar (distance in CRS units)
     if (crs_measure_info(crs_x)$geographic) {
-      # predicate_expr <- glue::glue("ST_DWithin_Spheroid(x.{x_geom}, y.{y_geom}, {distance})")
-      # predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{x_geom}), ST_FlipCoordinates(y.{y_geom}), {distance})")
+      # predicate_expr <- glue::glue("ST_DWithin_Spheroid(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)}, {distance})")
+      # predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{sql_ident(x_geom)}), ST_FlipCoordinates(y.{sql_ident(y_geom)}), {distance})")
         predicate_expr <- glue::glue(
         "ST_DWithin_Spheroid(
-          ST_Point(ST_Y(x.{x_geom}), ST_X(x.{x_geom})),
-          ST_Point(ST_Y(y.{y_geom}), ST_X(y.{y_geom})),
+          ST_Point(ST_Y(x.{sql_ident(x_geom)}), ST_X(x.{sql_ident(x_geom)})),
+          ST_Point(ST_Y(y.{sql_ident(y_geom)}), ST_X(y.{sql_ident(y_geom)})),
           {distance}
         )"
       )
@@ -247,12 +247,12 @@ ddbs_predicate <- function(
         )
       }
     } else {
-      predicate_expr <- glue::glue("ST_DWithin(x.{x_geom}, y.{y_geom}, {distance})")
+      predicate_expr <- glue::glue("ST_DWithin(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)}, {distance})")
     }
     
     
   } else {
-    predicate_expr <- glue::glue("{st_predicate}(x.{x_geom}, y.{y_geom})")
+    predicate_expr <- glue::glue("{st_predicate}(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)})")
   }
 
 
@@ -261,12 +261,16 @@ ddbs_predicate <- function(
   ## - mode duckspatial: it will return a lazy-tbl object
   if (mode == "sf") {
     
-    ## materialize full predicate matrix and reframe as sf/sparse when required
+    ## get only the matching (i, j) row pairs, with the predicate as a join
+    ## condition so DuckDB can use a spatial join (a predicate computed as an
+    ## output column over a cross join returns all n x m rows);
+    ## reframe_predicate_data() builds the sparse list or dense matrix
     tmp.query <- glue::glue("
-      SELECT {predicate_expr} AS predicate
+      SELECT x.ddbs_rid_x AS i, y.ddbs_rid_y AS j
       FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
       CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
-      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
+      WHERE {predicate_expr}
+      ORDER BY i, j
     ")
     
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
@@ -284,8 +288,8 @@ ddbs_predicate <- function(
   } else if (mode == "duckspatial") {
     
     ## Resolve identifiers
-    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{id_x} AS id_x")
-    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{id_y} AS id_y")
+    x_id_expr <- if (is.null(id_x)) "row_number() OVER () AS id_x" else glue::glue("{sql_ident(id_x)} AS id_x")
+    y_id_expr <- if (is.null(id_y)) "row_number() OVER () AS id_y" else glue::glue("{sql_ident(id_y)} AS id_y")
 
     ## Name for the table to be created
     view_name <- ddbs_temp_table_name()
@@ -306,14 +310,17 @@ ddbs_predicate <- function(
     } else {
       
       ## Wide format - all pairs with TRUE/FALSE
-      ## need to fetch y_ids eagerly to build pivot columns
+      ## need to fetch y_ids eagerly to build pivot columns.
+      ## The predicate is a LEFT JOIN condition so DuckDB can use a spatial
+      ## join; an x row with no match gets a NULL id_y, which matches no
+      ## pivot column and so gives FALSE everywhere
       y_ids <- DBI::dbGetQuery(
         target_conn,
         glue::glue("SELECT {y_id_expr} FROM {y_list$query_name}")
       )$id_y
       
       pivot_list <- paste(
-        glue::glue("SUM(CASE WHEN id_y = '{y_ids}' AND predicate THEN 1 ELSE 0 END)::BOOLEAN AS \"{y_ids}\""),
+        glue::glue("SUM(CASE WHEN id_y = '{y_ids}' AND predicate THEN 1 ELSE 0 END)::BOOLEAN AS {sql_ident(y_ids)}"),
         collapse = ",\n"
       )
       
@@ -321,12 +328,13 @@ ddbs_predicate <- function(
       tmp.query <- glue::glue("
         CREATE TEMP TABLE {view_name} AS
         WITH long AS (
-          SELECT 
+          SELECT
             x.id_x,
             y.id_y,
-            {predicate_expr} AS predicate
+            TRUE AS predicate
           FROM (SELECT {x_id_expr}, * FROM {x_list$query_name}) x
-          CROSS JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+          LEFT JOIN (SELECT {y_id_expr}, * FROM {y_list$query_name}) y
+            ON {predicate_expr}
         )
         SELECT 
           id_x,
