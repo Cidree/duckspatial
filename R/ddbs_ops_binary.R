@@ -181,15 +181,15 @@ ddbs_intersection <- function(
     assert_geometry_column(y_geom, y_list)
 
     ## 2.2. Build the base query
-    st_function <- glue::glue("ST_Intersection(v1.{x_geom}, v2.{y_geom})")
+    st_function <- glue::glue("ST_Intersection(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)})")
     base.query <- glue::glue("
         SELECT 
-            v1.* REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+            v1.* REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)})
         FROM 
             {x_list$query_name} v1,
             {y_list$query_name} v2
         WHERE 
-            ST_Intersects(v2.{y_geom}, v1.{x_geom});
+            ST_Intersects(v2.{sql_ident(y_geom)}, v1.{sql_ident(x_geom)});
     ")
 
 
@@ -300,28 +300,28 @@ ddbs_difference <- function(
     assert_geometry_column(y_geom, y_list)
 
     ## 2.2. Build base query
-    st_function <- glue::glue("{x_geom}")
+    st_function <- glue::glue("{sql_ident(x_geom)}")
     base.query <- glue::glue("
         WITH diff_geom AS (
             SELECT 
                 v1.* REPLACE (
                     ST_Difference(
-                        ST_MakeValid(v1.{x_geom}),
-                        ST_MakeValid(v2.{y_geom})
-                    ) AS {x_geom}
+                        ST_MakeValid(v1.{sql_ident(x_geom)}),
+                        ST_MakeValid(v2.{sql_ident(y_geom)})
+                    ) AS {sql_ident(x_geom)}
                 )
             FROM 
                 {x_list$query_name} v1, 
                 {y_list$query_name} v2
             WHERE NOT ST_IsEmpty(
                 ST_Difference(
-                    ST_MakeValid(v1.{x_geom}),
-                    ST_MakeValid(v2.{y_geom})
+                    ST_MakeValid(v1.{sql_ident(x_geom)}),
+                    ST_MakeValid(v2.{sql_ident(y_geom)})
                 )
             )
         )
         SELECT 
-            * REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+            * REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)})
         FROM diff_geom;
     ")
 
@@ -432,41 +432,41 @@ ddbs_sym_difference <- function(
     assert_geometry_column(y_geom, y_list)
 
     ## 2.2. Build the base query
-    st_function <- glue::glue("{x_geom}")
+    st_function <- glue::glue("{sql_ident(x_geom)}")
     base.query <- glue::glue("
         WITH symdiff_geom AS (
             SELECT 
                 v1.* REPLACE (
                     ST_Union(
                         ST_Difference(
-                            ST_MakeValid(v1.{x_geom}),
-                            ST_MakeValid(v2.{y_geom})
+                            ST_MakeValid(v1.{sql_ident(x_geom)}),
+                            ST_MakeValid(v2.{sql_ident(y_geom)})
                         ),
                         ST_Difference(
-                            ST_MakeValid(v2.{y_geom}),
-                            ST_MakeValid(v1.{x_geom})
+                            ST_MakeValid(v2.{sql_ident(y_geom)}),
+                            ST_MakeValid(v1.{sql_ident(x_geom)})
                         )
-                    ) AS {x_geom}
+                    ) AS {sql_ident(x_geom)}
                 ),
-                v2.* EXCLUDE ({y_geom})
+                v2.* EXCLUDE ({sql_ident(y_geom)})
             FROM 
                 {x_list$query_name} v1, 
                 {y_list$query_name} v2
             WHERE NOT ST_IsEmpty(
                 ST_Union(
                     ST_Difference(
-                        ST_MakeValid(v1.{x_geom}),
-                        ST_MakeValid(v2.{y_geom})
+                        ST_MakeValid(v1.{sql_ident(x_geom)}),
+                        ST_MakeValid(v2.{sql_ident(y_geom)})
                     ),
                     ST_Difference(
-                        ST_MakeValid(v2.{y_geom}),
-                        ST_MakeValid(v1.{x_geom})
+                        ST_MakeValid(v2.{sql_ident(y_geom)}),
+                        ST_MakeValid(v1.{sql_ident(x_geom)})
                     )
                 )
             )
         )
         SELECT 
-            * REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom})
+            * REPLACE ({build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)})
         FROM symdiff_geom;
     ")
 
@@ -627,11 +627,11 @@ ddbs_shortest_line <- function(
 
     ## 2.2. Build the base query (cross join, no filter)
     ## y's non-geometry columns are included so the user knows which y each row was paired with.
-    st_function <- glue::glue("ST_ShortestLine(v1.{x_geom}, v2.{y_geom})")
+    st_function <- glue::glue("ST_ShortestLine(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)})")
     base.query <- glue::glue("
         SELECT
-            v1.* REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {x_geom}),
-            v2.* EXCLUDE ({y_geom})
+            v1.* REPLACE({build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}),
+            v2.* EXCLUDE ({sql_ident(y_geom)})
         FROM
             {x_list$query_name} v1,
             {y_list$query_name} v2

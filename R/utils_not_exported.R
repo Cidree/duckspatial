@@ -343,7 +343,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
 get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NULL) {  # nocov start
 
     # check if the table exists (via DESCRIBE which works for temp views too)
-    info_tbl <- try(DBI::dbGetQuery(conn, glue::glue("DESCRIBE {x};")), silent = TRUE)
+    info_tbl <- try(DBI::dbGetQuery(conn, glue::glue("DESCRIBE {sql_table(x)};")), silent = TRUE)
     
     if (inherits(info_tbl, "try-error")) {
         cli::cli_abort("The table <{x}> does not exist.")
@@ -388,7 +388,8 @@ get_query_name <- function(name) {  # nocov start
     list(
         table_name = table_name,
         schema_name = schema_name,
-        query_name = query_name
+        query_name = query_name,
+        sql_name = sql_table(name)
     )
 } # nocov end
 
@@ -478,8 +479,22 @@ get_query_list <- function(x, conn) {
     x_list$owned <- TRUE
     return(x_list)
 
+  } else if (is.character(x) && length(x) == 1) {
+    ## Character table name: pre-existing, never modified. Wrap it in a temp
+    ## view so downstream SQL can use a plain identifier, whatever the name
+    temp_view_name <- ddbs_temp_view_name()
+    DBI::dbExecute(conn, glue::glue(
+      "CREATE OR REPLACE TEMPORARY VIEW {temp_view_name} AS SELECT * FROM {sql_table(x)}"
+    ))
+    x_list <- get_query_name(temp_view_name)
+    x_list$cleanup <- function() {
+      tryCatch(DBI::dbExecute(conn, glue::glue("DROP VIEW IF EXISTS {temp_view_name};")), error = function(e) NULL)
+    }
+    x_list$owned <- TRUE
+    return(x_list)
+
   } else {
-    ## Character table name: pre-existing, never clean up
+    ## Anything else (e.g. a CRS passed as `y`): names only, nothing to clean up
     x_list <- get_query_name(x)
     x_list$cleanup <- function() NULL
     x_list$owned <- TRUE
@@ -612,7 +627,7 @@ convert_to_sf_wkb <- function(data, crs, x_geom) { # nocov start
 #' @returns cli message
 overwrite_table <- function(x, conn, quiet, overwrite) { # nocov start
   if (overwrite) {
-    DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {x};"))
+    DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {sql_table(x)};"))
     if (isFALSE(quiet)) cli::cli_alert_info("Table <{x}> dropped")
   }
 } # nocov end
@@ -641,7 +656,7 @@ feedback_query <- function(quiet) { # nocov start
 #' @keywords internal
 #' @returns number of rows in the table
 get_nrow <- function(conn, table) { # nocov start
-  DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) as n FROM {table}"))$n
+  DBI::dbGetQuery(conn, glue::glue("SELECT COUNT(*) as n FROM {sql_table(table)}"))$n
 } # nocov end
 
 
@@ -661,25 +676,35 @@ reframe_predicate_data <- function(
   nrowx <- get_nrow(conn, x_list$query_name)
   nrowy <- get_nrow(conn, y_list$query_name)
 
-  ## convert results to matrix -> to list
-  ## return matrix if sparse = FALSE
-  pred_mat  <- matrix(data$predicate, nrow = nrowx, ncol = nrowy, byrow = TRUE)
-  if (isFALSE(sparse)) return(pred_mat)
+  ## `data` holds the (i, j) row indices of the matching pairs only, sorted
+  ## by i, j. row_number() is BIGINT (a double in R): convert to integer
+  ## first, otherwise factor() labels 100000 as "1e+05" and silently drops
+  ## those pairs
+  i <- as.integer(data$i)
+  j <- as.integer(data$j)
 
-  pred_list <- apply(pred_mat, 1, function(row) which(row), simplify = FALSE)
+  ## return matrix if sparse = FALSE
+  if (isFALSE(sparse)) {
+    pred_mat <- matrix(FALSE, nrow = nrowx, ncol = nrowy)
+    pred_mat[cbind(i, j)] <- TRUE
+    return(pred_mat)
+  }
+
+  ## sparse: one integer vector per row of x (empty when no match)
+  pred_list <- unname(split(j, factor(i, levels = seq_len(nrowx))))
 
   ## return if no matches have been found
   if (length(pred_list) == 0) return(NULL)
 
   ## rename list if id is provided
   if (!is.null(id_x)) {
-    idx_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {id_x} as id FROM {x_list$query_name}"))$id
+    idx_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {sql_ident(id_x)} as id FROM {x_list$query_name}"))$id
     names(pred_list) <- idx_names
   }
 
   ## rename list if id is provided
   if (!is.null(id_y)) {
-    idy_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {id_y} as id FROM {y_list$query_name}"))$id
+    idy_names <- DBI::dbGetQuery(conn, glue::glue("SELECT {sql_ident(id_y)} as id FROM {y_list$query_name}"))$id
     pred_list <- lapply(pred_list, function(ind) {
       if (length(ind) == 0) return(ind)
       idy_names[ind]
@@ -906,11 +931,6 @@ ddbs_default_conn <- function(create = TRUE, ...) {
   if (is.null(conn) && create) {
     conn <- ddbs_create_conn(dbdir = "memory", ...)
     options(duckspatial_conn = conn)
-  }
-
-  # Activate macros
-  if (!is.null(conn)) {
-    create_duckspatial_macros(conn)
   }
 
   conn
@@ -1272,7 +1292,7 @@ build_union_sql <- function(
   if (!is.null(y_query)) {
     if (by_feature) {
       list(
-        geom_call = glue::glue("ST_Union(v1.{x_geom}, v2.{y_geom})"),
+        geom_call = glue::glue("ST_Union(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)})"),
         geom_alias = x_geom,
         from      = glue::glue(
           "(SELECT ROW_NUMBER() OVER () as rn, * FROM {x_query}) v1
@@ -1285,15 +1305,15 @@ build_union_sql <- function(
         geom_call  = glue::glue("ST_Union_Agg(geom)"),
         geom_alias = x_geom,
         from       = glue::glue(
-          "(SELECT {x_geom} as geom FROM {x_query}
+          "(SELECT {sql_ident(x_geom)} as geom FROM {x_query}
             UNION ALL
-            SELECT {y_geom} as geom FROM {y_query}) v1"
+            SELECT {sql_ident(y_geom)} as geom FROM {y_query}) v1"
         )
       )
     }
   } else {
     list(
-      geom_call  = glue::glue("ST_Union_Agg({x_geom})"),
+      geom_call  = glue::glue("ST_Union_Agg({sql_ident(x_geom)})"),
       geom_alias = x_geom,
       from       = x_query
     )
@@ -1320,7 +1340,7 @@ build_union_query <- function(
   y_query = NULL) { # nocov start
 
   parts     <- build_union_sql(by_feature, x_geom, y_geom, x_query, y_query)
-  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs, mode)} as {parts$geom_alias}")
+  geom_expr <- glue::glue("{build_geom_query(parts$geom_call, name, crs, mode)} as {sql_ident(parts$geom_alias)}")
 
   if (!is.null(y_query)) {
     row_id  <- if (by_feature) "ROW_NUMBER() OVER () as row_id," else "1 as row_id,"
@@ -1358,9 +1378,9 @@ get_table_crs <- function(conn, geom_name, table_name) { # nocov start
     conn,
     glue::glue("
         SELECT 
-            ST_CRS({geom_name}) AS crs 
+            ST_CRS({sql_ident(geom_name)}) AS crs 
         FROM 
-            {table_name}
+            {sql_table(table_name)}
         LIMIT 1;")
     )$crs
 
@@ -1403,7 +1423,7 @@ create_duckdb_table <- function(
 
   ## Create and execute the query
   tmp.query <- glue::glue("
-      CREATE TABLE {name_list$query_name} AS
+      CREATE TABLE {name_list$sql_name} AS
       {query}
   ")
   DBI::dbExecute(conn, tmp.query)
@@ -1455,11 +1475,11 @@ generate_predicate_clause <- function(
               ))
           }
 
-          # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{x_geom}, v2.{y_geom}, {distance})")
+          # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)}, {distance})")
           st_predicate <- glue::glue("
               ST_DWithin_Spheroid(
-                  ST_Point(ST_Y(v1.{x_geom}), ST_X(v1.{x_geom})), 
-                  ST_Point(ST_Y(v2.{y_geom}), ST_X(v2.{y_geom})), 
+                  ST_Point(ST_Y(v1.{sql_ident(x_geom)}), ST_X(v1.{sql_ident(x_geom)})), 
+                  ST_Point(ST_Y(v2.{sql_ident(y_geom)}), ST_X(v2.{sql_ident(y_geom)})), 
                   {distance})
               ")
           if (!crs_equal(crs_x, 4326)) {
@@ -1470,12 +1490,12 @@ generate_predicate_clause <- function(
               ))
           }
       } else {
-          st_predicate <- glue::glue("ST_DWithin(v1.{x_geom}, v2.{y_geom}, {distance})")
+          st_predicate <- glue::glue("ST_DWithin(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)}, {distance})")
       }
 
   } else {
       ## In every other case, it's a simple binary predicate with no extra arguments
-      st_predicate <- glue::glue("{predicate}(v1.{x_geom}, v2.{y_geom})")
+      st_predicate <- glue::glue("{predicate}(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)})")
   }
 
   return(st_predicate)
@@ -1684,4 +1704,28 @@ ddbs_sfc_to_wkb <- function(x) { # nocov start
   wkb <- tryCatch(wk::as_wkb(x), error = function(e) sf::st_as_binary(x))
   attributes(wkb) <- NULL
   wkb
+} # nocov end
+
+#' Quote SQL identifiers (column, table or schema names) for DuckDB
+#'
+#' @param x character vector of identifiers (unquoted)
+#' @keywords internal
+#' @noRd
+sql_ident <- function(x) { # nocov start
+  paste0('"', gsub('"', '""', x, fixed = TRUE), '"')
+} # nocov end
+
+#' Quote a (possibly schema-qualified) table name for SQL
+#'
+#' A dotted name ("schema.table") or a length-2 vector c(schema, table) is
+#' split and each part quoted. Names that are already quoted are returned as is.
+#'
+#' @param x table name
+#' @keywords internal
+#' @noRd
+sql_table <- function(x) { # nocov start
+  x <- as.character(x)
+  if (length(x) == 1 && startsWith(x, '"')) return(x)
+  parts <- if (length(x) == 2) x else strsplit(x, ".", fixed = TRUE)[[1]]
+  paste(sql_ident(parts), collapse = ".")
 } # nocov end

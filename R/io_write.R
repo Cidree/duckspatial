@@ -101,7 +101,7 @@ ddbs_write_table <- function(
                 
                 # Create permanent table from the imported view
                 DBI::dbExecute(conn, glue::glue(
-                    "CREATE TABLE {name_list$query_name} AS SELECT * FROM {import_result$name}"
+                    "CREATE TABLE {name_list$sql_name} AS SELECT * FROM {import_result$name}"
                 ))
                 
                 # Cleanup temp view
@@ -205,7 +205,7 @@ ddbs_write_table <- function(
         q_geom <- DBI::dbQuoteIdentifier(conn, geom_name)
         DBI::dbExecute(conn, glue::glue(
             "CREATE TABLE {name_list$query_name} AS ",
-            "SELECT * REPLACE (ST_GeomFromWKB({q_geom})::{geom_field} AS {q_geom}) FROM {reg_name}"
+            "SELECT * REPLACE (ST_GeomFromWKB({sql_ident(q_geom)})::{geom_field} AS {sql_ident(q_geom)}) FROM {reg_name}"
         ))
         ddbs_write_legacy_crs_comment_if_needed(
             conn,
@@ -238,14 +238,14 @@ ddbs_write_table <- function(
             # geom_name <- metadata_df$column_name[grepl("STRUCT", metadata_df$column_type)]
             # DBI::dbExecute(conn, glue::glue("
             #     ALTER TABLE {name_list$query_name}
-            #     ALTER COLUMN {geom_name} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({geom_name});
+            #     ALTER COLUMN {sql_ident(geom_name)} SET DATA TYPE GEOMETRY USING ST_GeomFromWKB({sql_ident(geom_name)});
             # "))
         
         } else {
             ## insert files (in duckdb v1.5, ST_Read() already manages CRS)
             DBI::dbExecute(
                 conn,
-                glue::glue("CREATE TABLE {name_list$query_name} AS SELECT * FROM ST_Read('{data}')")
+                glue::glue("CREATE TABLE {name_list$sql_name} AS SELECT * FROM ST_Read('{data}')")
             )
             ddbs_write_legacy_crs_comment_if_needed(
                 conn,

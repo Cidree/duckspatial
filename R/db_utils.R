@@ -43,7 +43,7 @@ ddbs_create_schema <- function(conn, name, quiet = FALSE) {
     } else {
         DBI::dbExecute(
             conn,
-            glue::glue("CREATE SCHEMA {name};")
+            glue::glue("CREATE SCHEMA {sql_ident(name)};")
         )
 
         if (isFALSE(quiet)) {
@@ -160,8 +160,8 @@ ddbs_glimpse <- function(
   data_tbl <- DBI::dbGetQuery(conn, glue::glue("
     SELECT
     {no_geom_cols}
-    ST_AsWKB({x_geom}) AS {x_geom}
-    FROM {name}
+    ST_AsWKB({sql_ident(x_geom)}) AS {sql_ident(x_geom)}
+    FROM {name_list$sql_name}
     LIMIT 10;
   "))
 

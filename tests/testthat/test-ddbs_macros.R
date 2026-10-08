@@ -419,3 +419,31 @@ testthat::describe("Geometry processing functions", {
   })
 
 })
+
+
+# Default connection -----------------------------------------------------
+
+testthat::describe("Macros on the default connection", {
+
+  testthat::it("are created once and stay usable across repeated ddbs_default_conn() calls", {
+    conn <- ddbs_default_conn()
+
+    ## reusing the cached connection must not re-run the macro DDL
+    testthat::local_mocked_bindings(
+      create_duckspatial_macros = function(conn) stop("macros re-created")
+    )
+    for (i in 1:3) testthat::expect_identical(ddbs_default_conn(), conn)
+
+    n_macros <- DBI::dbGetQuery(conn, "
+      SELECT count(*) AS n FROM duckdb_functions()
+      WHERE function_type LIKE '%macro%' AND function_name = 'ddbs_area'
+    ")$n
+    testthat::expect_gte(n_macros, 1)
+
+    res <- as_duckspatial_df(argentina_sf) |>
+      dplyr::mutate(area = ddbs_area(geometry)) |>
+      ddbs_collect()
+    testthat::expect_true(all(res$area > 0))
+  })
+
+})

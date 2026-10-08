@@ -38,3 +38,35 @@ test_that("get_file_crs extracts CRS correctly", {
   expect_equal(crs$epsg, 4267)
 })
 
+
+test_that("reframe_predicate_data keeps pairs at row 100000 (factor() on doubles gives '1e+05')", {
+  skip_if_not_installed("duckdb")
+
+  conn <- duckspatial::ddbs_create_conn()
+  on.exit(duckspatial::ddbs_stop_conn(conn))
+  DBI::dbExecute(conn, "CREATE TEMP TABLE rx AS SELECT range AS i FROM range(100000)")
+  DBI::dbExecute(conn, "CREATE TEMP TABLE ry AS SELECT 1 AS j")
+
+  ## the (i, j) pairs come from DuckDB as doubles (BIGINT)
+  res <- duckspatial:::reframe_predicate_data(
+    conn   = conn,
+    data   = data.frame(i = c(1, 1e5), j = c(1, 1)),
+    x_list = list(query_name = "rx"),
+    y_list = list(query_name = "ry"),
+    id_x   = NULL,
+    id_y   = NULL,
+    sparse = TRUE
+  )
+  expect_length(res, 100000)
+  expect_equal(res[[1]], 1L)
+  expect_equal(res[[100000]], 1L)
+  expect_null(names(res))
+
+  mat <- duckspatial:::reframe_predicate_data(
+    conn, data.frame(i = c(1, 1e5), j = c(1, 1)),
+    list(query_name = "rx"), list(query_name = "ry"), NULL, NULL, sparse = FALSE
+  )
+  expect_equal(dim(mat), c(100000L, 1L))
+  expect_equal(sum(mat), 2L)
+  expect_true(mat[100000, 1])
+})

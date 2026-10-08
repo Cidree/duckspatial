@@ -15,6 +15,11 @@
 
 * `ddbs_write_table()` and `ddbs_write_dataset()` can now write sf objects that mix XYZ, XY and EMPTY geometries (previously "Skipping beyond end of binary data").
 * `ddbs_write_table()` now accepts a schema-qualified name as a single string (e.g. `"s1.t"`), and a failed write no longer leaves a partial table behind.
+* `ddbs_filter()`, the predicate functions with `mode = "sf"` (`ddbs_intersects()`, `ddbs_within()`, …) and the dense (`sparse = FALSE`) predicates in duckspatial mode now put the spatial predicate in a join condition, so DuckDB uses its spatial join instead of a cross product over every pair of features. On 100,000 points and the 100 `nc` counties, `ddbs_filter()` goes from about 14 s to about 1 s, `ddbs_intersects(mode = "sf")` from about 15 s to about 1 s and the dense duckspatial predicate from about 29 s to about 2 s. The sparse `mode = "sf"` result is built from the matching pairs only, so it no longer allocates an n × m matrix in R. Two consequences: `ddbs_disjoint()` cannot use the spatial join (nearly every pair matches) and is somewhat slower on large inputs; and in the dense `mode = "sf"` matrix, rows whose geometry is SQL `NULL` are now `FALSE` instead of `NA`.
+* Registering sf data in DuckDB is 3–4x faster and uses ~4x less memory (e.g. `as_duckspatial_df()` on 1 million points: 3.4 s → 0.8 s, 67 MB → 17 MB). This speeds up every `ddbs_*()` call with sf input. `ddbs_register_table()` no longer builds a chunk index for data that fits in a single Arrow chunk.
+* Every `ddbs_*()` call that uses the default connection is faster by about 50–100 ms: `ddbs_default_conn()` no longer re-creates the package's 35 SQL macros on each call. The macros are created once, when the connection is created. If you set the internal `duckspatial_conn` option to your own connection, run `ddbs_load(conn)` to create the macros on it.
+* `as_duckspatial_df()`, `ddbs_register_table()` and other functions that take an sf object no longer fail with "subscript out of bounds" on a 0-row sf. The result keeps the columns and the CRS.
+* sf data larger than ~500 MB (registered in several Arrow chunks) could only be read once: a second query or `collect()` on the same object returned 0 rows. It can now be read any number of times.
 * Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to convert WKB
   geometry columns to native GeoArrow layouts such as `geoarrow.point`. Since
   the method was introduced, it had incorrectly returned `geoarrow.wkb`
@@ -29,6 +34,7 @@
 * `ddbs_quadkey()` no longer overwrites the input table when `x` is not in EPSG:4326, and now returns the correct quadkeys for such input. Previously, a table passed by name was replaced with lat/lon-swapped coordinates and no CRS, and all inputs returned wrong tiles (#164).
 * `ddbs_contains()` and `ddbs_crosses()` are now exported. They were documented but missing from the package namespace.
 * `group_by()` groups on a `duckspatial_df` are no longer lost after `mutate()`, `filter()`, `arrange()`, `select()` and other verbs. Previously a following `summarise()` silently collapsed all groups into a single row (#170).
+* Column, table and schema names that contain spaces or are SQL reserved words (e.g. a geometry column `"my geom"`, `by = "group"`, `name = "my table"`, or a table named `"order"` passed as `x`) are now quoted in the generated SQL. Previously they failed with a parser error (#168).
 
 
 

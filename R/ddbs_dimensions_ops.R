@@ -116,7 +116,7 @@ ddbs_locate_along <- function(
     ## 2.2. Build the function arguments
     args <- sprintf(
         "%s, %s",
-        x_geom,
+        sql_ident(x_geom),
         glue::glue("{measure}, {offset}")
     )
 
@@ -127,12 +127,12 @@ ddbs_locate_along <- function(
     st_function <- glue::glue("ST_LocateAlong({args})")
     base.query <- glue::glue("
         WITH located AS (
-          SELECT * REPLACE ({st_function} AS {x_geom})
+          SELECT * REPLACE ({st_function} AS {sql_ident(x_geom)})
           FROM {x_list$query_name}
         )
-        SELECT * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom})
+        SELECT * REPLACE ({build_geom_query(sql_ident(x_geom), name, crs_x, mode)} AS {sql_ident(x_geom)})
         FROM located
-        WHERE NOT ST_IsEmpty({x_geom});
+        WHERE NOT ST_IsEmpty({sql_ident(x_geom)});
       ")
     
 
@@ -221,7 +221,7 @@ ddbs_locate_between <- function(
   ## 2.2. Build the function arguments
   args <- sprintf(
     "%s, %s",
-    x_geom,
+    sql_ident(x_geom),
     glue::glue("{start_measure}, {end_measure}, {offset}")
   )
 
@@ -232,12 +232,12 @@ ddbs_locate_between <- function(
   st_function <- glue::glue("ST_LocateBetween({args})")
   base.query <- glue::glue("
     WITH located AS (
-      SELECT * REPLACE ({st_function} AS {x_geom})
+      SELECT * REPLACE ({st_function} AS {sql_ident(x_geom)})
       FROM {x_list$query_name}
     )
-    SELECT * REPLACE ({build_geom_query(x_geom, name, crs_x, mode)} AS {x_geom})
+    SELECT * REPLACE ({build_geom_query(sql_ident(x_geom), name, crs_x, mode)} AS {sql_ident(x_geom)})
     FROM located
-    WHERE NOT ST_IsEmpty({x_geom});
+    WHERE NOT ST_IsEmpty({sql_ident(x_geom)});
   ")
   
 

@@ -250,8 +250,8 @@ ddbs_write_mbtiles <- function(
   tmp3857 <- ddbs_temp_table_name()
   DBI::dbExecute(target_conn, glue::glue(
     'CREATE TEMP TABLE {tmp3857} AS
-     SELECT * EXCLUDE ("{x_geom}"),
-            ST_Transform("{x_geom}", {src_q}, \'EPSG:3857\', always_xy := true) AS mvt_src_geom
+     SELECT * EXCLUDE ({sql_ident(x_geom)}),
+            ST_Transform({sql_ident(x_geom)}, {src_q}, \'EPSG:3857\', always_xy := true) AS mvt_src_geom
      FROM {x_list$query_name};'
   ))
   on.exit(DBI::dbExecute(target_conn, glue::glue("DROP TABLE IF EXISTS {tmp3857};")), add = TRUE)
