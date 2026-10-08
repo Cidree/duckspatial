@@ -1690,6 +1690,22 @@ check_loaded_extension <- function(conn = NULL, extension) {
 
 }
 
+
+
+#' Convert an sfc to a plain list of WKB raw vectors
+#'
+#' Uses `wk::as_wkb()` (much faster than `sf::st_as_binary()`), falling back to
+#' sf when wk cannot handle the input. No EWKB/SRID: the CRS is set through
+#' the DuckDB column type.
+#'
+#' @keywords internal
+#' @noRd
+ddbs_sfc_to_wkb <- function(x) { # nocov start
+  wkb <- tryCatch(wk::as_wkb(x), error = function(e) sf::st_as_binary(x))
+  attributes(wkb) <- NULL
+  wkb
+} # nocov end
+
 #' Quote SQL identifiers (column, table or schema names) for DuckDB
 #'
 #' @param x character vector of identifiers (unquoted)

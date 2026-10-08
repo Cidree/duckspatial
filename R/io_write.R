@@ -125,6 +125,33 @@ ddbs_write_table <- function(
             }
         }
         
+        # Same connection: materialize the lazy query in-database (no R round trip)
+        if (same_conn) {
+            name_list <- get_query_name(name)
+            tables_df <- ddbs_list_tables(conn)
+            db_tables <- paste0(tables_df$table_schema, ".", tables_df$table_name) |>
+                sub(pattern = "^main\\.", replacement = "")
+            if (name_list$query_name %in% db_tables & !overwrite)
+                cli::cli_abort("The provided name is already present in the database. Please, use `overwrite = TRUE` or choose a different name.")
+            # CREATE OR REPLACE instead of DROP + CREATE: `data` may read from the table being replaced
+            if (overwrite && isFALSE(quiet)) cli::cli_alert_info("Table <{name_list$query_name}> dropped")
+            DBI::dbExecute(conn, glue::glue(
+                "CREATE OR REPLACE TABLE {name_list$query_name} AS {dbplyr::sql_render(data, con = conn)}"
+            ))
+            ## Keep a CRS known only from R metadata (e.g. `as_duckspatial_df(crs = ...)`)
+            geom_field <- get_geometry_type_duckdb(input_crs, conn)
+            cols <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {name_list$query_name}"))
+            untyped <- cols$column_name[cols$column_type == "GEOMETRY"]
+            if (geom_field != "GEOMETRY" && length(untyped) == 1) {
+                DBI::dbExecute(conn, glue::glue(
+                    "ALTER TABLE {name_list$query_name} ALTER COLUMN {DBI::dbQuoteIdentifier(conn, untyped)} SET DATA TYPE {geom_field}"
+                ))
+            }
+            ddbs_write_legacy_crs_comment_if_needed(conn, name_list$query_name, crs = input_crs)
+            if (isFALSE(quiet)) cli::cli_alert_success("Table {name_list$query_name} successfully imported")
+            return(invisible(TRUE))
+        }
+
         # Fallback: collect to sf and re-upload (slow but always works)
         if (inherits(data, "duckspatial_df")) {
              data <- ddbs_collect(data, as = "sf")
@@ -160,9 +187,8 @@ ddbs_write_table <- function(
         ## Get geometry column name
         geom_name <- setdiff(names(data), names(sf::st_drop_geometry(data)))
         ## Extract geometry as binary and append to data frame
-        wkb_data <- sf::st_as_binary(sf::st_geometry(data), EWKB = TRUE)
         data_df <- as.data.frame(data)
-        data_df[[geom_name]] <- wkb_data  # Ensure raw data is preserved
+        data_df[[geom_name]] <- ddbs_sfc_to_wkb(data_df[[geom_name]])
 
         ## Get the CRS, and define the geometry type for duckdb
         geom_field <- get_geometry_type_duckdb(data, conn)
@@ -172,27 +198,21 @@ ddbs_write_table <- function(
             cli::cli_alert_warning("No CRS found in the input data. The table will be created without CRS information.")
         }
 
-        ## Write data into DuckDB
-        # duckdb::duckdb_register(conn, "temp_view", data_df, experimental = TRUE) # check later
-        duckdb::dbWriteTable(
-            conn, 
-            DBI::Id(schema = name_list$schema_name, table = name_list$table_name), 
-            data_df, 
-            field.types = c(geom_name = "BLOB")
-        )
- 
-        ## Convert to spatial with CRS
-        DBI::dbExecute(conn, glue::glue("
-            ALTER TABLE {name_list$sql_name}
-            ALTER COLUMN {sql_ident(geom_name)} SET DATA TYPE {geom_field} USING ST_GeomFromWKB({sql_ident(geom_name)});
-        "))
+        ## Register the data frame and create the spatial table in a single pass
+        reg_name <- ddbs_temp_view_name()
+        duckdb::duckdb_register(conn, reg_name, data_df)
+        on.exit(try(duckdb::duckdb_unregister(conn, reg_name), silent = TRUE), add = TRUE)
+        q_geom <- DBI::dbQuoteIdentifier(conn, geom_name)
+        DBI::dbExecute(conn, glue::glue(
+            "CREATE TABLE {name_list$sql_name} AS ",
+            "SELECT * REPLACE (ST_GeomFromWKB({sql_ident(q_geom)})::{geom_field} AS {sql_ident(q_geom)}) FROM {reg_name}"
+        ))
         ddbs_write_legacy_crs_comment_if_needed(
             conn,
             name_list$query_name,
             geom_col = geom_name,
             crs = input_crs
         )
-        # duckdb::duckdb_unregister(conn, "temp_view") |> on.exit()
         
 
     } else if (!is.character(data) || length(data) != 1) {
