@@ -187,7 +187,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Benchmark</h1>
 
 
-      <p class="date">2026-10-08</p>
+      <p class="date">2026-10-09</p>
 
       <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/benchmark.qmd" class="external-link"><code>vignettes/benchmark.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -198,18 +198,20 @@
 
 
 
-    <p>This vignette benchmarks <strong>{duckspatial}</strong> against <strong>{sf}</strong> across several spatial operations, comparing computation time and memory usage as dataset size grows. We plan to extend it with additional operation types in future releases. Versions of packages used in this vignette:</p>
+    <p>This vignette benchmarks <strong>{duckspatial}</strong> against <strong>{sf}</strong> across several spatial operations, comparing computation time and memory usage as dataset size grows. We plan to extend it with additional operation types in future releases.</p>
+<p>The benchmark code below is <strong>not evaluated</strong> when the vignette is built: it takes too long. Instead, it is run locally once before each release, and the results are stored in <code>vignettes/data/bench-results.csv</code>, which is what every number and figure in this document is generated from.</p>
+<p>Results shown here were produced on 2026-10-09 with:</p>
 <ul>
-<li><p><code>duckspatial</code>: v1.0.0</p></li>
-<li><p><code>duckdb</code>: v1.5.1</p></li>
-<li><p><code>sf</code>: v1.1.0</p></li>
+<li><p><code>duckspatial</code>: v1.2.1.9000</p></li>
+<li><p><code>duckdb</code>: v1.5.6</p></li>
+<li><p><code>sf</code>: v1.1.3</p></li>
 </ul>
 <section class="section level3"><h3 id="tldr">TL;DR<a class="anchor" aria-label="anchor" href="#tldr"></a>
 </h3>
-<p>{duckspatial} is substantially faster and allocates far less memory than {sf} in almost all cases, with the advantage becoming more pronounced on larger datasets. The one exception is pairwise distance calculation, where {sf} retains a memory advantage for Euclidean distances.</p>
+<p>{duckspatial} is substantially faster and allocates far less memory than {sf} in almost all cases, with the advantage becoming more pronounced on larger datasets. The one exception is pairwise distance calculation, where the gap in computation time narrows considerably.</p>
 </section><section class="section level3"><h3 id="prepare-data">Prepare data<a class="anchor" aria-label="anchor" href="#prepare-data"></a>
 </h3>
-<p>We are going to test the speed of a a bunch of functions using simulated data. We use the <code>make_points()</code> function to generate <code>n</code> random points within the globe, and 10,000 random rectangles.</p>
+<p>We are going to test the speed of a bunch of functions using simulated data. We use the <code>make_points()</code> function to generate <code>n</code> random points within the globe, and 10,000 random rectangles.</p>
 <div class="cell">
 <details class="code-fold"><summary>Set-up</summary><div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load necessary packages</span></span>
@@ -230,6 +232,22 @@
 <span>      category <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span><span class="op">)</span>, <span class="va">n_points</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Turn a bench::mark() result into plain, CSV-friendly columns:</span></span>
+<span><span class="co">#  - median    : seconds   (numeric)</span></span>
+<span><span class="co">#  - mem_alloc : bytes     (numeric)</span></span>
+<span><span class="va">bench_tidy</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">bm</span>, <span class="va">op</span>, <span class="va">n</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    op        <span class="op">=</span> <span class="va">op</span>,</span>
+<span>    n         <span class="op">=</span> <span class="va">n</span>,</span>
+<span>    pkg       <span class="op">=</span> <span class="va">bm</span><span class="op">$</span><span class="va">pkg</span>,</span>
+<span>    median    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">bm</span><span class="op">$</span><span class="va">median</span><span class="op">)</span>,</span>
+<span>    min       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">bm</span><span class="op">$</span><span class="va">min</span><span class="op">)</span>,</span>
+<span>    mem_alloc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">bm</span><span class="op">$</span><span class="va">mem_alloc</span><span class="op">)</span>,</span>
+<span>    n_itr     <span class="op">=</span> <span class="va">bm</span><span class="op">$</span><span class="va">n_itr</span>,</span>
+<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Generate datasets of different sizes</span></span>
@@ -287,11 +305,11 @@
 </div>
 </section><section class="section level2"><h2 id="spatial-join">Spatial join<a class="anchor" aria-label="anchor" href="#spatial-join"></a>
 </h2>
-<p>The spatial join aims to bring the attributes of a dataset to another dataset based in a spatial predicate. One example would be to have an <code>x</code> dataset with points that represent observations of wolves. In an <code>y</code> dataset, we could have polygons with attributes describing the geopraphical location (e.g. the name of the country, the name of the region..). So, by using a <code>ST_Join(x, y, "intersects")</code>, we would assign the attributes of <code>y</code> to <code>x</code> according to where the observation of the wolf fall.</p>
+<p>The spatial join aims to bring the attributes of a dataset to another dataset based on a spatial predicate. One example would be to have an <code>x</code> dataset with points that represent observations of wolves. In a <code>y</code> dataset, we could have polygons with attributes describing the geographical location (e.g. the name of the country, the name of the region). So, by using a <code>ST_Join(x, y, "intersects")</code>, we would assign the attributes of <code>y</code> to <code>x</code> according to where the observation of the wolf falls.</p>
 <p>This operation can be intensive. In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-join" class="quarto-xref">Figure 1</a>.</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 50 times faster than {sf}, and allocated 18 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 35 times faster than {sf}, and allocated 16 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 37 times faster than {sf}, and allocated 16 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 27 times faster than {sf}, and allocated 16 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_join</summary><div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
@@ -303,9 +321,8 @@
 <span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_join.html">ddbs_join</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span>, join <span class="op">=</span> <span class="st">"within"</span><span class="op">)</span>,</span>
 <span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">st_join</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span>, join <span class="op">=</span> <span class="va">st_within</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
-<span>  <span class="va">temp</span></span>
+<span>  <span class="fu">bench_tidy</span><span class="op">(</span><span class="va">temp</span>, op <span class="op">=</span> <span class="st">"join"</span>, n <span class="op">=</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Run the benchmark</span></span>
@@ -316,21 +333,25 @@
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<div id="fig-st-join" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-st-join" class="quarto-float quarto-figure quarto-figure-center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-join-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-join-v1.5.1.png" class="quarto-figure quarto-figure-center">
+<img src="benchmark_files/figure-html/fig-st-join-1.png" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-join-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Benchmark that compares spatial join for duckspatial and sf
 </figcaption></figure>
 </div>
+</div>
+</div>
 </section><section class="section level2"><h2 id="spatial-filter">Spatial filter<a class="anchor" aria-label="anchor" href="#spatial-filter"></a>
 </h2>
-<p>The spatial filter aims to filter rows of <code>x</code> based in a spatial relationship with <code>y</code>. For example, let’s imagine that we have an <code>x</code> dataset with observations of wolves all around the world, and we want to filter only those that are in a specific country, for instance in Spain. If the dataset has this attritbute, we can just do it with a simple <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>, but, if the wolves datase doesn’t include a column with the country, we can use a spatial filter. For that, we need a second dataset <code>y</code> with the boundaries of Spain, and by using <code>ST_Filter(x, y, "intersects")</code>, we would filter only those wolves observations that intersects with the Spain’s polygon.</p>
+<p>The spatial filter aims to filter rows of <code>x</code> based on a spatial relationship with <code>y</code>. For example, let’s imagine that we have an <code>x</code> dataset with observations of wolves all around the world, and we want to filter only those that are in a specific country, for instance in Spain. If the dataset has this attribute, we can just do it with a simple <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>, but, if the wolves dataset doesn’t include a column with the country, we can use a spatial filter. For that, we need a second dataset <code>y</code> with the boundaries of Spain, and by using <code>ST_Filter(x, y, "intersects")</code>, we would filter only those wolf observations that intersect with Spain’s polygon.</p>
 <p>In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-filter" class="quarto-xref">Figure 2</a>.</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 42 times faster than {sf}, and allocated 5 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 5 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 40 times faster than {sf}, and allocated 4.9 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 31 times faster than {sf}, and allocated 5.3 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_filter</summary><div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
@@ -342,9 +363,8 @@ Figure 1: Benchmark that compares spatial join for duckspatial and sf
 <span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_filter.html">ddbs_filter</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span>,</span>
 <span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">st_filter</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
-<span>  <span class="va">temp</span></span>
+<span>  <span class="fu">bench_tidy</span><span class="op">(</span><span class="va">temp</span>, op <span class="op">=</span> <span class="st">"filter"</span>, n <span class="op">=</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Run the benchmark</span></span>
@@ -355,18 +375,24 @@ Figure 1: Benchmark that compares spatial join for duckspatial and sf
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<div id="fig-st-filter" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-st-filter" class="quarto-float quarto-figure quarto-figure-center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-filter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-filter-v1.5.1.png" class="quarto-figure quarto-figure-center">
+<img src="benchmark_files/figure-html/fig-st-filter-1.png" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-filter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Benchmark that compares spatial filter for duckspatial and sf
 </figcaption></figure>
 </div>
+</div>
+</div>
 </section><section class="section level2"><h2 id="spatial-distances">Spatial distances<a class="anchor" aria-label="anchor" href="#spatial-distances"></a>
 </h2>
-<p>The <code>ST_Distance(x, y)</code> calculates the distance between each observation in <code>x</code> against each observation in <code>y</code>. The default {duckspatial} mode will return a lazy table with three columns: (id_x) the id of the row in <code>x</code>; (id_y) the id of the row in <code>y</code>; (distance) the actual distance between those pair of observations. In the case of <code>mode = 'sf'</code>, the result will be a sparse matrix. Note that {duckspatial} will use by default the best distance for the input CRS and geometry type.</p>
-<p>When calculating the distance between 10,000 pairs of points, {duckspatial} was about 1.5 times faster, but used much less memory (&gt; 400 times).</p>
+<p>The <code>ST_Distance(x, y)</code> calculates the distance between each observation in <code>x</code> against each observation in <code>y</code>. The default {duckspatial} mode will return a lazy table with three columns: (id_x) the id of the row in <code>x</code>; (id_y) the id of the row in <code>y</code>; (distance) the actual distance between those pairs of observations. In the case of <code>mode = 'sf'</code>, the result will be a sparse matrix. Note that {duckspatial} will use by default the best distance for the input CRS and geometry type.</p>
+<ul>
+<li>Using 10,000 pairs of points: {duckspatial} was about 3.9 times faster than {sf}, and allocated 141 times less memory.</li>
+</ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_distance</summary><div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Helper to run the benchmark</span></span>
@@ -380,9 +406,8 @@ Figure 2: Benchmark that compares spatial filter for duckspatial and sf
 <span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_measure_funs.html">ddbs_distance</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">points_sf</span><span class="op">)</span>,</span>
 <span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_distance</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="va">n</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
-<span>  <span class="va">temp</span></span>
+<span>  <span class="fu">bench_tidy</span><span class="op">(</span><span class="va">temp</span>, op <span class="op">=</span> <span class="st">"distance"</span>, n <span class="op">=</span> <span class="va">n</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">df_bench_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
@@ -392,21 +417,25 @@ Figure 2: Benchmark that compares spatial filter for duckspatial and sf
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<div id="fig-st-distance" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-st-distance" class="quarto-float quarto-figure quarto-figure-center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-distance-v1.5.1.png" class="quarto-figure quarto-figure-center">
+<img src="benchmark_files/figure-html/fig-st-distance-1.png" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: Benchmark that compares spatial distance for duckspatial and sf
 </figcaption></figure>
 </div>
+</div>
+</div>
 </section><section class="section level2"><h2 id="dissolving-geometries">Dissolving geometries<a class="anchor" aria-label="anchor" href="#dissolving-geometries"></a>
 </h2>
-<p>Dissolving geometries consist in merging/aggregating geometries that share a common attribute into a single geometry per group.</p>
+<p>Dissolving geometries consists in merging/aggregating geometries that share a common attribute into a single geometry per group.</p>
 <p>In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in <a href="#fig-st-dissolve" class="quarto-xref">Figure 4</a>.</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 14 times faster than {sf}, and allocated 10 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 10 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 6 times faster than {sf}, and allocated 9.5 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 4.5 times faster than {sf}, and allocated 9.8 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_union_agg</summary><div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
@@ -420,9 +449,8 @@ Figure 3: Benchmark that compares spatial distance for duckspatial and sf
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">category</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>geometry <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_combine.html" class="external-link">st_union</a></span><span class="op">(</span><span class="va">geometry</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
-<span>  <span class="va">temp</span></span>
+<span>  <span class="fu">bench_tidy</span><span class="op">(</span><span class="va">temp</span>, op <span class="op">=</span> <span class="st">"union_agg"</span>, n <span class="op">=</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Run the benchmark</span></span>
@@ -433,21 +461,25 @@ Figure 3: Benchmark that compares spatial distance for duckspatial and sf
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<div id="fig-st-dissolve" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-st-dissolve" class="quarto-float quarto-figure quarto-figure-center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-dissolve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-dissolve-v1.5.1.png" class="quarto-figure quarto-figure-center">
+<img src="benchmark_files/figure-html/fig-st-dissolve-1.png" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-dissolve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 4: Benchmark that compares dissolving geometries by group for duckspatial and sf
 </figcaption></figure>
+</div>
+</div>
 </div>
 </section><section class="section level2"><h2 id="geometry-predicates">Geometry predicates<a class="anchor" aria-label="anchor" href="#geometry-predicates"></a>
 </h2>
 <p>Geometry predicates are boolean functions that test spatial relationships between two geometries (they return true or false). They’re fundamental to spatial queries, letting you filter or join data based on how geometries relate to one another in space. Common examples include: ST_Contains, ST_Within, ST_Touches, ST_Overlaps, ST_Crosses, ST_Disjoint, and ST_Equals.</p>
 <p>In the following example, we compare <code>ST_Intersects(geometry A, geometry B)</code>, which returns true if the two geometries share any point in common (their interiors or boundaries overlap in any way).</p>
 <ul>
-<li><p>Using 1 million points: {duckspatial} was about 28 times faster than {sf}, and allocated 3 times less memory.</p></li>
-<li><p>Using 3 million points: {duckspatial} was about 23 times faster than {sf}, and allocated 3 times less memory.</p></li>
+<li><p>Using 1 million points: {duckspatial} was about 22 times faster than {sf}, and allocated 2.9 times less memory.</p></li>
+<li><p>Using 3 million points: {duckspatial} was about 28 times faster than {sf}, and allocated 3.1 times less memory.</p></li>
 </ul>
 <div class="cell">
 <details class="code-fold"><summary>Benchmark code - ddbs_intersects</summary><div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
@@ -459,9 +491,8 @@ Figure 4: Benchmark that compares dissolving geometries by group for duckspatia
 <span>    duckspatial <span class="op">=</span> <span class="fu"><a href="../reference/ddbs_predicate.html">ddbs_intersects</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span>,</span>
 <span>    sf          <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_binary_pred.html" class="external-link">st_intersects</a></span><span class="op">(</span><span class="va">points_sf</span>, <span class="va">polygons_sf</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="va">temp</span><span class="op">$</span><span class="va">n</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span></span>
 <span>  <span class="va">temp</span><span class="op">$</span><span class="va">pkg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"duckspatial"</span>, <span class="st">"sf"</span><span class="op">)</span></span>
-<span>  <span class="va">temp</span></span>
+<span>  <span class="fu">bench_tidy</span><span class="op">(</span><span class="va">temp</span>, op <span class="op">=</span> <span class="st">"intersects"</span>, n <span class="op">=</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">points_sf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Run the benchmark</span></span>
@@ -472,13 +503,39 @@ Figure 4: Benchmark that compares dissolving geometries by group for duckspatia
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-<div id="fig-st-intersects" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-st-intersects" class="quarto-float quarto-figure quarto-figure-center">
 <figure class="quarto-float quarto-float-fig"><div aria-describedby="fig-st-intersects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../reference/figures/bench/bench-st-intersects-v1.5.1.png" class="quarto-figure quarto-figure-center">
+<img src="benchmark_files/figure-html/fig-st-intersects-1.png" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-st-intersects-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 5: Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf
 </figcaption></figure>
+</div>
+</div>
+</div>
+</section><section class="section level2"><h2 id="export-results">Export results<a class="anchor" aria-label="anchor" href="#export-results"></a>
+</h2>
+<p>Run this chunk once, after all the benchmark chunks above, to refresh the CSV that this vignette is built from. Everything else in the document (numbers, prose, figures) updates automatically from it.</p>
+<div class="cell">
+<details class="code-fold"><summary>Export the results to CSV</summary><div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bench_export</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span></span>
+<span>  <span class="va">df_bench_join</span>,</span>
+<span>  <span class="va">df_bench_filter</span>,</span>
+<span>  <span class="va">df_bench_distance</span>,</span>
+<span>  <span class="va">df_bench_union</span>,</span>
+<span>  <span class="va">df_bench_predicate</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">bench_export</span><span class="op">$</span><span class="va">date</span>          <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">bench_export</span><span class="op">$</span><span class="va">v_duckspatial</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">"duckspatial"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">bench_export</span><span class="op">$</span><span class="va">v_duckdb</span>      <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">"duckdb"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">bench_export</span><span class="op">$</span><span class="va">v_sf</span>          <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">"sf"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">bench_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">bench_export</span>, <span class="va">bench_csv</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+</details>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {

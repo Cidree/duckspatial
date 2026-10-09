@@ -3,24 +3,32 @@
 This vignette benchmarks **{duckspatial}** against **{sf}** across
 several spatial operations, comparing computation time and memory usage
 as dataset size grows. We plan to extend it with additional operation
-types in future releases. Versions of packages used in this vignette:
+types in future releases.
 
-- `duckspatial`: v1.0.0
+The benchmark code below is **not evaluated** when the vignette is
+built: it takes too long. Instead, it is run locally once before each
+release, and the results are stored in
+`vignettes/data/bench-results.csv`, which is what every number and
+figure in this document is generated from.
 
-- `duckdb`: v1.5.1
+Results shown here were produced on 2026-10-09 with:
 
-- `sf`: v1.1.0
+- `duckspatial`: v1.2.1.9000
+
+- `duckdb`: v1.5.6
+
+- `sf`: v1.1.3
 
 ### TL;DR
 
 {duckspatial} is substantially faster and allocates far less memory than
 {sf} in almost all cases, with the advantage becoming more pronounced on
 larger datasets. The one exception is pairwise distance calculation,
-where {sf} retains a memory advantage for Euclidean distances.
+where the gap in computation time narrows considerably.
 
 ### Prepare data
 
-We are going to test the speed of a a bunch of functions using simulated
+We are going to test the speed of a bunch of functions using simulated
 data. We use the `make_points()` function to generate `n` random points
 within the globe, and 10,000 random rectangles.
 
@@ -46,6 +54,22 @@ make_points <- function(n_points) {
       category = sample(c("A", "B", "C", "D"), n_points, replace = TRUE)
   ) |>
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+}
+
+# Turn a bench::mark() result into plain, CSV-friendly columns:
+#  - median    : seconds   (numeric)
+#  - mem_alloc : bytes     (numeric)
+bench_tidy <- function(bm, op, n) {
+  data.frame(
+    op        = op,
+    n         = n,
+    pkg       = bm$pkg,
+    median    = as.numeric(bm$median),
+    min       = as.numeric(bm$min),
+    mem_alloc = as.numeric(bm$mem_alloc),
+    n_itr     = bm$n_itr,
+    stringsAsFactors = FALSE
+  )
 }
 
 # Generate datasets of different sizes
@@ -104,22 +128,22 @@ polygons_sf <- st_sf(
 ## Spatial join
 
 The spatial join aims to bring the attributes of a dataset to another
-dataset based in a spatial predicate. One example would be to have an
-`x` dataset with points that represent observations of wolves. In an `y`
+dataset based on a spatial predicate. One example would be to have an
+`x` dataset with points that represent observations of wolves. In a `y`
 dataset, we could have polygons with attributes describing the
-geopraphical location (e.g. the name of the country, the name of the
-region..). So, by using a `ST_Join(x, y, "intersects")`, we would assign
+geographical location (e.g. the name of the country, the name of the
+region). So, by using a `ST_Join(x, y, "intersects")`, we would assign
 the attributes of `y` to `x` according to where the observation of the
-wolf fall.
+wolf falls.
 
 This operation can be intensive. In the current version of {duckspatial}
 we see an improvement in speed and memory usage in bigger datasets, as
 shown in [Figure 1](#fig-st-join).
 
-- Using 1 million points: {duckspatial} was about 50 times faster than
-  {sf}, and allocated 18 times less memory.
+- Using 1 million points: {duckspatial} was about 37 times faster than
+  {sf}, and allocated 16 times less memory.
 
-- Using 3 million points: {duckspatial} was about 35 times faster than
+- Using 3 million points: {duckspatial} was about 27 times faster than
   {sf}, and allocated 16 times less memory.
 
 Benchmark code - ddbs_join
@@ -134,9 +158,8 @@ run_join_benchmark <- function(points_sf) {
     duckspatial = ddbs_join(points_sf, polygons_sf, join = "within"),
     sf          = st_join(points_sf, polygons_sf, join = st_within)
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "join", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -147,33 +170,33 @@ df_bench_join <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-join-v1.5.1.png)
+![](benchmark_files/figure-html/fig-st-join-1.png)
 
 Figure 1: Benchmark that compares spatial join for duckspatial and sf
 
 ## Spatial filter
 
-The spatial filter aims to filter rows of `x` based in a spatial
+The spatial filter aims to filter rows of `x` based on a spatial
 relationship with `y`. For example, let’s imagine that we have an `x`
 dataset with observations of wolves all around the world, and we want to
 filter only those that are in a specific country, for instance in Spain.
-If the dataset has this attritbute, we can just do it with a simple
+If the dataset has this attribute, we can just do it with a simple
 [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html),
-but, if the wolves datase doesn’t include a column with the country, we
+but, if the wolves dataset doesn’t include a column with the country, we
 can use a spatial filter. For that, we need a second dataset `y` with
 the boundaries of Spain, and by using `ST_Filter(x, y, "intersects")`,
-we would filter only those wolves observations that intersects with the
-Spain’s polygon.
+we would filter only those wolf observations that intersect with Spain’s
+polygon.
 
 In the current version of {duckspatial} we see an improvement in speed
 and memory usage in bigger datasets, as shown in
 [Figure 2](#fig-st-filter).
 
-- Using 1 million points: {duckspatial} was about 42 times faster than
-  {sf}, and allocated 5 times less memory.
+- Using 1 million points: {duckspatial} was about 40 times faster than
+  {sf}, and allocated 4.9 times less memory.
 
-- Using 3 million points: {duckspatial} was about 12 times faster than
-  {sf}, and allocated 5 times less memory.
+- Using 3 million points: {duckspatial} was about 31 times faster than
+  {sf}, and allocated 5.3 times less memory.
 
 Benchmark code - ddbs_filter
 
@@ -187,9 +210,8 @@ run_filter_benchmark <- function(points_sf) {
     duckspatial = ddbs_filter(points_sf, polygons_sf),
     sf          = st_filter(points_sf, polygons_sf)
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "filter", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -200,7 +222,7 @@ df_bench_filter <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-filter-v1.5.1.png)
+![](benchmark_files/figure-html/fig-st-filter-1.png)
 
 Figure 2: Benchmark that compares spatial filter for duckspatial and sf
 
@@ -210,13 +232,12 @@ The `ST_Distance(x, y)` calculates the distance between each observation
 in `x` against each observation in `y`. The default {duckspatial} mode
 will return a lazy table with three columns: (id_x) the id of the row in
 `x`; (id_y) the id of the row in `y`; (distance) the actual distance
-between those pair of observations. In the case of `mode = 'sf'`, the
+between those pairs of observations. In the case of `mode = 'sf'`, the
 result will be a sparse matrix. Note that {duckspatial} will use by
 default the best distance for the input CRS and geometry type.
 
-When calculating the distance between 10,000 pairs of points,
-{duckspatial} was about 1.5 times faster, but used much less memory (\>
-400 times).
+- Using 10,000 pairs of points: {duckspatial} was about 3.9 times faster
+  than {sf}, and allocated 141 times less memory.
 
 Benchmark code - ddbs_distance
 
@@ -233,9 +254,8 @@ run_distance_benchmark <- function(n) {
     duckspatial = ddbs_distance(points_sf, points_sf),
     sf          = st_distance(points_sf, points_sf)
   )
-  temp$n   <- n
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "distance", n = n)
 }
 
 df_bench_distance <- lapply(
@@ -245,25 +265,25 @@ df_bench_distance <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-distance-v1.5.1.png)
+![](benchmark_files/figure-html/fig-st-distance-1.png)
 
 Figure 3: Benchmark that compares spatial distance for duckspatial and
 sf
 
 ## Dissolving geometries
 
-Dissolving geometries consist in merging/aggregating geometries that
+Dissolving geometries consists in merging/aggregating geometries that
 share a common attribute into a single geometry per group.
 
 In the current version of {duckspatial} we see an improvement in speed
 and memory usage in bigger datasets, as shown in
 [Figure 4](#fig-st-dissolve).
 
-- Using 1 million points: {duckspatial} was about 14 times faster than
-  {sf}, and allocated 10 times less memory.
+- Using 1 million points: {duckspatial} was about 6 times faster than
+  {sf}, and allocated 9.5 times less memory.
 
-- Using 3 million points: {duckspatial} was about 12 times faster than
-  {sf}, and allocated 10 times less memory.
+- Using 3 million points: {duckspatial} was about 4.5 times faster than
+  {sf}, and allocated 9.8 times less memory.
 
 Benchmark code - ddbs_union_agg
 
@@ -279,9 +299,8 @@ run_union_benchmark <- function(points_sf) {
       group_by(category) |> 
       summarise(geometry = st_union(geometry))
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "union_agg", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -292,7 +311,7 @@ df_bench_union <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-dissolve-v1.5.1.png)
+![](benchmark_files/figure-html/fig-st-dissolve-1.png)
 
 Figure 4: Benchmark that compares dissolving geometries by group for
 duckspatial and sf
@@ -311,11 +330,11 @@ In the following example, we compare
 geometries share any point in common (their interiors or boundaries
 overlap in any way).
 
-- Using 1 million points: {duckspatial} was about 28 times faster than
-  {sf}, and allocated 3 times less memory.
+- Using 1 million points: {duckspatial} was about 22 times faster than
+  {sf}, and allocated 2.9 times less memory.
 
-- Using 3 million points: {duckspatial} was about 23 times faster than
-  {sf}, and allocated 3 times less memory.
+- Using 3 million points: {duckspatial} was about 28 times faster than
+  {sf}, and allocated 3.1 times less memory.
 
 Benchmark code - ddbs_intersects
 
@@ -329,9 +348,8 @@ run_predicate_benchmark <- function(points_sf) {
     duckspatial = ddbs_intersects(points_sf, polygons_sf),
     sf          = st_intersects(points_sf, polygons_sf)
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "intersects", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -342,7 +360,34 @@ df_bench_predicate <- lapply(
   dplyr::bind_rows()
 ```
 
-![](../reference/figures/bench/bench-st-intersects-v1.5.1.png)
+![](benchmark_files/figure-html/fig-st-intersects-1.png)
 
 Figure 5: Benchmark that compares the geometry predicate
 ST_Intersects(x, y) for duckspatial and sf
+
+## Export results
+
+Run this chunk once, after all the benchmark chunks above, to refresh
+the CSV that this vignette is built from. Everything else in the
+document (numbers, prose, figures) updates automatically from it.
+
+Export the results to CSV
+
+``` r
+
+bench_export <- dplyr::bind_rows(
+  df_bench_join,
+  df_bench_filter,
+  df_bench_distance,
+  df_bench_union,
+  df_bench_predicate
+)
+
+bench_export$date          <- as.character(Sys.Date())
+bench_export$v_duckspatial <- as.character(utils::packageVersion("duckspatial"))
+bench_export$v_duckdb      <- as.character(utils::packageVersion("duckdb"))
+bench_export$v_sf          <- as.character(utils::packageVersion("sf"))
+
+dir.create(bench_dir, recursive = TRUE, showWarnings = FALSE)
+utils::write.csv(bench_export, bench_csv, row.names = FALSE)
+```
