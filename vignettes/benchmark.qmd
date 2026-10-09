@@ -5,77 +5,166 @@ code-annotations: hover
 urlcolor: blue
 vignette: >
   %\VignetteIndexEntry{Benchmark}
-  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
-execute:
-  eval: false
+  %\VignetteEngine{quarto::html}
 knitr:
   opts_chunk:
     collapse: true
     comment: "#>"
     out.width: "100%"
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r}
+#| label: setup
 #| include: false
 
 # Limit threads to avoid a CRAN NOTE
 Sys.setenv(OMP_THREAD_LIMIT = 2)
-```
 
-```{r}
-#| echo: false
+options(scipen = 999)
 
-## Internal packages
+## Packages needed to *build* the vignette (not to run the benchmarks)
+library(ggplot2)
 library(patchwork)
 
-## Functions used in the vignette
+## ---------------------------------------------------------------------------
+## Where the benchmark results live.
+## Works both when the working directory is the package root (interactive use)
+## and when it is vignettes/ (what happens at build time).
+## ---------------------------------------------------------------------------
+bench_dir <- if (dir.exists("vignettes")) "vignettes/data" else "data"
+bench_csv <- file.path(bench_dir, "bench-results.csv")
+
+if (!file.exists(bench_csv)) {
+  stop(
+    "Benchmark results not found at '", bench_csv, "'.\n",
+    "Run the benchmark chunks of this vignette locally and execute the ",
+    "'export-results' chunk at the bottom before building."
+  )
+}
+
+bench_results <- utils::read.csv(bench_csv, stringsAsFactors = FALSE)
+
+## ---------------------------------------------------------------------------
+## Helpers to turn the stored numbers into prose
+## ---------------------------------------------------------------------------
+
+# Subset one operation
+bench_op <- function(op) {
+  out <- bench_results[bench_results$op == op, ]
+  if (nrow(out) == 0) stop("No benchmark results stored for op = '", op, "'")
+  out
+}
+
+# One value (median seconds or mem_alloc bytes) for one op / size / package
+bench_get <- function(op, n, pkg, metric) {
+  row <- bench_results[
+    bench_results$op == op & bench_results$n == n & bench_results$pkg == pkg,
+  ]
+  if (nrow(row) != 1) {
+    stop(
+      "Expected exactly 1 row for op = '", op, "', n = ", n,
+      ", pkg = '", pkg, "'; found ", nrow(row),
+      ". The results CSV is probably stale."
+    )
+  }
+  row[[metric]]
+}
+
+# sf / duckspatial ratio: > 1 means duckspatial wins
+bench_ratio <- function(op, n, metric = c("median", "mem_alloc")) {
+  metric <- match.arg(metric)
+  bench_get(op, n, "sf", metric) / bench_get(op, n, "duckspatial", metric)
+}
+
+fmt_num <- function(x) {
+  if (x >= 10) format(round(x)) else format(round(x, 1))
+}
+
+# "about 50 times faster than {sf}" / "about 1.2 times slower than {sf}"
+bench_speed <- function(op, n) {
+  r <- bench_ratio(op, n, "median")
+  if (r >= 1) {
+    paste0("about ", fmt_num(r), " times faster than {sf}")
+  } else {
+    paste0("about ", fmt_num(1 / r), " times slower than {sf}")
+  }
+}
+
+# "allocated 18 times less memory" / "allocated 2 times more memory"
+bench_mem <- function(op, n) {
+  r <- bench_ratio(op, n, "mem_alloc")
+  if (r >= 1) {
+    paste0("allocated ", fmt_num(r), " times less memory")
+  } else {
+    paste0("allocated ", fmt_num(1 / r), " times more memory")
+  }
+}
+
+## ---------------------------------------------------------------------------
+## Plotting helpers (now fed by plain numeric columns, not bench objects)
+## ---------------------------------------------------------------------------
 ggplot_benchmark <- function(
-  data, 
+  data,
   log = FALSE,
   show.legend = TRUE,
   ...
   ) {
 
-    ## Generate base plot
-    ggplot(
-      data = data, 
+    sizes <- sort(unique(data$n))
+    data$n_lab <- factor(
+      data$n,
+      levels = sizes,
+      labels = format(sizes, big.mark = ".", scientific = FALSE, trim = TRUE)
+    )
+
+    p <- ggplot(
+      data = data,
       aes(
-        x     = factor(format(n, big.mark = ".")),
-        y     = if (log) median else as.numeric(median),
+        x     = n_lab,
+        y     = median,
         color = pkg,
         group = pkg
     )) +
       geom_line(
-        linewidth = 0.7,
-        linetype  = "dashed",
-        alpha     = 0.6,
+        linewidth   = 0.7,
+        linetype    = "dashed",
+        alpha       = 0.6,
         show.legend = show.legend
       ) +
       geom_point(
-        aes(size = as.numeric(mem_alloc)),
-        alpha = 0.9,
+        aes(size = mem_alloc),
+        alpha       = 0.9,
         show.legend = show.legend
       ) +
       scale_size_binned(
-        name   = "Memory allocated",
-        labels = scales::label_bytes(),
+        name     = "Memory allocated",
+        labels   = scales::label_bytes(),
         n.breaks = 4,
-        range = c(1, 8)
+        range    = c(1, 8)
       ) +
       scale_color_brewer(palette = "Set1") +
       labs(
-        color    = "Package",
-        x        = "Data size (rows)",
-        y        = "Computation time",
+        color = "Package",
+        x     = "Data size (rows)",
+        y     = "Computation time",
         ...
       ) +
       theme_minimal(base_size = 13) +
       theme(
-        # legend.position  = "top",
         panel.grid.minor = element_blank(),
         plot.title       = element_text(face = "bold")
       )
+
+    time_lab <- scales::label_number(suffix = " s", accuracy = 0.01)
+
+    if (log) {
+      p + scale_y_log10(labels = time_lab)
+    } else {
+      p + scale_y_continuous(labels = time_lab)
+    }
 }
 
 ggplot_assemble <- function(plot1, plot2, fun_name) {
@@ -86,32 +175,36 @@ ggplot_assemble <- function(plot1, plot2, fun_name) {
       title    = paste("Benchmark Comparison for", fun_name),
       subtitle = "Execution time vs. data size",
       theme    = theme(
-        plot.title = element_text(face = "bold", hjust = .5),
-        plot.subtitle = element_text(hjust = .5),
-        text = element_text(size = rel(3.5))
+        plot.title    = element_text(face = "bold", hjust = .5),
+        plot.subtitle = element_text(hjust = .5)
       )
     )
 
 }
 ```
 
-This vignette benchmarks **{duckspatial}** against **{sf}** across several spatial operations, comparing computation time and memory usage as dataset size grows. We plan to extend it with additional operation types in future releases. Versions of packages used in this vignette:
+This vignette benchmarks **{duckspatial}** against **{sf}** across several spatial operations, comparing computation time and memory usage as dataset size grows. We plan to extend it with additional operation types in future releases.
 
-* `duckspatial`: v1.0.0
+The benchmark code below is **not evaluated** when the vignette is built: it takes too long. Instead, it is run locally once before each release, and the results are stored in `vignettes/data/bench-results.csv`, which is what every number and figure in this document is generated from.
 
-* `duckdb`: v1.5.1
+Results shown here were produced on `r unique(bench_results$date)` with:
 
-* `sf`: v1.1.0
+* `duckspatial`: v`r unique(bench_results$v_duckspatial)`
+
+* `duckdb`: v`r unique(bench_results$v_duckdb)`
+
+* `sf`: v`r unique(bench_results$v_sf)`
 
 ## TL;DR
 
-{duckspatial} is substantially faster and allocates far less memory than {sf} in almost all cases, with the advantage becoming more pronounced on larger datasets. The one exception is pairwise distance calculation, where {sf} retains a memory advantage for Euclidean distances.
+{duckspatial} is substantially faster and allocates far less memory than {sf} in almost all cases, with the advantage becoming more pronounced on larger datasets. The one exception is pairwise distance calculation, where the gap in computation time narrows considerably.
 
 ## Prepare data
 
-We are going to test the speed of a a bunch of functions using simulated data. We use the `make_points()` function to generate `n` random points within the globe, and 10,000 random rectangles.
+We are going to test the speed of a bunch of functions using simulated data. We use the `make_points()` function to generate `n` random points within the globe, and 10,000 random rectangles.
 
 ```{r}
+#| eval: false
 #| message: false
 #| warning: false
 #| code-fold: true
@@ -135,6 +228,22 @@ make_points <- function(n_points) {
       category = sample(c("A", "B", "C", "D"), n_points, replace = TRUE)
   ) |>
     sf::st_as_sf(coords = c("x", "y"), crs = 4326)
+}
+
+# Turn a bench::mark() result into plain, CSV-friendly columns:
+#  - median    : seconds   (numeric)
+#  - mem_alloc : bytes     (numeric)
+bench_tidy <- function(bm, op, n) {
+  data.frame(
+    op        = op,
+    n         = n,
+    pkg       = bm$pkg,
+    median    = as.numeric(bm$median),
+    min       = as.numeric(bm$min),
+    mem_alloc = as.numeric(bm$mem_alloc),
+    n_itr     = bm$n_itr,
+    stringsAsFactors = FALSE
+  )
 }
 
 # Generate datasets of different sizes
@@ -192,15 +301,16 @@ polygons_sf <- st_sf(
 
 # Spatial join
 
-The spatial join aims to bring the attributes of a dataset to another dataset based in a spatial predicate. One example would be to have an `x` dataset with points that represent observations of wolves. In an `y` dataset, we could have polygons with attributes describing the geopraphical location (e.g. the name of the country, the name of the region..). So, by using a `ST_Join(x, y, "intersects")`, we would assign the attributes of `y` to `x` according to where the observation of the wolf fall.
+The spatial join aims to bring the attributes of a dataset to another dataset based on a spatial predicate. One example would be to have an `x` dataset with points that represent observations of wolves. In a `y` dataset, we could have polygons with attributes describing the geographical location (e.g. the name of the country, the name of the region). So, by using a `ST_Join(x, y, "intersects")`, we would assign the attributes of `y` to `x` according to where the observation of the wolf falls.
 
 This operation can be intensive. In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in @fig-st-join.
 
--   Using 1 million points: {duckspatial} was about 50 times faster than {sf}, and allocated 18 times less memory.
+-   Using 1 million points: {duckspatial} was `r bench_speed("join", 1e6)`, and `r bench_mem("join", 1e6)`.
 
--   Using 3 million points: {duckspatial} was about 35 times faster than {sf}, and allocated 16 times less memory.
+-   Using 3 million points: {duckspatial} was `r bench_speed("join", 3e6)`, and `r bench_mem("join", 3e6)`.
 
 ```{r}
+#| eval: false
 #| message: false
 #| code-fold: true
 #| code-summary: "Benchmark code - ddbs_join"
@@ -213,9 +323,8 @@ run_join_benchmark <- function(points_sf) {
     duckspatial = ddbs_join(points_sf, polygons_sf, join = "within"),
     sf          = st_join(points_sf, polygons_sf, join = st_within)
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "join", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -227,56 +336,38 @@ df_bench_join <- lapply(
 ```
 
 ```{r}
+#| label: fig-st-join
+#| fig-cap: "Benchmark that compares spatial join for duckspatial and sf"
 #| echo: false
 #| warning: false
+#| fig-width: 12
+#| fig-height: 6
 
-# Id to store the figures, saving the older ones
-id_output <- "v1.5.1"
-
-# Generate the plots
-gg_join <- ggplot_benchmark(
-  data     = df_bench_join,
-  log      = FALSE,
-  show.legend = T,
-  subtitle = "A) Normal scale"
-)
-
-gg_join_log <- ggplot_benchmark(
-  data     = df_bench_join,
-  log      = TRUE,
-  show.legend = F,
-  subtitle = "B) Log scale"
-)
-
-# Assemble them in a single plot
 ggplot_assemble(
-  plot1 = gg_join,
-  plot2 = gg_join_log,
+  plot1 = ggplot_benchmark(
+    bench_op("join"), log = FALSE, show.legend = TRUE,
+    subtitle = "A) Normal scale"
+  ),
+  plot2 = ggplot_benchmark(
+    bench_op("join"), log = TRUE, show.legend = FALSE,
+    subtitle = "B) Log scale"
+  ),
   fun_name = "ddbs_join()"
-)
-
-# Export it
-ggsave(
-  filename = paste0("man/figures/bench/bench-st-join-", id_output, ".png"),
-  height   = 15,
-  width    = 30,
-  units    = "cm"
 )
 ```
 
-![Benchmark that compares spatial join for duckspatial and sf](../man/figures/bench/bench-st-join-v1.5.1.png){#fig-st-join fig-align="center"}
-
 # Spatial filter
 
-The spatial filter aims to filter rows of `x` based in a spatial relationship with `y`. For example, let's imagine that we have an `x` dataset with observations of wolves all around the world, and we want to filter only those that are in a specific country, for instance in Spain. If the dataset has this attritbute, we can just do it with a simple `dplyr::filter()`, but, if the wolves datase doesn't include a column with the country, we can use a spatial filter. For that, we need a second dataset `y` with the boundaries of Spain, and by using `ST_Filter(x, y, "intersects")`, we would filter only those wolves observations that intersects with the Spain's polygon.
+The spatial filter aims to filter rows of `x` based on a spatial relationship with `y`. For example, let's imagine that we have an `x` dataset with observations of wolves all around the world, and we want to filter only those that are in a specific country, for instance in Spain. If the dataset has this attribute, we can just do it with a simple `dplyr::filter()`, but, if the wolves dataset doesn't include a column with the country, we can use a spatial filter. For that, we need a second dataset `y` with the boundaries of Spain, and by using `ST_Filter(x, y, "intersects")`, we would filter only those wolf observations that intersect with Spain's polygon.
 
 In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in @fig-st-filter.
 
--   Using 1 million points: {duckspatial} was about 42 times faster than {sf}, and allocated 5 times less memory.
+-   Using 1 million points: {duckspatial} was `r bench_speed("filter", 1e6)`, and `r bench_mem("filter", 1e6)`.
 
--   Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 5 times less memory.
+-   Using 3 million points: {duckspatial} was `r bench_speed("filter", 3e6)`, and `r bench_mem("filter", 3e6)`.
 
 ```{r}
+#| eval: false
 #| message: false
 #| code-fold: true
 #| code-summary: "Benchmark code - ddbs_filter"
@@ -289,9 +380,8 @@ run_filter_benchmark <- function(points_sf) {
     duckspatial = ddbs_filter(points_sf, polygons_sf),
     sf          = st_filter(points_sf, polygons_sf)
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "filter", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -303,49 +393,34 @@ df_bench_filter <- lapply(
 ```
 
 ```{r}
+#| label: fig-st-filter
+#| fig-cap: "Benchmark that compares spatial filter for duckspatial and sf"
 #| echo: false
 #| warning: false
+#| fig-width: 12
+#| fig-height: 6
 
-# Generate the plots
-gg_filter <- ggplot_benchmark(
-  data     = df_bench_filter,
-  log      = FALSE,
-  show.legend = T,
-  subtitle = "A) Normal scale"
-)
-
-gg_filter_log <- ggplot_benchmark(
-  data     = df_bench_filter,
-  log      = TRUE,
-  show.legend = F,
-  subtitle = "B) Log scale"
-)
-
-# Assemble them in a single plot
 ggplot_assemble(
-  plot1 = gg_filter,
-  plot2 = gg_filter_log,
+  plot1 = ggplot_benchmark(
+    bench_op("filter"), log = FALSE, show.legend = TRUE,
+    subtitle = "A) Normal scale"
+  ),
+  plot2 = ggplot_benchmark(
+    bench_op("filter"), log = TRUE, show.legend = FALSE,
+    subtitle = "B) Log scale"
+  ),
   fun_name = "ddbs_filter()"
-)
-
-# Export it
-ggsave(
-  filename = paste0("man/figures/bench/bench-st-filter-", id_output, ".png"),
-  height   = 15,
-  width    = 30,
-  units    = "cm"
 )
 ```
 
-![Benchmark that compares spatial filter for duckspatial and sf](../man/figures/bench/bench-st-filter-v1.5.1.png){#fig-st-filter fig-align="center"}
-
 # Spatial distances
 
-The `ST_Distance(x, y)` calculates the distance between each observation in `x` against each observation in `y`. The default {duckspatial} mode will return a lazy table with three columns: (id_x) the id of the row in `x`; (id_y) the id of the row in `y`; (distance) the actual distance between those pair of observations. In the case of `mode = 'sf'`, the result will be a sparse matrix. Note that {duckspatial} will use by default the best distance for the input CRS and geometry type.
+The `ST_Distance(x, y)` calculates the distance between each observation in `x` against each observation in `y`. The default {duckspatial} mode will return a lazy table with three columns: (id_x) the id of the row in `x`; (id_y) the id of the row in `y`; (distance) the actual distance between those pairs of observations. In the case of `mode = 'sf'`, the result will be a sparse matrix. Note that {duckspatial} will use by default the best distance for the input CRS and geometry type.
 
-When calculating the distance between 10,000 pairs of points, {duckspatial} was about 1.5 times faster, but used much less memory (> 400 times).
+-   Using 10,000 pairs of points: {duckspatial} was `r bench_speed("distance", 10000)`, and `r bench_mem("distance", 10000)`.
 
 ```{r}
+#| eval: false
 #| message: false
 #| code-fold: true
 #| code-summary: "Benchmark code - ddbs_distance"
@@ -361,9 +436,8 @@ run_distance_benchmark <- function(n) {
     duckspatial = ddbs_distance(points_sf, points_sf),
     sf          = st_distance(points_sf, points_sf)
   )
-  temp$n   <- n
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "distance", n = n)
 }
 
 df_bench_distance <- lapply(
@@ -373,56 +447,39 @@ df_bench_distance <- lapply(
   dplyr::bind_rows()
 ```
 
-
 ```{r}
+#| label: fig-st-distance
+#| fig-cap: "Benchmark that compares spatial distance for duckspatial and sf"
 #| echo: false
 #| warning: false
+#| fig-width: 12
+#| fig-height: 6
 
-# Generate the plots
-gg_distance <- ggplot_benchmark(
-  data     = df_bench_distance,
-  log      = FALSE,
-  show.legend = T,
-  subtitle = "A) Normal scale"
-)
-
-gg_distance_log <- ggplot_benchmark(
-  data     = df_bench_distance,
-  log      = TRUE,
-  show.legend = F,
-  subtitle = "B) Log scale"
-)
-
-# Assemble them in a single plot
 ggplot_assemble(
-  plot1 = gg_distance,
-  plot2 = gg_distance_log,
+  plot1 = ggplot_benchmark(
+    bench_op("distance"), log = FALSE, show.legend = TRUE,
+    subtitle = "A) Normal scale"
+  ),
+  plot2 = ggplot_benchmark(
+    bench_op("distance"), log = TRUE, show.legend = FALSE,
+    subtitle = "B) Log scale"
+  ),
   fun_name = "ddbs_distance()"
-)
-
-# Export it
-ggsave(
-  filename = paste0("man/figures/bench/bench-st-distance-", id_output, ".png"),
-  height   = 15,
-  width    = 30,
-  units    = "cm"
 )
 ```
 
-![Benchmark that compares spatial distance for duckspatial and sf](../man/figures/bench/bench-st-distance-v1.5.1.png){#fig-st-distance fig-align="center"}
-
-
 # Dissolving geometries
 
-Dissolving geometries consist in merging/aggregating geometries that share a common attribute into a single geometry per group.
+Dissolving geometries consists in merging/aggregating geometries that share a common attribute into a single geometry per group.
 
 In the current version of {duckspatial} we see an improvement in speed and memory usage in bigger datasets, as shown in @fig-st-dissolve.
 
--   Using 1 million points: {duckspatial} was about 14 times faster than {sf}, and allocated 10 times less memory.
+-   Using 1 million points: {duckspatial} was `r bench_speed("union_agg", 1e6)`, and `r bench_mem("union_agg", 1e6)`.
 
--   Using 3 million points: {duckspatial} was about 12 times faster than {sf}, and allocated 10 times less memory.
+-   Using 3 million points: {duckspatial} was `r bench_speed("union_agg", 3e6)`, and `r bench_mem("union_agg", 3e6)`.
 
 ```{r}
+#| eval: false
 #| message: false
 #| code-fold: true
 #| code-summary: "Benchmark code - ddbs_union_agg"
@@ -437,9 +494,8 @@ run_union_benchmark <- function(points_sf) {
       group_by(category) |> 
       summarise(geometry = st_union(geometry))
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "union_agg", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -451,42 +507,25 @@ df_bench_union <- lapply(
 ```
 
 ```{r}
+#| label: fig-st-dissolve
+#| fig-cap: "Benchmark that compares dissolving geometries by group for duckspatial and sf"
 #| echo: false
 #| warning: false
+#| fig-width: 12
+#| fig-height: 6
 
-# Generate the plots
-gg_union_agg <- ggplot_benchmark(
-  data     = df_bench_union,
-  log      = FALSE,
-  show.legend = T,
-  subtitle = "A) Normal scale"
-)
-
-gg_union_agg_log <- ggplot_benchmark(
-  data     = df_bench_union,
-  log      = TRUE,
-  show.legend = F,
-  subtitle = "B) Log scale"
-)
-
-# Assemble them in a single plot
 ggplot_assemble(
-  plot1 = gg_union_agg,
-  plot2 = gg_union_agg_log,
+  plot1 = ggplot_benchmark(
+    bench_op("union_agg"), log = FALSE, show.legend = TRUE,
+    subtitle = "A) Normal scale"
+  ),
+  plot2 = ggplot_benchmark(
+    bench_op("union_agg"), log = TRUE, show.legend = FALSE,
+    subtitle = "B) Log scale"
+  ),
   fun_name = "ddbs_union_agg()"
 )
-
-# Export it
-ggsave(
-  filename = paste0("man/figures/bench/bench-st-dissolve-", id_output, ".png"),
-  height   = 15,
-  width    = 30,
-  units    = "cm"
-)
 ```
-
-![Benchmark that compares dissolving geometries by group for duckspatial and sf](../man/figures/bench/bench-st-dissolve-v1.5.1.png){#fig-st-dissolve fig-align="center"}
-
 
 # Geometry predicates
 
@@ -495,11 +534,12 @@ Common examples include: ST_Contains, ST_Within, ST_Touches, ST_Overlaps, ST_Cro
 
 In the following example, we compare `ST_Intersects(geometry A, geometry B)`, which returns true if the two geometries share any point in common (their interiors or boundaries overlap in any way).
 
--   Using 1 million points: {duckspatial} was about 28 times faster than {sf}, and allocated 3 times less memory.
+-   Using 1 million points: {duckspatial} was `r bench_speed("intersects", 1e6)`, and `r bench_mem("intersects", 1e6)`.
 
--   Using 3 million points: {duckspatial} was about 23 times faster than {sf}, and allocated 3 times less memory.
+-   Using 3 million points: {duckspatial} was `r bench_speed("intersects", 3e6)`, and `r bench_mem("intersects", 3e6)`.
 
 ```{r}
+#| eval: false
 #| message: false
 #| code-fold: true
 #| code-summary: "Benchmark code - ddbs_intersects"
@@ -512,9 +552,8 @@ run_predicate_benchmark <- function(points_sf) {
     duckspatial = ddbs_intersects(points_sf, polygons_sf),
     sf          = st_intersects(points_sf, polygons_sf)
   )
-  temp$n   <- nrow(points_sf)
   temp$pkg <- c("duckspatial", "sf")
-  temp
+  bench_tidy(temp, op = "intersects", n = nrow(points_sf))
 }
 
 # Run the benchmark
@@ -526,38 +565,51 @@ df_bench_predicate <- lapply(
 ```
 
 ```{r}
+#| label: fig-st-intersects
+#| fig-cap: "Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf"
 #| echo: false
 #| warning: false
+#| fig-width: 12
+#| fig-height: 6
 
-# Generate the plots
-gg_predicate <- ggplot_benchmark(
-  data     = df_bench_predicate,
-  log      = FALSE,
-  show.legend = T,
-  subtitle = "A) Normal scale"
-)
-
-gg_predicate_log <- ggplot_benchmark(
-  data     = df_bench_predicate,
-  log      = TRUE,
-  show.legend = F,
-  subtitle = "B) Log scale"
-)
-
-# Assemble them in a single plot
 ggplot_assemble(
-  plot1 = gg_predicate,
-  plot2 = gg_predicate_log,
+  plot1 = ggplot_benchmark(
+    bench_op("intersects"), log = FALSE, show.legend = TRUE,
+    subtitle = "A) Normal scale"
+  ),
+  plot2 = ggplot_benchmark(
+    bench_op("intersects"), log = TRUE, show.legend = FALSE,
+    subtitle = "B) Log scale"
+  ),
   fun_name = "ddbs_intersects()"
-)
-
-# Export it
-ggsave(
-  filename = paste0("man/figures/bench/bench-st-intersects-", id_output, ".png"),
-  height   = 15,
-  width    = 30,
-  units    = "cm"
 )
 ```
 
-![Benchmark that compares the geometry predicate ST_Intersects(x, y) for duckspatial and sf](../man/figures/bench/bench-st-intersects-v1.5.1.png){#fig-st-intersects fig-align="center"}
+# Export results
+
+Run this chunk once, after all the benchmark chunks above, to refresh the CSV
+that this vignette is built from. Everything else in the document (numbers,
+prose, figures) updates automatically from it.
+
+```{r}
+#| label: export-results
+#| eval: false
+#| code-fold: true
+#| code-summary: "Export the results to CSV"
+
+bench_export <- dplyr::bind_rows(
+  df_bench_join,
+  df_bench_filter,
+  df_bench_distance,
+  df_bench_union,
+  df_bench_predicate
+)
+
+bench_export$date          <- as.character(Sys.Date())
+bench_export$v_duckspatial <- as.character(utils::packageVersion("duckspatial"))
+bench_export$v_duckdb      <- as.character(utils::packageVersion("duckdb"))
+bench_export$v_sf          <- as.character(utils::packageVersion("sf"))
+
+dir.create(bench_dir, recursive = TRUE, showWarnings = FALSE)
+utils::write.csv(bench_export, bench_csv, row.names = FALSE)
+```
