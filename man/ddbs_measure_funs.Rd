@@ -133,7 +133,7 @@ with \code{\link{ddbs_set_crs}}.
 
 For \code{ddbs_azimuth}: A numeric matrix of azimuth values (in the specified \code{unit})
 with dimensions nrow(x) by nrow(y) when \code{mode = "sf"}, or a lazy
-\code{tbl_duckdb_connection} with columns \code{id_x}, \code{id_y}, and \code{azimuth} otherwise.
+\code{tbl_duckdb_connection} with columns \code{sql_ident(id_x)}, \code{sql_ident(id_y)}, and \code{azimuth} otherwise.
 Both inputs must contain only POINT geometries.
 }
 \description{
