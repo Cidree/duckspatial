@@ -7,6 +7,8 @@
 
 * `ddbs_expand()`: expand the bounding box of geometries.
 
+* `ddbs_default_conn()`: creates or returns the default duckdb connection used internally by the package (#154).
+
 ## PERFORMANCE
 
 * Less fixed overhead on every call with sf input: `ddbs_register_table()` no longer runs a call to `register_geoarrow_extensions()`, which does not exist in duckdb >= 1.5 and always failed (~45 ms per sf input), and building the DuckDB CRS literal skips a slow `sf::st_crs(parameters = TRUE)` lookup when the CRS has an EPSG code (~10 ms -> ~4 ms per call).
