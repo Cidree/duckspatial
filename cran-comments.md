@@ -12,7 +12,7 @@
 * Local Ubuntu 26.04 LTS: 
 
 ```
-Duration: 6m 32.9s
+Duration: 2m 35.8s
 
 0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 ```
@@ -26,6 +26,3 @@ Maintainer: 'Adrián Cidre González <adrian.cidre@gmail.com>'
 0 errors ✔ | 0 warnings ✔ | 1 note ✖
 ```
 
-## Other comments
-
-This is a patch to debug the errors in some flavors: <https://cran.r-project.org/web/checks/check_results_duckspatial.html>. The error message is ambiguous, so this patch captures the complete error message to make it easier to check what's actually failing.
