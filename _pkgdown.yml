@@ -173,6 +173,7 @@ reference:
   desc: Install the spatial extension and manage DuckDB connections
   contents:
   - ddbs_create_conn
+  - ddbs_default_conn
   - ddbs_stop_conn
   - ddbs_install
   - ddbs_load

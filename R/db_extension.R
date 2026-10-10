@@ -264,3 +264,52 @@ ddbs_extension_info <- function(conn = NULL, extension = "spatial") {
     dplyr::glimpse(tibble::as_tibble(info))
 
 }
+
+
+
+
+
+#' Get or create default DuckDB connection with spatial extension installed and loaded.
+#'
+#' @param create Logical. If TRUE and no connection exists, create one.
+#'   Default is TRUE.
+#' @param ... Additional parameters to pass to `ddbs_create_conn()`
+#'
+#' @returns A `duckdb_connection` or NULL if no connection exists and
+#'   create = FALSE
+#' 
+#' @details
+#' The connection is created internally when the first ckspatial  function is run. Every
+#' function of the package runs on this connection when the argument `conn` is `NULL`.
+#' 
+#'
+#' @export
+#' @examples
+#' \dontrun{
+#' ## load package
+#' library(duckspatial)
+#'
+#' # get/create the default connection
+#' conn <- ddbs_default_conn()
+#'
+#' }
+ddbs_default_conn <- function(create = TRUE, ...) {
+  conn <- getOption("duckspatial_conn", NULL)
+
+  # Check if existing connection is still valid
+
+  if (!is.null(conn)) {
+    if (!DBI::dbIsValid(conn)) {
+      options(duckspatial_conn = NULL)
+      conn <- NULL
+    }
+  }
+
+  # Create new connection if needed
+  if (is.null(conn) && create) {
+    conn <- ddbs_create_conn(dbdir = "memory", ...)
+    options(duckspatial_conn = conn)
+  }
+
+  conn
+}
