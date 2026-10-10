@@ -1,7 +1,7 @@
-# Get or create default DuckDB connection with spatial extension installed and loaded
+# Get or create default DuckDB connection with spatial extension installed and loaded.
 
 Get or create default DuckDB connection with spatial extension installed
-and loaded
+and loaded.
 
 ## Usage
 
@@ -24,3 +24,22 @@ ddbs_default_conn(create = TRUE, ...)
 ## Value
 
 A `duckdb_connection` or NULL if no connection exists and create = FALSE
+
+## Details
+
+The connection is created internally when the first ckspatial function
+is run. Every function of the package runs on this connection when the
+argument `conn` is `NULL`.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+## load package
+library(duckspatial)
+
+# get/create the default connection
+conn <- ddbs_default_conn()
+
+} # }
+```

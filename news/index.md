@@ -10,6 +10,11 @@
 - [`ddbs_expand()`](https://cidree.github.io/duckspatial/reference/ddbs_expand.md):
   expand the bounding box of geometries.
 
+- [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md):
+  creates or returns the default duckdb connection used internally by
+  the package
+  ([\#154](https://github.com/Cidree/duckspatial/issues/154)).
+
 ### PERFORMANCE
 
 - Less fixed overhead on every call with sf input:

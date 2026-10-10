@@ -6,6 +6,9 @@ Install the spatial extension and manage DuckDB connections
 
 - [`ddbs_create_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_create_conn.md)
   : Create a DuckDB connection with spatial extension
+- [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  : Get or create default DuckDB connection with spatial extension
+  installed and loaded.
 - [`ddbs_stop_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_stop_conn.md)
   : Close a DuckDB connection
 - [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md)
