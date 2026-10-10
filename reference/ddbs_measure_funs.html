@@ -116,7 +116,7 @@ method selection based on the coordinate reference system (CRS)."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -313,7 +313,7 @@ EPSG:2264), as in <code>sf</code>. Inputs without a CRS raise an error; set one
 with <code><a href="ddbs_set_crs.html">ddbs_set_crs</a></code>.</p>
 <p>For <code>ddbs_azimuth</code>: A numeric matrix of azimuth values (in the specified <code>unit</code>)
 with dimensions nrow(x) by nrow(y) when <code>mode = "sf"</code>, or a lazy
-<code>tbl_duckdb_connection</code> with columns <code>id_x</code>, <code>id_y</code>, and <code>azimuth</code> otherwise.
+<code>tbl_duckdb_connection</code> with columns <code>sql_ident(id_x)</code>, <code>sql_ident(id_y)</code>, and <code>azimuth</code> otherwise.
 Both inputs must contain only POINT geometries.</p>
     </div>
     <div class="section level2">

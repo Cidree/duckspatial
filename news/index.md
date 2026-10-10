@@ -1,5 +1,168 @@
 # Changelog
 
+## duckspatial 1.3.0
+
+### NEW FEATURES
+
+- Updated the `duckdb` dependency to v1.5.6. See
+  <https://r.duckdb.org/news/index.html#duckdb-156>.
+
+- [`ddbs_expand()`](https://cidree.github.io/duckspatial/reference/ddbs_expand.md):
+  expand the bounding box of geometries.
+
+### PERFORMANCE
+
+- Less fixed overhead on every call with sf input:
+  [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md)
+  no longer runs a call to `register_geoarrow_extensions()`, which does
+  not exist in duckdb \>= 1.5 and always failed (~45 ms per sf input),
+  and building the DuckDB CRS literal skips a slow
+  `sf::st_crs(parameters = TRUE)` lookup when the CRS has an EPSG code
+  (~10 ms -\> ~4 ms per call).
+
+### BUG FIXES
+
+- Functions called with sf or data.frame input no longer leak the
+  registered data: each call left one Arrow registration (or a
+  registered data.frame) and its memory in the connection until the
+  session ended.
+- [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
+  is much faster: for sf input about 5x (1 million points: 6.3 s → 1.4
+  s, half the memory), and for a `duckspatial_df` or lazy table from the
+  same connection about 100x (1 million rows: 5.4 s → 0.05 s), because
+  the data no longer makes a round trip through R.
+  [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
+  with sf input is about 2x faster.
+- [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
+  and
+  [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
+  can now write sf objects that mix XYZ, XY and EMPTY geometries
+  (previously “Skipping beyond end of binary data”).
+- [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
+  now accepts a schema-qualified name as a single string
+  (e.g. `"s1.t"`), and a failed write no longer leaves a partial table
+  behind.
+- [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md),
+  the predicate functions with `mode = "sf"`
+  ([`ddbs_intersects()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
+  [`ddbs_within()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
+  …) and the dense (`sparse = FALSE`) predicates in duckspatial mode now
+  put the spatial predicate in a join condition, so DuckDB uses its
+  spatial join instead of a cross product over every pair of features.
+  On 100,000 points and the 100 `nc` counties,
+  [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md)
+  goes from about 14 s to about 1 s, `ddbs_intersects(mode = "sf")` from
+  about 15 s to about 1 s and the dense duckspatial predicate from about
+  29 s to about 2 s. The sparse `mode = "sf"` result is built from the
+  matching pairs only, so it no longer allocates an n × m matrix in R.
+  Two consequences:
+  [`ddbs_disjoint()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  cannot use the spatial join (nearly every pair matches) and is
+  somewhat slower on large inputs; and in the dense `mode = "sf"`
+  matrix, rows whose geometry is SQL `NULL` are now `FALSE` instead of
+  `NA`.
+- Registering sf data in DuckDB is 3–4x faster and uses ~4x less memory
+  (e.g. [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md)
+  on 1 million points: 3.4 s → 0.8 s, 67 MB → 17 MB). This speeds up
+  every `ddbs_*()` call with sf input.
+  [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md)
+  no longer builds a chunk index for data that fits in a single Arrow
+  chunk.
+- Every `ddbs_*()` call that uses the default connection is faster by
+  about 50–100 ms:
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  no longer re-creates the package’s 35 SQL macros on each call. The
+  macros are created once, when the connection is created. If you set
+  the internal `duckspatial_conn` option to your own connection, run
+  `ddbs_load(conn)` to create the macros on it.
+- [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md),
+  [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md)
+  and other functions that take an sf object no longer fail with
+  “subscript out of bounds” on a 0-row sf. The result keeps the columns
+  and the CRS.
+- sf data larger than ~500 MB (registered in several Arrow chunks) could
+  only be read once: a second query or
+  [`collect()`](https://dplyr.tidyverse.org/reference/compute.html) on
+  the same object returned 0 rows. It can now be read any number of
+  times.
+- Fix `nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)` to
+  convert WKB geometry columns to native GeoArrow layouts such as
+  `geoarrow.point`. Since the method was introduced, it had incorrectly
+  returned `geoarrow.wkb` unchanged because its target schema was
+  inferred from the existing WKB Arrow column
+  ([\#121](https://github.com/Cidree/duckspatial/pull/121)).
+- [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md)
+  no longer drops rows of `x` that are exact duplicates of another row,
+  and now returns the matching rows in their original order
+  ([\#156](https://github.com/Cidree/duckspatial/issues/156)).
+- [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_azimuth()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  and the predicate functions
+  ([`ddbs_predicate()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
+  [`ddbs_intersects()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
+  etc.) with `mode = "sf"` could return matrices with values in the
+  wrong cells, because the cross join results were reshaped without an
+  explicit row order
+  ([\#155](https://github.com/Cidree/duckspatial/issues/155)).
+- `ddbs_*` functions and [`print()`](https://rdrr.io/r/base/print.html)
+  now respect dplyr verbs that have no `duckspatial_df` method
+  (e.g. [`distinct()`](https://dplyr.tidyverse.org/reference/distinct.html),
+  [`semi_join()`](https://dplyr.tidyverse.org/reference/filter-joins.html),
+  [`anti_join()`](https://dplyr.tidyverse.org/reference/filter-joins.html),
+  [`union_all()`](https://dplyr.tidyverse.org/reference/setops.html)).
+  Previously they silently used the original, unmodified table
+  ([\#159](https://github.com/Cidree/duckspatial/issues/159)).
+- [`ddbs_area()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_length()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_perimeter()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md),
+  [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  and the `dwithin` predicate
+  ([`ddbs_is_within_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
+  [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md),
+  [`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md))
+  now compute planar results in the CRS’s own units for projected CRSs
+  not in metres (e.g. US survey feet), labelled as in `sf`; previously
+  they returned `NaN`, mislabelled feet as metres, or found no `dwithin`
+  matches. These functions and
+  [`ddbs_buffer()`](https://cidree.github.io/duckspatial/reference/ddbs_buffer.md)
+  now give an informative error when the input has no CRS, and WGS84
+  written as `"OGC:CRS84"` or `"WGS 84"` no longer triggers an accuracy
+  warning ([\#161](https://github.com/Cidree/duckspatial/issues/161)).
+- [`ddbs_read_meta()`](https://cidree.github.io/duckspatial/reference/ddbs_read_meta.md)
+  now gives an informative error for files GDAL can’t open
+  (e.g. GeoParquet) or that don’t exist, instead of silently returning
+  an empty tibble.
+  [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
+  on a `.parquet` path no longer emits a spurious “Could not auto-detect
+  CRS from file” warning before its error
+  ([\#166](https://github.com/Cidree/duckspatial/issues/166)).
+- [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md)
+  no longer overwrites the input table when `x` is not in EPSG:4326, and
+  now returns the correct quadkeys for such input. Previously, a table
+  passed by name was replaced with lat/lon-swapped coordinates and no
+  CRS, and all inputs returned wrong tiles
+  ([\#164](https://github.com/Cidree/duckspatial/issues/164)).
+- [`ddbs_contains()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  and
+  [`ddbs_crosses()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md)
+  are now exported. They were documented but missing from the package
+  namespace.
+- [`group_by()`](https://dplyr.tidyverse.org/reference/group_by.html)
+  groups on a `duckspatial_df` are no longer lost after
+  [`mutate()`](https://dplyr.tidyverse.org/reference/mutate.html),
+  [`filter()`](https://dplyr.tidyverse.org/reference/filter.html),
+  [`arrange()`](https://dplyr.tidyverse.org/reference/arrange.html),
+  [`select()`](https://dplyr.tidyverse.org/reference/select.html) and
+  other verbs. Previously a following
+  [`summarise()`](https://dplyr.tidyverse.org/reference/summarise.html)
+  silently collapsed all groups into a single row
+  ([\#170](https://github.com/Cidree/duckspatial/issues/170)).
+- Column, table and schema names that contain spaces or are SQL reserved
+  words (e.g. a geometry column `"my geom"`, `by = "group"`,
+  `name = "my table"`, or a table named `"order"` passed as `x`) are now
+  quoted in the generated SQL. Previously they failed with a parser
+  error ([\#168](https://github.com/Cidree/duckspatial/issues/168)).
+
 ## duckspatial 1.2.1
 
 CRAN release: 2026-07-04

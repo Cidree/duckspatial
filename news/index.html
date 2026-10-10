@@ -114,7 +114,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -155,6 +155,53 @@
       <small>Source: <a href="https://github.com/Cidree/duckspatial/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.0" id="duckspatial-130">duckspatial 1.3.0<a class="anchor" aria-label="anchor" href="#duckspatial-130"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-3-0">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-1-3-0"></a></h3>
+<ul><li><p>Updated the <code>duckdb</code> dependency to v1.5.6. See <a href="https://r.duckdb.org/news/index.html#duckdb-156" class="external-link uri">https://r.duckdb.org/news/index.html#duckdb-156</a>.</p></li>
+<li><p><code><a href="../reference/ddbs_expand.html">ddbs_expand()</a></code>: expand the bounding box of geometries.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-1-3-0">PERFORMANCE<a class="anchor" aria-label="anchor" href="#performance-1-3-0"></a></h3>
+<ul><li>Less fixed overhead on every call with sf input: <code><a href="../reference/ddbs_register_table.html">ddbs_register_table()</a></code> no longer runs a call to <code>register_geoarrow_extensions()</code>, which does not exist in duckdb &gt;= 1.5 and always failed (~45 ms per sf input), and building the DuckDB CRS literal skips a slow <code>sf::st_crs(parameters = TRUE)</code> lookup when the CRS has an EPSG code (~10 ms -&gt; ~4 ms per call).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-3-0">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-1-3-0"></a></h3>
+<ul><li>Functions called with sf or data.frame input no longer leak the registered data: each call left one Arrow registration (or a registered data.frame) and its memory in the connection until the session ended.</li>
+<li>
+<code><a href="../reference/ddbs_write_table.html">ddbs_write_table()</a></code> is much faster: for sf input about 5x (1 million points: 6.3 s → 1.4 s, half the memory), and for a <code>duckspatial_df</code> or lazy table from the same connection about 100x (1 million rows: 5.4 s → 0.05 s), because the data no longer makes a round trip through R. <code><a href="../reference/ddbs_write_dataset.html">ddbs_write_dataset()</a></code> with sf input is about 2x faster.</li>
+<li>
+<code><a href="../reference/ddbs_write_table.html">ddbs_write_table()</a></code> and <code><a href="../reference/ddbs_write_dataset.html">ddbs_write_dataset()</a></code> can now write sf objects that mix XYZ, XY and EMPTY geometries (previously “Skipping beyond end of binary data”).</li>
+<li>
+<code><a href="../reference/ddbs_write_table.html">ddbs_write_table()</a></code> now accepts a schema-qualified name as a single string (e.g. <code>"s1.t"</code>), and a failed write no longer leaves a partial table behind.</li>
+<li>
+<code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>, the predicate functions with <code>mode = "sf"</code> (<code><a href="../reference/ddbs_predicate.html">ddbs_intersects()</a></code>, <code><a href="../reference/ddbs_predicate.html">ddbs_within()</a></code>, …) and the dense (<code>sparse = FALSE</code>) predicates in duckspatial mode now put the spatial predicate in a join condition, so DuckDB uses its spatial join instead of a cross product over every pair of features. On 100,000 points and the 100 <code>nc</code> counties, <code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code> goes from about 14 s to about 1 s, <code>ddbs_intersects(mode = "sf")</code> from about 15 s to about 1 s and the dense duckspatial predicate from about 29 s to about 2 s. The sparse <code>mode = "sf"</code> result is built from the matching pairs only, so it no longer allocates an n × m matrix in R. Two consequences: <code><a href="../reference/ddbs_predicate.html">ddbs_disjoint()</a></code> cannot use the spatial join (nearly every pair matches) and is somewhat slower on large inputs; and in the dense <code>mode = "sf"</code> matrix, rows whose geometry is SQL <code>NULL</code> are now <code>FALSE</code> instead of <code>NA</code>.</li>
+<li>Registering sf data in DuckDB is 3–4x faster and uses ~4x less memory (e.g. <code><a href="../reference/as_duckspatial_df.html">as_duckspatial_df()</a></code> on 1 million points: 3.4 s → 0.8 s, 67 MB → 17 MB). This speeds up every <code>ddbs_*()</code> call with sf input. <code><a href="../reference/ddbs_register_table.html">ddbs_register_table()</a></code> no longer builds a chunk index for data that fits in a single Arrow chunk.</li>
+<li>Every <code>ddbs_*()</code> call that uses the default connection is faster by about 50–100 ms: <code><a href="../reference/ddbs_default_conn.html">ddbs_default_conn()</a></code> no longer re-creates the package’s 35 SQL macros on each call. The macros are created once, when the connection is created. If you set the internal <code>duckspatial_conn</code> option to your own connection, run <code>ddbs_load(conn)</code> to create the macros on it.</li>
+<li>
+<code><a href="../reference/as_duckspatial_df.html">as_duckspatial_df()</a></code>, <code><a href="../reference/ddbs_register_table.html">ddbs_register_table()</a></code> and other functions that take an sf object no longer fail with “subscript out of bounds” on a 0-row sf. The result keeps the columns and the CRS.</li>
+<li>sf data larger than ~500 MB (registered in several Arrow chunks) could only be read once: a second query or <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect()</a></code> on the same object returned 0 rows. It can now be read any number of times.</li>
+<li>Fix <code>nanoarrow::as_nanoarrow_array_stream(..., native = TRUE)</code> to convert WKB geometry columns to native GeoArrow layouts such as <code>geoarrow.point</code>. Since the method was introduced, it had incorrectly returned <code>geoarrow.wkb</code> unchanged because its target schema was inferred from the existing WKB Arrow column (<a href="https://github.com/Cidree/duckspatial/pull/121" class="external-link">#121</a>).</li>
+<li>
+<code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code> no longer drops rows of <code>x</code> that are exact duplicates of another row, and now returns the matching rows in their original order (<a href="https://github.com/Cidree/duckspatial/issues/156" class="external-link">#156</a>).</li>
+<li>
+<code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_azimuth()</a></code> and the predicate functions (<code><a href="../reference/ddbs_predicate.html">ddbs_predicate()</a></code>, <code><a href="../reference/ddbs_predicate.html">ddbs_intersects()</a></code>, etc.) with <code>mode = "sf"</code> could return matrices with values in the wrong cells, because the cross join results were reshaped without an explicit row order (<a href="https://github.com/Cidree/duckspatial/issues/155" class="external-link">#155</a>).</li>
+<li>
+<code>ddbs_*</code> functions and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> now respect dplyr verbs that have no <code>duckspatial_df</code> method (e.g. <code><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct()</a></code>, <code><a href="https://dplyr.tidyverse.org/reference/filter-joins.html" class="external-link">semi_join()</a></code>, <code><a href="https://dplyr.tidyverse.org/reference/filter-joins.html" class="external-link">anti_join()</a></code>, <code><a href="https://dplyr.tidyverse.org/reference/setops.html" class="external-link">union_all()</a></code>). Previously they silently used the original, unmodified table (<a href="https://github.com/Cidree/duckspatial/issues/159" class="external-link">#159</a>).</li>
+<li>
+<code><a href="../reference/ddbs_measure_funs.html">ddbs_area()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_length()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_perimeter()</a></code>, <code><a href="../reference/ddbs_measure_funs.html">ddbs_distance()</a></code> and the <code>dwithin</code> predicate (<code><a href="../reference/ddbs_predicate.html">ddbs_is_within_distance()</a></code>, <code><a href="../reference/ddbs_join.html">ddbs_join()</a></code>, <code><a href="../reference/ddbs_filter.html">ddbs_filter()</a></code>) now compute planar results in the CRS’s own units for projected CRSs not in metres (e.g. US survey feet), labelled as in <code>sf</code>; previously they returned <code>NaN</code>, mislabelled feet as metres, or found no <code>dwithin</code> matches. These functions and <code><a href="../reference/ddbs_buffer.html">ddbs_buffer()</a></code> now give an informative error when the input has no CRS, and WGS84 written as <code>"OGC:CRS84"</code> or <code>"WGS 84"</code> no longer triggers an accuracy warning (<a href="https://github.com/Cidree/duckspatial/issues/161" class="external-link">#161</a>).</li>
+<li>
+<code><a href="../reference/ddbs_read_meta.html">ddbs_read_meta()</a></code> now gives an informative error for files GDAL can’t open (e.g. GeoParquet) or that don’t exist, instead of silently returning an empty tibble. <code><a href="../reference/ddbs_write_table.html">ddbs_write_table()</a></code> on a <code>.parquet</code> path no longer emits a spurious “Could not auto-detect CRS from file” warning before its error (<a href="https://github.com/Cidree/duckspatial/issues/166" class="external-link">#166</a>).</li>
+<li>
+<code><a href="../reference/ddbs_quadkey.html">ddbs_quadkey()</a></code> no longer overwrites the input table when <code>x</code> is not in EPSG:4326, and now returns the correct quadkeys for such input. Previously, a table passed by name was replaced with lat/lon-swapped coordinates and no CRS, and all inputs returned wrong tiles (<a href="https://github.com/Cidree/duckspatial/issues/164" class="external-link">#164</a>).</li>
+<li>
+<code><a href="../reference/ddbs_predicate.html">ddbs_contains()</a></code> and <code><a href="../reference/ddbs_predicate.html">ddbs_crosses()</a></code> are now exported. They were documented but missing from the package namespace.</li>
+<li>
+<code><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by()</a></code> groups on a <code>duckspatial_df</code> are no longer lost after <code><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate()</a></code>, <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code>, <code><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange()</a></code>, <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select()</a></code> and other verbs. Previously a following <code><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise()</a></code> silently collapsed all groups into a single row (<a href="https://github.com/Cidree/duckspatial/issues/170" class="external-link">#170</a>).</li>
+<li>Column, table and schema names that contain spaces or are SQL reserved words (e.g. a geometry column <code>"my geom"</code>, <code>by = "group"</code>, <code>name = "my table"</code>, or a table named <code>"order"</code> passed as <code>x</code>) are now quoted in the generated SQL. Previously they failed with a parser error (<a href="https://github.com/Cidree/duckspatial/issues/168" class="external-link">#168</a>).</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.1" id="duckspatial-121">duckspatial 1.2.1<a class="anchor" aria-label="anchor" href="#duckspatial-121"></a></h2><p class="text-muted">CRAN release: 2026-07-04</p>
 <div class="section level3">

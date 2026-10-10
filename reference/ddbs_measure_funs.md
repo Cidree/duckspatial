@@ -172,8 +172,9 @@ with
 
 For `ddbs_azimuth`: A numeric matrix of azimuth values (in the specified
 `unit`) with dimensions nrow(x) by nrow(y) when `mode = "sf"`, or a lazy
-`tbl_duckdb_connection` with columns `id_x`, `id_y`, and `azimuth`
-otherwise. Both inputs must contain only POINT geometries.
+`tbl_duckdb_connection` with columns `sql_ident(id_x)`,
+`sql_ident(id_y)`, and `azimuth` otherwise. Both inputs must contain
+only POINT geometries.
 
 ## Details
 
