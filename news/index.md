@@ -2,6 +2,8 @@
 
 ## duckspatial 1.3.0
 
+CRAN release: 2026-10-10
+
 ### NEW FEATURES
 
 - Updated the `duckdb` dependency to v1.5.6. See
