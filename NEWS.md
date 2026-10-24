@@ -1,4 +1,10 @@
 
+# Development version
+
+## BUG FIXES
+
+* Internal Spheroid functions (ST_Area_Spheroid, ST_Length_Spheroid, ...) are affected by a flip of the axis order to [LONGITUDE, LATITUDE] (#109).
+
 # duckspatial 1.3.0
 
 ## NEW FEATURES

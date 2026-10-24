@@ -433,8 +433,7 @@ template_measure <- function(
   if (!crs_info$geographic) {
     st_function <- glue::glue("{fun}({sql_ident(x_geom)})")
   } else {
-    # st_function <- glue::glue("{fun}_Spheroid({sql_ident(x_geom)})") # when the issue #109 is solved
-    st_function <- glue::glue("{fun}_Spheroid(ST_FlipCoordinates({sql_ident(x_geom)}))")
+    st_function <- glue::glue("{fun}_Spheroid({sql_ident(x_geom)})")
   }
   
   ## 3.4. Determine units for output: metres for geographic CRSs, the CRS
