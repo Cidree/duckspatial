@@ -1447,8 +1447,8 @@ generate_predicate_clause <- function(
           # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)}, {distance})")
           st_predicate <- glue::glue("
               ST_DWithin_Spheroid(
-                  ST_Point(ST_Y(v1.{sql_ident(x_geom)}), ST_X(v1.{sql_ident(x_geom)})), 
-                  ST_Point(ST_Y(v2.{sql_ident(y_geom)}), ST_X(v2.{sql_ident(y_geom)})), 
+                  ST_Point(ST_X(v1.{sql_ident(x_geom)}), ST_Y(v1.{sql_ident(x_geom)})), 
+                  ST_Point(ST_X(v2.{sql_ident(y_geom)}), ST_Y(v2.{sql_ident(y_geom)})), 
                   {distance})
               ")
           if (!crs_equal(crs_x, 4326)) {
@@ -1514,21 +1514,21 @@ create_duckspatial_macros <- function(conn) { # nocov start
     # --- measure functions
     "CREATE OR REPLACE MACRO ddbs_area(geom) AS (
       CASE 
-        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Area_Spheroid(ST_FlipCoordinates(geom))
+        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Area_Spheroid(geom)
         ELSE ST_Area(geom)
       END
     );",
 
     "CREATE OR REPLACE MACRO ddbs_length(geom) AS (
       CASE 
-        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Length_Spheroid(ST_FlipCoordinates(geom))
+        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Length_Spheroid(geom)
         ELSE ST_Length(geom)
       END
     );",
 
     "CREATE OR REPLACE MACRO ddbs_perimeter(geom) AS (
       CASE 
-        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Perimeter_Spheroid(ST_FlipCoordinates(geom))
+        WHEN ST_CRS(geom) = 'EPSG:4326' THEN ST_Perimeter_Spheroid(geom)
         ELSE ST_Perimeter(geom)
       END
     );",
