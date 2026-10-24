@@ -1,6 +1,9 @@
 
 # Development version
 
+* Updated the `duckdb` dependency to v2.0.0 See <https://r.duckdb.org/news/index.html#duckdb-200>.
+
+
 ## BUG FIXES
 
 * Internal Spheroid functions (ST_Area_Spheroid, ST_Length_Spheroid, ...) are affected by a flip of the axis order to [LONGITUDE, LATITUDE] (#109).
