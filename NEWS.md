@@ -3,6 +3,9 @@
 
 * Updated the `duckdb` dependency to v2.0.0 See <https://r.duckdb.org/news/index.html#duckdb-200>.
 
+## NEW FEATURES
+
+* `duckspatial` defaults storage is now v2.0.0 (see <https://duckdb.org/docs/2.0/internals/storage>).
 
 ## BUG FIXES
 
