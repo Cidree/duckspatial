@@ -643,7 +643,15 @@ convert_to_sf_wkb <- function(data, crs, x_geom) { # nocov start
 #' @returns cli message
 overwrite_table <- function(x, conn, quiet, overwrite) { # nocov start
   if (overwrite) {
-    DBI::dbExecute(conn, glue::glue("DROP TABLE IF EXISTS {sql_table(x)};"))
+    name_list <- get_query_name(x)
+    is_view <- DBI::dbGetQuery(conn, glue::glue(
+      "SELECT COUNT(*) AS n FROM duckdb_views() WHERE NOT internal ",
+      "AND schema_name = {DBI::dbQuoteString(conn, name_list$schema_name)} ",
+      "AND view_name = {DBI::dbQuoteString(conn, name_list$table_name)}"
+    ))$n > 0
+    DBI::dbExecute(conn, glue::glue(
+      "DROP {if (is_view) 'VIEW' else 'TABLE'} IF EXISTS {sql_table(x)};"
+    ))
     if (isFALSE(quiet)) cli::cli_alert_info("Table <{x}> dropped")
   }
 } # nocov end

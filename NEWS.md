@@ -44,6 +44,11 @@
 * `ddbs_transform()` now gives the standard "connection cannot be NULL" error when a table name is passed without a connection.
 * `ddbs_crop()` now accepts a table name in `y`.
 * The distance predicates (`ddbs_is_within_distance()`, `dwithin` in `ddbs_join()`/`ddbs_filter()`) on a geographic CRS now give an informative error for non-POINT geometries (including MULTIPOINT), instead of a raw DuckDB error.
+* `ddbs_write_table()` can now write sf objects whose geometry column name needs quoting (e.g. `"my geom"`), and can overwrite an existing view.
+* `ddbs_collect()` now honours the `duckspatial.output_type` option, like `collect()`, and `st_as_sf()` no longer fails when called with `as =`.
+* `ddbs_transform()` now gives a clear error when `x` has no CRS.
+* `ddbs_install()` and `ddbs_load()` check the connection before using it, so an invalid connection gives the package's error message.
+* `ddbs_union_agg()` now works without `by`, unioning all geometries into one, as documented.
 * Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors.
 
 

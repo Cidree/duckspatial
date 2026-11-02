@@ -106,7 +106,9 @@ st_bbox.duckspatial_df <- function(obj, ...) {
 #'
 #' @param x A \code{duckspatial_df} object
 #' @param ... Additional arguments passed to \code{collect}
-#' @param as Output format. One of:
+#' @param as Output format. If `NULL` (default), uses the
+#'   `duckspatial.output_type` option (see [ddbs_options()]), falling back to
+#'   `"sf"`. One of:
 #'   \describe{
 #'     \item{\code{"sf"}}{(Default) Returns an \code{sf} object with \code{sfc} geometry}
 #'     \item{\code{"tibble"}}{Returns a tibble with geometry column dropped (fastest)}
@@ -140,11 +142,10 @@ st_bbox.duckspatial_df <- function(obj, ...) {
 #' # Collect as geoarrow for Arrow workflows
 #' result_ga <- ddbs_collect(result, as = "geoarrow")
 #' }
-ddbs_collect <- function(x, ..., as = c("sf", "tibble", "raw", "geoarrow")) {
+ddbs_collect <- function(x, ..., as = NULL) {
   if (!inherits(x, "duckspatial_df")) {
     cli::cli_abort("{.arg x} must be a {.cls duckspatial_df} object.")
   }
-  as <- match.arg(as)
   dplyr::collect(x, ..., as = as)
 }
 
@@ -206,7 +207,9 @@ ddbs_compute <- function(x, ..., name = NULL, temporary = TRUE) {
 #' @importFrom sf st_as_sf
 st_as_sf.duckspatial_df <- function(x, ...) {
   # st_as_sf always returns sf, ignore any as= argument
-  dplyr::collect(x, ..., as = "sf")
+  dots <- list(...)
+  dots$as <- NULL
+  do.call(dplyr::collect, c(list(x), dots, list(as = "sf")))
 }
 
 #' @rdname duckspatial_df_sf

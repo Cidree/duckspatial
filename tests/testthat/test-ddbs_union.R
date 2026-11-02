@@ -137,8 +137,8 @@ describe("ddbs_union_agg()", {
       expect_error(ddbs_union_agg("countries", conn = NULL))
     })
     
-    it("requires by argument", {
-      expect_error(ddbs_union_agg(countries_group_ddbs, by = NULL))
+    it("unions everything when by = NULL", {
+      expect_no_error(ddbs_union_agg(countries_group_ddbs, by = NULL))
     })
     
     it("validates by argument type", {
@@ -517,3 +517,7 @@ describe("ddbs_dump()", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+test_that("ddbs_union_agg works without `by` (audit B6)", {
+  expect_equal(nrow(ddbs_union_agg(nc_sf, mode = "sf")), 1)
+})

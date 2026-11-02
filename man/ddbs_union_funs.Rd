@@ -31,7 +31,7 @@ ddbs_combine(
 
 ddbs_union_agg(
   x,
-  by,
+  by = NULL,
   mem = FALSE,
   conn = NULL,
   name = NULL,
@@ -96,7 +96,8 @@ Defaults to \code{FALSE}.}
 
 \item{by}{Character vector specifying one or more column names to
 group by when computing unions. Geometries will be unioned within each group.
-Default is \code{NULL}}
+When \code{NULL} (default), all geometries are unioned into a single geometry.
+Only applies to \code{ddbs_union_agg()}.}
 
 \item{mem}{Logical. If \code{TRUE}, uses \code{ST_MemUnion_Agg()} instead of
 \code{ST_Union_Agg()} — slower but more memory efficient. Default is
