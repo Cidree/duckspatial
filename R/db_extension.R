@@ -203,6 +203,9 @@ ddbs_load <- function(
 
     ## 2.2. Activate macros
     if (isTRUE(create_macros)) create_duckspatial_macros(conn)
+  
+    ## 1.4. For DuckDB v2.0.0
+    DBI::dbExecute(conn, "SET geometry_always_xy = true")
 
     ## 2.3. Message
     if (isFALSE(quiet)) {

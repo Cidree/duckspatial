@@ -1,9 +1,9 @@
 duckspatial_storage_default <- function() {
-  getOption("duckspatial.duckdb_storage_version", "v1.5.0")
+  getOption("duckspatial.duckdb_storage_version", "v2.0.0")
 }
 
 duckspatial_storage_versions <- function() {
-  c(duckspatial_storage_default(), "v1.4.0", "v1.3.0", "v1.2.0", "v1.0.0", "latest")
+  c(duckspatial_storage_default(), "v1.5.0", "v1.4.0", "v1.3.0", "v1.2.0", "v1.0.0", "latest")
 }
 
 match_duckdb_storage_version <- function(x) {
@@ -402,7 +402,7 @@ ddbs_open_persistent <- function(
 
   is_new <- !file.exists(dbdir)
   config <- list()
-  if (is_new && !identical(duckdb_storage_version, "v1.0.0")) {
+  if (is_new) {
     config$storage_compatibility_version <- duckdb_storage_version
   }
 
