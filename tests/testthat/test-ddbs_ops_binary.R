@@ -576,3 +576,11 @@ describe("ddbs_shortest_line()", {
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)
 
+
+test_that("ddbs_crop accepts a table name in `y` (audit B1)", {
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc", quiet = TRUE)
+  ddbs_write_table(conn, nc_sf[1:3, ], "nc3", quiet = TRUE)
+  expect_s3_class(ddbs_crop("nc", "nc3", conn = conn, mode = "sf"), "sf")
+})

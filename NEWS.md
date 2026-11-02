@@ -38,6 +38,13 @@
 * `ddbs_contains()` and `ddbs_crosses()` are now exported. They were documented but missing from the package namespace.
 * `group_by()` groups on a `duckspatial_df` are no longer lost after `mutate()`, `filter()`, `arrange()`, `select()` and other verbs. Previously a following `summarise()` silently collapsed all groups into a single row (#170).
 * Column, table and schema names that contain spaces or are SQL reserved words (e.g. a geometry column `"my geom"`, `by = "group"`, `name = "my table"`, or a table named `"order"` passed as `x`) are now quoted in the generated SQL. Previously they failed with a parser error (#168).
+* `ddbs_write_dataset()` after `distinct()` or `count()` on a table opened by name no longer writes the original, unfiltered table.
+* `select()` now keeps track of a renamed geometry column (e.g. `select(x, geom2 = geometry)`).
+* `mutate()` that reprojects the geometry column in place (e.g. with `ST_Transform`) now warns and sets the CRS to `NA`, instead of keeping the old, wrong CRS.
+* `ddbs_transform()` now gives the standard "connection cannot be NULL" error when a table name is passed without a connection.
+* `ddbs_crop()` now accepts a table name in `y`.
+* The distance predicates (`ddbs_is_within_distance()`, `dwithin` in `ddbs_join()`/`ddbs_filter()`) on a geographic CRS now give an informative error for non-POINT geometries (including MULTIPOINT), instead of a raw DuckDB error.
+* Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors.
 
 
 

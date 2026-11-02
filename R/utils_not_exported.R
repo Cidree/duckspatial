@@ -369,6 +369,22 @@ get_geom_name <- function(conn, x, rest = FALSE, collapse = FALSE, table_id = NU
 }  # nocov end
 
 
+## ST_DWithin_Spheroid (used for geographic CRS) is built with ST_X/ST_Y, which
+## only accept POINT geometries
+assert_dwithin_points <- function(conn, x_query, y_query) { # nocov start
+    geom_type_x <- as.character(ddbs_geometry_type(x_query, FALSE, conn))
+    geom_type_y <- as.character(ddbs_geometry_type(y_query, FALSE, conn))
+    if (!all(c(geom_type_x, geom_type_y) == "POINT")) {
+        cli::cli_abort(c(
+            "Distance predicates on a geographic CRS only support POINT geometries.",
+            "i" = "Detected types: {.val {unique(c(geom_type_x, geom_type_y))}}.",
+            "i" = "Transform the inputs to a projected CRS with {.fn ddbs_transform}."
+        ))
+    }
+} # nocov end
+
+
+
 #' Get names for the query
 #'
 #' @param name table name
@@ -1435,14 +1451,7 @@ generate_predicate_clause <- function(
       if (crs_measure_info(crs_x, call = rlang::caller_env())$geographic) {
 
           ## When using Spheroid version, only point geometry is allowed
-          geom_type_x <- ddbs_geometry_type(x_list$query_name, FALSE, conn)
-          geom_type_y <- ddbs_geometry_type(y_list$query_name, FALSE, conn)
-          if (!geom_type_x %in% c("POINT", "MULTIPOINT") || !geom_type_y %in% c("POINT", "MULTIPOINT")) {
-              cli::cli_abort(c(
-                  "ST_DWithin with non-meter units only supports POINT or MULTIPOINT geometries.",
-                  "i" = "Detected types: {.val {geom_type_x}} and {.val {geom_type_y}}."
-              ))
-          }
+          assert_dwithin_points(conn, x_list$query_name, y_list$query_name)
 
           # st_predicate <- glue::glue("ST_DWithin_Spheroid(v1.{sql_ident(x_geom)}, v2.{sql_ident(y_geom)}, {distance})")
           st_predicate <- glue::glue("

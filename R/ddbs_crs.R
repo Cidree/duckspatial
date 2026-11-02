@@ -368,6 +368,8 @@ ddbs_transform <- function(
     assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    ## `y` may be a CRS string (e.g. "EPSG:4326"), so only `x` is checked
+    assert_conn_character(conn %||% conn_x, x)
 
     # 1. Manage connection to DB
 

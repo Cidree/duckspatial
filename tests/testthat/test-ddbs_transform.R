@@ -279,3 +279,7 @@ describe("ddbs_transform()", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+test_that("ddbs_transform requires a connection for a table name (audit A7)", {
+  expect_error(ddbs_transform("nc", "EPSG:3857"), "connection cannot be")
+})
