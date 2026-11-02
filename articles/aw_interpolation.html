@@ -138,7 +138,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">duckspatial</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,9 +187,9 @@
       <img src="../logo.png" class="logo" alt=""><h1>Areal Interpolation</h1>
 
 
-      <p class="date">2026-10-11</p>
+      <p class="date">2026-11-02</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/v1.3.0/vignettes/aw_interpolation.qmd" class="external-link"><code>vignettes/aw_interpolation.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Cidree/duckspatial/blob/main/vignettes/aw_interpolation.qmd" class="external-link"><code>vignettes/aw_interpolation.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -250,7 +250,7 @@
 <span>  mode <span class="op">=</span> <span class="st">"sf"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpwkCGVx/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/RtmpPAOAcD/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -325,10 +325,10 @@
 <span><span class="co">#&gt;       &lt;int&gt; &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1         1 1168.</span></span>
 <span><span class="co">#&gt; 2         2  379.</span></span>
-<span><span class="co">#&gt; 3         6  753.</span></span>
-<span><span class="co">#&gt; 4         7 5731.</span></span>
-<span><span class="co">#&gt; 5         8 8000.</span></span>
-<span><span class="co">#&gt; 6        11 1417.</span></span></code></pre></div>
+<span><span class="co">#&gt; 3         3   NA </span></span>
+<span><span class="co">#&gt; 4         4   NA </span></span>
+<span><span class="co">#&gt; 5         5   NA </span></span>
+<span><span class="co">#&gt; 6         6  753.</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="database-mode-large-data-workflows">3) Database Mode: Large Data Workflows<a class="anchor" aria-label="anchor" href="#database-mode-large-data-workflows"></a>
 </h2>
@@ -339,7 +339,7 @@
 <code class="sourceCode R"><span><span class="co"># Create connection</span></span>
 <span><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddbs_create_conn.html">ddbs_create_conn</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpwkCGVx/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/RtmpPAOAcD/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -392,15 +392,15 @@
 <span><span class="co">#&gt; Simple feature collection with 6 features and 2 fields</span></span>
 <span><span class="co">#&gt; Geometry type: POLYGON</span></span>
 <span><span class="co">#&gt; Dimension:     XY</span></span>
-<span><span class="co">#&gt; Bounding box:  xmin: 1054293 ymin: 1348021 xmax: 1677656 ymax: 1484503</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: 1054293 ymin: 1348021 xmax: 1521815 ymax: 1416262</span></span>
 <span><span class="co">#&gt; Projected CRS: NAD83 / Conus Albers</span></span>
 <span><span class="co">#&gt;   target_id     BIR74                              x</span></span>
 <span><span class="co">#&gt; 1         1 1168.3093 POLYGON ((1054293 1348021, ...</span></span>
 <span><span class="co">#&gt; 2         2  378.5281 POLYGON ((1132214 1348021, ...</span></span>
-<span><span class="co">#&gt; 3         6  752.9156 POLYGON ((1443895 1348021, ...</span></span>
-<span><span class="co">#&gt; 4         7 5731.0103 POLYGON ((1521815 1348021, ...</span></span>
-<span><span class="co">#&gt; 5         8 7999.6957 POLYGON ((1599735 1348021, ...</span></span>
-<span><span class="co">#&gt; 6        11 1416.5579 POLYGON ((1054293 1416262, ...</span></span></code></pre></div>
+<span><span class="co">#&gt; 3         3        NA POLYGON ((1210134 1348021, ...</span></span>
+<span><span class="co">#&gt; 4         4        NA POLYGON ((1288054 1348021, ...</span></span>
+<span><span class="co">#&gt; 5         5        NA POLYGON ((1365975 1348021, ...</span></span>
+<span><span class="co">#&gt; 6         6  752.9156 POLYGON ((1443895 1348021, ...</span></span></code></pre></div>
 </div>
 <p>If we only wanted the database table, without the geometry, we could do:</p>
 <div class="cell">
@@ -433,19 +433,19 @@
 <span><span class="co">#&gt; # Use ddbs_collect() or st_as_sf() to materialize to sf</span></span>
 <span><span class="co">#&gt; #</span></span>
 <span><span class="co">#&gt; # A query:  ?? x 3</span></span>
-<span><span class="co">#&gt; # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]</span></span>
+<span><span class="co">#&gt; # Database: DuckDB 2.0.0 [unknown@Linux 7.0.0-1017-azure:R 4.6.2/:memory:]</span></span>
 <span><span class="co">#&gt;    target_id x                                                             BIR74</span></span>
 <span><span class="co">#&gt;        &lt;int&gt; &lt;wk_wkb&gt;                                                      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1         1 &lt;POLYGON ((1054293 1348021, 1132214 1348021, 1132214 141626…  1168.</span></span>
-<span><span class="co">#&gt;  2         2 &lt;POLYGON ((1132214 1348021, 1210134 1348021, 1210134 141626…   379.</span></span>
-<span><span class="co">#&gt;  3         6 &lt;POLYGON ((1443895 1348021, 1521815 1348021, 1521815 141626…   753.</span></span>
-<span><span class="co">#&gt;  4         7 &lt;POLYGON ((1521815 1348021, 1599735 1348021, 1599735 141626…  5731.</span></span>
-<span><span class="co">#&gt;  5         8 &lt;POLYGON ((1599735 1348021, 1677656 1348021, 1677656 141626…  8000.</span></span>
-<span><span class="co">#&gt;  6        11 &lt;POLYGON ((1054293 1416262, 1132214 1416262, 1132214 148450…  1417.</span></span>
-<span><span class="co">#&gt;  7        12 &lt;POLYGON ((1132214 1416262, 1210134 1416262, 1210134 148450…  8314.</span></span>
-<span><span class="co">#&gt;  8        13 &lt;POLYGON ((1210134 1416262, 1288054 1416262, 1288054 148450…  8305.</span></span>
-<span><span class="co">#&gt;  9        14 &lt;POLYGON ((1288054 1416262, 1365975 1416262, 1365975 148450… 25694.</span></span>
-<span><span class="co">#&gt; 10        15 &lt;POLYGON ((1365975 1416262, 1443895 1416262, 1443895 148450… 17277.</span></span>
+<span><span class="co">#&gt;  1         1 &lt;POLYGON ((1054293 1348021, 1132214 1348021, 1132214 1416262… 1168.</span></span>
+<span><span class="co">#&gt;  2         2 &lt;POLYGON ((1132214 1348021, 1210134 1348021, 1210134 1416262…  379.</span></span>
+<span><span class="co">#&gt;  3         3 &lt;POLYGON ((1210134 1348021, 1288054 1348021, 1288054 1416262…   NA </span></span>
+<span><span class="co">#&gt;  4         4 &lt;POLYGON ((1288054 1348021, 1365975 1348021, 1365975 1416262…   NA </span></span>
+<span><span class="co">#&gt;  5         5 &lt;POLYGON ((1365975 1348021, 1443895 1348021, 1443895 1416262…   NA </span></span>
+<span><span class="co">#&gt;  6         6 &lt;POLYGON ((1443895 1348021, 1521815 1348021, 1521815 1416262…  753.</span></span>
+<span><span class="co">#&gt;  7         7 &lt;POLYGON ((1521815 1348021, 1599735 1348021, 1599735 1416262… 5731.</span></span>
+<span><span class="co">#&gt;  8         8 &lt;POLYGON ((1599735 1348021, 1677656 1348021, 1677656 1416262… 8000.</span></span>
+<span><span class="co">#&gt;  9         9 &lt;POLYGON ((1677656 1348021, 1755576 1348021, 1755576 1416262…   NA </span></span>
+<span><span class="co">#&gt; 10        10 &lt;POLYGON ((1755576 1348021, 1833496 1348021, 1833496 1416262…   NA </span></span>
 <span><span class="co">#&gt; # ℹ more rows</span></span></code></pre></div>
 </div>
 <section class="level3"><h3 id="cleanup">Cleanup<a class="anchor" aria-label="anchor" href="#cleanup"></a>
@@ -464,7 +464,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -473,8 +474,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -488,6 +550,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;
@@ -516,44 +579,54 @@
           const lineIds = lines.map((line) => {
             return targetCell + "-" + line;
           })
-          let top = null;
-          let height = null;
-          let parent = null;
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
           if (lineIds.length > 0) {
-              //compute the position of the single el (top and bottom and make a div)
-              const el = window.document.getElementById(lineIds[0]);
-              top = el.offsetTop;
-              height = el.offsetHeight;
-              parent = el.parentElement.parentElement;
-            if (lineIds.length > 1) {
-              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-              height = bottom - top;
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
             }
-            if (top !== null && height !== null && parent !== null) {
-              // cook up a div (if necessary) and position it
-              let div = window.document.getElementById("code-annotation-line-highlight");
-              if (div === null) {
-                div = window.document.createElement("div");
-                div.setAttribute("id", "code-annotation-line-highlight");
-                div.style.position = 'absolute';
-                parent.appendChild(div);
-              }
-              div.style.top = top - 2 + "px";
-              div.style.height = height + 4 + "px";
-              div.style.left = 0;
-              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-              if (gutterDiv === null) {
-                gutterDiv = window.document.createElement("div");
-                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-                gutterDiv.style.position = 'absolute';
-                const codeCell = window.document.getElementById(targetCell);
-                const gutter = codeCell.querySelector('.code-annotation-gutter');
-                gutter.appendChild(gutterDiv);
-              }
-              gutterDiv.style.top = top - 2 + "px";
-              gutterDiv.style.height = height + 4 + "px";
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
             }
+            placeBand(gutterDiv, el, lastEl);
             selectedAnnoteEl = annoteEl;
           }
         };
@@ -630,6 +703,7 @@
             interactiveBorder: 10,
             theme: 'light-border',
             placement: 'right',
+            plugins: [hideOnEscAndFocusOut],
             popperOptions: {
               modifiers: [
               {

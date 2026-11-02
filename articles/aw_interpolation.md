@@ -79,7 +79,7 @@ res_extensive <- ddbs_interpolate_aw(
   mode = "sf"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpwkCGVx/duckdb
+#> ℹ /tmp/RtmpPAOAcD/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -168,10 +168,10 @@ head(res_tbl)
 #>       <int> <dbl>
 #> 1         1 1168.
 #> 2         2  379.
-#> 3         6  753.
-#> 4         7 5731.
-#> 5         8 8000.
-#> 6        11 1417.
+#> 3         3   NA 
+#> 4         4   NA 
+#> 5         5   NA 
+#> 6         6  753.
 ```
 
 ## 3) Database Mode: Large Data Workflows
@@ -188,7 +188,7 @@ tables.
 # Create connection
 conn <- ddbs_create_conn()
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpwkCGVx/duckdb
+#> ℹ /tmp/RtmpPAOAcD/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -247,15 +247,15 @@ head(final_sf)
 #> Simple feature collection with 6 features and 2 fields
 #> Geometry type: POLYGON
 #> Dimension:     XY
-#> Bounding box:  xmin: 1054293 ymin: 1348021 xmax: 1677656 ymax: 1484503
+#> Bounding box:  xmin: 1054293 ymin: 1348021 xmax: 1521815 ymax: 1416262
 #> Projected CRS: NAD83 / Conus Albers
 #>   target_id     BIR74                              x
 #> 1         1 1168.3093 POLYGON ((1054293 1348021, ...
 #> 2         2  378.5281 POLYGON ((1132214 1348021, ...
-#> 3         6  752.9156 POLYGON ((1443895 1348021, ...
-#> 4         7 5731.0103 POLYGON ((1521815 1348021, ...
-#> 5         8 7999.6957 POLYGON ((1599735 1348021, ...
-#> 6        11 1416.5579 POLYGON ((1054293 1416262, ...
+#> 3         3        NA POLYGON ((1210134 1348021, ...
+#> 4         4        NA POLYGON ((1288054 1348021, ...
+#> 5         5        NA POLYGON ((1365975 1348021, ...
+#> 6         6  752.9156 POLYGON ((1443895 1348021, ...
 ```
 
 If we only wanted the database table, without the geometry, we could do:
@@ -292,19 +292,19 @@ as_duckspatial_df("nc_grid_births", conn)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
 #> # A query:  ?? x 3
-#> # Database: DuckDB 1.5.6 [unknown@Linux 6.17.0-1022-azure:R 4.6.1/:memory:]
+#> # Database: DuckDB 2.0.0 [unknown@Linux 7.0.0-1017-azure:R 4.6.2/:memory:]
 #>    target_id x                                                             BIR74
 #>        <int> <wk_wkb>                                                      <dbl>
-#>  1         1 <POLYGON ((1054293 1348021, 1132214 1348021, 1132214 141626…  1168.
-#>  2         2 <POLYGON ((1132214 1348021, 1210134 1348021, 1210134 141626…   379.
-#>  3         6 <POLYGON ((1443895 1348021, 1521815 1348021, 1521815 141626…   753.
-#>  4         7 <POLYGON ((1521815 1348021, 1599735 1348021, 1599735 141626…  5731.
-#>  5         8 <POLYGON ((1599735 1348021, 1677656 1348021, 1677656 141626…  8000.
-#>  6        11 <POLYGON ((1054293 1416262, 1132214 1416262, 1132214 148450…  1417.
-#>  7        12 <POLYGON ((1132214 1416262, 1210134 1416262, 1210134 148450…  8314.
-#>  8        13 <POLYGON ((1210134 1416262, 1288054 1416262, 1288054 148450…  8305.
-#>  9        14 <POLYGON ((1288054 1416262, 1365975 1416262, 1365975 148450… 25694.
-#> 10        15 <POLYGON ((1365975 1416262, 1443895 1416262, 1443895 148450… 17277.
+#>  1         1 <POLYGON ((1054293 1348021, 1132214 1348021, 1132214 1416262… 1168.
+#>  2         2 <POLYGON ((1132214 1348021, 1210134 1348021, 1210134 1416262…  379.
+#>  3         3 <POLYGON ((1210134 1348021, 1288054 1348021, 1288054 1416262…   NA 
+#>  4         4 <POLYGON ((1288054 1348021, 1365975 1348021, 1365975 1416262…   NA 
+#>  5         5 <POLYGON ((1365975 1348021, 1443895 1348021, 1443895 1416262…   NA 
+#>  6         6 <POLYGON ((1443895 1348021, 1521815 1348021, 1521815 1416262…  753.
+#>  7         7 <POLYGON ((1521815 1348021, 1599735 1348021, 1599735 1416262… 5731.
+#>  8         8 <POLYGON ((1599735 1348021, 1677656 1348021, 1677656 1416262… 8000.
+#>  9         9 <POLYGON ((1677656 1348021, 1755576 1348021, 1755576 1416262…   NA 
+#> 10        10 <POLYGON ((1755576 1348021, 1833496 1348021, 1833496 1416262…   NA 
 #> # ℹ more rows
 ```
 
