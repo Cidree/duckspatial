@@ -31,7 +31,7 @@ ddbs_combine(
 
 ddbs_union_agg(
   x,
-  by,
+  by = NULL,
   mem = FALSE,
   conn = NULL,
   name = NULL,
@@ -76,8 +76,9 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names. If \code{NULL} (the default), the function returns the result as an
-\code{sf} object}
+names. If \code{NULL} (the default), no table is written and the result is
+returned as a \code{duckspatial_df} or \code{sf} object, depending on
+\code{mode}}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{
@@ -95,7 +96,8 @@ Defaults to \code{FALSE}.}
 
 \item{by}{Character vector specifying one or more column names to
 group by when computing unions. Geometries will be unioned within each group.
-Default is \code{NULL}}
+When \code{NULL} (default), all geometries are unioned into a single geometry.
+Only applies to \code{ddbs_union_agg()}.}
 
 \item{mem}{Logical. If \code{TRUE}, uses \code{ST_MemUnion_Agg()} instead of
 \code{ST_Union_Agg()} — slower but more memory efficient. Default is

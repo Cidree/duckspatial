@@ -528,3 +528,11 @@ describe("predicates use a spatial join and match sf", {
     expect_equal(lapply(ddbs_intersects("null_x", "null_y", conn = conn, mode = "sf"), as.integer), list(1L, integer(0)))
   })
 })
+
+test_that("geographic dwithin aborts cleanly on non-POINT input (audit B2)", {
+  expect_error(
+    ddbs_predicate(countries_sf[1:2, ], countries_sf[1:2, ], predicate = "dwithin",
+                   distance = 1000, mode = "sf"),
+    "only support POINT"
+  )
+})

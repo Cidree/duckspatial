@@ -1,11 +1,11 @@
 
-#' Generate random points within bounding boxes of geometries
+#' Generate random points within the bounding box of the input
 #'
-#' Creates random points within the bounding box of each geometry, which may 
-#' fall outside the geometry itself.
+#' Creates `n` random points within the bounding box of the whole input (all
+#' geometries together), which may fall outside the geometries themselves.
 #'
 #' @template x
-#' @param n Number of random points to generate within each geometry
+#' @param n Total number of random points to generate within the bounding box
 #' @param seed A number for the random number generator
 #' @template conn_null
 #' @template name
@@ -33,7 +33,7 @@
 #' ## store in duckdb
 #' ddbs_write_table(conn, argentina_ddbs, "argentina")
 #'
-#' ## generate 100 random points within each geometry
+#' ## generate 100 random points within the bounding box
 #' ddbs_generate_points("argentina", n = 100, conn)
 #'
 #' ## generate points without using a connection

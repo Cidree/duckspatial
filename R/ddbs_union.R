@@ -22,7 +22,8 @@
 #'   * `TRUE` - Perform row-by-row union between matching features from `x` and `y` (requires same number of rows)
 #' @param by Character vector specifying one or more column names to
 #' group by when computing unions. Geometries will be unioned within each group.
-#' Default is \code{NULL}
+#' When \code{NULL} (default), all geometries are unioned into a single geometry.
+#' Only applies to \code{ddbs_union_agg()}.
 #' @param mem Logical. If \code{TRUE}, uses \code{ST_MemUnion_Agg()} instead of
 #' \code{ST_Union_Agg()} — slower but more memory efficient. Default is
 #' \code{FALSE}. Only applies to \code{ddbs_union_agg()}.
@@ -384,7 +385,7 @@ ddbs_combine <- function(
 #' @export
 ddbs_union_agg <- function(
   x,
-  by,
+  by = NULL,
   mem = FALSE,
   conn = NULL,
   name = NULL,
@@ -402,6 +403,9 @@ ddbs_union_agg <- function(
   assert_logic(mem, "mem")
   assert_logic(overwrite, "overwrite")
   assert_logic(quiet, "quiet")
+  if (!is.null(by) && !is.character(by)) {
+    cli::cli_abort("{.arg by} must be a character vector of column names or {.code NULL}.")
+  }
 
 
   # 1. Prepare inputs
@@ -434,21 +438,31 @@ ddbs_union_agg <- function(
   x_geom <- sf_col_x %||% get_geom_name(target_conn, x_list$query_name)
   assert_geometry_column(x_geom, x_list)
 
-  ## 2.2. Get names of the rest of the groupping columns
-  by_cols <- paste0(sql_ident(by), collapse = ", ")
-
-  ## 2.3. Build the base query (depends on the output type - sf, duckspatial_df, table)
+  ## 2.2. Build the base query. With `by` we group; without it we aggregate the
+  ## whole dataset into a single geometry.
   agg_fn      <- if (isTRUE(mem)) "ST_MemUnion_Agg" else "ST_Union_Agg"
   st_function <- glue::glue("{agg_fn}({sql_ident(x_geom)})")
-  base.query <- glue::glue("
-    SELECT 
-      {by_cols},
-      {build_geom_query(st_function, name, crs_x, mode)} AS {sql_ident(x_geom)}
-    FROM 
-      {x_list$query_name}
-    GROUP BY 
-      {by_cols};
-  ")
+  geom_expr   <- build_geom_query(st_function, name, crs_x, mode)
+
+  if (is.null(by)) {
+    base.query <- glue::glue("
+      SELECT
+        {geom_expr} AS {sql_ident(x_geom)}
+      FROM
+        {x_list$query_name};
+    ")
+  } else {
+    by_cols <- paste0(sql_ident(by), collapse = ", ")
+    base.query <- glue::glue("
+      SELECT
+        {by_cols},
+        {geom_expr} AS {sql_ident(x_geom)}
+      FROM
+        {x_list$query_name}
+      GROUP BY
+        {by_cols};
+    ")
+  }
 
 
   # 3. Table creation if name is provided, or 

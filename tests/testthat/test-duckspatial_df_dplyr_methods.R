@@ -509,3 +509,43 @@ test_that("join that suffixes the group column does not error (#170)", {
   )
   expect_s3_class(res, "duckspatial_df")
 })
+
+test_that("count() and distinct() drop the stale source table (audit A1)", {
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  pts <- sf::st_as_sf(data.frame(id = 1:6, g = rep(1:3, 2), x = 1:6, y = 1:6),
+                      coords = c("x", "y"), crs = 4326)
+  ddbs_write_table(conn, pts, "pts", quiet = TRUE)
+  d <- as_duckspatial_df("pts", conn)
+
+  expect_null(attr(dplyr::count(d, g), "source_table"))
+
+  dd <- dplyr::distinct(d, g, .keep_all = TRUE)
+  f <- tempfile(fileext = ".parquet")
+  on.exit(unlink(f), add = TRUE)
+  ddbs_write_dataset(dd, f, quiet = TRUE)
+  expect_equal(nrow(ddbs_collect(ddbs_open_dataset(f))), 3)
+})
+
+test_that("select() tracks a renamed geometry column (audit A3)", {
+  nc_lazy <- as_duckspatial_df(nc_sf[1:5, ])
+  s <- dplyr::select(nc_lazy, NAME, geom2 = geometry)
+  expect_equal(attr(s, "sf_column"), "geom2")
+  expect_equal(colnames(s), c("NAME", "geom2"))
+  expect_s3_class(ddbs_collect(s), "sf")
+  # geometry is still sticky when not selected
+  expect_equal(colnames(dplyr::select(nc_lazy, NAME)), c("NAME", "geometry"))
+})
+
+test_that("mutate() resets the CRS when the geometry is reprojected (audit A4)", {
+  nc_lazy <- as_duckspatial_df(nc_sf[1:5, ])
+  expect_warning(
+    m <- dplyr::mutate(nc_lazy, geometry = dplyr::sql(
+      "ST_Transform(geometry, 'EPSG:4267', 'EPSG:3857', always_xy := true)"
+    )),
+    "reprojected"
+  )
+  expect_true(is.na(ddbs_crs(m)))
+  # other mutations keep the CRS
+  expect_equal(ddbs_crs(dplyr::mutate(nc_lazy, a2 = AREA * 2)), sf::st_crs(nc_sf))
+})

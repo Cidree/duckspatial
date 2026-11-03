@@ -508,7 +508,8 @@ ddbs_crop <- function(
     quiet = FALSE) {
 
     ## When we crop we use the intersection of the envelope of y
-    y <- ddbs_envelope(y)
+    ## a table name in `y` needs its connection
+    y <- if (is.character(y)) ddbs_envelope(y, conn = conn_y %||% conn) else ddbs_envelope(y)
 
 
     ddbs_intersection(
