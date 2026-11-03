@@ -236,8 +236,8 @@ ddbs_predicate <- function(
       # predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{sql_ident(x_geom)}), ST_FlipCoordinates(y.{sql_ident(y_geom)}), {distance})")
         predicate_expr <- glue::glue(
         "ST_DWithin_Spheroid(
-          ST_Point(ST_Y(x.{sql_ident(x_geom)}), ST_X(x.{sql_ident(x_geom)})),
-          ST_Point(ST_Y(y.{sql_ident(y_geom)}), ST_X(y.{sql_ident(y_geom)})),
+          ST_Point(ST_X(x.{sql_ident(x_geom)}), ST_Y(x.{sql_ident(x_geom)})),
+          ST_Point(ST_X(y.{sql_ident(y_geom)}), ST_Y(y.{sql_ident(y_geom)})),
           {distance}
         )"
       )
