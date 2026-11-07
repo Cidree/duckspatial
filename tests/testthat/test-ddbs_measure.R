@@ -1311,3 +1311,14 @@ describe("CRS units handling (#161)", {
     expect_error(ddbs_distance(nc_4326, nc_4326, mode = "sf"), "projected CRS")
   })
 })
+
+test_that("ddbs_distance uses [lon, lat] axis order on geographic CRS (#109)", {
+  ## 1 degree of longitude at lat 60 is ~55.6 km; flipped axes give ~111 km
+  pts <- sf::st_as_sf(data.frame(lon = c(0, 1), lat = c(60, 60)),
+                      coords = c("lon", "lat"), crs = 4326)
+  ref <- as.numeric(sf::st_distance(pts[1, ], pts[2, ]))
+  for (dt in c("haversine", "spheroid")) {
+    d <- as.numeric(ddbs_distance(pts[1, ], pts[2, ], dist_type = dt, mode = "sf"))
+    expect_equal(d, ref, tolerance = 0.01)
+  }
+})

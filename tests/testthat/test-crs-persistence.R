@@ -26,8 +26,8 @@ test_that("ddbs_create_conn persists native CRS metadata in v1.5 storage", {
   on.exit(unlink(db_path), add = TRUE)
 
   conn <- ddbs_create_conn(db_path)
-  expect_equal(attr(conn, "duckspatial_storage_mode"), "v1.5.0")
-  expect_equal(attr(conn, "duckspatial_storage"), "v1.5.0+")
+  expect_equal(attr(conn, "duckspatial_storage_mode"), "v2.0.0")
+  expect_equal(attr(conn, "duckspatial_storage"), "v2.0.0+")
   on.exit(
     suppressWarnings(try(ddbs_stop_conn(conn), silent = TRUE)),
     add = TRUE
@@ -36,8 +36,8 @@ test_that("ddbs_create_conn persists native CRS metadata in v1.5 storage", {
   ddbs_stop_conn(conn)
 
   conn2 <- ddbs_create_conn(db_path)
-  expect_equal(attr(conn2, "duckspatial_storage_mode"), "v1.5.0")
-  expect_equal(attr(conn2, "duckspatial_storage"), "v1.5.0+")
+  expect_equal(attr(conn2, "duckspatial_storage_mode"), "v2.0.0")
+  expect_equal(attr(conn2, "duckspatial_storage"), "v2.0.0+")
   on.exit(
     suppressWarnings(try(ddbs_stop_conn(conn2), silent = TRUE)),
     add = TRUE

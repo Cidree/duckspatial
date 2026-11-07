@@ -199,22 +199,7 @@ ddbs_glimpse <- function(
 #' @template memory_limit_gb
 #' @param upgrade if TRUE, it upgrades the DuckDB extension to the latest version
 #' @param ... Additional parameters to be passed to \code{\link[DBI]{dbConnect}}
-#' @param duckdb_storage_version Storage compatibility for newly created persistent
-#'   native DuckDB files (\code{.duckdb}, \code{.db}, \code{.ddb}). See
-#'   \url{https://duckdb.org/docs/internals/storage} for more information on
-#'   DuckDB storage versions and compatibility.
-#'   \itemize{
-#'     \item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
-#'           CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
-#'           DuckDB >= 1.5.0 to open the file.
-#'     \item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
-#'           files readable by older DuckDB versions (>= 1.0.0). Persists CRS
-#'           metadata in duckspatial-managed column comments (a convention not
-#'           recognized by other spatial software).
-#'     \item \code{"latest"}: Use the highest storage version supported by your
-#'           installed DuckDB engine.
-#'   }
-#'   Other major version strings like \code{"v1.4.0"}, \code{"v1.3.0"}, etc., are also supported.
+#' @template duckdb_storage_version
 #'
 #' @returns A `duckdb_connection`
 #' @export

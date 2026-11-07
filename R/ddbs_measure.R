@@ -461,11 +461,11 @@ ddbs_distance <- function(
   ## 3.3. Select the right coordinates order
   # st_distance_fun <- glue::glue("{st_distance_fun}(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)})")
   if (dist_type %in% c("haversine", "spheroid")) {
-    # Here we flip the coordinates, but this will have to changed when spatial updates
+    # Spheroid/sphere functions expect [lon, lat] (`geometry_always_xy = true`, set in ddbs_load())
     st_distance_fun <- glue::glue(
       "{st_distance_fun}(
-        ST_Point(ST_Y(x.{sql_ident(x_geom)}), ST_X(x.{sql_ident(x_geom)})),
-        ST_Point(ST_Y(y.{sql_ident(y_geom)}), ST_X(y.{sql_ident(y_geom)}))
+        ST_Point(ST_X(x.{sql_ident(x_geom)}), ST_Y(x.{sql_ident(x_geom)})),
+        ST_Point(ST_X(y.{sql_ident(y_geom)}), ST_Y(y.{sql_ident(y_geom)}))
       )"
     )
   } else {
