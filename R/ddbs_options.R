@@ -15,9 +15,7 @@
 #'     \item \code{"sf"}: Eagerly collected sf object (uses memory)
 #'   }
 #'   If \code{NULL} (the default), the existing option is not changed.
-#' @param duckdb_storage_version Character. The default DuckDB storage compatibility version
-#'   for newly created database files. See \url{https://duckdb.org/docs/internals/storage}
-#'   for details.
+#' @template duckdb_storage_version
 #'
 #' @return Invisibly returns a list containing the currently set options.
 #' @export
@@ -97,7 +95,7 @@ ddbs_sitrep <- function() {
   
   out_type <- getOption("duckspatial.output_type", "duckspatial_df (default)")
   mode     <- getOption("duckspatial.mode", "duckspatial (default)")
-  storage_ver <- getOption("duckspatial.duckdb_storage_version", "v1.5.0")
+  storage_ver <- getOption("duckspatial.duckdb_storage_version", "v2.0.0")
   cli::cli_ul()
   cli::cli_li("Output Type: {.val {out_type}}")
   cli::cli_li("Mode: {.val {mode}}")

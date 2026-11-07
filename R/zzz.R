@@ -6,7 +6,7 @@
   op_duckspatial <- list(
     duckspatial.output_type = "duckspatial_df",
     duckspatial.max_rows = 1e6,
-    duckspatial.duckdb_storage_version = "v1.5.0"
+    duckspatial.duckdb_storage_version = "v2.0.0"
   )
   toset <- !(names(op_duckspatial) %in% names(op))
   if (any(toset)) options(op_duckspatial[toset])
@@ -18,16 +18,13 @@
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
     paste("duckspatial", utils::packageVersion("duckspatial"), "attached"),
-    "\n* Compatible with DuckDB >= v2.0.0"
+    "\n Compatible with DuckDB >= v2.0.0"
   )
 
   # Notify about default output change
   packageStartupMessage(
-      "\nDefault output has changed on v1.0.0:",
-      "\n  duckspatial now returns lazy `duckspatial_df` (dbplyr) objects",
-      "\n  instead of `sf` objects.",
-      "\n\nTo restore the previous behaviour:",
-      "\n  ddbs_options(mode = 'sf')"
+      "\nDefault duckdb_storage_version has changed in duckspatial v1.4.0:",
+      "\n  duckdb_storage_version is now v2.0.0"
     )
 }
 

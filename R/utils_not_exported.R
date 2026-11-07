@@ -959,17 +959,7 @@ ddbs_checkpoint_if_possible <- function(conn) {
 #'   parent frame (the caller's environment).
 #' @template threads
 #' @template memory_limit_gb
-#' @param duckdb_storage_version Storage compatibility for newly created persistent
-#'   native DuckDB files (\code{.duckdb}, \code{.db}, \code{.ddb}).
-#'   \itemize{
-#'     \item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
-#'           CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
-#'           DuckDB >= 1.5.0 to open the file.
-#'     \item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
-#'           files readable by older DuckDB versions (>= 1.0.0). Persists CRS
-#'           metadata in duckspatial-managed column comments (a convention not
-#'           recognized by other spatial software).
-#'   }
+#' @template duckdb_storage_version
 #'
 #' @returns A `duckdb_connection` that will be automatically closed on exit.
 #'   For file-based connections, also returns the file path as an attribute 
