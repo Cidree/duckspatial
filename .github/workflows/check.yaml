@@ -28,7 +28,6 @@ jobs:
     env:
       RSPM: ${{ matrix.config.rspm }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      TESTTHAT_PARALLEL: "false"
 
     steps:
       - uses: actions/checkout@v6
