@@ -74,12 +74,17 @@ runs on a temporary DuckDB database.}
 \item{quiet}{A logical value. If \code{TRUE}, suppresses any informational messages.
 Defaults to \code{FALSE}.}
 
-\item{duckdb_storage_version}{Storage compatibility for newly created native
-DuckDB database files (\code{.duckdb}, \code{.db}, \code{.ddb}). See
-\url{https://duckdb.org/docs/internals/storage} for more information on
+\item{duckdb_storage_version}{Storage compatibility for newly created persistent
+native DuckDB files (\code{.duckdb}, \code{.db}, \code{.ddb}). See
+\url{https://duckdb.org/docs/2.0/internals/storage} for more information on
 DuckDB storage versions and compatibility.
 \itemize{
-\item \code{"v1.5.0"} (\strong{Native Spatial Storage}, Default): Preserves
+\item \code{"v2.0.0"} (\strong{Default, Modern Storage}): Introduces lazy
+column metadata loading, enables \code{DICT_FSST} string compression
+by default, stores row deletions more compactly, and performs
+stronger corruption validation. Requires DuckDB >= 2.0.0 to open
+the file.
+\item \code{"v1.5.0"} (\strong{Native Spatial Storage}): Preserves
 CRS metadata in native DuckDB \code{GEOMETRY} columns. Requires
 DuckDB >= 1.5.0 to open the file.
 \item \code{"v1.0.0"} (\strong{Legacy Compatibility}): Creates
