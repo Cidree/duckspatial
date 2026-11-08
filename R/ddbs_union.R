@@ -22,7 +22,7 @@
 #'   * `TRUE` - Perform row-by-row union between matching features from `x` and `y` (requires same number of rows)
 #' @param by Character vector specifying one or more column names to
 #' group by when computing unions. Geometries will be unioned within each group.
-#' When \code{NULL} (default), all geometries are unioned into a single geometry.
+#' When \code{NULL} (default), it falls back to \code{ddbs_union}.
 #' Only applies to \code{ddbs_union_agg()}.
 #' @param mem Logical. If \code{TRUE}, uses \code{ST_MemUnion_Agg()} instead of
 #' \code{ST_Union_Agg()} — slower but more memory efficient. Default is
