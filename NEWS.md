@@ -9,6 +9,7 @@
 
 ## BUG FIXES
 
+* `ddbs_distance()` (haversine and spheroid) and `ddbs_predicate(predicate = "dwithin")` on a geographic CRS now pass coordinates in [LONGITUDE, LATITUDE] order. With DuckDB v2.0 they returned distances of the wrong magnitude and missed `dwithin` matches (#109).
 * Internal Spheroid functions (ST_Area_Spheroid, ST_Length_Spheroid, ...) are affected by a flip of the axis order to [LONGITUDE, LATITUDE] (#109).
 * `ddbs_write_dataset()` after `distinct()` or `count()` on a table opened by name no longer writes the original, unfiltered table.
 * `select()` now keeps track of a renamed geometry column (e.g. `select(x, geom2 = geometry)`).
