@@ -368,6 +368,8 @@ ddbs_transform <- function(
     assert_name(mode, "mode")
     assert_logic(overwrite, "overwrite")
     assert_logic(quiet, "quiet")
+    ## `y` may be a CRS string (e.g. "EPSG:4326"), so only `x` is checked
+    assert_conn_character(conn %||% conn_x, x)
 
     # 1. Manage connection to DB
 
@@ -407,15 +409,14 @@ ddbs_transform <- function(
     x_list <- get_query_list(x, target_conn)
     on.exit(x_list$cleanup(), add = TRUE)
 
-    ## if CRS wasn't guessed earlier
-    if (is.null(crs_x)) crs_x <- ddbs_crs(x_list$query_name, target_conn)
-    if (is.null(crs_y)) {
-        ## try to get from `y`. if it fails, it's not sf, nor duckspatial_df
-        ## therefore, it might be a CRS or character string with CRS
-        try(crs_y <- ddbs_crs(y, target_conn), silent = TRUE)
-
-        if (is.null(crs_y)) crs_y <- sf::st_crs(y)
+    ## a CRS is needed on both sides to reproject
+    if (is.na(crs_x)) {
+        cli::cli_abort(c(
+            "{.arg x} has no CRS, so it cannot be transformed.",
+            "i" = "Set it first with {.fn ddbs_set_crs}."
+        ))
     }
+    if (is.na(crs_y)) cli::cli_abort("Could not determine a target CRS from {.arg y}.")
 
     ## warn if the crs is the same
     if (crs_x$input == crs_y$input) cli::cli_warn("The CRS of `x` and `y` is the same.")

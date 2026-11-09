@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_generate_points.R
 \name{ddbs_generate_points}
 \alias{ddbs_generate_points}
-\title{Generate random points within bounding boxes of geometries}
+\title{Generate random points within the bounding box of the input}
 \usage{
 ddbs_generate_points(
   x,
@@ -25,7 +25,7 @@ ddbs_generate_points(
 }
 Data is returned from this object.}
 
-\item{n}{Number of random points to generate within each geometry}
+\item{n}{Total number of random points to generate within the bounding box}
 
 \item{seed}{A number for the random number generator}
 
@@ -34,8 +34,9 @@ runs on a temporary DuckDB database.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names. If \code{NULL} (the default), the function returns the result as an
-\code{sf} object}
+names. If \code{NULL} (the default), no table is written and the result is
+returned as a \code{duckspatial_df} or \code{sf} object, depending on
+\code{mode}}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{
@@ -61,8 +62,8 @@ Depends on the \code{mode} argument (or global preference set by \code{\link{ddb
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Creates random points within the bounding box of each geometry, which may
-fall outside the geometry itself.
+Creates \code{n} random points within the bounding box of the whole input (all
+geometries together), which may fall outside the geometries themselves.
 }
 \examples{
 \dontrun{
@@ -81,7 +82,7 @@ argentina_ddbs <- ddbs_open_dataset(
 ## store in duckdb
 ddbs_write_table(conn, argentina_ddbs, "argentina")
 
-## generate 100 random points within each geometry
+## generate 100 random points within the bounding box
 ddbs_generate_points("argentina", n = 100, conn)
 
 ## generate points without using a connection

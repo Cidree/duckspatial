@@ -46,12 +46,13 @@ ddbs_install <- function(
     repos = NULL
 ) {
 
-    # 1. Get extensions list
+    # 1. Check connection
+    dbConnCheck(conn)
+
+    # 2. Get extensions list
     ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
 
-    # 2. Checks
-    ## 2.1. Check connection
-    dbConnCheck(conn)
+    ## 2.1. Other checks
     if (!is.null(repos)) assert_character_scalar(repos, "repos")
     ## 2.2. Check if it's installed. When already installed and not upgrading,
     ## there is nothing to do; with `upgrade = TRUE` we fall through to a
@@ -172,11 +173,11 @@ ddbs_load <- function(
 
     # 1. Checks
 
-    ## 1.1. Get extensions list
-    ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
-
-    ## 1.2. Check connection
+    ## 1.1. Check connection
     dbConnCheck(conn)
+
+    ## 1.2. Get extensions list
+    ext <- DBI::dbGetQuery(conn, "SELECT * FROM duckdb_extensions();")
 
     ## 1.3. Check if extension is installed or already loaded (bundled extensions
     ##      may show installed = FALSE but are still loadable/loaded)

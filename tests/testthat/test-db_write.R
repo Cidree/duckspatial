@@ -364,3 +364,18 @@ describe("ddbs_write_table() same-connection lazy input", {
     expect_equal(sf::st_crs(ddbs_read_table(conn, "nc_legacy_out", quiet = TRUE))$epsg, 4267L)
   })
 })
+
+test_that("ddbs_write_table handles quoted geometry names and views (audit A9, A18)", {
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn), add = TRUE)
+
+  ## geometry column name that needs quoting
+  p <- nc_sf[1:3, "NAME"]
+  names(p)[names(p) == "geometry"] <- "my geom"
+  sf::st_geometry(p) <- "my geom"
+  expect_true(ddbs_write_table(conn, p, "p_geom", quiet = TRUE))
+
+  ## overwriting a view
+  ddbs_register_table(conn, nc_sf, "nc_view", quiet = TRUE)
+  expect_true(ddbs_write_table(conn, nc_sf, "nc_view", overwrite = TRUE, quiet = TRUE))
+})

@@ -95,8 +95,9 @@ If \code{NULL} (default), it is resolved from \code{conn} or extracted from \cod
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names. If \code{NULL} (the default), the function returns the result as an
-\code{sf} object}
+names. If \code{NULL} (the default), no table is written and the result is
+returned as a \code{duckspatial_df} or \code{sf} object, depending on
+\code{mode}}
 
 \item{id_x}{Character; optional name of the column in \code{x} whose values will
 be used to name the list elements. If \code{NULL}, integer row numbers of \code{x} are used.}
@@ -109,7 +110,8 @@ it returns a wide table/matrix.}
 
 \item{distance}{a numeric value specifying the distance for ST_DWithin. Units are
 metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
-(e.g. US survey feet for EPSG:2264)}
+(e.g. US survey feet for EPSG:2264). On a geographic CRS only POINT
+geometries are supported}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{
