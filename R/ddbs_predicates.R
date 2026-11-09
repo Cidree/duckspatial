@@ -16,7 +16,8 @@
 #' @template predicate_args
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units are
 #' metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
-#' (e.g. US survey feet for EPSG:2264)
+#' (e.g. US survey feet for EPSG:2264). On a geographic CRS only POINT
+#' geometries are supported
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -232,6 +233,7 @@ ddbs_predicate <- function(
     ## geographic CRS: spheroid (distance in metres);
     ## projected CRS: planar (distance in CRS units)
     if (crs_measure_info(crs_x)$geographic) {
+      assert_dwithin_points(target_conn, x_list$query_name, y_list$query_name)
       # predicate_expr <- glue::glue("ST_DWithin_Spheroid(x.{sql_ident(x_geom)}, y.{sql_ident(y_geom)}, {distance})")
       # predicate_expr <- glue::glue("ST_DWithin_Spheroid(ST_FlipCoordinates(x.{sql_ident(x_geom)}), ST_FlipCoordinates(y.{sql_ident(y_geom)}), {distance})")
         predicate_expr <- glue::glue(

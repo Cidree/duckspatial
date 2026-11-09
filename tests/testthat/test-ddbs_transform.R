@@ -279,3 +279,14 @@ describe("ddbs_transform()", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+test_that("ddbs_transform requires a connection for a table name (audit A7)", {
+  expect_error(ddbs_transform("nc", "EPSG:3857"), "connection cannot be")
+})
+
+test_that("ddbs_transform errors clearly when x has no CRS (audit A17)", {
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  DBI::dbExecute(conn, "CREATE TABLE nocrs AS SELECT ST_Point(1, 1) AS geom")
+  expect_error(suppressWarnings(ddbs_transform("nocrs", "EPSG:3857", conn = conn)), "has no CRS")
+})

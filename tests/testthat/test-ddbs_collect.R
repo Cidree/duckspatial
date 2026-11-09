@@ -56,3 +56,10 @@ test_that("st_as_sf.duckspatial_df delegates to collect(as='sf')", {
   res <- sf::st_as_sf(nc_lazy)
   expect_s3_class(res, "sf")
 })
+
+test_that("ddbs_collect honours duckspatial.output_type and st_as_sf ignores `as` (audit A13, A14)", {
+  withr::local_options(duckspatial.output_type = "tibble")
+  expect_s3_class(ddbs_collect(nc_ddbs), "tbl_df")
+  expect_false(inherits(ddbs_collect(nc_ddbs), "sf"))
+  expect_s3_class(sf::st_as_sf(nc_ddbs, as = "tibble"), "sf")
+})

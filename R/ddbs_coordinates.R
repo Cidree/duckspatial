@@ -39,9 +39,10 @@
 #'   package = "duckspatial")
 #' )
 #'
-#' ## extract coordinates
-#' ddbs_x(argentina_ddbs)
-#' ddbs_y(argentina_ddbs)
+#' ## extract coordinates (POINT geometries only, so use the centroid)
+#' argentina_centroid <- ddbs_centroid(argentina_ddbs)
+#' ddbs_x(argentina_centroid)
+#' ddbs_y(argentina_centroid)
 #' }
 NULL
 

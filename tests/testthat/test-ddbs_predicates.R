@@ -537,4 +537,12 @@ test_that("dwithin uses [lon, lat] axis order on geographic CRS (#109)", {
   far  <- ddbs_predicate(pts[1, ], pts[2, ], predicate = "dwithin", distance = 50000, mode = "sf")
   expect_equal(lengths(near), 1L)
   expect_equal(lengths(far), 0L)
+ })
+ 
+test_that("geographic dwithin aborts cleanly on non-POINT input (audit B2)", {
+  expect_error(
+    ddbs_predicate(countries_sf[1:2, ], countries_sf[1:2, ], predicate = "dwithin",
+                   distance = 1000, mode = "sf"),
+    "only support POINT"
+  )
 })

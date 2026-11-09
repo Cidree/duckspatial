@@ -8,14 +8,16 @@
 \usage{
 \method{collect}{duckspatial_df}(x, ..., as = NULL)
 
-ddbs_collect(x, ..., as = c("sf", "tibble", "raw", "geoarrow"))
+ddbs_collect(x, ..., as = NULL)
 }
 \arguments{
 \item{x}{A \code{duckspatial_df} object}
 
 \item{...}{Additional arguments passed to \code{collect}}
 
-\item{as}{Output format. One of:
+\item{as}{Output format. If \code{NULL} (default), uses the
+\code{duckspatial.output_type} option (see \code{\link[=ddbs_options]{ddbs_options()}}), falling back to
+\code{"sf"}. One of:
 \describe{
 \item{\code{"sf"}}{(Default) Returns an \code{sf} object with \code{sfc} geometry}
 \item{\code{"tibble"}}{Returns a tibble with geometry column dropped (fastest)}

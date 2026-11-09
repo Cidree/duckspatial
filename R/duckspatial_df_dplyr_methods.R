@@ -316,14 +316,28 @@ select.duckspatial_df <- function(.data, ...) {
   atts <- attributes(.data)
   
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  
-  # Strip geometry, select requested cols, re-add geometry as WKB
-  res <- dplyr::select(.data, ..., dplyr::all_of(atts$sf_column))
-  
+
+  # Resolve the selection on a one-row local proxy (column i holds value i)
+  # to detect whether the geometry column was selected and/or renamed
+  cols <- colnames(.data)
+  proxy <- tibble::as_tibble(rlang::set_names(as.list(seq_along(cols)), cols))
+  selected <- vapply(dplyr::select(proxy, ...), function(v) v[[1]], integer(1))
+  geom_idx <- which(selected == match(atts$sf_column, cols))
+
+  if (length(geom_idx) > 0) {
+    # geometry selected explicitly (possibly under a new name)
+    geom_col <- names(selected)[geom_idx[1]]
+    res <- dplyr::select(.data, ...)
+  } else {
+    # geometry is sticky: re-add it
+    geom_col <- atts$sf_column
+    res <- dplyr::select(.data, ..., dplyr::all_of(atts$sf_column))
+  }
+
   new_duckspatial_df(
     x            = res,
     crs          = atts$crs,
-    geom_col     = atts$sf_column,
+    geom_col     = geom_col,
     source_table = NULL,
     source_conn  = atts$source_conn,
     create_view  = TRUE
@@ -482,11 +496,27 @@ glimpse.duckspatial_df <- function(x, width = NULL, ...) {
 #' @importFrom dplyr mutate
 mutate.duckspatial_df <- function(.data, ...) {
   atts <- attributes(.data)
+
+  # Reprojecting the geometry column in place (e.g. with ST_Transform) changes
+  # its CRS, so the stored CRS can no longer be trusted
+  crs <- atts$crs
+  geom_expr <- rlang::enquos(...)[[atts$sf_column]]
+  reprojected <- !is.null(geom_expr) &&
+    grepl("transform", rlang::expr_deparse(rlang::quo_get_expr(geom_expr)) |> paste(collapse = ""),
+          ignore.case = TRUE)
+  if (reprojected && !is.na(crs)) {
+    cli::cli_warn(c(
+      "The geometry column {.val {atts$sf_column}} was reprojected, so its CRS is unknown and has been set to {.val NA}.",
+      "i" = "Use {.fn ddbs_set_crs} to set it, or {.fn ddbs_transform} to reproject."
+    ))
+    crs <- sf::st_crs(NA)
+  }
+
   class(.data) <- setdiff(class(.data), "duckspatial_df")
   res <- NextMethod()
   new_duckspatial_df(
     x            = res,
-    crs          = atts$crs,
+    crs          = crs,
     geom_col     = atts$sf_column,
     source_table = NULL,
     source_conn  = atts$source_conn,
@@ -502,7 +532,7 @@ mutate.duckspatial_df <- function(.data, ...) {
 count.duckspatial_df <- function(x, ..., wt = NULL, sort = FALSE, name = NULL) {
   # count() aggregates — intentionally drops spatial class (no geometry)
   class(x) <- setdiff(class(x), "duckspatial_df")
-  NextMethod()
+  .strip_spatial_attrs(NextMethod())
 }
 
 
@@ -514,7 +544,8 @@ distinct.duckspatial_df <- function(.data, ..., .keep_all = FALSE) {
   crs <- attr(.data, "crs")
   geom_col <- attr(.data, "sf_column")
   class(.data) <- setdiff(class(.data), "duckspatial_df")
-  res <- NextMethod()
+  ## the result is a new query, so it no longer maps to the source table
+  res <- .strip_spatial_attrs(NextMethod())
 
   ## if geometry column is in the table, return duckspatial_df
   ## otherwise, return a lazy tbl
