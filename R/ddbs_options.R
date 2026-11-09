@@ -9,15 +9,8 @@
 #'     \item \code{"geoarrow"}: Eagerly collected \code{tibble} with geometry as \code{geoarrow_vctr}.
 #'   }
 #'   If \code{NULL} (the default), the existing option is not changed.
-#' @param mode Character. Controls the return type. Options:
-#'   \itemize{
-#'     \item \code{"duckspatial"} (default): Lazy spatial data frame backed by dbplyr/DuckDB
-#'     \item \code{"sf"}: Eagerly collected sf object (uses memory)
-#'   }
-#'   If \code{NULL} (the default), the existing option is not changed.
-#' @param duckdb_storage_version Character. The default DuckDB storage compatibility version
-#'   for newly created database files. See \url{https://duckdb.org/docs/internals/storage}
-#'   for details.
+#' @template mode
+#' @template duckdb_storage_version
 #'
 #' @return Invisibly returns a list containing the currently set options.
 #' @export
