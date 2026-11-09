@@ -257,8 +257,9 @@ If <code>NULL</code> (default), it is resolved from <code>conn</code> or extract
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names. If <code>NULL</code> (the default), the function returns the result as an
-<code>sf</code> object</p></dd>
+names. If <code>NULL</code> (the default), no table is written and the result is
+returned as a <code>duckspatial_df</code> or <code>sf</code> object, depending on
+<code>mode</code></p></dd>
 
 
 <dt id="arg-id-x">id_x<a class="anchor" aria-label="anchor" href="#arg-id-x"></a></dt>
@@ -279,7 +280,8 @@ it returns a wide table/matrix.</p></dd>
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
 <dd><p>a numeric value specifying the distance for ST_DWithin. Units are
 metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
-(e.g. US survey feet for EPSG:2264)</p></dd>
+(e.g. US survey feet for EPSG:2264). On a geographic CRS only POINT
+geometries are supported</p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>

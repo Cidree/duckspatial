@@ -228,8 +228,9 @@ runs on a temporary DuckDB database.</p></dd>
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
-names. If <code>NULL</code> (the default), the function returns the result as an
-<code>sf</code> object</p></dd>
+names. If <code>NULL</code> (the default), no table is written and the result is
+returned as a <code>duckspatial_df</code> or <code>sf</code> object, depending on
+<code>mode</code></p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>

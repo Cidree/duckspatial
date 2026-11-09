@@ -109,8 +109,8 @@ ddbs_interpolate_aw(
 
   A character string of length one specifying the name of the table, or
   a character string of length two specifying the schema and table
-  names. If `NULL` (the default), the function returns the result as an
-  `sf` object
+  names. If `NULL` (the default), no table is written and the result is
+  returned as a `duckspatial_df` or `sf` object, depending on `mode`
 
 - overwrite:
 
@@ -220,7 +220,7 @@ res_ext <- ddbs_interpolate_aw(
   mode = "sf"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpdyH7y1/duckdb
+#> ℹ /tmp/Rtmp0q9Gcx/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

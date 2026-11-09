@@ -168,7 +168,7 @@ DuckDB query. Supports multiple output formats.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'duckspatial_df'</span></span>
 <span><span class="fu">collect</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, as <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">ddbs_collect</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, as <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sf"</span>, <span class="st">"tibble"</span>, <span class="st">"raw"</span>, <span class="st">"geoarrow"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">ddbs_collect</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, as <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -184,7 +184,9 @@ DuckDB query. Supports multiple output formats.</p>
 
 
 <dt id="arg-as">as<a class="anchor" aria-label="anchor" href="#arg-as"></a></dt>
-<dd><p>Output format. One of:</p><dl><dt><code>"sf"</code></dt>
+<dd><p>Output format. If <code>NULL</code> (default), uses the
+<code>duckspatial.output_type</code> option (see <code><a href="ddbs_options.html">ddbs_options()</a></code>), falling back to
+<code>"sf"</code>. One of:</p><dl><dt><code>"sf"</code></dt>
 <dd><p>(Default) Returns an <code>sf</code> object with <code>sfc</code> geometry</p></dd>
 
 <dt><code>"tibble"</code></dt>

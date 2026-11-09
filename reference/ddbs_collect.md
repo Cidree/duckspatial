@@ -9,7 +9,7 @@ DuckDB query. Supports multiple output formats.
 # S3 method for class 'duckspatial_df'
 collect(x, ..., as = NULL)
 
-ddbs_collect(x, ..., as = c("sf", "tibble", "raw", "geoarrow"))
+ddbs_collect(x, ..., as = NULL)
 ```
 
 ## Arguments
@@ -24,7 +24,10 @@ ddbs_collect(x, ..., as = c("sf", "tibble", "raw", "geoarrow"))
 
 - as:
 
-  Output format. One of:
+  Output format. If `NULL` (default), uses the `duckspatial.output_type`
+  option (see
+  [`ddbs_options()`](https://cidree.github.io/duckspatial/reference/ddbs_options.md)),
+  falling back to `"sf"`. One of:
 
   `"sf"`
 

@@ -189,7 +189,7 @@ Create new geometries from scratch or from existing data
 - [`ddbs_point()`](https://cidree.github.io/duckspatial/reference/ddbs_point.md)
   : Create point geometries from coordinate vectors
 - [`ddbs_generate_points()`](https://cidree.github.io/duckspatial/reference/ddbs_generate_points.md)
-  : Generate random points within bounding boxes of geometries
+  : Generate random points within the bounding box of the input
 - [`ddbs_quadkey()`](https://cidree.github.io/duckspatial/reference/ddbs_quadkey.md)
   : Convert point geometries to QuadKey tiles
 

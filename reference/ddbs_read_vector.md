@@ -21,8 +21,8 @@ ddbs_read_vector(conn, name, clauses = NULL, quiet = FALSE)
 
   A character string of length one specifying the name of the table, or
   a character string of length two specifying the schema and table
-  names. If `NULL` (the default), the function returns the result as an
-  `sf` object
+  names. If `NULL` (the default), no table is written and the result is
+  returned as a `duckspatial_df` or `sf` object, depending on `mode`
 
 - clauses:
 
