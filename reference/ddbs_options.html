@@ -181,13 +181,29 @@ Must be one of:</p><ul><li><p><code>"sf"</code> (default): Eagerly collected <co
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
 <dd><p>Character. Controls the return type. Options:</p><ul><li><p><code>"duckspatial"</code> (default): Lazy spatial data frame backed by dbplyr/DuckDB</p></li>
 <li><p><code>"sf"</code>: Eagerly collected sf object (uses memory)</p></li>
-</ul><p>If <code>NULL</code> (the default), the existing option is not changed.</p></dd>
+</ul><p>Can be set globally via <code>ddbs_options(mode = "...")</code> or
+per-function via this argument. Per-function overrides global setting.</p></dd>
 
 
 <dt id="arg-duckdb-storage-version">duckdb_storage_version<a class="anchor" aria-label="anchor" href="#arg-duckdb-storage-version"></a></dt>
-<dd><p>Character. The default DuckDB storage compatibility version
-for newly created database files. See <a href="https://duckdb.org/docs/internals/storage" class="external-link">https://duckdb.org/docs/internals/storage</a>
-for details.</p></dd>
+<dd><p>Storage compatibility for newly created persistent
+native DuckDB files (<code>.duckdb</code>, <code>.db</code>, <code>.ddb</code>). See
+<a href="https://duckdb.org/docs/2.0/internals/storage" class="external-link">https://duckdb.org/docs/2.0/internals/storage</a> for more information on
+DuckDB storage versions and compatibility.</p><ul><li><p><code>"v2.0.0"</code> (<strong>Default, Modern Storage</strong>): Introduces lazy
+column metadata loading, enables <code>DICT_FSST</code> string compression
+by default, stores row deletions more compactly, and performs
+stronger corruption validation. Requires DuckDB &gt;= 2.0.0 to open
+the file.</p></li>
+<li><p><code>"v1.5.0"</code> (<strong>Native Spatial Storage</strong>): Preserves
+CRS metadata in native DuckDB <code>GEOMETRY</code> columns. Requires
+DuckDB &gt;= 1.5.0 to open the file.</p></li>
+<li><p><code>"v1.0.0"</code> (<strong>Legacy Compatibility</strong>): Creates
+files readable by older DuckDB versions (&gt;= 1.0.0). Persists CRS
+metadata in duckspatial-managed column comments (a convention not
+recognized by other spatial software).</p></li>
+<li><p><code>"latest"</code>: Use the highest storage version supported by your
+installed DuckDB engine.</p></li>
+</ul><p>Other major version strings like <code>"v1.4.0"</code>, <code>"v1.3.0"</code>, etc., are also supported.</p></dd>
 
 </dl></div>
     <div class="section level2">

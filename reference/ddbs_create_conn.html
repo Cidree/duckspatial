@@ -203,8 +203,13 @@ file path with <code>.duckdb</code>, <code>.db</code>, or <code>.ddb</code> exte
 <dt id="arg-duckdb-storage-version">duckdb_storage_version<a class="anchor" aria-label="anchor" href="#arg-duckdb-storage-version"></a></dt>
 <dd><p>Storage compatibility for newly created persistent
 native DuckDB files (<code>.duckdb</code>, <code>.db</code>, <code>.ddb</code>). See
-<a href="https://duckdb.org/docs/internals/storage" class="external-link">https://duckdb.org/docs/internals/storage</a> for more information on
-DuckDB storage versions and compatibility.</p><ul><li><p><code>"v1.5.0"</code> (<strong>Native Spatial Storage</strong>, Default): Preserves
+<a href="https://duckdb.org/docs/2.0/internals/storage" class="external-link">https://duckdb.org/docs/2.0/internals/storage</a> for more information on
+DuckDB storage versions and compatibility.</p><ul><li><p><code>"v2.0.0"</code> (<strong>Default, Modern Storage</strong>): Introduces lazy
+column metadata loading, enables <code>DICT_FSST</code> string compression
+by default, stores row deletions more compactly, and performs
+stronger corruption validation. Requires DuckDB &gt;= 2.0.0 to open
+the file.</p></li>
+<li><p><code>"v1.5.0"</code> (<strong>Native Spatial Storage</strong>): Preserves
 CRS metadata in native DuckDB <code>GEOMETRY</code> columns. Requires
 DuckDB &gt;= 1.5.0 to open the file.</p></li>
 <li><p><code>"v1.0.0"</code> (<strong>Legacy Compatibility</strong>): Creates

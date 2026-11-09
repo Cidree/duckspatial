@@ -24,7 +24,7 @@ ddbs_sitrep()
 #> 
 #> • Output Type: "duckspatial_df"
 #> • Mode: "duckspatial (default)"
-#> • DuckDB Storage Version: "v1.5.0"
+#> • DuckDB Storage Version: "v2.0.0"
 #> 
 #> ── Default Connection ──
 #> 
