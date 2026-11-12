@@ -24,6 +24,10 @@
 * `ddbs_union_agg()` now works without `by`, unioning all geometries into one, as documented.
 * Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors.
 
+## PERFORMANCE
+
+* `ddbs_distance()` and `ddbs_azimuth()` with `mode = "sf"` no longer sort the n x m pairs before building the matrix; each value is written straight to its cell. For 100k x 100 points this is ~4x faster for planar distance, ~2x for azimuth and ~1.4x for haversine distance.
+
 # duckspatial 1.3.0
 
 ## NEW FEATURES
