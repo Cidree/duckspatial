@@ -22,7 +22,7 @@ following columns:
 \code{"GeoPackage"}).}
 \item{layers}{A list-column of data frames, one per file, each
 describing the layers contained in the file. Unnest with
-\code{\link[tidyr]{unnest}} to access individual layer attributes
+\code{tidyr::unnest()} to access individual layer attributes
 such as name, geometry type, and feature count.}
 }
 }

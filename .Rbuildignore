@@ -23,3 +23,6 @@ internal/*
 ^vignettes/*_files$
 ^\.positai$
 ^\.claude$
+^sync2$
+^quality_reports$
+^man/figures/bench$

@@ -7,6 +7,8 @@ vignette: >
   %\VignetteIndexEntry{Areal Interpolation}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+execute:
+  eval: !expr identical(tolower(Sys.getenv("NOT_CRAN")), "true")
 knitr:
   opts_chunk:
     collapse: true

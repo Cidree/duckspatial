@@ -30,6 +30,8 @@ ddbs_options <- function(output_type = NULL, mode = NULL, duckdb_storage_version
   
   # 1. SETTER logic
   if (!is.null(output_type)) {
+    ## "duckspatial_df" was the stored default in earlier versions; collect() treats it as "sf"
+    if (identical(output_type, "duckspatial_df")) output_type <- "sf"
     if (!output_type %in% c("sf", "tibble", "raw", "geoarrow")) {
       cli::cli_abort(paste0(
         "Invalid output_type: {.val {output_type}}. ",
@@ -88,9 +90,9 @@ ddbs_sitrep <- function() {
   # 1. Global Options
   cli::cli_h2("Global Options")
   
-  out_type <- getOption("duckspatial.output_type", "duckspatial_df (default)")
+  out_type <- getOption("duckspatial.output_type", "sf (default)")
   mode     <- getOption("duckspatial.mode", "duckspatial (default)")
-  storage_ver <- getOption("duckspatial.duckdb_storage_version", "v1.5.0")
+  storage_ver <- getOption("duckspatial.duckdb_storage_version", duckspatial_storage_default())
   cli::cli_ul()
   cli::cli_li("Output Type: {.val {out_type}}")
   cli::cli_li("Mode: {.val {mode}}")

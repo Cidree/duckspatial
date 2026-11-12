@@ -44,3 +44,15 @@ test_that("ddbs_sitrep runs without error", {
   expect_true("output_type" %in% names(res))
   expect_true("connection_status" %in% names(res))
 })
+
+test_that("the default output_type can be set again with ddbs_options()", {
+  withr::local_options(duckspatial.output_type = NULL)
+  duckspatial:::.onLoad(NULL, "duckspatial")
+  default <- getOption("duckspatial.output_type")
+  expect_equal(default, "sf")
+  expect_no_error(ddbs_options(output_type = default))
+
+  # "duckspatial_df" (the stored default in earlier versions) is accepted as "sf"
+  ddbs_options(output_type = "duckspatial_df")
+  expect_equal(getOption("duckspatial.output_type"), "sf")
+})

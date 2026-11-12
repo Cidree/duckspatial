@@ -213,3 +213,21 @@ test_that("is_duckspatial_df works correctly", {
   expect_false(is_duckspatial_df(NULL))
 })
 
+
+test_that("data.frame and coords ingestion do not leave permanent tables", {
+  db <- tempfile(fileext = ".duckdb")
+  conn <- ddbs_create_conn(dbdir = db)
+  on.exit(unlink(db), add = TRUE)
+
+  df <- data.frame(id = 1:3, x = c(0, 1, 2), y = 0)
+  pts <- as_duckspatial_df(df, conn = conn, coords = c("x", "y"), crs = 3857)
+  expect_equal(nrow(dplyr::collect(pts)), 3)
+
+  tbls <- DBI::dbGetQuery(conn, "SELECT table_name FROM duckdb_tables() WHERE NOT temporary")
+  expect_false(any(startsWith(tbls$table_name, "temp_table_")))
+
+  duckdb::dbDisconnect(conn)
+  conn2 <- duckdb::dbConnect(duckdb::duckdb(), db)
+  on.exit(duckdb::dbDisconnect(conn2), add = TRUE, after = FALSE)
+  expect_equal(nrow(DBI::dbGetQuery(conn2, "SELECT * FROM duckdb_tables()")), 0)
+})

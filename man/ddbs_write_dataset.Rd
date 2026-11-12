@@ -106,11 +106,12 @@ and \code{.ddb} paths. Format is auto-detected from file extension for common
 formats, or can be specified explicitly via \code{gdal_driver}.
 }
 \details{
-Persistent DuckDB database files created by duckspatial use \strong{Native
-Spatial Storage} (\code{storage_version = "v1.5.0"}) by default so CRS metadata is
-retained in native \code{GEOMETRY} columns. These files require DuckDB >= 1.5.0
-to open; use \strong{Legacy Compatibility} (\code{storage_version = "v1.0.0"})
-when the output must be readable by older DuckDB versions.
+Persistent DuckDB database files created by duckspatial use \strong{Modern
+Storage} (\code{duckdb_storage_version = "v2.0.0"}) by default, which keeps CRS
+metadata in native \code{GEOMETRY} columns. These files require DuckDB >= 2.0.0
+to open. Use \code{duckdb_storage_version = "v1.5.0"} for files readable by
+DuckDB >= 1.5.0, or \strong{Legacy Compatibility} (\code{"v1.0.0"}) when the output
+must be readable by older DuckDB versions.
 }
 \examples{
 \dontrun{
@@ -120,13 +121,16 @@ library(duckspatial)
 path <- system.file("spatial/countries.geojson", package = "duckspatial")
 ds <- ddbs_open_dataset(path)
 
+# Write to a temporary directory
+out_dir <- tempdir()
+
 # Auto-detect format from extension
-ddbs_write_dataset(ds, "output.geojson")
-ddbs_write_dataset(ds, "output.gpkg")
-ddbs_write_dataset(ds, "output.parquet")
+ddbs_write_dataset(ds, file.path(out_dir, "output.geojson"))
+ddbs_write_dataset(ds, file.path(out_dir, "output.gpkg"))
+ddbs_write_dataset(ds, file.path(out_dir, "output.parquet"))
 
 # Explicit GDAL driver for non-standard extension
-ddbs_write_dataset(ds, "mydata.dat", gdal_driver = "GeoJSON")
+ddbs_write_dataset(ds, file.path(out_dir, "mydata.dat"), gdal_driver = "GeoJSON")
 
 # See available drivers on your system
 drivers <- ddbs_drivers()
@@ -134,10 +138,16 @@ writable <- drivers[drivers$can_create == TRUE, ]
 head(writable)
 
 # CRS override
-ddbs_write_dataset(ds, "output_3857.geojson", crs = "EPSG:3857")
+ddbs_write_dataset(ds, file.path(out_dir, "output_3857.geojson"), crs = "EPSG:3857")
 
 # Overwrite existing file
-ddbs_write_dataset(ds, "output.gpkg", overwrite = TRUE)
+ddbs_write_dataset(ds, file.path(out_dir, "output.gpkg"), overwrite = TRUE)
+
+# Clean up
+unlink(file.path(out_dir, c(
+  "output.geojson", "output.gpkg", "output.parquet",
+  "mydata.dat", "output_3857.geojson"
+)))
 }
 }
 \references{
