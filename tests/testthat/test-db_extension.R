@@ -5,6 +5,13 @@ skip_if(Sys.getenv("TEST_ONE") != "")
 testthat::skip_on_cran()
 testthat::skip_if_not_installed("duckdb")
 
+## With duckdb 2.0.0 on Windows (R 4.6), a failed extension download (HTTP 404)
+## can leave DuckDB in a state that segfaults later in the session, at garbage
+## collection or shutdown. Tests that need a download to fail are skipped there.
+skip_failed_download_on_windows <- function() {
+  testthat::skip_on_os("windows")
+}
+
 
 # 1. ddbs_install() ------------------------------------------------------
 
@@ -51,6 +58,7 @@ describe("ddbs_install()", {
   describe("errors", {
 
     it("errors when extension cannot be found in any repository", {
+      skip_failed_download_on_windows()
       conn <- duckdb::dbConnect(duckdb::duckdb())
       on.exit(duckdb::dbDisconnect(conn), add = TRUE)
       expect_error(
@@ -148,7 +156,11 @@ describe("ddbs_load()", {
 ## Community extensions
 testthat::test_that("Community extensions are installed", {
   conn <- duckdb::dbConnect(duckdb::duckdb())
-  out <- tryCatch(ddbs_install(conn, extension = "h3"), error = function(e) NULL)
+  ## h3 is not a core extension, so it goes straight to the community repository
+  out <- tryCatch(
+    testthat::expect_message(ddbs_install(conn, extension = "h3"), "from community repository"),
+    error = function(e) NULL
+  )
   if (is.null(out)) {
     testthat::pass()
   } else {
@@ -159,6 +171,7 @@ testthat::test_that("Community extensions are installed", {
 ## Other core extensions
 testthat::test_that("Community extensions are installed", {
   conn <- duckdb::dbConnect(duckdb::duckdb())
+  skip_failed_download_on_windows()
   out <- tryCatch(ddbs_install(conn, extension = "aws"), error = function(e) NULL)
   if (is.null(out)) {
     testthat::pass()

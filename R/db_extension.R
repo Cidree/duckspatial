@@ -10,7 +10,9 @@
 #' @param repos optional character string naming the repository to install the
 #' extension from (e.g. \code{"core"}, \code{"core_nightly"}, or
 #' \code{"community"}); a URL or path can also be supplied. If \code{NULL}
-#' (default), the \code{core} repository is tried first, then \code{community}.
+#' (default), core extensions known to DuckDB are installed from \code{core}
+#' and any other extension from \code{community}, falling back to the other
+#' repository if that fails.
 #' Switching an already-installed extension to a different repository requires
 #' \code{upgrade = TRUE}. See
 #' \url{https://duckdb.org/docs/stable/extensions/installing_extensions}.
@@ -97,28 +99,38 @@ ddbs_install <- function(
 
     } else {
 
-        ## 3b. Default: try core, then community, then error
-        err_core <- err_community <- NULL
+        ## 3b. Default: try the likely repository first, then the other one.
+        ## `duckdb_extensions()` lists every core extension known to this DuckDB
+        ## build, installed or not, so an extension missing from it (or installed
+        ## from community) is tried in community first. This avoids a download
+        ## that is bound to fail: with duckdb 2.0.0 on Windows, a failed download
+        ## can crash the R session later on.
+        installed_from <- if ("installed_from" %in% names(target_ext)) target_ext$installed_from else character(0)
+        is_core <- nrow(target_ext) == 1 && !identical(installed_from, "community")
+        repos_order <- if (is_core) c("core", "community") else c("community", "core")
 
-        installed <- tryCatch({
-            suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension};")))
-            "core"
-        }, error = function(e) {
-            err_core <<- e
-            tryCatch({
-                suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension} FROM community;")))
-                "community"
-            }, error = function(e2) {
-                err_community <<- e2
-                NULL
+        errs <- list()
+        installed <- NULL
+        for (r in repos_order) {
+            from_sql <- if (r == "core") "" else glue::glue(" FROM {r}")
+            ok <- tryCatch({
+                suppressMessages(DBI::dbExecute(conn, glue::glue("{install_kw} {extension}{from_sql};")))
+                TRUE
+            }, error = function(e) {
+                errs[[r]] <<- conditionMessage(e)
+                FALSE
             })
-        })
+            if (ok) {
+                installed <- r
+                break
+            }
+        }
 
         if (is.null(installed)) {
             cli::cli_abort(c(
                 "Failed to {if (upgrade) 'upgrade' else 'install'} the {extension} extension.",
-                "x" = "core: {conditionMessage(err_core)}",
-                "x" = "community: {conditionMessage(err_community)}",
+                "x" = "core: {errs[['core']]}",
+                "x" = "community: {errs[['community']]}",
                 "i" = "It might not be available for this version of DuckDB, or the install location may not be writable.",
                 "i" = "Check that the extension name is correct: {.url https://duckdb.org/docs/extensions/overview}"
             ))

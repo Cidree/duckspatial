@@ -9,6 +9,8 @@
 
 ## BUG FIXES
 
+* `ddbs_install()` now installs extensions that are not core DuckDB extensions (e.g. `h3`) from the community repository directly, instead of first trying a core download that always fails. With duckdb 2.0.0 on Windows, a failed extension download can crash the R session later on.
+
 * `ddbs_distance()` (haversine and spheroid) and `ddbs_predicate(predicate = "dwithin")` on a geographic CRS now pass coordinates in [LONGITUDE, LATITUDE] order. With DuckDB v2.0 they returned distances of the wrong magnitude and missed `dwithin` matches (#109).
 * Internal Spheroid functions (ST_Area_Spheroid, ST_Length_Spheroid, ...) are affected by a flip of the axis order to [LONGITUDE, LATITUDE] (#109).
 * `ddbs_write_dataset()` after `distinct()` or `count()` on a table opened by name no longer writes the original, unfiltered table.
