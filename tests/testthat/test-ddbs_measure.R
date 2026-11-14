@@ -1147,6 +1147,22 @@ describe("ddbs_azimuth()", {
       expect_equal(ddbs_azimuth(x, y, mode = "sf"), expected, tolerance = 1e-6)
     })
 
+    it("fills every cell in x-by-y order for a parallel cross join", {
+      withr::with_seed(7, {
+        xy_x <- data.frame(x = runif(600, 0, 1e5), y = runif(600, 0, 1e5))
+        xy_y <- data.frame(x = runif(40, 0, 1e5), y = runif(40, 0, 1e5))
+      })
+      x <- sf::st_as_sf(xy_x, coords = c("x", "y"), crs = "EPSG:3857", remove = FALSE)
+      y <- sf::st_as_sf(xy_y, coords = c("x", "y"), crs = "EPSG:3857", remove = FALSE)
+      expected <- outer(
+        seq_len(nrow(xy_x)), seq_len(nrow(xy_y)),
+        function(i, j) atan2(xy_y$x[j] - xy_x$x[i], xy_y$y[j] - xy_x$y[i]) %% (2 * pi)
+      )
+      output <- ddbs_azimuth(x, y, mode = "sf")
+      expect_false(anyNA(output))
+      expect_equal(output, expected, tolerance = 1e-6)
+    })
+
     it("calculates azimuth correctly in degrees", {
       output <- ddbs_azimuth(origin_sf, dirs_sf, unit = "degrees", mode = "sf")
       expect_equal(output[1, 1],   0, tolerance = 1e-6)

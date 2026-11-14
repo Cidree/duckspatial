@@ -28,6 +28,10 @@
 * The default `duckspatial.output_type` option is now `"sf"`, as documented, so `ddbs_options(output_type = getOption("duckspatial.output_type"))` no longer errors. `collect()` returns the same output as before, and `"duckspatial_df"` is still accepted as an alias for `"sf"`.
 * Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors. `ddbs_write_dataset()` now documents v2.0.0 as the default storage version, and its examples write to `tempdir()`. `as_duckspatial_df()` documents that `coords` input with no `crs` is assumed to be in EPSG:4326. `ddbs_rotate()` explains that `by_feature = FALSE` rotates around the centroid of the whole dataset, and that `center_x`/`center_y` need `by_feature = TRUE`; its example no longer errors.
 
+## PERFORMANCE
+
+* `ddbs_distance()` and `ddbs_azimuth()` with `mode = "sf"` no longer sort the n x m pairs before building the matrix; each value is written straight to its cell. For 100k x 100 points this is ~4x faster for planar distance, ~2x for azimuth and ~1.4x for haversine distance.
+
 # duckspatial 1.3.0
 
 ## NEW FEATURES

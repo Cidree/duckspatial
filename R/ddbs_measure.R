@@ -475,30 +475,27 @@ ddbs_distance <- function(
   ## 3.2. Create query and get results based on mode
   if (mode == "sf") {
 
-    ## Create the query
-    tmp.query <- glue::glue("
-      SELECT {st_distance_fun} as distance
-      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
-      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
-      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
-    ")
-
-    ## Retrieve results
-    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    ## Cconvert to matrix
     ## Get number of rows
     nrowx <- get_nrow(target_conn, x_list$query_name)
     nrowy <- get_nrow(target_conn, y_list$query_name)
+    nrowx_sql <- format(nrowx, scientific = FALSE)
+    ## a 4-byte cell index halves its memory when the matrix fits in an integer index
+    cell_type <- if (nrowx * nrowy <= .Machine$integer.max) "INTEGER" else "DOUBLE"
 
-    ## Convert results to matrix -> to list
-    ## Return sparse matrix
-    dist_mat  <- matrix(
-        data_tbl[["distance"]],
-        nrow = nrowx,
-        ncol = nrowy,
-        byrow = TRUE
-    )
+    ## Create the query. Each pair returns its cell index in the (column-major)
+    ## result matrix, so the n x m rows don't need to be sorted
+    tmp.query <- glue::glue("
+      SELECT
+        CAST((y.ddbs_rid_y - 1) * {nrowx_sql} + x.ddbs_rid_x AS {cell_type}) AS ddbs_cell,
+        {st_distance_fun} AS distance
+      FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
+      CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
+    ")
+
+    ## Retrieve results and fill the matrix
+    data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
+    dist_mat <- matrix(NA_real_, nrow = nrowx, ncol = nrowy)
+    dist_mat[data_tbl[["ddbs_cell"]]] <- data_tbl[["distance"]]
 
     ## Set units and return the resulting matrix
     if (!is.null(crs_info$units)) {
@@ -677,24 +674,25 @@ ddbs_azimuth <- function(
 
   if (mode == "sf") {
 
+    nrowx <- get_nrow(target_conn, x_list$query_name)
+    nrowy <- get_nrow(target_conn, y_list$query_name)
+    nrowx_sql <- format(nrowx, scientific = FALSE)
+    ## a 4-byte cell index halves its memory when the matrix fits in an integer index
+    cell_type <- if (nrowx * nrowy <= .Machine$integer.max) "INTEGER" else "DOUBLE"
+
+    ## Each pair returns its cell index in the (column-major) result matrix,
+    ## so the n x m rows don't need to be sorted
     tmp.query <- glue::glue("
-      SELECT {st_azimuth_expr} AS azimuth
+      SELECT
+        CAST((y.ddbs_rid_y - 1) * {nrowx_sql} + x.ddbs_rid_x AS {cell_type}) AS ddbs_cell,
+        {st_azimuth_expr} AS azimuth
       FROM (SELECT *, row_number() OVER () AS ddbs_rid_x FROM {x_list$query_name}) x
       CROSS JOIN (SELECT *, row_number() OVER () AS ddbs_rid_y FROM {y_list$query_name}) y
-      ORDER BY x.ddbs_rid_x, y.ddbs_rid_y
     ")
 
     data_tbl <- DBI::dbGetQuery(target_conn, tmp.query)
-
-    nrowx <- get_nrow(target_conn, x_list$query_name)
-    nrowy <- get_nrow(target_conn, y_list$query_name)
-
-    az_mat <- matrix(
-      data_tbl[["azimuth"]],
-      nrow = nrowx,
-      ncol = nrowy,
-      byrow = TRUE
-    )
+    az_mat <- matrix(NA_real_, nrow = nrowx, ncol = nrowy)
+    az_mat[data_tbl[["ddbs_cell"]]] <- data_tbl[["azimuth"]]
     return(az_mat)
 
   } else {
