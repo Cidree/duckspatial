@@ -1,7 +1,10 @@
-# Rotate geometries around their centroid
+# Rotate geometries around a centroid or a given point
 
-Rotates geometries by a specified angle around their centroid (or
-another center), preserving their shape.
+Rotates geometries by a specified angle, preserving their shape. With
+`by_feature = FALSE` (default), all geometries rotate together around
+the centroid of the whole dataset. With `by_feature = TRUE`, each
+geometry rotates around its own centroid, or around the point given by
+`center_x`/`center_y`.
 
 ## Usage
 
@@ -54,13 +57,15 @@ ddbs_rotate(
 
 - center_x:
 
-  numeric value for the X coordinate of rotation center. If NULL,
-  rotates around the centroid of each geometry
+  numeric value for the X coordinate of the rotation center. Only used
+  with `by_feature = TRUE`. If NULL, rotates around the centroid (see
+  `by_feature`)
 
 - center_y:
 
-  numeric value for the Y coordinate of rotation center. If NULL,
-  rotates around the centroid of each geometry
+  numeric value for the Y coordinate of the rotation center. Only used
+  with `by_feature = TRUE`. If NULL, rotates around the centroid (see
+  `by_feature`)
 
 - conn:
 
@@ -135,7 +140,8 @@ ddbs_write_table(conn, argentina_ddbs, "argentina")
 ddbs_rotate(conn = conn, "argentina", angle = 45)
 
 ## rotate 90 degrees around a specific point
-ddbs_rotate(conn = conn, "argentina", angle = 90, center_x = -64, center_y = -34)
+ddbs_rotate(conn = conn, "argentina", angle = 90, by_feature = TRUE,
+            center_x = -64, center_y = -34)
 
 ## rotate without using a connection
 ddbs_rotate(argentina_ddbs, angle = 45)

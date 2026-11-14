@@ -271,7 +271,7 @@ Rotate, scale, shear, and shift geometries
 - [`ddbs_flip()`](https://cidree.github.io/duckspatial/reference/ddbs_flip.md)
   : Flip geometries horizontally or vertically
 - [`ddbs_rotate()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate.md)
-  : Rotate geometries around their centroid
+  : Rotate geometries around a centroid or a given point
 - [`ddbs_rotate_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate_3d.md)
   : Rotate 3D geometries around an axis
 - [`ddbs_scale()`](https://cidree.github.io/duckspatial/reference/ddbs_scale.md)

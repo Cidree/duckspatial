@@ -224,7 +224,10 @@ and will default to <code>NA</code> with a warning.</p>
 
 <dt id="arg-crs">crs<a class="anchor" aria-label="anchor" href="#arg-crs"></a></dt>
 <dd><p>CRS object or string. Auto-detected from <code>sf</code> objects and
-persistent DuckDB tables.</p></dd>
+persistent DuckDB tables. When points are built from <code>coords</code> and <code>crs</code>
+is <code>NULL</code>, the coordinates are assumed to be longitude/latitude in
+WGS84 (<code>"EPSG:4326"</code>); pass <code>crs</code> explicitly for any other coordinate
+reference system.</p></dd>
 
 
 <dt id="arg-geom-col">geom_col<a class="anchor" aria-label="anchor" href="#arg-geom-col"></a></dt>

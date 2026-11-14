@@ -41,8 +41,8 @@ A `tibble` with one row per file and the following columns:
 
   A list-column of data frames, one per file, each describing the layers
   contained in the file. Unnest with
-  [`unnest`](https://tidyr.tidyverse.org/reference/unnest.html) to
-  access individual layer attributes such as name, geometry type, and
+  [`tidyr::unnest()`](https://tidyr.tidyverse.org/reference/unnest.html)
+  to access individual layer attributes such as name, geometry type, and
   feature count.
 
 ## Examples

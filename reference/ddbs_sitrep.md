@@ -22,7 +22,7 @@ ddbs_sitrep()
 #> 
 #> ── Global Options ──
 #> 
-#> • Output Type: "duckspatial_df"
+#> • Output Type: "sf"
 #> • Mode: "duckspatial (default)"
 #> • DuckDB Storage Version: "v2.0.0"
 #> 

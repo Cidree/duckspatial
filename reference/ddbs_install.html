@@ -196,7 +196,9 @@ Defaults to <code>FALSE</code>.</p></dd>
 <dd><p>optional character string naming the repository to install the
 extension from (e.g. <code>"core"</code>, <code>"core_nightly"</code>, or
 <code>"community"</code>); a URL or path can also be supplied. If <code>NULL</code>
-(default), the <code>core</code> repository is tried first, then <code>community</code>.
+(default), core extensions known to DuckDB are installed from <code>core</code>
+and any other extension from <code>community</code>, falling back to the other
+repository if that fails.
 Switching an already-installed extension to a different repository requires
 <code>upgrade = TRUE</code>. See
 <a href="https://duckdb.org/docs/stable/extensions/installing_extensions" class="external-link">https://duckdb.org/docs/stable/extensions/installing_extensions</a>.</p></dd>

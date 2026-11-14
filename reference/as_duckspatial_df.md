@@ -50,7 +50,10 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 - crs:
 
   CRS object or string. Auto-detected from `sf` objects and persistent
-  DuckDB tables.
+  DuckDB tables. When points are built from `coords` and `crs` is
+  `NULL`, the coordinates are assumed to be longitude/latitude in WGS84
+  (`"EPSG:4326"`); pass `crs` explicitly for any other coordinate
+  reference system.
 
 - geom_col:
 
