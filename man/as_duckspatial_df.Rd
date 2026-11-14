@@ -30,7 +30,10 @@ as_duckspatial_df(x, conn = NULL, crs = NULL, geom_col = NULL, ...)
 \item{conn}{DuckDB connection (required for character table names)}
 
 \item{crs}{CRS object or string. Auto-detected from \code{sf} objects and
-persistent DuckDB tables.}
+persistent DuckDB tables. When points are built from \code{coords} and \code{crs}
+is \code{NULL}, the coordinates are assumed to be longitude/latitude in
+WGS84 (\code{"EPSG:4326"}); pass \code{crs} explicitly for any other coordinate
+reference system.}
 
 \item{geom_col}{Geometry column name (default: "geom")}
 

@@ -9,6 +9,8 @@
 
 ## BUG FIXES
 
+* `ddbs_install()` now installs extensions that are not core DuckDB extensions (e.g. `h3`) from the community repository directly, instead of first trying a core download that always fails. With duckdb 2.0.0 on Windows, a failed extension download can crash the R session later on.
+
 * `ddbs_distance()` (haversine and spheroid) and `ddbs_predicate(predicate = "dwithin")` on a geographic CRS now pass coordinates in [LONGITUDE, LATITUDE] order. With DuckDB v2.0 they returned distances of the wrong magnitude and missed `dwithin` matches (#109).
 * Internal Spheroid functions (ST_Area_Spheroid, ST_Length_Spheroid, ...) are affected by a flip of the axis order to [LONGITUDE, LATITUDE] (#109).
 * `ddbs_write_dataset()` after `distinct()` or `count()` on a table opened by name no longer writes the original, unfiltered table.
@@ -22,7 +24,9 @@
 * `ddbs_transform()` now gives a clear error when `x` has no CRS.
 * `ddbs_install()` and `ddbs_load()` check the connection before using it, so an invalid connection gives the package's error message.
 * `ddbs_union_agg()` now works without `by`, unioning all geometries into one, as documented.
-* Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors.
+* `as_duckspatial_df()` on a data.frame (including `coords` and `wkt` input) now uploads it as a temporary table. Before, it left a permanent `temp_table_*` table in file-backed databases.
+* The default `duckspatial.output_type` option is now `"sf"`, as documented, so `ddbs_options(output_type = getOption("duckspatial.output_type"))` no longer errors. `collect()` returns the same output as before, and `"duckspatial_df"` is still accepted as an alias for `"sf"`.
+* Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors. `ddbs_write_dataset()` now documents v2.0.0 as the default storage version, and its examples write to `tempdir()`. `as_duckspatial_df()` documents that `coords` input with no `crs` is assumed to be in EPSG:4326. `ddbs_rotate()` explains that `by_feature = FALSE` rotates around the centroid of the whole dataset, and that `center_x`/`center_y` need `by_feature = TRUE`; its example no longer errors.
 
 # duckspatial 1.3.0
 

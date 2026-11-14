@@ -25,7 +25,9 @@ Defaults to \code{FALSE}.}
 \item{repos}{optional character string naming the repository to install the
 extension from (e.g. \code{"core"}, \code{"core_nightly"}, or
 \code{"community"}); a URL or path can also be supplied. If \code{NULL}
-(default), the \code{core} repository is tried first, then \code{community}.
+(default), core extensions known to DuckDB are installed from \code{core}
+and any other extension from \code{community}, falling back to the other
+repository if that fails.
 Switching an already-installed extension to a different repository requires
 \code{upgrade = TRUE}. See
 \url{https://duckdb.org/docs/stable/extensions/installing_extensions}.}

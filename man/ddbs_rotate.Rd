@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddbs_affine.R
 \name{ddbs_rotate}
 \alias{ddbs_rotate}
-\title{Rotate geometries around their centroid}
+\title{Rotate geometries around a centroid or a given point}
 \usage{
 ddbs_rotate(
   x,
@@ -36,11 +36,13 @@ Data is returned from this object.}
 separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
-\item{center_x}{numeric value for the X coordinate of rotation center. If NULL,
-rotates around the centroid of each geometry}
+\item{center_x}{numeric value for the X coordinate of the rotation center.
+Only used with \code{by_feature = TRUE}. If NULL, rotates around the centroid
+(see \code{by_feature})}
 
-\item{center_y}{numeric value for the Y coordinate of rotation center. If NULL,
-rotates around the centroid of each geometry}
+\item{center_y}{numeric value for the Y coordinate of the rotation center.
+Only used with \code{by_feature = TRUE}. If NULL, rotates around the centroid
+(see \code{by_feature})}
 
 \item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
 runs on a temporary DuckDB database.}
@@ -75,8 +77,11 @@ Depends on the \code{mode} argument (or global preference set by \code{\link{ddb
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Rotates geometries by a specified angle around their centroid (or another center),
-preserving their shape.
+Rotates geometries by a specified angle, preserving their shape. With
+\code{by_feature = FALSE} (default), all geometries rotate together around the
+centroid of the whole dataset. With \code{by_feature = TRUE}, each geometry
+rotates around its own centroid, or around the point given by
+\code{center_x}/\code{center_y}.
 }
 \examples{
 \dontrun{
@@ -99,7 +104,8 @@ ddbs_write_table(conn, argentina_ddbs, "argentina")
 ddbs_rotate(conn = conn, "argentina", angle = 45)
 
 ## rotate 90 degrees around a specific point
-ddbs_rotate(conn = conn, "argentina", angle = 90, center_x = -64, center_y = -34)
+ddbs_rotate(conn = conn, "argentina", angle = 90, by_feature = TRUE,
+            center_x = -64, center_y = -34)
 
 ## rotate without using a connection
 ddbs_rotate(argentina_ddbs, angle = 45)

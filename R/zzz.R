@@ -4,7 +4,7 @@
 .onLoad <- function(libname, pkgname) {
   op <- options()
   op_duckspatial <- list(
-    duckspatial.output_type = "duckspatial_df",
+    duckspatial.output_type = "sf",
     duckspatial.max_rows = 1e6,
     duckspatial.duckdb_storage_version = "v2.0.0"
   )

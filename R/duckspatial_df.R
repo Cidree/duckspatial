@@ -99,8 +99,11 @@ is_duckspatial_df <- function(x) {
 #'
 #' @param x Object to convert (sf, tbl_lazy, data.frame, or table name)
 #' @param conn DuckDB connection (required for character table names)
-#' @param crs CRS object or string. Auto-detected from `sf` objects and 
-#'   persistent DuckDB tables.
+#' @param crs CRS object or string. Auto-detected from `sf` objects and
+#'   persistent DuckDB tables. When points are built from `coords` and `crs`
+#'   is `NULL`, the coordinates are assumed to be longitude/latitude in
+#'   WGS84 (`"EPSG:4326"`); pass `crs` explicitly for any other coordinate
+#'   reference system.
 #' @param geom_col Geometry column name (default: "geom")
 #' @param ... Additional arguments passed to methods:
 #'   \describe{
@@ -366,7 +369,7 @@ as_duckspatial_df.data.frame <- function(
    if (is.null(conn)) conn <- ddbs_default_conn()
    
    view_name <- ddbs_temp_table_name()
-   DBI::dbWriteTable(conn, view_name, x)
+   DBI::dbWriteTable(conn, view_name, x, temporary = TRUE)
    
    lazy_tbl <- dplyr::tbl(conn, view_name)
    new_duckspatial_df(
@@ -396,7 +399,7 @@ handle_heterogeneous_ingestion <- function(x, conn, crs, geom_col, ...) {
      # Already handled by as_duckspatial_df.sf before calling us
   } else if (is.data.frame(x)) {
      view_name <- ddbs_temp_table_name()
-     DBI::dbWriteTable(target_conn, view_name, x)
+     DBI::dbWriteTable(target_conn, view_name, x, temporary = TRUE)
      x <- view_name
   }
   
