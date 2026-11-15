@@ -136,15 +136,15 @@ ddbs_write_table <- function(
             # CREATE OR REPLACE instead of DROP + CREATE: `data` may read from the table being replaced
             if (overwrite && isFALSE(quiet)) cli::cli_alert_info("Table <{name_list$query_name}> dropped")
             DBI::dbExecute(conn, glue::glue(
-                "CREATE OR REPLACE TABLE {name_list$query_name} AS {dbplyr::sql_render(data, con = conn)}"
+                "CREATE OR REPLACE TABLE {name_list$sql_name} AS {dbplyr::sql_render(data, con = conn)}"
             ))
             ## Keep a CRS known only from R metadata (e.g. `as_duckspatial_df(crs = ...)`)
             geom_field <- get_geometry_type_duckdb(input_crs, conn)
-            cols <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {name_list$query_name}"))
+            cols <- DBI::dbGetQuery(conn, glue::glue("DESCRIBE {name_list$sql_name}"))
             untyped <- cols$column_name[cols$column_type == "GEOMETRY"]
             if (geom_field != "GEOMETRY" && length(untyped) == 1) {
                 DBI::dbExecute(conn, glue::glue(
-                    "ALTER TABLE {name_list$query_name} ALTER COLUMN {DBI::dbQuoteIdentifier(conn, untyped)} SET DATA TYPE {geom_field}"
+                    "ALTER TABLE {name_list$sql_name} ALTER COLUMN {DBI::dbQuoteIdentifier(conn, untyped)} SET DATA TYPE {geom_field}"
                 ))
             }
             ddbs_write_legacy_crs_comment_if_needed(conn, name_list$query_name, crs = input_crs)
@@ -245,7 +245,7 @@ ddbs_write_table <- function(
             ## insert files (in duckdb v1.5, ST_Read() already manages CRS)
             DBI::dbExecute(
                 conn,
-                glue::glue("CREATE TABLE {name_list$sql_name} AS SELECT * FROM ST_Read('{data}')")
+                glue::glue("CREATE TABLE {name_list$sql_name} AS SELECT * FROM ST_Read({ddbs_quote_sql_string(NULL, data)})")
             )
             ddbs_write_legacy_crs_comment_if_needed(
                 conn,

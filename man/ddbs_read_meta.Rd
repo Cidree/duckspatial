@@ -33,7 +33,7 @@ information about the file's driver and its layers as a tibble.
 }
 \examples{
 \dontrun{
-## Read metadata from a GeoPackage
+## Read metadata from a GeoJSON file
 meta <- ddbs_read_meta(
   system.file("spatial/rivers.geojson",
   package = "duckspatial")

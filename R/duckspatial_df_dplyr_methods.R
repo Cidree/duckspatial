@@ -609,6 +609,19 @@ distinct.duckspatial_df <- function(.data, ..., .keep_all = FALSE) {
 #   out
 # }
 
+## If `y` has a column with the same name as the geometry column of `x`,
+## dbplyr would suffix both (e.g. `geometry.x`, `geometry.y`) and the geometry
+## column of the result would be lost. Drop it from `y` beforehand, as
+## `sf::st_join()` does, unless it is a join key (including natural joins,
+## where `by` is NULL).
+.drop_clashing_geom <- function(y, geom_col, by) {
+  by_y <- if (inherits(by, "dplyr_join_by")) by$y else by
+  if (is.null(by) || geom_col %in% by_y || !geom_col %in% colnames(y)) return(y)
+  dplyr::select(y, -dplyr::all_of(geom_col))
+}
+
+
+
 #' @rdname duckspatial_df_dplyr
 #' @export
 #' @importFrom dplyr left_join
@@ -618,6 +631,7 @@ left_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
+  y <- .drop_clashing_geom(y, atts$sf_column, by)
   res <- NextMethod()
   new_duckspatial_df(
     x            = res,
@@ -640,6 +654,7 @@ inner_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
+  y <- .drop_clashing_geom(y, atts$sf_column, by)
   res <- NextMethod()
   new_duckspatial_df(
     x            = res,
@@ -662,6 +677,7 @@ right_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
+  y <- .drop_clashing_geom(y, atts$sf_column, by)
   res <- NextMethod()
   new_duckspatial_df(
     x            = res,
@@ -684,6 +700,7 @@ full_join.duckspatial_df <- function(x, y, by = NULL, ...) {
   if (inherits(y, "duckspatial_df")) {
     class(y) <- setdiff(class(y), "duckspatial_df")
   }
+  y <- .drop_clashing_geom(y, atts$sf_column, by)
   res <- NextMethod()
   new_duckspatial_df(
     x            = res,

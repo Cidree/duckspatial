@@ -43,8 +43,10 @@ specified in \code{coords} are removed from the output.}
 \item{na.fail}{Logical. If \code{TRUE} (default), the function errors if
 any missing values (NAs) are found in the coordinate columns.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
@@ -67,7 +69,7 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 
 \item{...}{Additional arguments. Currently supports \code{geom_col} to
-specify the name of the geometry column in the output.}
+specify the name of the geometry column in the output (default \code{"geom"}).}
 }
 \value{
 Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):

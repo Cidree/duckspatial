@@ -98,13 +98,14 @@ ddbs_quadkey <- function(
   ## valid outputs
   if (!output %in% c("polygon", "raster", "tilexy")) cli::cli_abort("{.arg output} must be one of: {.val {c('polygon', 'raster', 'tilexy')}}")
 
-  ## suggested packages
-  rlang::check_installed(
+  ## suggested packages (only needed to convert the result in R, not when
+  ## writing a table with `name`)
+  if (is.null(name)) rlang::check_installed(
     "quadkeyr",
     "to convert quadkeys to sf or raster."
   )
 
-  if (output == "raster") {
+  if (is.null(name) && output == "raster") {
     rlang::check_installed(
       "terra",
       "to convert quadkeys to raster."

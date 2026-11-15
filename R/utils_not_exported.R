@@ -251,7 +251,7 @@ import_view_to_connection <- function(target_conn, source_conn, source_object, t
       source_table_clean <- gsub('^"|"$', "", as.character(source_table))
       
       tryCatch({
-        DBI::dbExecute(target_conn, glue::glue("ATTACH '{source_dbdir}' AS {attach_alias} (READ_ONLY)"))
+        DBI::dbExecute(target_conn, glue::glue("ATTACH {ddbs_quote_sql_string(NULL, source_dbdir)} AS {attach_alias} (READ_ONLY)"))
         
         view_query <- glue::glue("
           CREATE OR REPLACE TEMPORARY VIEW {target_name} AS
@@ -392,6 +392,11 @@ assert_dwithin_points <- function(conn, x_query, y_query) { # nocov start
 #' @keywords internal
 #' @returns list with fixed names
 get_query_name <- function(name) {  # nocov start
+    ## split an unquoted "schema.table" string, as `sql_table()` does
+    if (is.character(name) && length(name) == 1 && !startsWith(name, '"')) {
+        parts <- strsplit(name, ".", fixed = TRUE)[[1]]
+        if (length(parts) == 2) name <- parts
+    }
     if (length(name) == 2) {
         table_name <- name[2]
         schema_name <- name[1]
@@ -908,7 +913,7 @@ get_file_crs <- function(path, conn) {
         SELECT 
           layers[1].geometry_fields[1].crs.auth_name as auth_name,
           layers[1].geometry_fields[1].crs.auth_code as auth_code
-        FROM st_read_meta('{path}')
+        FROM st_read_meta({ddbs_quote_sql_string(NULL, path)})
       ")
       meta <- DBI::dbGetQuery(conn, meta_query)
       ## ST_Read_Meta returns 0 rows for files GDAL can't open (e.g. GeoParquet)
@@ -1165,12 +1170,12 @@ resolve_spatial_connections <- function(
              })
          }
          
-         res <- import_view_to_connection(target_conn, source_conn_x, x_to_import, quiet = quiet)
-         x <- res$name
+         res_x <- import_view_to_connection(target_conn, source_conn_x, x_to_import, quiet = quiet)
+         x <- res_x$name
          
          add_cleanup(function() {
-             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res$name}")), error = function(e) NULL)
-             if (is.function(res$cleanup)) tryCatch(res$cleanup(), error = function(e) NULL)
+             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res_x$name}")), error = function(e) NULL)
+             if (is.function(res_x$cleanup)) tryCatch(res_x$cleanup(), error = function(e) NULL)
          })
     }
     
@@ -1194,12 +1199,12 @@ resolve_spatial_connections <- function(
              })
          }
          
-         res <- import_view_to_connection(target_conn, source_conn_y, y_to_import, quiet = quiet)
-         y <- res$name
+         res_y <- import_view_to_connection(target_conn, source_conn_y, y_to_import, quiet = quiet)
+         y <- res_y$name
          
          add_cleanup(function() {
-             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res$name}")), error = function(e) NULL)
-             if (is.function(res$cleanup)) tryCatch(res$cleanup(), error = function(e) NULL)
+             tryCatch(DBI::dbExecute(target_conn, glue::glue("DROP VIEW IF EXISTS {res_y$name}")), error = function(e) NULL)
+             if (is.function(res_y$cleanup)) tryCatch(res_y$cleanup(), error = function(e) NULL)
          })
     }
     
@@ -1438,9 +1443,9 @@ generate_predicate_clause <- function(
   ## differ based on the CRS units (ST_DWithin vs ST_DWithin_Spheroid)
   if (predicate == "ST_DWithin") {
 
-      ## if distance is not specified, it will fall back to ST_Within
+      ## if distance is not specified, it will fall back to a distance of 0
       if (is.null(distance)) {
-          cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
+          cli::cli_warn("{.val distance} wasn't specified. Using {.code distance = 0}.")
           distance <- 0
       }
 

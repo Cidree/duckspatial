@@ -203,6 +203,14 @@ describe("ddbs_force_3d()", {
       expect_error(ddbs_force_3d(nc_ddbs_local, "AREA", conn = conn_test, name = c("banana", "banana")))
     })
   })
+
+  it("quotes column names and accepts a numeric constant", {
+    pz <- points_sf[1:3, ]
+    pz$`my z` <- 1
+    expect_s3_class(ddbs_force_3d(pz, var = "my z", mode = "sf"), "sf")
+    out <- ddbs_force_3d(pz, var = 0, mode = "sf")
+    expect_equal(unname(sf::st_coordinates(out)[, "Z"]), c(0, 0, 0))
+  })
 })
 
 
@@ -286,8 +294,30 @@ describe("ddbs_force_4d()", {
       expect_error(ddbs_force_4d(nc_ddbs_local, "AREA", "PERIMETER", conn = conn_test, name = c("banana", "banana")))
     })
   })
+
+  it("quotes column names and accepts numeric constants", {
+    pz <- points_sf[1:3, ]
+    pz$`my z` <- 1
+    pz$`my m` <- 2
+    expect_s3_class(ddbs_force_4d(pz, var_z = "my z", var_m = "my m", mode = "sf"), "sf")
+    expect_s3_class(ddbs_force_4d(pz, var_z = 0, var_m = 1, mode = "sf"), "sf")
+  })
 })
 
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+describe("ddbs_has_z()", {
+  it("checks every feature with by_feature = FALSE", {
+    m <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(1, 1)), sf::st_point(c(1, 1, 1))), crs = 4326)
+    expect_true(ddbs_has_z(m, by_feature = FALSE))
+  })
+
+  it("ignores NULL geometries with by_feature = FALSE", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    DBI::dbExecute(conn, "CREATE TABLE t AS SELECT ST_Point(1, 1)::GEOMETRY('EPSG:4326') AS geom UNION ALL SELECT NULL")
+    expect_false(ddbs_has_z("t", conn = conn, by_feature = FALSE))
+  })
+})

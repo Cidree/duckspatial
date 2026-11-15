@@ -15,4 +15,4 @@
 #' - `"ST_Crosses"`: Whether a crosses b
 #' - `"ST_Covers"`: Whether a covers b
 #' - `"ST_CoveredBy"`: Whether a is covered by b
-#' - `"ST_DWithin"`: x)	Whether a is within distance x of b
+#' - `"ST_DWithin"`: Whether a is within distance `distance` of b

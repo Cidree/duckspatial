@@ -441,3 +441,22 @@ test_that("ddbs_open_dataset lets non-DuckDB .db files fall through to ST_Read",
     ignore.case = TRUE
   )
 })
+
+describe("ddbs_open_dataset()", {
+  it("rejects parquet_encryption_config", {
+    f <- tempfile(fileext = ".parquet")
+    on.exit(unlink(f), add = TRUE)
+    ddbs_write_dataset(nc_ddbs, f, quiet = TRUE)
+    expect_error(ddbs_open_dataset(f, parquet_encryption_config = list(a = 1)), "not supported")
+  })
+})
+
+test_that("ddbs_open_dataset keeps the CRS of a file whose path contains a single quote", {
+  dir <- file.path(tempdir(), "it's")
+  dir.create(dir, showWarnings = FALSE)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  f <- file.path(dir, "nc.shp")
+  sf::st_write(nc_sf, f, quiet = TRUE)
+  expect_true(ddbs_crs(ddbs_open_dataset(f)) == sf::st_crs(nc_sf))
+  expect_equal(nrow(ddbs_read_meta(f)), 1)
+})

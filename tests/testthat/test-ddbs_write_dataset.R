@@ -312,3 +312,12 @@ test_that("ddbs_write_dataset validates invalid driver", {
     "is not available on this system"
   )
 })
+
+describe("ddbs_write_dataset()", {
+  it("writes to paths containing a single quote", {
+    f <- file.path(tempdir(), "it's.parquet")
+    on.exit(unlink(f), add = TRUE)
+    ddbs_write_dataset(nc_ddbs, f, quiet = TRUE)
+    expect_equal(nrow(ddbs_collect(ddbs_open_dataset(f))), nrow(nc_sf))
+  })
+})

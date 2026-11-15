@@ -84,8 +84,10 @@ Data is returned from this object.}
 \item{predicate}{A geometry predicate function. Defaults to \code{intersects},
 a wrapper of \code{ST_Intersects}. See details for other options.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
 If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
@@ -110,8 +112,8 @@ it returns a wide table/matrix.}
 
 \item{distance}{a numeric value specifying the distance for ST_DWithin. Units are
 metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
-(e.g. US survey feet for EPSG:2264). On a geographic CRS only POINT
-geometries are supported}
+(e.g. US survey feet for EPSG:2264). The inputs must have a CRS;
+on a geographic CRS only POINT geometries are supported}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

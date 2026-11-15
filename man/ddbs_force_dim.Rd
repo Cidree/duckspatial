@@ -48,8 +48,10 @@ ddbs_force_4d(
 }
 Data is returned from this object.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
@@ -72,14 +74,16 @@ to \code{FALSE}. This argument is ignored when \code{name} is \code{NULL}.}
 Defaults to \code{FALSE}.}
 
 \item{var}{A numeric variable in \code{x} to be converted in the dimension specified
-in the argument \code{dim}}
+in the argument \code{dim}, or a single number to use for every feature}
 
 \item{dim}{The dimension to add: either \code{"z"} (default) for
 elevation or \code{"m"} for measure values.}
 
-\item{var_z}{A numeric variable in \code{x} to be convered in \code{Z} dimension}
+\item{var_z}{A numeric variable in \code{x} to be converted in \code{Z} dimension, or a
+single number to use for every feature}
 
-\item{var_m}{A numeric variable in \code{x} to be convered in \code{M} dimension}
+\item{var_m}{A numeric variable in \code{x} to be converted in \code{M} dimension, or a
+single number to use for every feature}
 }
 \value{
 Depends on the \code{mode} argument (or global preference set by \code{\link{ddbs_options}}):

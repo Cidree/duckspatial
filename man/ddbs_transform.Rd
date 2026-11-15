@@ -34,8 +34,10 @@ Data is returned from this object.}
 \item Name of a DuckDB table (uses its CRS)
 }}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
 If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}

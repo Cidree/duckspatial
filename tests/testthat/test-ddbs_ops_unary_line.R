@@ -1059,6 +1059,14 @@ describe("ddbs_line_locate_point()", {
       expect_error(ddbs_line_locate_point(TRUE, y = ref_point_sf))
     })
   })
+
+  it("errors when x and y have different CRSs", {
+    ln <- sf::st_sf(geometry = sf::st_sfc(
+      sf::st_linestring(matrix(c(0, 0, 10, 0), 2, byrow = TRUE)), crs = 3857
+    ))
+    pt <- sf::st_sf(geometry = sf::st_sfc(sf::st_point(c(5, 0)), crs = 4326))
+    expect_error(ddbs_line_locate_point(ln, pt, mode = "sf"), "is different")
+  })
 })
 
 

@@ -1266,6 +1266,14 @@ describe("ddbs_azimuth()", {
       expect_error(ddbs_azimuth(origin_sf, dirs_sf, quiet = 999))
     })
   })
+
+  it("errors on mixed geometry types", {
+    mix <- sf::st_sf(geometry = sf::st_sfc(
+      sf::st_point(c(0, 0)), sf::st_multipoint(matrix(c(1, 1, 2, 2), 2, byrow = TRUE)),
+      crs = 3857
+    ))
+    expect_error(ddbs_azimuth(mix, mix, mode = "sf"), "must contain POINT")
+  })
 })
 
 

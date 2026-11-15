@@ -93,7 +93,7 @@ ddbs_boundary <- function(
 #'   package = "duckspatial")
 #' )
 #' 
-#' # input as sf, and output as sf
+#' # input as duckspatial_df, one envelope per feature
 #' env <- ddbs_envelope(x = argentina_ddbs, by_feature = TRUE)
 #'
 #' # create a duckdb database in memory (with spatial extension)

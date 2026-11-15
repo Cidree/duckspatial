@@ -466,7 +466,7 @@ ddbs_write_dataset <- function(
   }
   
   opt_str <- fmt_opts(copy_ops)
-  query <- glue::glue("COPY {sql_source} TO '{path}' ({opt_str})")
+  query <- glue::glue("COPY {sql_source} TO {ddbs_quote_sql_string(NULL, path)} ({opt_str})")
   
   tryCatch({
       DBI::dbExecute(conn, query)

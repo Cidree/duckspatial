@@ -87,8 +87,10 @@ Data is returned from this object.}
 \item A character string naming a table/view in \code{conn}
 }}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
 If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}
@@ -136,7 +138,8 @@ of geometries, producing the area, line, or point shared by both.}
 \item{\code{ddbs_crop}}{Returns the geometric intersection of two sets of
 geometries, using the bounding box of \code{y}, rather than its original geometry}
 \item{\code{ddbs_difference}}{Returns the portion of the first geometry that
-does not overlap with the second geometry.}
+does not overlap with the second geometry. The result has one row per
+pair of \code{x} and \code{y} features; pairs whose difference is empty are dropped.}
 \item{\code{ddbs_sym_difference}}{Returns the portions of both geometries
 that do not overlap with each other. Equivalent to
 \verb{(A - B) UNION (B - A)}.}

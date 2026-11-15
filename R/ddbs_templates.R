@@ -568,6 +568,9 @@ template_new_column <- function(
   ## - For functions ST_is_*() - if 1 is FALSE, return FALSE
   ## - For coordinate bound functions - aggregate in SQL, return global max/min
   if (isFALSE(by_feature)) {
+    if (!is.null(name)) {
+      cli::cli_warn("{.arg name} is ignored when {.code by_feature = FALSE}.")
+    }
     fun_lower <- tolower(fun)
 
     ## For coordinate max functions: return the global maximum across all features
@@ -599,7 +602,7 @@ template_new_column <- function(
 
     ## Return TRUE if any is TRUE
     if (fun_lower %in% c("st_hasz", "st_hasm")) {
-      return(any(data_tbl[1, ]))
+      return(any(data_tbl[[1]], na.rm = TRUE))
     } else {
       return(all(data_tbl[1, ]))
     }

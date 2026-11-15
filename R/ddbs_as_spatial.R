@@ -194,7 +194,7 @@ ddbs_point <- function(
 #' @template overwrite
 #' @template quiet
 #' @param ... Additional arguments. Currently supports \code{geom_col} to
-#'        specify the name of the geometry column in the output.
+#'        specify the name of the geometry column in the output (default `"geom"`).
 #'
 #' @template returns_mode
 #' @export

@@ -1362,6 +1362,10 @@ describe("ddbs_maximum_inscribed_circle()", {
       expect_error(ddbs_maximum_inscribed_circle(argentina_ddbs, conn = conn_test, name = c('banana', 'banana')))
     })
   })
+
+  it("validates `geom`", {
+    expect_error(ddbs_maximum_inscribed_circle(nc_sf[1:2, ], geom = "foo", mode = "sf"), "should be one of")
+  })
 })
 
 

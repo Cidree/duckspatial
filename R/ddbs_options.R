@@ -17,8 +17,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Set default mode to geoarrow
-#' ddbs_options(mode = "geoarrow")
+#' # Return sf objects by default
+#' ddbs_options(mode = "sf")
 #' 
 #' # Set default output to tibble
 #' ddbs_options(output_type = "tibble")

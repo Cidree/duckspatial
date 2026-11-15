@@ -10,7 +10,8 @@
 #'   \item{`ddbs_crop`}{Returns the geometric intersection of two sets of
 #'   geometries, using the bounding box of `y`, rather than its original geometry}
 #'   \item{`ddbs_difference`}{Returns the portion of the first geometry that
-#'   does not overlap with the second geometry.}
+#'   does not overlap with the second geometry. The result has one row per
+#'   pair of `x` and `y` features; pairs whose difference is empty are dropped.}
 #'   \item{`ddbs_sym_difference`}{Returns the portions of both geometries
 #'   that do not overlap with each other. Equivalent to
 #'   `(A - B) UNION (B - A)`.}

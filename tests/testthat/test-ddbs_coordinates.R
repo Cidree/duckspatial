@@ -95,6 +95,12 @@ describe("ddbs_xmax()", {
       expect_error(ddbs_xmax(TRUE))
     })
   })
+
+  it("warns that `name` is ignored when by_feature = FALSE", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    expect_warning(ddbs_xmax(points_sf, by_feature = FALSE, conn = conn, name = "tt"), "is ignored")
+  })
 })
 
 

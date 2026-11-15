@@ -201,9 +201,9 @@ ddbs_line_endpoint <- function(
 #'
 #' Returns either a single point at a specified position along a line, or
 #' multiple equally-spaced points along a line, depending on the value of
-#' \code{intervals}. When \code{intervals = FALSE}, this wraps
-#' \code{ST_LineInterpolatePoint}; when \code{intervals = TRUE}, it wraps
-#' \code{ST_LineInterpolatePoints}.
+#' \code{intervals}. It wraps \code{ST_LineInterpolatePoints}, returning a
+#' single POINT when \code{intervals = FALSE} and a MULTIPOINT when
+#' \code{intervals = TRUE}.
 #'
 #' @template x
 #' @param fraction a numeric value between 0 and 1. When
@@ -262,7 +262,7 @@ ddbs_line_interpolate <- function(
     assert_numeric_interval(fraction, 0, 1)
     assert_logic(intervals, "intervals")
   
-    # 1. Build ST_Buffer parameters string
+    # 1. Build ST_LineInterpolatePoints parameters string
     other_args <- glue::glue("{fraction}, {intervals}")
   
     # 2. Pass to template
@@ -743,10 +743,11 @@ ddbs_build_area <- function(
 #'   system.file("spatial/rivers.geojson", package = "duckspatial")
 #' )
 #'
-#' ## define a single reference point (sf with 1 row)
+#' ## define a single reference point (sf with 1 row), in the CRS of the rivers
 #' ref_pt <- sf::st_sf(
 #'   geometry = sf::st_sfc(sf::st_point(c(-8, 43)), crs = 4326)
 #' )
+#' ref_pt <- sf::st_transform(ref_pt, ddbs_crs(rivers_ddbs))
 #'
 #' ## locate the fraction along each river closest to the reference point
 #' ddbs_line_locate_point(rivers_ddbs, y = ref_pt)
@@ -803,6 +804,12 @@ ddbs_line_locate_point <- function(
     crs_x    <- ddbs_crs(x, conn_x)
     sf_col_x <- attr(x, "sf_column")
     mode     <- get_mode(mode, name)
+
+    ## 1.3. x and y must share the same CRS
+    crs_y <- suppressWarnings(ddbs_crs(y, conn_y))
+    if (!is.na(crs_x) && !is.na(crs_y) && !crs_equal(crs_x, crs_y)) {
+        cli::cli_abort("The Coordinates Reference System of {.arg x} and {.arg y} is different.")
+    }
 
 
     # 2. Resolve connections and build y_sql based on y type

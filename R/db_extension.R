@@ -225,6 +225,7 @@ ddbs_load <- function(
         cli::cli_alert_success("{extension} extension loaded")
     }
 
+    invisible(TRUE)
 }
 
 

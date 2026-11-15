@@ -23,8 +23,10 @@ ddbs_exterior_ring(
 }
 Data is returned from this object.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
@@ -56,8 +58,8 @@ Depends on the \code{mode} argument (or global preference set by \code{\link{ddb
 When \code{name} is provided, the result is also written as a table or view in DuckDB and the function returns \code{TRUE} (invisibly).
 }
 \description{
-Returns the outer boundary (exterior ring) of polygon geometries. For multi-polygons,
-returns the exterior ring of each individual polygon.
+Returns the outer boundary (exterior ring) of polygon geometries. Only
+POLYGON geometries are supported; use \code{\link[=ddbs_dump]{ddbs_dump()}} to split MULTIPOLYGON first.
 }
 \examples{
 \dontrun{

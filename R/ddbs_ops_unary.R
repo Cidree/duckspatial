@@ -413,8 +413,8 @@ ddbs_reduce_precision <- function(
 
 #' Extract the exterior ring of polygons
 #'
-#' Returns the outer boundary (exterior ring) of polygon geometries. For multi-polygons, 
-#' returns the exterior ring of each individual polygon.
+#' Returns the outer boundary (exterior ring) of polygon geometries. Only
+#' POLYGON geometries are supported; use [ddbs_dump()] to split MULTIPOLYGON first.
 #'
 #' @template x
 #' @template conn_null
@@ -1145,6 +1145,7 @@ ddbs_maximum_inscribed_circle <- function(
 
   # 0. Validate inputs
   assert_xy(x, "x")
+  geom <- match.arg(geom, c("center", "nearest"))
   assert_conn_x_name(conn, x, name)
   assert_conn_character(conn, x)
   assert_name(name)

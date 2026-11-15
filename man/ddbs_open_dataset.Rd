@@ -59,7 +59,7 @@ auto-detection.}
 
 \item{parquet_union_by_name}{Logical. (Parquet) If TRUE, unify columns by name.}
 
-\item{parquet_encryption_config}{List/Struct. (Parquet) Encryption configuration (advanced).}
+\item{parquet_encryption_config}{Not supported yet. Must be \code{NULL}.}
 
 \item{read_shp_mode}{Mode for reading Shapefiles. "ST_ReadSHP" (default, fast native reader) or "GDAL" (ST_Read).}
 
@@ -85,7 +85,8 @@ auto-detection.}
 \item{gdal_open_options}{Character vector. Driver-specific open options (ST_Read only).}
 }
 \value{
-A \code{duckspatial_df} object.
+A \code{duckspatial_df} object, or a lazy \code{tbl_duckdb_connection}
+when no geometry column is found (e.g. a non-spatial Parquet or CSV file).
 }
 \description{
 Reads spatial data directly from disk using DuckDB's spatial extension or
