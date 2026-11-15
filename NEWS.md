@@ -7,6 +7,10 @@
 
 * `duckspatial` defaults storage is now v2.0.0 (see <https://duckdb.org/docs/2.0/internals/storage>).
 
+* `ddbs_coverage_invalid_edges()`: returns the invalid edges in a polygonal coverage, which are edges that are not shared by two polygons (#191).
+
+* `ddbs_coverage_union()`: union all geometries in a polygonal coverage into a single geometry (#191).
+
 ## BUG FIXES
 
 * `ddbs_install()` now installs extensions that are not core DuckDB extensions (e.g. `h3`) from the community repository directly, instead of first trying a core download that always fails. With duckdb 2.0.0 on Windows, a failed extension download can crash the R session later on.
