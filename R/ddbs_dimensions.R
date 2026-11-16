@@ -121,9 +121,11 @@ ddbs_has_m <- function(
 #' 
 #' @template x
 #' @param var A numeric variable in `x` to be converted in the dimension specified
-#' in the argument `dim`
-#' @param var_z A numeric variable in `x` to be convered in `Z` dimension
-#' @param var_m A numeric variable in `x` to be convered in `M` dimension
+#' in the argument `dim`, or a single number to use for every feature
+#' @param var_z A numeric variable in `x` to be converted in `Z` dimension, or a
+#' single number to use for every feature
+#' @param var_m A numeric variable in `x` to be converted in `M` dimension, or a
+#' single number to use for every feature
 #' @param dim The dimension to add: either `"z"` (default) for
 #' elevation or `"m"` for measure values.
 #' @template conn_null
@@ -249,7 +251,7 @@ ddbs_force_3d <- function(
       overwrite = overwrite,
       quiet = quiet,
       fun = st_fun,
-      other_args = var
+      other_args = if (is.numeric(var)) var else sql_ident(var)
   )
   
 }
@@ -272,7 +274,8 @@ ddbs_force_4d <- function(
   
 
   # 1. Build ST_Force4D parameters string
-  force_args <- glue::glue("{var_z}, {var_m}")
+  quote_var <- function(v) if (is.numeric(v)) v else sql_ident(v)
+  force_args <- glue::glue("{quote_var(var_z)}, {quote_var(var_m)}")
 
   
   # 2. Pass to template

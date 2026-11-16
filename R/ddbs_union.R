@@ -19,7 +19,8 @@
 #'   }
 #' @param by_feature Logical. When `y` is provided:
 #'   * `FALSE` (default) - Union all geometries from both `x` and `y` into a single geometry
-#'   * `TRUE` - Perform row-by-row union between matching features from `x` and `y` (requires same number of rows)
+#'   * `TRUE` - Perform row-by-row union between matching features from `x` and `y`, paired by row position. If they
+#'     have a different number of rows, extra rows are silently dropped
 #' @param by Character vector specifying one or more column names to
 #' group by when computing unions. Geometries will be unioned within each group.
 #' When \code{NULL} (default), it falls back to \code{ddbs_union}.

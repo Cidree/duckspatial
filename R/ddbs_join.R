@@ -12,7 +12,8 @@
 #' @template name
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units are
 #' metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
-#' (e.g. US survey feet for EPSG:2264)
+#' (e.g. US survey feet for EPSG:2264). The inputs must have a CRS;
+#' on a geographic CRS only POINT geometries are supported
 #' @template mode
 #' @template overwrite
 #' @template quiet

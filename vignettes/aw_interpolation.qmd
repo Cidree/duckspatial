@@ -160,8 +160,8 @@ First, let's establish a connection and load our spatial layers into tables.
 conn <- ddbs_create_conn()
 
 # Write layers to DuckDB
-ddbs_write_vector(conn, nc, "nc_table", overwrite = TRUE)
-ddbs_write_vector(conn, grid, "grid_table", overwrite = TRUE)
+ddbs_write_table(conn, nc, "nc_table", overwrite = TRUE)
+ddbs_write_table(conn, grid, "grid_table", overwrite = TRUE)
 ```
 
 Now we run the interpolation by referencing the table names. We can also use the `name` argument to save the result directly to a new table instead of returning it to R.
@@ -188,7 +188,7 @@ We can now query this table or read it back later.
 
 ```{r}
 # Read the result back from the database
-final_sf <- ddbs_read_vector(conn, "nc_grid_births")
+final_sf <- ddbs_read_table(conn, "nc_grid_births")
 
 head(final_sf)
 ```

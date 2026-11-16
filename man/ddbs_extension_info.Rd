@@ -7,8 +7,10 @@
 ddbs_extension_info(conn = NULL, extension = "spatial")
 }
 \arguments{
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{extension}{name of the extension to inspect, default is "spatial"}
 }

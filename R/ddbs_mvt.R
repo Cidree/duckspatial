@@ -442,7 +442,7 @@ mvt_vector_layers_json <- function(layer_name, attr_cols, minz, maxz) {
                  "USMALLINT", "UINTEGER", "UBIGINT", "HUGEINT", "UHUGEINT",
                  "FLOAT", "DOUBLE", "DECIMAL", "REAL", "NUMERIC")
 
-  fields <- list()
+  fields <- structure(list(), names = character(0))
   for (i in seq_len(nrow(attr_cols))) {
     base_ty <- toupper(sub("\\(.*", "", attr_cols$column_type[i]))
     if (base_ty == "BLOB") next

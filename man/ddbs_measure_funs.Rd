@@ -75,8 +75,10 @@ ddbs_azimuth(
 \item{new_column}{Name of the new column to create on the input data. Ignored
 with \code{mode = "sf"}.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
@@ -125,7 +127,8 @@ For \code{ddbs_area}, \code{ddbs_length}, and \code{ddbs_perimeter}:
 \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
 }
 
-For \code{ddbs_distance}: A \code{units} matrix with dimensions nrow(x), nrow(y).
+For \code{ddbs_distance}: A \code{units} matrix with dimensions nrow(x), nrow(y)
+when \code{mode = "sf"}, or a lazy \code{tbl_duckdb_connection} otherwise.
 
 Results are in metres (square metres for area) for geographic (lon/lat) CRSs,
 and in the CRS units for projected CRSs (e.g. \code{[US_survey_foot^2]} for
@@ -162,6 +165,10 @@ transform other geometries to a projected CRS first
 survey feet for EPSG:2264)
 \item For \code{ddbs_distance}: defaults to \code{"planar"}
 }
+
+\strong{\code{ddbs_azimuth}} always uses the planar \code{ST_Azimuth}. On a
+geographic CRS it is computed on raw longitude/latitude values (not a
+geodesic bearing), so transform to a projected CRS first.
 
 \strong{Inside \code{dplyr::mutate()}:} \code{ddbs_area()}, \code{ddbs_length()}
 and \code{ddbs_perimeter()} run as DuckDB macros, which use the spheroid only

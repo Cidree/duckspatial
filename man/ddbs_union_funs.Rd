@@ -62,11 +62,14 @@ Data is returned from this object.}
 \item{by_feature}{Logical. When \code{y} is provided:
 \itemize{
 \item \code{FALSE} (default) - Union all geometries from both \code{x} and \code{y} into a single geometry
-\item \code{TRUE} - Perform row-by-row union between matching features from \code{x} and \code{y} (requires same number of rows)
+\item \code{TRUE} - Perform row-by-row union between matching features from \code{x} and \code{y}, paired by row position. If they
+have a different number of rows, extra rows are silently dropped
 }}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{conn_x}{A \code{DBIConnection} object to a DuckDB database for the input \code{x}.
 If \code{NULL} (default), it is resolved from \code{conn} or extracted from \code{x}.}

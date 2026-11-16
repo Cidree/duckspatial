@@ -527,6 +527,29 @@ test_that("count() and distinct() drop the stale source table (audit A1)", {
   expect_equal(nrow(ddbs_collect(ddbs_open_dataset(f))), 3)
 })
 
+describe("joins on duckspatial_df", {
+  it("keep the geometry when both sides share its name", {
+    nc_lazy <- as_duckspatial_df(nc_sf[1:5, ])
+    y <- dplyr::select(nc_lazy, FIPS)
+    j <- dplyr::left_join(nc_lazy, y, by = "FIPS")
+    expect_equal(sum(grepl("^geometry", colnames(j))), 1)
+    expect_s3_class(ddbs_collect(j), "sf")
+  })
+
+  it("keep the geometry when `suffix` is given", {
+    nc_lazy <- as_duckspatial_df(nc_sf[1:5, ])
+    j <- dplyr::left_join(nc_lazy, nc_lazy, by = "FIPS", suffix = c("_a", "_b"))
+    expect_s3_class(ddbs_collect(j), "sf")
+  })
+
+  it("leave natural joins (by = NULL) unchanged", {
+    nc_lazy <- as_duckspatial_df(nc_sf[1:5, ])
+    j <- suppressMessages(dplyr::left_join(nc_lazy, nc_lazy))
+    expect_equal(sum(grepl("^geometry", colnames(j))), 1)
+    expect_equal(nrow(ddbs_collect(j)), 5)
+  })
+})
+
 test_that("select() tracks a renamed geometry column (audit A3)", {
   nc_lazy <- as_duckspatial_df(nc_sf[1:5, ])
   s <- dplyr::select(nc_lazy, NAME, geom2 = geometry)

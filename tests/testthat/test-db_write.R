@@ -379,3 +379,14 @@ test_that("ddbs_write_table handles quoted geometry names and views (audit A9, A
   ddbs_register_table(conn, nc_sf, "nc_view", quiet = TRUE)
   expect_true(ddbs_write_table(conn, nc_sf, "nc_view", overwrite = TRUE, quiet = TRUE))
 })
+
+describe("ddbs_write_table()", {
+  it("quotes the table name for same-connection lazy writes", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    ddbs_write_table(conn, nc_sf, "nc", quiet = TRUE)
+    lazy <- dplyr::filter(as_duckspatial_df("nc", conn), AREA > 0.1)
+    expect_true(ddbs_write_table(conn, lazy, "my-table", quiet = TRUE))
+    expect_true(DBI::dbExistsTable(conn, "my-table"))
+  })
+})

@@ -16,8 +16,8 @@
 #' @template predicate_args
 #' @param distance a numeric value specifying the distance for ST_DWithin. Units are
 #' metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
-#' (e.g. US survey feet for EPSG:2264). On a geographic CRS only POINT
-#' geometries are supported
+#' (e.g. US survey feet for EPSG:2264). The inputs must have a CRS;
+#' on a geographic CRS only POINT geometries are supported
 #' @template mode
 #' @template overwrite
 #' @template quiet
@@ -226,10 +226,10 @@ ddbs_predicate <- function(
 
     ## Warn if the distance arg wasn't specified, and give it a value of 0
     if (is.null(distance)) {
-      cli::cli_warn("{.val distance} wasn't specified. Using ST_Within.")
+      cli::cli_warn("{.val distance} wasn't specified. Using {.code distance = 0}.")
       distance <- 0
     }
-    
+
     ## geographic CRS: spheroid (distance in metres);
     ## projected CRS: planar (distance in CRS units)
     if (crs_measure_info(crs_x)$geographic) {

@@ -36,8 +36,10 @@ single \code{POINT} at the position given by \code{fraction}. If
 \code{TRUE}, returns a \code{MULTIPOINT} of equally-spaced points along
 the line at intervals defined by \code{fraction}.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
@@ -71,9 +73,9 @@ When \code{name} is provided, the result is also written as a table or view in D
 \description{
 Returns either a single point at a specified position along a line, or
 multiple equally-spaced points along a line, depending on the value of
-\code{intervals}. When \code{intervals = FALSE}, this wraps
-\code{ST_LineInterpolatePoint}; when \code{intervals = TRUE}, it wraps
-\code{ST_LineInterpolatePoints}.
+\code{intervals}. It wraps \code{ST_LineInterpolatePoints}, returning a
+single POINT when \code{intervals = FALSE} and a MULTIPOINT when
+\code{intervals = TRUE}.
 }
 \examples{
 \dontrun{

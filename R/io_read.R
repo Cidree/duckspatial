@@ -237,7 +237,7 @@ ddbs_read_vector <- function(
 #'
 #' @examples
 #' \dontrun{
-#' ## Read metadata from a GeoPackage
+#' ## Read metadata from a GeoJSON file
 #' meta <- ddbs_read_meta(
 #'   system.file("spatial/rivers.geojson",
 #'   package = "duckspatial")
@@ -258,7 +258,7 @@ ddbs_read_meta <- function(path, conn = NULL) {
   }
 
   meta <- DBI::dbGetQuery(target_conn, glue::glue(
-    "SELECT * FROM ST_Read_Meta('{path}')"
+    "SELECT * FROM ST_Read_Meta({ddbs_quote_sql_string(NULL, path)})"
   ))
 
   if (nrow(meta) == 0) {

@@ -36,8 +36,10 @@ point feature (requires \code{conn}).
 \item{new_column}{Name of the new column to create on the input data. Ignored
 with \code{mode = "sf"}.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{name}{A character string of length one specifying the name of the table,
 or a character string of length two specifying the schema and table
@@ -83,10 +85,11 @@ rivers_ddbs <- ddbs_open_dataset(
   system.file("spatial/rivers.geojson", package = "duckspatial")
 )
 
-## define a single reference point (sf with 1 row)
+## define a single reference point (sf with 1 row), in the CRS of the rivers
 ref_pt <- sf::st_sf(
   geometry = sf::st_sfc(sf::st_point(c(-8, 43)), crs = 4326)
 )
+ref_pt <- sf::st_transform(ref_pt, ddbs_crs(rivers_ddbs))
 
 ## locate the fraction along each river closest to the reference point
 ddbs_line_locate_point(rivers_ddbs, y = ref_pt)

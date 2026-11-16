@@ -34,7 +34,8 @@
 #'   \item When \code{name} is provided: writes the table in the DuckDB connection and returns \code{TRUE} (invisibly).
 #' }
 #' 
-#' For \code{ddbs_distance}: A \code{units} matrix with dimensions nrow(x), nrow(y).
+#' For \code{ddbs_distance}: A \code{units} matrix with dimensions nrow(x), nrow(y)
+#' when \code{mode = "sf"}, or a lazy \code{tbl_duckdb_connection} otherwise.
 #'
 #' Results are in metres (square metres for area) for geographic (lon/lat) CRSs,
 #' and in the CRS units for projected CRSs (e.g. \code{[US_survey_foot^2]} for
@@ -67,6 +68,10 @@
 #'     survey feet for EPSG:2264)
 #'   \item For \code{ddbs_distance}: defaults to \code{"planar"}
 #' }
+#'
+#' \strong{\code{ddbs_azimuth}} always uses the planar \code{ST_Azimuth}. On a
+#' geographic CRS it is computed on raw longitude/latitude values (not a
+#' geodesic bearing), so transform to a projected CRS first.
 #'
 #' \strong{Inside \code{dplyr::mutate()}:} \code{ddbs_area()}, \code{ddbs_length()}
 #' and \code{ddbs_perimeter()} run as DuckDB macros, which use the spheroid only
@@ -646,10 +651,10 @@ ddbs_azimuth <- function(
   geom_type_x <- as.character(ddbs_geometry_type(x, conn = target_conn, by_feature = FALSE))
   geom_type_y <- as.character(ddbs_geometry_type(y, conn = target_conn, by_feature = FALSE))
 
-  if (geom_type_x != "POINT") {
+  if (!all(geom_type_x == "POINT")) {
     cli::cli_abort("{.arg x} must contain POINT geometries, not {.val {geom_type_x}}.")
   }
-  if (geom_type_y != "POINT") {
+  if (!all(geom_type_y == "POINT")) {
     cli::cli_abort("{.arg y} must contain POINT geometries, not {.val {geom_type_y}}.")
   }
 

@@ -147,7 +147,12 @@ describe("ddbs_load()", {
     })
   })
 
-
+  it("returns TRUE invisibly", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    res <- expect_invisible(ddbs_load(conn, quiet = TRUE))
+    expect_true(res)
+  })
 })
 
 

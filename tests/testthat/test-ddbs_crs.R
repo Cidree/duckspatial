@@ -232,3 +232,11 @@ describe("ddbs_set_crs()", {
 })
 
 duckspatial::ddbs_stop_conn(conn_set_crs)
+
+test_that("ddbs_crs accepts dotted schema.table names and checks the schema", {
+  conn <- ddbs_create_conn()
+  on.exit(ddbs_stop_conn(conn), add = TRUE)
+  ddbs_write_table(conn, nc_sf, "nc", quiet = TRUE)
+  expect_true(ddbs_crs("main.nc", conn) == sf::st_crs(nc_sf))
+  expect_error(ddbs_crs("other.nc", conn))
+})

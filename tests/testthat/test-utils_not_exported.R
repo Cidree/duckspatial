@@ -160,3 +160,26 @@ describe("table names with spaces or reserved words (#168)", {
 
 ## stop connection
 ddbs_stop_conn(conn_test)
+
+describe("resolve_spatial_connections()", {
+  it("drops the imported views of both x and y", {
+    conn_x <- ddbs_create_conn()
+    conn_y <- ddbs_create_conn()
+    conn <- ddbs_create_conn()
+    on.exit({
+      ddbs_stop_conn(conn_x)
+      ddbs_stop_conn(conn_y)
+      ddbs_stop_conn(conn)
+    }, add = TRUE)
+    ddbs_write_table(conn_x, nc_sf[1:5, ], "x", quiet = TRUE)
+    ddbs_write_table(conn_y, nc_sf[3:8, ], "y", quiet = TRUE)
+    suppressWarnings(ddbs_intersection(
+      as_duckspatial_df("x", conn_x), as_duckspatial_df("y", conn_y),
+      conn = conn, mode = "sf", quiet = TRUE
+    ))
+    left <- DBI::dbGetQuery(
+      conn, "SELECT view_name FROM duckdb_views() WHERE NOT internal AND view_name LIKE 'imported_%'"
+    )
+    expect_equal(nrow(left), 0)
+  })
+})

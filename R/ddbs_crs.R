@@ -159,10 +159,10 @@ ddbs_crs.character <- function(x, conn, ...) {
     # Use SQL check to catch temporary views which might not show up in dbListTables
     check_query <- glue::glue("
       SELECT 1 FROM information_schema.tables 
-      WHERE table_name = '{x_list$query_name}' 
+      WHERE table_schema = '{x_list$schema_name}' AND table_name = '{x_list$table_name}' 
       UNION 
       SELECT 1 FROM duckdb_views() 
-      WHERE view_name = '{x_list$query_name}'
+      WHERE schema_name = '{x_list$schema_name}' AND view_name = '{x_list$table_name}'
       LIMIT 1
     ")
     

@@ -175,6 +175,13 @@ describe("ddbs_quadkey()", {
       expect_error(ddbs_quadkey(points_ddbs, conn = conn_test, name = c('banana', 'banana')))
     })
   })
+
+  it("does not need quadkeyr when writing a table with `name`", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    local_mocked_bindings(check_installed = function(...) stop("not installed"), .package = "rlang")
+    expect_true(ddbs_quadkey(points_sf, level = 4, conn = conn, name = "qk", quiet = TRUE))
+  })
 })
 
 ## 1.3. Non-EPSG:4326 input (#164) ---------

@@ -20,8 +20,10 @@ Data is returned from this object.}
 separately to each geometry. If \code{FALSE}, the geometric
 operation is applied to the data as a whole.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 }
 \value{
 A factor with geometry type(s)

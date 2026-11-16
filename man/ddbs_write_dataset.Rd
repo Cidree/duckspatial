@@ -52,8 +52,10 @@ The function validates that the specified driver is available and writable on yo
 system. Note: \code{.parquet} and \code{.csv} files use native DuckDB writers and do not
 require a GDAL driver.}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{overwrite}{Logical. If \code{TRUE}, overwrites existing file.}
 

@@ -546,3 +546,14 @@ test_that("geographic dwithin aborts cleanly on non-POINT input (audit B2)", {
     "only support POINT"
   )
 })
+
+test_that("dwithin without `distance` warns that it uses distance = 0", {
+  expect_warning(
+    ddbs_predicate(points_sf[1:3, ], points_sf[1:3, ], predicate = "dwithin", mode = "sf"),
+    "distance = 0"
+  )
+  expect_warning(
+    ddbs_join(points_sf[1:3, ], points_sf[1:3, ], join = "dwithin", mode = "sf"),
+    "distance = 0"
+  )
+})

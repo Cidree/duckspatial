@@ -26,7 +26,22 @@
 * `ddbs_union_agg()` now works without `by`, unioning all geometries into one, as documented.
 * `as_duckspatial_df()` on a data.frame (including `coords` and `wkt` input) now uploads it as a temporary table. Before, it left a permanent `temp_table_*` table in file-backed databases.
 * The default `duckspatial.output_type` option is now `"sf"`, as documented, so `ddbs_options(output_type = getOption("duckspatial.output_type"))` no longer errors. `collect()` returns the same output as before, and `"duckspatial_df"` is still accepted as an alias for `"sf"`.
-* Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors. `ddbs_write_dataset()` now documents v2.0.0 as the default storage version, and its examples write to `tempdir()`. `as_duckspatial_df()` documents that `coords` input with no `crs` is assumed to be in EPSG:4326. `ddbs_rotate()` explains that `by_feature = FALSE` rotates around the centroid of the whole dataset, and that `center_x`/`center_y` need `by_feature = TRUE`; its example no longer errors.
+* Joins between two `duckspatial_df` whose geometry columns share a name no longer lose the geometry: the result keeps the geometry of `x` and drops the geometry column of `y`, as `sf::st_join()` does. Natural joins (`by = NULL`) are unchanged.
+* `ddbs_write_table()` with a lazy table from the same connection now quotes the table name, so names like `"my-table"` work.
+* Schema-qualified names given as a single string (e.g. `"main.table"`) now work in `ddbs_read_table()`, `ddbs_crs()`, `ddbs_glimpse()`, `as_duckspatial_df()` and `ddbs_register_table()`.
+* File paths containing a single quote (e.g. `"it's.parquet"`) no longer break the generated SQL.
+* `ddbs_open_dataset()` now errors when `parquet_encryption_config` is used with a Parquet file, instead of silently ignoring it.
+* `ddbs_load()` now returns `TRUE` invisibly, as documented.
+* When `x` and `y` come from two different connections and are both imported into a third one (`conn`), the imported view of `x` is no longer left behind.
+* `ddbs_line_locate_point()` now errors when `x` and `y` have different CRSs, instead of returning a wrong fraction.
+* The warning for a `dwithin` predicate without `distance` now says it uses `distance = 0` (it previously said "Using ST_Within").
+* `ddbs_azimuth()` now gives a clear error for mixed geometry types, and documents that it is planar.
+* `ddbs_has_z()` and `ddbs_has_m()` with `by_feature = FALSE` now check every feature, not only the first one.
+* Functions with `by_feature = FALSE` that return a single value (e.g. `ddbs_xmax()`, `ddbs_has_z()`) now warn that `name` is ignored.
+* `ddbs_force_3d()` and `ddbs_force_4d()` now quote the `var`, `var_z` and `var_m` column names, so names like `"my z"` work. A single number is still accepted.
+* `ddbs_maximum_inscribed_circle()` validates `geom`, and `ddbs_quadkey(name = ...)` no longer requires the `quadkeyr` package.
+* `ddbs_write_mbtiles()` writes `"fields": {}` instead of `[]` for layers without attributes.
+* Documentation fixes: the `name` argument now describes the actual default (a `duckspatial_df` or `sf` result, depending on `mode`), `ddbs_generate_points()` generates `n` points in total within the bounding box of the whole input, and the `ddbs_x()`/`ddbs_y()` example no longer errors. `ddbs_write_dataset()` now documents v2.0.0 as the default storage version, and its examples write to `tempdir()`. `as_duckspatial_df()` documents that `coords` input with no `crs` is assumed to be in EPSG:4326. `ddbs_rotate()` explains that `by_feature = FALSE` rotates around the centroid of the whole dataset, and that `center_x`/`center_y` need `by_feature = TRUE`; its example no longer errors. The `conn` argument now describes the default connection, `ddbs_exterior_ring()` only supports POLYGON, and several other examples and descriptions were corrected.
 
 ## PERFORMANCE
 

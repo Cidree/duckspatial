@@ -107,3 +107,12 @@ test_that("ddbs_read_meta errors on files GDAL cannot open (#166)", {
 
 # Disconnect
 duckdb::dbDisconnect(conn_test, shutdown = TRUE)
+
+describe("ddbs_read_table()", {
+  it("accepts dotted schema.table names", {
+    conn <- ddbs_create_conn()
+    on.exit(ddbs_stop_conn(conn), add = TRUE)
+    ddbs_write_table(conn, nc_sf, "nc", quiet = TRUE)
+    expect_equal(nrow(ddbs_read_table(conn, "main.nc", quiet = TRUE)), nrow(nc_sf))
+  })
+})

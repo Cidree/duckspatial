@@ -35,8 +35,10 @@ names. If \code{NULL} (the default), no table is written and the result is
 returned as a \code{duckspatial_df} or \code{sf} object, depending on
 \code{mode}}
 
-\item{conn}{A connection object to a DuckDB database. If \code{NULL}, the function
-runs on a temporary DuckDB database.}
+\item{conn}{A connection object to a DuckDB database. Required when an input
+is a table name. If \code{NULL} (the default), the connection of a
+\code{duckspatial_df} input is used when there is one; otherwise the default
+connection from \code{\link[=ddbs_default_conn]{ddbs_default_conn()}} is used.}
 
 \item{mode}{Character. Controls the return type. Options:
 \itemize{

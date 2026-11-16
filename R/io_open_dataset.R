@@ -23,7 +23,7 @@
 #' @param parquet_filename Logical. (Parquet) If TRUE, include a `filename` column.
 #' @param parquet_hive_partitioning Logical. (Parquet) If TRUE, interpret path as Hive partitioned.
 #' @param parquet_union_by_name Logical. (Parquet) If TRUE, unify columns by name.
-#' @param parquet_encryption_config List/Struct. (Parquet) Encryption configuration (advanced).
+#' @param parquet_encryption_config Not supported yet. Must be `NULL`.
 #' 
 #' @param read_shp_mode Mode for reading Shapefiles. "ST_ReadSHP" (default, fast native reader) or "GDAL" (ST_Read).
 #' @param read_osm_mode Mode for reading OSM PBF files. "GDAL" (default, ST_Read) or "ST_ReadOSM" (fast native reader, no geometry).
@@ -39,7 +39,8 @@
 #' @param gdal_allowed_drivers Character vector. List of allowed GDAL drivers (ST_Read only).
 #' @param gdal_open_options Character vector. Driver-specific open options (ST_Read only).
 #'
-#' @returns A \code{duckspatial_df} object.
+#' @returns A \code{duckspatial_df} object, or a lazy \code{tbl_duckdb_connection}
+#' when no geometry column is found (e.g. a non-spatial Parquet or CSV file).
 #' 
 #' @references 
 #' This function is inspired by the dataset opening logic in the 
@@ -192,7 +193,7 @@ ddbs_open_dataset <- function(path,
       # We check by trying to read the first row with read_parquet
       # We use tryCatch to detect failure (bad magic bytes)
       is_parquet_check <- tryCatch({
-          DBI::dbGetQuery(conn, glue::glue("SELECT 1 FROM read_parquet('{path}') LIMIT 1"))
+          DBI::dbGetQuery(conn, glue::glue("SELECT 1 FROM read_parquet({ddbs_quote_sql_string(NULL, path)}) LIMIT 1"))
           TRUE
       }, error = function(e) FALSE)
       
@@ -209,6 +210,10 @@ ddbs_open_dataset <- function(path,
           cli::cli_warn("Arguments specific to ST_Read (gdal_*) and 'layer' are ignored for Parquet files.")
       }
       
+      if (!is.null(parquet_encryption_config)) {
+          cli::cli_abort("{.arg parquet_encryption_config} is not supported yet.")
+      }
+
       # Build read_parquet args
       p_args <- c()
       if (!is.null(parquet_binary_as_string)) p_args <- c(p_args, glue::glue("binary_as_string := {fmt_arg(parquet_binary_as_string)}"))
@@ -222,7 +227,7 @@ ddbs_open_dataset <- function(path,
           p_args_str <- paste0(", ", paste(p_args, collapse = ", "))
       }
       
-      scan_query <- glue::glue("read_parquet('{path}'{p_args_str})")
+      scan_query <- glue::glue("read_parquet({ddbs_quote_sql_string(NULL, path)}{p_args_str})")
       
       # Resolve geometry column
       try_cols <- tryCatch({
@@ -264,12 +269,12 @@ ddbs_open_dataset <- function(path,
       if (!is.null(shp_encoding)) {
         view_query <- create_temp_table(
             name = view_name,
-            from = glue::glue("ST_ReadSHP('{path}', encoding := '{shp_encoding}')")
+            from = glue::glue("ST_ReadSHP({ddbs_quote_sql_string(NULL, path)}, encoding := '{shp_encoding}')")
         )
       } else {
         view_query <- create_temp_table(
             name = view_name,
-            from = glue::glue("ST_ReadSHP('{path}')")
+            from = glue::glue("ST_ReadSHP({ddbs_quote_sql_string(NULL, path)})")
         )
       }
 
@@ -278,7 +283,7 @@ ddbs_open_dataset <- function(path,
         geom_col <- NA_character_ # Signal no geometry
         view_query <- create_temp_table(
             name = view_name,
-            from = glue::glue("ST_ReadOSM('{path}')")
+            from = glue::glue("ST_ReadOSM({ddbs_quote_sql_string(NULL, path)})")
         )
 
   } else {
@@ -330,7 +335,7 @@ ddbs_open_dataset <- function(path,
           args_str <- paste0(", ", paste(args_list, collapse = ", "))
       }
       
-      query_str <- glue::glue("ST_Read('{path}'{args_str})")
+      query_str <- glue::glue("ST_Read({ddbs_quote_sql_string(NULL, path)}{args_str})")
       
       if (is.null(geom_col)) {
          try_cols <- tryCatch({

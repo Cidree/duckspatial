@@ -204,6 +204,12 @@ describe("ddbs_write_mbtiles()", {
       expect_error(ddbs_write_mbtiles(999, dsn = tempfile(fileext = ".mbtiles")))
     })
   })
+
+  it("writes `fields` as a JSON object for layers without attributes", {
+    no_attrs <- data.frame(column_name = character(), column_type = character())
+    json <- mvt_vector_layers_json("layer", no_attrs, 0, 1)
+    expect_match(json, '"fields":{}', fixed = TRUE)
+  })
 })
 
 
