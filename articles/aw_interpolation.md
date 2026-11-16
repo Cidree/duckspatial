@@ -79,7 +79,7 @@ res_extensive <- ddbs_interpolate_aw(
   mode = "sf"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpoRBJHG/duckdb
+#> ℹ /tmp/Rtmps0qNIU/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -188,7 +188,7 @@ tables.
 # Create connection
 conn <- ddbs_create_conn()
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpoRBJHG/duckdb
+#> ℹ /tmp/Rtmps0qNIU/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -288,7 +288,7 @@ as_duckspatial_df("nc_grid_births", conn)
 #> # Use ddbs_collect() or st_as_sf() to materialize to sf
 #> #
 #> # A query:  ?? x 3
-#> # Database: DuckDB 2.0.0 [unknown@Linux 7.0.0-1014-aws:R 4.6.2/:memory:]
+#> # Database: DuckDB 2.0.0 [unknown@Linux 7.0.0-1019-azure:R 4.6.2/:memory:]
 #>    target_id x                                                             BIR74
 #>        <int> <wk_wkb>                                                      <dbl>
 #>  1         1 <POLYGON ((1054293 1348021, 1132214 1348021, 1132214 1416262… 1168.

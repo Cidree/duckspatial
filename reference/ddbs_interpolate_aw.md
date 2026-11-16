@@ -201,7 +201,7 @@ Available at:
 ``` r
 # \donttest{
 library(sf)
-#> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
+#> Linking to GEOS 3.14.1, GDAL 3.12.2, PROJ 9.7.1; sf_use_s2() is TRUE
 
 # 1. Prepare Data
 # Load NC counties (Source) and project to Albers (EPSG:5070)
@@ -224,7 +224,7 @@ res_ext <- ddbs_interpolate_aw(
   mode = "sf"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp2zMCV4/duckdb
+#> ℹ /tmp/Rtmp15TctX/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
