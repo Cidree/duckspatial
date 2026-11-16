@@ -303,6 +303,9 @@ Utility functions for M and Z dimensions
 
 Check and repair geometry validity and dimensionality
 
+- [`ddbs_coverage_union()`](https://cidree.github.io/duckspatial/reference/ddbs_coverage_funs.md)
+  [`ddbs_coverage_invalid_edges()`](https://cidree.github.io/duckspatial/reference/ddbs_coverage_funs.md)
+  : Operations on polygonal coverages
 - [`ddbs_geometry_type()`](https://cidree.github.io/duckspatial/reference/ddbs_geometry_type.md)
   : Get the geometry type of features
 - [`ddbs_make_valid()`](https://cidree.github.io/duckspatial/reference/ddbs_make_valid.md)

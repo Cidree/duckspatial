@@ -224,7 +224,7 @@ res_ext <- ddbs_interpolate_aw(
   mode = "sf"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmpamdf1u/duckdb
+#> ℹ /tmp/Rtmp2zMCV4/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
