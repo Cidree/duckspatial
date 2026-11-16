@@ -102,8 +102,12 @@ ddbs_interpolate_aw(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - name:
 
@@ -220,7 +224,7 @@ res_ext <- ddbs_interpolate_aw(
   mode = "sf"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpNQn7Br/duckdb
+#> ℹ /tmp/Rtmpamdf1u/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

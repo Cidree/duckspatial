@@ -53,8 +53,12 @@ ddbs_line_locate_point(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - name:
 
@@ -113,10 +117,11 @@ rivers_ddbs <- ddbs_open_dataset(
   system.file("spatial/rivers.geojson", package = "duckspatial")
 )
 
-## define a single reference point (sf with 1 row)
+## define a single reference point (sf with 1 row), in the CRS of the rivers
 ref_pt <- sf::st_sf(
   geometry = sf::st_sfc(sf::st_point(c(-8, 43)), crs = 4326)
 )
+ref_pt <- sf::st_transform(ref_pt, ddbs_crs(rivers_ddbs))
 
 ## locate the fraction along each river closest to the reference point
 ddbs_line_locate_point(rivers_ddbs, y = ref_pt)

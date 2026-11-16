@@ -49,7 +49,7 @@ A `tibble` with one row per file and the following columns:
 
 ``` r
 if (FALSE) { # \dontrun{
-## Read metadata from a GeoPackage
+## Read metadata from a GeoJSON file
 meta <- ddbs_read_meta(
   system.file("spatial/rivers.geojson",
   package = "duckspatial")

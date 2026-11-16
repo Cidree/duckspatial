@@ -231,13 +231,16 @@ ddbs_combine() - Combine geometries into a MULTI-geometry without dissolving bou
 
 <dt id="arg-by-feature">by_feature<a class="anchor" aria-label="anchor" href="#arg-by-feature"></a></dt>
 <dd><p>Logical. When <code>y</code> is provided:</p><ul><li><p><code>FALSE</code> (default) - Union all geometries from both <code>x</code> and <code>y</code> into a single geometry</p></li>
-<li><p><code>TRUE</code> - Perform row-by-row union between matching features from <code>x</code> and <code>y</code> (requires same number of rows)</p></li>
+<li><p><code>TRUE</code> - Perform row-by-row union between matching features from <code>x</code> and <code>y</code>, paired by row position. If they
+have a different number of rows, extra rows are silently dropped</p></li>
 </ul></dd>
 
 
 <dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>A connection object to a DuckDB database. If <code>NULL</code>, the function
-runs on a temporary DuckDB database.</p></dd>
+<dd><p>A connection object to a DuckDB database. Required when an input
+is a table name. If <code>NULL</code> (the default), the connection of a
+<code>duckspatial_df</code> input is used when there is one; otherwise the default
+connection from <code><a href="ddbs_default_conn.html">ddbs_default_conn()</a></code> is used.</p></dd>
 
 
 <dt id="arg-conn-x">conn_x<a class="anchor" aria-label="anchor" href="#arg-conn-x"></a></dt>

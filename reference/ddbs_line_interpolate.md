@@ -2,9 +2,8 @@
 
 Returns either a single point at a specified position along a line, or
 multiple equally-spaced points along a line, depending on the value of
-`intervals`. When `intervals = FALSE`, this wraps
-`ST_LineInterpolatePoint`; when `intervals = TRUE`, it wraps
-`ST_LineInterpolatePoints`.
+`intervals`. It wraps `ST_LineInterpolatePoints`, returning a single
+POINT when `intervals = FALSE` and a MULTIPOINT when `intervals = TRUE`.
 
 ## Usage
 
@@ -54,8 +53,12 @@ ddbs_line_interpolate(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - name:
 

@@ -207,8 +207,10 @@
 
 
 <dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>A connection object to a DuckDB database. If <code>NULL</code>, the function
-runs on a temporary DuckDB database.</p></dd>
+<dd><p>A connection object to a DuckDB database. Required when an input
+is a table name. If <code>NULL</code> (the default), the connection of a
+<code>duckspatial_df</code> input is used when there is one; otherwise the default
+connection from <code><a href="ddbs_default_conn.html">ddbs_default_conn()</a></code> is used.</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
@@ -238,7 +240,7 @@ Defaults to <code>FALSE</code>.</p></dd>
 
 <dt id="arg-var">var<a class="anchor" aria-label="anchor" href="#arg-var"></a></dt>
 <dd><p>A numeric variable in <code>x</code> to be converted in the dimension specified
-in the argument <code>dim</code></p></dd>
+in the argument <code>dim</code>, or a single number to use for every feature</p></dd>
 
 
 <dt id="arg-dim">dim<a class="anchor" aria-label="anchor" href="#arg-dim"></a></dt>
@@ -247,11 +249,13 @@ elevation or <code>"m"</code> for measure values.</p></dd>
 
 
 <dt id="arg-var-z">var_z<a class="anchor" aria-label="anchor" href="#arg-var-z"></a></dt>
-<dd><p>A numeric variable in <code>x</code> to be convered in <code>Z</code> dimension</p></dd>
+<dd><p>A numeric variable in <code>x</code> to be converted in <code>Z</code> dimension, or a
+single number to use for every feature</p></dd>
 
 
 <dt id="arg-var-m">var_m<a class="anchor" aria-label="anchor" href="#arg-var-m"></a></dt>
-<dd><p>A numeric variable in <code>x</code> to be convered in <code>M</code> dimension</p></dd>
+<dd><p>A numeric variable in <code>x</code> to be converted in <code>M</code> dimension, or a
+single number to use for every feature</p></dd>
 
 </dl></div>
     <div class="section level2">

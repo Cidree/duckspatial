@@ -206,8 +206,10 @@ the details for other options.</p></dd>
 
 
 <dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>A connection object to a DuckDB database. If <code>NULL</code>, the function
-runs on a temporary DuckDB database.</p></dd>
+<dd><p>A connection object to a DuckDB database. Required when an input
+is a table name. If <code>NULL</code> (the default), the connection of a
+<code>duckspatial_df</code> input is used when there is one; otherwise the default
+connection from <code><a href="ddbs_default_conn.html">ddbs_default_conn()</a></code> is used.</p></dd>
 
 
 <dt id="arg-conn-x">conn_x<a class="anchor" aria-label="anchor" href="#arg-conn-x"></a></dt>
@@ -231,7 +233,8 @@ returned as a <code>duckspatial_df</code> or <code>sf</code> object, depending o
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
 <dd><p>a numeric value specifying the distance for ST_DWithin. Units are
 metres for geographic (lon/lat) CRSs, and the CRS units for projected CRSs
-(e.g. US survey feet for EPSG:2264)</p></dd>
+(e.g. US survey feet for EPSG:2264). The inputs must have a CRS;
+on a geographic CRS only POINT geometries are supported</p></dd>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
@@ -274,7 +277,7 @@ most commonly used ones, taking two geometries a and b:</p><ul><li><p><code>"ST_
 <li><p><code>"ST_Crosses"</code>: Whether a crosses b</p></li>
 <li><p><code>"ST_Covers"</code>: Whether a covers b</p></li>
 <li><p><code>"ST_CoveredBy"</code>: Whether a is covered by b</p></li>
-<li><p><code>"ST_DWithin"</code>: x)	Whether a is within distance x of b</p></li>
+<li><p><code>"ST_DWithin"</code>: Whether a is within distance <code>distance</code> of b</p></li>
 </ul></div>
 
     <div class="section level2">

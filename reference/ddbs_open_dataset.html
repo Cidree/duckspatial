@@ -245,7 +245,7 @@ auto-detection.</p></dd>
 
 
 <dt id="arg-parquet-encryption-config">parquet_encryption_config<a class="anchor" aria-label="anchor" href="#arg-parquet-encryption-config"></a></dt>
-<dd><p>List/Struct. (Parquet) Encryption configuration (advanced).</p></dd>
+<dd><p>Not supported yet. Must be <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-read-shp-mode">read_shp_mode<a class="anchor" aria-label="anchor" href="#arg-read-shp-mode"></a></dt>
@@ -295,7 +295,8 @@ auto-detection.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>duckspatial_df</code> object.</p>
+    <p>A <code>duckspatial_df</code> object, or a lazy <code>tbl_duckdb_connection</code>
+when no geometry column is found (e.g. a non-spatial Parquet or CSV file).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

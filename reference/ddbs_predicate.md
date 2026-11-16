@@ -88,8 +88,12 @@ ddbs_within_properly(x, y, ...)
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - conn_x:
 
@@ -128,8 +132,8 @@ ddbs_within_properly(x, y, ...)
 
   a numeric value specifying the distance for ST_DWithin. Units are
   metres for geographic (lon/lat) CRSs, and the CRS units for projected
-  CRSs (e.g. US survey feet for EPSG:2264). On a geographic CRS only
-  POINT geometries are supported
+  CRSs (e.g. US survey feet for EPSG:2264). The inputs must have a CRS;
+  on a geographic CRS only POINT geometries are supported
 
 - mode:
 

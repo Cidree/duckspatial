@@ -213,8 +213,10 @@ any missing values (NAs) are found in the coordinate columns.</p></dd>
 
 
 <dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>A connection object to a DuckDB database. If <code>NULL</code>, the function
-runs on a temporary DuckDB database.</p></dd>
+<dd><p>A connection object to a DuckDB database. Required when an input
+is a table name. If <code>NULL</code> (the default), the connection of a
+<code>duckspatial_df</code> input is used when there is one; otherwise the default
+connection from <code><a href="ddbs_default_conn.html">ddbs_default_conn()</a></code> is used.</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
@@ -244,7 +246,7 @@ Defaults to <code>FALSE</code>.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments. Currently supports <code>geom_col</code> to
-specify the name of the geometry column in the output.</p></dd>
+specify the name of the geometry column in the output (default <code>"geom"</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">

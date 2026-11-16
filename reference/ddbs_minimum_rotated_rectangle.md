@@ -37,8 +37,12 @@ ddbs_minimum_rotated_rectangle(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - name:
 

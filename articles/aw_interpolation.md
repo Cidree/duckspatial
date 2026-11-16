@@ -79,7 +79,7 @@ res_extensive <- ddbs_interpolate_aw(
   mode = "sf"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpYdUQZ6/duckdb
+#> ℹ /tmp/RtmpIspeB8/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -188,7 +188,7 @@ tables.
 # Create connection
 conn <- ddbs_create_conn()
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpYdUQZ6/duckdb
+#> ℹ /tmp/RtmpIspeB8/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -197,12 +197,10 @@ conn <- ddbs_create_conn()
 #> ℹ See ?duckdb_storage for details and alternatives.
 
 # Write layers to DuckDB
-ddbs_write_vector(conn, nc, "nc_table", overwrite = TRUE)
-#> Warning: `ddbs_write_vector()` was deprecated in duckspatial 1.0.0.
-#> ℹ Please use `ddbs_write_table()` instead.
+ddbs_write_table(conn, nc, "nc_table", overwrite = TRUE)
 #> ℹ Table <nc_table> dropped
 #> ✔ Table nc_table successfully imported
-ddbs_write_vector(conn, grid, "grid_table", overwrite = TRUE)
+ddbs_write_table(conn, grid, "grid_table", overwrite = TRUE)
 #> ℹ Table <grid_table> dropped
 #> ✔ Table grid_table successfully imported
 ```
@@ -238,9 +236,7 @@ We can now query this table or read it back later.
 ``` r
 
 # Read the result back from the database
-final_sf <- ddbs_read_vector(conn, "nc_grid_births")
-#> Warning: `ddbs_read_vector()` was deprecated in duckspatial 1.0.0.
-#> ℹ Please use `ddbs_read_table()` instead.
+final_sf <- ddbs_read_table(conn, "nc_grid_births")
 #> ✔ table nc_grid_births successfully imported.
 
 head(final_sf)

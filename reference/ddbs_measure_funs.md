@@ -81,8 +81,12 @@ ddbs_azimuth(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - name:
 
@@ -162,7 +166,8 @@ For `ddbs_area`, `ddbs_length`, and `ddbs_perimeter`:
 - When `name` is provided: writes the table in the DuckDB connection and
   returns `TRUE` (invisibly).
 
-For `ddbs_distance`: A `units` matrix with dimensions nrow(x), nrow(y).
+For `ddbs_distance`: A `units` matrix with dimensions nrow(x), nrow(y)
+when `mode = "sf"`, or a lazy `tbl_duckdb_connection` otherwise.
 
 Results are in metres (square metres for area) for geographic (lon/lat)
 CRSs, and in the CRS units for projected CRSs (e.g. `[US_survey_foot^2]`
@@ -204,6 +209,10 @@ based on the input CRS:
   survey feet for EPSG:2264)
 
 - For `ddbs_distance`: defaults to `"planar"`
+
+**`ddbs_azimuth`** always uses the planar `ST_Azimuth`. On a geographic
+CRS it is computed on raw longitude/latitude values (not a geodesic
+bearing), so transform to a projected CRS first.
 
 **Inside
 [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html):**

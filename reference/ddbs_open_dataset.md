@@ -87,7 +87,7 @@ ddbs_open_dataset(
 
 - parquet_encryption_config:
 
-  List/Struct. (Parquet) Encryption configuration (advanced).
+  Not supported yet. Must be `NULL`.
 
 - read_shp_mode:
 
@@ -141,7 +141,8 @@ ddbs_open_dataset(
 
 ## Value
 
-A `duckspatial_df` object.
+A `duckspatial_df` object, or a lazy `tbl_duckdb_connection` when no
+geometry column is found (e.g. a non-spatial Parquet or CSV file).
 
 ## References
 

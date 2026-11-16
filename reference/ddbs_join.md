@@ -57,8 +57,12 @@ ddbs_join(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - conn_x:
 
@@ -81,7 +85,8 @@ ddbs_join(
 
   a numeric value specifying the distance for ST_DWithin. Units are
   metres for geographic (lon/lat) CRSs, and the CRS units for projected
-  CRSs (e.g. US survey feet for EPSG:2264)
+  CRSs (e.g. US survey feet for EPSG:2264). The inputs must have a CRS;
+  on a geographic CRS only POINT geometries are supported
 
 - mode:
 
@@ -151,7 +156,7 @@ overview of the most commonly used ones, taking two geometries a and b:
 
 - `"ST_CoveredBy"`: Whether a is covered by b
 
-- `"ST_DWithin"`: x) Whether a is within distance x of b
+- `"ST_DWithin"`: Whether a is within distance `distance` of b
 
 ## Examples
 

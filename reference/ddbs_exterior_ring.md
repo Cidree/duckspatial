@@ -1,7 +1,9 @@
 # Extract the exterior ring of polygons
 
-Returns the outer boundary (exterior ring) of polygon geometries. For
-multi-polygons, returns the exterior ring of each individual polygon.
+Returns the outer boundary (exterior ring) of polygon geometries. Only
+POLYGON geometries are supported; use
+[`ddbs_dump()`](https://cidree.github.io/duckspatial/reference/ddbs_dump.md)
+to split MULTIPOLYGON first.
 
 ## Usage
 
@@ -34,8 +36,12 @@ ddbs_exterior_ring(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - name:
 

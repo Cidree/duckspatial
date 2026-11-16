@@ -56,8 +56,12 @@ ddbs_force_4d(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - name:
 
@@ -93,7 +97,7 @@ ddbs_force_4d(
 - var:
 
   A numeric variable in `x` to be converted in the dimension specified
-  in the argument `dim`
+  in the argument `dim`, or a single number to use for every feature
 
 - dim:
 
@@ -102,11 +106,13 @@ ddbs_force_4d(
 
 - var_z:
 
-  A numeric variable in `x` to be convered in `Z` dimension
+  A numeric variable in `x` to be converted in `Z` dimension, or a
+  single number to use for every feature
 
 - var_m:
 
-  A numeric variable in `x` to be convered in `M` dimension
+  A numeric variable in `x` to be converted in `M` dimension, or a
+  single number to use for every feature
 
 ## Value
 

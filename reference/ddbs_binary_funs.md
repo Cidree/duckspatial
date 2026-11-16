@@ -96,8 +96,12 @@ ddbs_shortest_line(
 
 - conn:
 
-  A connection object to a DuckDB database. If `NULL`, the function runs
-  on a temporary DuckDB database.
+  A connection object to a DuckDB database. Required when an input is a
+  table name. If `NULL` (the default), the connection of a
+  `duckspatial_df` input is used when there is one; otherwise the
+  default connection from
+  [`ddbs_default_conn()`](https://cidree.github.io/duckspatial/reference/ddbs_default_conn.md)
+  is used.
 
 - conn_x:
 
@@ -171,7 +175,8 @@ These functions perform different geometric set operations:
 - `ddbs_difference`:
 
   Returns the portion of the first geometry that does not overlap with
-  the second geometry.
+  the second geometry. The result has one row per pair of `x` and `y`
+  features; pairs whose difference is empty are dropped.
 
 - `ddbs_sym_difference`:
 

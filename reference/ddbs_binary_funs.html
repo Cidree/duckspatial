@@ -244,8 +244,10 @@
 
 
 <dt id="arg-conn">conn<a class="anchor" aria-label="anchor" href="#arg-conn"></a></dt>
-<dd><p>A connection object to a DuckDB database. If <code>NULL</code>, the function
-runs on a temporary DuckDB database.</p></dd>
+<dd><p>A connection object to a DuckDB database. Required when an input
+is a table name. If <code>NULL</code> (the default), the connection of a
+<code>duckspatial_df</code> input is used when there is one; otherwise the default
+connection from <code><a href="ddbs_default_conn.html">ddbs_default_conn()</a></code> is used.</p></dd>
 
 
 <dt id="arg-conn-x">conn_x<a class="anchor" aria-label="anchor" href="#arg-conn-x"></a></dt>
@@ -302,7 +304,8 @@ geometries, using the bounding box of <code>y</code>, rather than its original g
 
 <dt><code>ddbs_difference</code></dt>
 <dd><p>Returns the portion of the first geometry that
-does not overlap with the second geometry.</p></dd>
+does not overlap with the second geometry. The result has one row per
+pair of <code>x</code> and <code>y</code> features; pairs whose difference is empty are dropped.</p></dd>
 
 <dt><code>ddbs_sym_difference</code></dt>
 <dd><p>Returns the portions of both geometries
