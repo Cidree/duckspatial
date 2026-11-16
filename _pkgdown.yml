@@ -270,6 +270,7 @@ reference:
 - title: Geometry Validation
   desc: Check and repair geometry validity and dimensionality
   contents:
+  - ddbs_coverage_funs
   - ddbs_geometry_type
   - ddbs_make_valid
   - ddbs_reduce_precision
