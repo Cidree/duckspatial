@@ -12,7 +12,7 @@
 * Local Ubuntu 26.04 LTS: 
 
 ```
-Duration: 2m 35.8s
+Duration: 5m 45.8s.
 
 0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 ```
@@ -20,9 +20,6 @@ Duration: 2m 35.8s
 * R Under development (unstable) x86_64-w64-mingw32:
 
 ```
-* checking CRAN incoming feasibility ... NOTE
-Maintainer: 'Adrián Cidre González <adrian.cidre@gmail.com>'
-
-0 errors ✔ | 0 warnings ✔ | 1 note ✖
+0 errors ✔ | 0 warnings ✔ | 0 notes ✖
 ```
 
