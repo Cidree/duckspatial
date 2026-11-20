@@ -72,7 +72,7 @@ to the connection.
 # create a fresh DuckDB connection
 conn <- duckspatial::ddbs_create_conn()
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpYlQpSB/duckdb
+#> ℹ /tmp/RtmpSGND7c/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
