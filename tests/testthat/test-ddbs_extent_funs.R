@@ -512,6 +512,125 @@ describe("ddbs_minimum_rotated_rectangle()", {
 })
 
 
+# 6. ddbs_expand() -------------------------------------------------------
+
+## - CHECK 1.1: works on all formats
+## - CHECK 1.2: returns different output formats
+## - CHECK 1.3: messages work
+## - CHECK 1.4: writing a table works
+## - CHECK 1.5: geometry type is POLYGON and number of rows is kept
+## - CHECK 1.6: bbox is expanded by `distance` in every direction
+## - CHECK 2.1: specific errors
+## - CHECK 2.2: general errors
+
+describe("ddbs_expand()", {
+
+  describe("expected behavior", {
+
+    it("works on all input formats", {
+      output_ddbs <- ddbs_expand(countries_ddbs, distance = 1)
+      output_sf   <- ddbs_expand(countries_sf, distance = 1)
+      output_conn <- ddbs_expand("countries", distance = 1, conn = conn_test)
+
+      expect_s3_class(output_ddbs, "duckspatial_df")
+      expect_equal(nrow(ddbs_collect(output_ddbs)), nrow(countries_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_sf))
+      expect_equal(ddbs_collect(output_ddbs), ddbs_collect(output_conn))
+    })
+
+    it("returns different output formats", {
+      output_sf_fmt <- ddbs_expand(countries_ddbs, distance = 1, mode = "sf")
+      expect_s3_class(output_sf_fmt, "sf")
+    })
+
+    it("shows and suppresses messages correctly", {
+      expect_no_message(ddbs_expand(countries_ddbs, distance = 1))
+      expect_message(ddbs_expand("countries", distance = 1, conn = conn_test, name = "expand"))
+      expect_message(ddbs_expand("countries", distance = 1, conn = conn_test, name = "expand", overwrite = TRUE))
+      expect_true(ddbs_expand("countries", distance = 1, conn = conn_test, name = "expand2"))
+
+      expect_no_message(ddbs_expand(countries_ddbs, distance = 1, quiet = TRUE))
+      expect_no_message(ddbs_expand("countries", distance = 1, conn = conn_test, name = "expand", overwrite = TRUE, quiet = TRUE))
+    })
+
+    it("writes tables correctly to DuckDB", {
+      output_tbl <- ddbs_read_table(conn_test, "expand")
+      expect_equal(
+        ddbs_collect(ddbs_expand(countries_ddbs, distance = 1))$geometry,
+        output_tbl$geometry
+      )
+    })
+
+    it("produces POLYGON geometry", {
+      geom_type <- sf::st_geometry_type(ddbs_collect(ddbs_expand(countries_ddbs, distance = 1))) |> as.character()
+      expect_true(all(geom_type == "POLYGON"))
+    })
+
+    it("expands the bounding box by distance in every direction", {
+      square_sf <- sf::st_sf(
+        id       = 1L,
+        geometry = sf::st_sfc(sf::st_polygon(list(
+          rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0))
+        ))),
+        crs = 4326
+      )
+
+      bbox_out <- ddbs_bbox(ddbs_expand(square_sf, distance = 1))
+      expect_equal(as.numeric(bbox_out), c(-1, -1, 2, 2))
+
+      bbox_in  <- ddbs_bbox(argentina_ddbs)
+      bbox_out <- ddbs_bbox(ddbs_expand(argentina_ddbs, distance = 0.5))
+      expect_equal(as.numeric(bbox_out), as.numeric(bbox_in) + c(-0.5, -0.5, 0.5, 0.5))
+    })
+
+    it("preserves the CRS", {
+      output <- ddbs_expand(countries_ddbs, distance = 1)
+      expect_equal(ddbs_crs(output), ddbs_crs(countries_ddbs))
+    })
+
+  })
+
+  describe("errors", {
+
+    it("requires a numeric distance", {
+      expect_error(ddbs_expand(countries_ddbs))
+      expect_error(ddbs_expand(countries_ddbs, distance = "1"))
+    })
+
+    it("requires a valid connection when using table name", {
+      expect_error(ddbs_expand("countries", distance = 1, conn = NULL))
+    })
+
+    it("validates x argument type", {
+      expect_error(ddbs_expand(x = 999, distance = 1))
+      expect_error(ddbs_expand(x = "999", distance = 1, conn = conn_test))
+    })
+
+    it("validates conn argument type", {
+      expect_error(ddbs_expand(countries_ddbs, distance = 1, conn = 999))
+    })
+
+    it("validates overwrite argument type", {
+      expect_error(ddbs_expand(countries_ddbs, distance = 1, overwrite = 999))
+    })
+
+    it("validates quiet argument type", {
+      expect_error(ddbs_expand(countries_ddbs, distance = 1, quiet = 999))
+    })
+
+    it("requires name to be a single character string", {
+      expect_error(ddbs_expand(countries_ddbs, distance = 1, conn = conn_test, name = c("a", "b")))
+    })
+
+    it("errors on unexpected arguments", {
+      expect_error(ddbs_expand(countries_ddbs, distance = 1, new_column = 999))
+    })
+
+  })
+
+})
+
+
 ## stop connection
 duckspatial::ddbs_stop_conn(conn_test)
 
