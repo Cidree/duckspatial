@@ -1,5 +1,209 @@
 # Changelog
 
+## duckspatial 1.4.0
+
+CRAN release: 2026-11-16
+
+- Updated the `duckdb` dependency to v2.0.0 See
+  <https://r.duckdb.org/news/index.html#duckdb-200>.
+
+### NEW FEATURES
+
+- `duckspatial` defaults storage is now v2.0.0 (see
+  <https://duckdb.org/docs/2.0/internals/storage>).
+
+- [`ddbs_coverage_invalid_edges()`](https://cidree.github.io/duckspatial/reference/ddbs_coverage_funs.md):
+  returns the invalid edges in a polygonal coverage, which are edges
+  that are not shared by two polygons
+  ([\#191](https://github.com/Cidree/duckspatial/issues/191)).
+
+- [`ddbs_coverage_union()`](https://cidree.github.io/duckspatial/reference/ddbs_coverage_funs.md):
+  union all geometries in a polygonal coverage into a single geometry
+  ([\#191](https://github.com/Cidree/duckspatial/issues/191)).
+
+### BUG FIXES
+
+- [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md)
+  now installs extensions that are not core DuckDB extensions
+  (e.g. `h3`) from the community repository directly, instead of first
+  trying a core download that always fails. With duckdb 2.0.0 on
+  Windows, a failed extension download can crash the R session later on.
+
+- [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  (haversine and spheroid) and `ddbs_predicate(predicate = "dwithin")`
+  on a geographic CRS now pass coordinates in \[LONGITUDE, LATITUDE\]
+  order. With DuckDB v2.0 they returned distances of the wrong magnitude
+  and missed `dwithin` matches
+  ([\#109](https://github.com/Cidree/duckspatial/issues/109)).
+
+- Internal Spheroid functions (ST_Area_Spheroid, ST_Length_Spheroid, …)
+  are affected by a flip of the axis order to \[LONGITUDE, LATITUDE\]
+  ([\#109](https://github.com/Cidree/duckspatial/issues/109)).
+
+- [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
+  after
+  [`distinct()`](https://dplyr.tidyverse.org/reference/distinct.html) or
+  [`count()`](https://dplyr.tidyverse.org/reference/count.html) on a
+  table opened by name no longer writes the original, unfiltered table.
+
+- [`select()`](https://dplyr.tidyverse.org/reference/select.html) now
+  keeps track of a renamed geometry column
+  (e.g. `select(x, geom2 = geometry)`).
+
+- [`mutate()`](https://dplyr.tidyverse.org/reference/mutate.html) that
+  reprojects the geometry column in place (e.g. with `ST_Transform`) now
+  warns and sets the CRS to `NA`, instead of keeping the old, wrong CRS.
+
+- [`ddbs_transform()`](https://cidree.github.io/duckspatial/reference/ddbs_transform.md)
+  now gives the standard “connection cannot be NULL” error when a table
+  name is passed without a connection.
+
+- [`ddbs_crop()`](https://cidree.github.io/duckspatial/reference/ddbs_binary_funs.md)
+  now accepts a table name in `y`.
+
+- The distance predicates
+  ([`ddbs_is_within_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.md),
+  `dwithin` in
+  [`ddbs_join()`](https://cidree.github.io/duckspatial/reference/ddbs_join.md)/[`ddbs_filter()`](https://cidree.github.io/duckspatial/reference/ddbs_filter.md))
+  on a geographic CRS now give an informative error for non-POINT
+  geometries (including MULTIPOINT), instead of a raw DuckDB error.
+
+- [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
+  can now write sf objects whose geometry column name needs quoting
+  (e.g. `"my geom"`), and can overwrite an existing view.
+
+- [`ddbs_collect()`](https://cidree.github.io/duckspatial/reference/ddbs_collect.md)
+  now honours the `duckspatial.output_type` option, like
+  [`collect()`](https://dplyr.tidyverse.org/reference/compute.html), and
+  [`st_as_sf()`](https://r-spatial.github.io/sf/reference/st_as_sf.html)
+  no longer fails when called with `as =`.
+
+- [`ddbs_transform()`](https://cidree.github.io/duckspatial/reference/ddbs_transform.md)
+  now gives a clear error when `x` has no CRS.
+
+- [`ddbs_install()`](https://cidree.github.io/duckspatial/reference/ddbs_install.md)
+  and
+  [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)
+  check the connection before using it, so an invalid connection gives
+  the package’s error message.
+
+- [`ddbs_union_agg()`](https://cidree.github.io/duckspatial/reference/ddbs_union_funs.md)
+  now works without `by`, unioning all geometries into one, as
+  documented.
+
+- [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md)
+  on a data.frame (including `coords` and `wkt` input) now uploads it as
+  a temporary table. Before, it left a permanent `temp_table_*` table in
+  file-backed databases.
+
+- The default `duckspatial.output_type` option is now `"sf"`, as
+  documented, so
+  `ddbs_options(output_type = getOption("duckspatial.output_type"))` no
+  longer errors.
+  [`collect()`](https://dplyr.tidyverse.org/reference/compute.html)
+  returns the same output as before, and `"duckspatial_df"` is still
+  accepted as an alias for `"sf"`.
+
+- Joins between two `duckspatial_df` whose geometry columns share a name
+  no longer lose the geometry: the result keeps the geometry of `x` and
+  drops the geometry column of `y`, as
+  [`sf::st_join()`](https://r-spatial.github.io/sf/reference/st_join.html)
+  does. Natural joins (`by = NULL`) are unchanged.
+
+- [`ddbs_write_table()`](https://cidree.github.io/duckspatial/reference/ddbs_write_table.md)
+  with a lazy table from the same connection now quotes the table name,
+  so names like `"my-table"` work.
+
+- Schema-qualified names given as a single string (e.g. `"main.table"`)
+  now work in
+  [`ddbs_read_table()`](https://cidree.github.io/duckspatial/reference/ddbs_read_table.md),
+  [`ddbs_crs()`](https://cidree.github.io/duckspatial/reference/ddbs_crs.md),
+  [`ddbs_glimpse()`](https://cidree.github.io/duckspatial/reference/ddbs_glimpse.md),
+  [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md)
+  and
+  [`ddbs_register_table()`](https://cidree.github.io/duckspatial/reference/ddbs_register_table.md).
+
+- File paths containing a single quote (e.g. `"it's.parquet"`) no longer
+  break the generated SQL.
+
+- [`ddbs_open_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_open_dataset.md)
+  now errors when `parquet_encryption_config` is used with a Parquet
+  file, instead of silently ignoring it.
+
+- [`ddbs_load()`](https://cidree.github.io/duckspatial/reference/ddbs_load.md)
+  now returns `TRUE` invisibly, as documented.
+
+- When `x` and `y` come from two different connections and are both
+  imported into a third one (`conn`), the imported view of `x` is no
+  longer left behind.
+
+- [`ddbs_line_locate_point()`](https://cidree.github.io/duckspatial/reference/ddbs_line_locate_point.md)
+  now errors when `x` and `y` have different CRSs, instead of returning
+  a wrong fraction.
+
+- The warning for a `dwithin` predicate without `distance` now says it
+  uses `distance = 0` (it previously said “Using ST_Within”).
+
+- [`ddbs_azimuth()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  now gives a clear error for mixed geometry types, and documents that
+  it is planar.
+
+- [`ddbs_has_z()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
+  and
+  [`ddbs_has_m()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md)
+  with `by_feature = FALSE` now check every feature, not only the first
+  one.
+
+- Functions with `by_feature = FALSE` that return a single value
+  (e.g. [`ddbs_xmax()`](https://cidree.github.io/duckspatial/reference/ddbs_coord_bounds.md),
+  [`ddbs_has_z()`](https://cidree.github.io/duckspatial/reference/ddbs_has_dim.md))
+  now warn that `name` is ignored.
+
+- [`ddbs_force_3d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  and
+  [`ddbs_force_4d()`](https://cidree.github.io/duckspatial/reference/ddbs_force_dim.md)
+  now quote the `var`, `var_z` and `var_m` column names, so names like
+  `"my z"` work. A single number is still accepted.
+
+- [`ddbs_maximum_inscribed_circle()`](https://cidree.github.io/duckspatial/reference/ddbs_maximum_inscribed_circle.md)
+  validates `geom`, and `ddbs_quadkey(name = ...)` no longer requires
+  the `quadkeyr` package.
+
+- [`ddbs_write_mbtiles()`](https://cidree.github.io/duckspatial/reference/ddbs_write_mbtiles.md)
+  writes `"fields": {}` instead of `[]` for layers without attributes.
+
+- Documentation fixes: the `name` argument now describes the actual
+  default (a `duckspatial_df` or `sf` result, depending on `mode`),
+  [`ddbs_generate_points()`](https://cidree.github.io/duckspatial/reference/ddbs_generate_points.md)
+  generates `n` points in total within the bounding box of the whole
+  input, and the
+  [`ddbs_x()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)/[`ddbs_y()`](https://cidree.github.io/duckspatial/reference/ddbs_xy.md)
+  example no longer errors.
+  [`ddbs_write_dataset()`](https://cidree.github.io/duckspatial/reference/ddbs_write_dataset.md)
+  now documents v2.0.0 as the default storage version, and its examples
+  write to [`tempdir()`](https://rdrr.io/r/base/tempfile.html).
+  [`as_duckspatial_df()`](https://cidree.github.io/duckspatial/reference/as_duckspatial_df.md)
+  documents that `coords` input with no `crs` is assumed to be in
+  EPSG:4326.
+  [`ddbs_rotate()`](https://cidree.github.io/duckspatial/reference/ddbs_rotate.md)
+  explains that `by_feature = FALSE` rotates around the centroid of the
+  whole dataset, and that `center_x`/`center_y` need
+  `by_feature = TRUE`; its example no longer errors. The `conn` argument
+  now describes the default connection,
+  [`ddbs_exterior_ring()`](https://cidree.github.io/duckspatial/reference/ddbs_exterior_ring.md)
+  only supports POLYGON, and several other examples and descriptions
+  were corrected.
+
+### PERFORMANCE
+
+- [`ddbs_distance()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  and
+  [`ddbs_azimuth()`](https://cidree.github.io/duckspatial/reference/ddbs_measure_funs.md)
+  with `mode = "sf"` no longer sort the n x m pairs before building the
+  matrix; each value is written straight to its cell. For 100k x 100
+  points this is ~4x faster for planar distance, ~2x for azimuth and
+  ~1.4x for haversine distance.
+
 ## duckspatial 1.3.0
 
 CRAN release: 2026-10-10
