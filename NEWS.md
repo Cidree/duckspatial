@@ -1,5 +1,5 @@
 
-# Development version
+# duckspatial 1.4.0
 
 * Updated the `duckdb` dependency to v2.0.0 See <https://r.duckdb.org/news/index.html#duckdb-200>.
 
